@@ -1,0 +1,134 @@
+{
+  "_meta": {
+    "generated": "2025-09-19T00:00:00Z",
+    "description": "Inventory of pricing-related fields, domains, usage classification, risks, and canonical recommendations"
+  },
+  "fields": {
+    "description": {
+      "aliases": ["description","itemName","desc","name","title","specifications","details","itemDesc","itemDescription","label","text"],
+      "domain": "Descriptive",
+      "normalizedBy": "normalizePricingItem",
+      "producedIn": ["normalizePricing.ts"],
+      "consumedIn": ["TenderPricingProcess.tsx","TenderDetails.tsx","pricingEngine.ts","normalizePricing.ts"],
+      "risks": ["Multiple fallback sources -> inconsistent display"],
+      "canonicalProvider": "normalizePricing.normalizePricingItem",
+      "recommendation": "Introduce getCanonicalDescription helper; stop ad-hoc fallback duplication inside components"
+    },
+    "unit": {
+      "aliases": ["unit","uom","unit_ar","unitName","unitAr"],
+      "domain": "Quantity & Units",
+      "normalizedBy": "normalizePricingItem",
+      "producedIn": ["normalizePricing.ts"],
+      "consumedIn": ["TenderDetails.tsx","TenderPricingProcess.tsx"],
+      "risks": ["Legacy placeholder '—' or 'وحدة' may leak"],
+      "canonicalProvider": "normalizePricing.normalizePricingItem"
+    },
+    "quantity": {
+      "aliases": ["quantity","qty","baseQty"],
+      "domain": "Quantity & Units",
+      "normalizedBy": "normalizePricingItem",
+      "producedIn": ["normalizePricing.ts"],
+      "consumedIn": ["pricingEngine.ts","TenderPricingProcess.tsx","TenderDetails.tsx"],
+      "risks": ["Zero quantity causing divide-by-zero in unitPrice computations"],
+      "canonicalProvider": "normalizePricing.normalizePricingItem"
+    },
+    "materials": {
+      "domain": "Cost Components",
+      "collection": true,
+      "producedIn": ["TenderPricingProcess.tsx","normalizePricing.ts"],
+      "consumedIn": ["pricingEngine.ts","TenderDetails.tsx"],
+      "risks": ["Sometimes absent on initial TenderDetails load (fixed patch)"]
+    },
+    "labor": {
+      "domain": "Cost Components",
+      "collection": true,
+      "producedIn": ["TenderPricingProcess.tsx","normalizePricing.ts"],
+      "consumedIn": ["pricingEngine.ts","TenderDetails.tsx"],
+      "risks": []
+    },
+    "equipment": {
+      "domain": "Cost Components",
+      "collection": true,
+      "producedIn": ["TenderPricingProcess.tsx","normalizePricing.ts"],
+      "consumedIn": ["pricingEngine.ts","TenderDetails.tsx"],
+      "risks": []
+    },
+    "subcontractors": {
+      "domain": "Cost Components",
+      "collection": true,
+      "producedIn": ["TenderPricingProcess.tsx","normalizePricing.ts"],
+      "consumedIn": ["pricingEngine.ts","TenderDetails.tsx"],
+      "risks": []
+    },
+    "adminPercentage": {
+      "domain": "Percentage Adders",
+      "producedIn": ["TenderPricingProcess.tsx","pricingEngine.ts"],
+      "consumedIn": ["TenderDetails.tsx"],
+      "risks": ["Duplication of default fallback logic"],
+      "canonicalProvider": "pricingEngine.getEffectivePercentages"
+    },
+    "operationalPercentage": {
+      "domain": "Percentage Adders",
+      "producedIn": ["TenderPricingProcess.tsx","pricingEngine.ts"],
+      "consumedIn": ["TenderDetails.tsx"],
+      "canonicalProvider": "pricingEngine.getEffectivePercentages"
+    },
+    "profitPercentage": {
+      "domain": "Percentage Adders",
+      "producedIn": ["TenderPricingProcess.tsx","pricingEngine.ts"],
+      "consumedIn": ["TenderDetails.tsx"],
+      "canonicalProvider": "pricingEngine.getEffectivePercentages"
+    },
+    "breakdown": {
+      "domain": "Derived Totals",
+      "producedIn": ["TenderPricingProcess.tsx","pricingEngine.ts"],
+      "consumedIn": ["TenderDetails.tsx","pricingEngine.ts"],
+      "risks": ["Pre-engine manual construction vs engine computeBreakdown"]
+    },
+    "subtotal": {
+      "domain": "Derived Totals",
+      "producedIn": ["TenderPricingProcess.tsx","TenderDetails.tsx","pricingEngine.ts"],
+      "risks": ["Triple duplication of arithmetic"],
+      "canonicalProvider": "pricingEngine.computeBreakdown"
+    },
+    "unitPrice": {
+      "domain": "Derived Totals",
+      "producedIn": ["normalizePricing.ts","TenderPricingProcess.tsx","pricingEngine.ts"],
+      "consumedIn": ["TenderDetails.tsx"],
+      "risks": ["Different divide-by-quantity rounding rules"],
+      "canonicalProvider": "pricingEngine.enrichPricingItems"
+    },
+    "totalPrice": {
+      "domain": "Derived Totals",
+      "producedIn": ["normalizePricing.ts","TenderPricingProcess.tsx","pricingEngine.ts"],
+      "consumedIn": ["TenderDetails.tsx","pricingEngine.ts"],
+      "canonicalProvider": "pricingEngine.enrichPricingItems"
+    },
+    "vatAmount": {
+      "domain": "Derived Totals",
+      "producedIn": ["pricingEngine.ts"],
+      "consumedIn": ["TenderDetails.tsx"],
+      "risks": ["Manual external VAT computations might drift if added"],
+      "canonicalProvider": "pricingEngine.aggregateTotals"
+    },
+    "totalWithVat": {
+      "domain": "Derived Totals",
+      "producedIn": ["pricingEngine.ts"],
+      "consumedIn": ["TenderDetails.tsx"],
+      "canonicalProvider": "pricingEngine.aggregateTotals"
+    }
+  },
+  "risks": {
+    "duplicationClusters": [
+      {"name": "ArithmeticCore", "files": ["TenderPricingProcess.tsx","TenderDetails.tsx","pricingEngine.ts"], "severity": "high"},
+      {"name": "DescriptionFallback", "files": ["TenderPricingProcess.tsx","normalizePricing.ts"], "severity": "medium"},
+      {"name": "SubtotalPercentages", "files": ["TenderPricingProcess.tsx","TenderDetails.tsx"], "severity": "high"}
+    ],
+    "summary": "Core cost arithmetic duplicated 3x; description fallback duplicated 2x; risk of drift without enforced engine adoption"
+  },
+  "recommendations": {
+    "phase1": "Adopt pricingEngine in TenderDetails (read-only) and TenderPricingProcess (replace inline breakdown).",
+    "phase2": "Remove old arithmetic blocks; introduce getCanonicalDescription; unify percentage defaults via getEffectivePercentages.",
+    "phase3": "Extend engine to cover analytics modules; deprecate ad-hoc subtotal logic elsewhere." 
+  }
+}

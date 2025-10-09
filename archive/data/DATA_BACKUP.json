@@ -1,0 +1,20 @@
+{
+  "timestamp": "2025-09-15T11:31:34.813Z",
+  "version": "1.0.0",
+  "source": "DataDiscoveryTool",
+  "data": {
+    "C:\\Users\\ammn\\AppData\\Roaming\\desktop-management-system-community\\config.json": {
+      "CLIENTS": {
+        "key": "app_clients_data",
+        "data": "[]",
+        "source": "Electron",
+        "filePath": "C:\\Users\\ammn\\AppData\\Roaming\\desktop-management-system-community\\config.json",
+        "extractedAt": "2025-09-15T11:31:35.016Z"
+      }
+    }
+  },
+  "summary": {
+    "totalFiles": 1,
+    "totalKeys": 1
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "timestamp": "2025-09-15T13:38:05.517Z",
+  "action": "Tender Data Recovery from Pricing Data",
+  "success": true,
+  "recoveredTender": {
+    "id": "tender_1757843036209_hjt6pa9ei",
+    "name": "مشروع إنشاء 1/H/ 1/E (مستعاد من البيانات)",
+    "description": "منافسة تم استعادتها من بيانات التسعير المحفوظة",
+    "status": "under_action",
+    "value": 363492,
+    "currency": "SAR",
+    "submissionDate": "2025-09-20T00:00:00.000Z",
+    "createdAt": "2025-09-14T00:00:00.000Z",
+    "updatedAt": "2025-09-15T13:38:05.440Z",
+    "client": "عميل مستعاد",
+    "location": "الموقع غير محدد",
+    "category": "إنشاءات",
+    "priority": "medium",
+    "progress": 19.5,
+    "winChance": 75,
+    "notes": "تم استعادة هذه المنافسة من بيانات التسعير المحفوظة. القيمة والتفاصيل مبنية على آخر بيانات متاحة. تحتوي على 1 مادة مسعرة.",
+    "recovered": true,
+    "originalId": "tender_1757843036209_hjt6pa9ei"
+  },
+  "sourceData": {
+    "pricingKey": "tender-pricing-tender_1757843036209_hjt6pa9ei",
+    "pricingEntries": 1
+  },
+  "restoredFields": [
+    "id",
+    "name",
+    "description",
+    "status",
+    "value",
+    "currency",
+    "submissionDate",
+    "createdAt",
+    "updatedAt",
+    "client",
+    "location",
+    "category",
+    "priority",
+    "progress",
+    "winChance",
+    "notes"
+  ]
+}

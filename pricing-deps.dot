@@ -1,0 +1,43 @@
+digraph PricingDeps {
+  rankdir=LR;
+  node [shape=rectangle, fontname="Arial", fontsize=10];
+
+  subgraph cluster_components { label="Components"; style=filled; color=lightgrey;
+    TenderPricingProcess [label="TenderPricingProcess.tsx\n(Producer + Arithmetic)"];
+    TenderDetails [label="TenderDetails.tsx\n(Display + Recalc)"];
+  }
+
+  subgraph cluster_services { label="Services / Engine"; style=filled; color=lightyellow;
+    pricingService [label="pricingService.ts\n(Storage + Defaults)"];
+    pricingEngine [label="pricingEngine.ts\n(Canonical Arithmetic)"];
+  }
+
+  subgraph cluster_utils { label="Utilities"; style=filled; color=lightblue;
+    normalizePricing [label="normalizePricing.ts\n(Field Normalization)"];
+    unifiedCalculations [label="unifiedCalculations.ts\n(Analytics / Independent)"];
+  }
+
+  // Imports (current state)
+  TenderPricingProcess -> pricingService;
+  TenderPricingProcess -> normalizePricing [style=dashed, label="(indirect via concepts)"];
+  TenderDetails -> pricingService;
+  TenderDetails -> normalizePricing;
+
+  // Engine currently isolated
+  pricingEngine;
+
+  // Utilities independence
+  unifiedCalculations -> pricingService [style=dotted, label="(values)"];
+
+  // Desired future edges (planned) dashed green
+  TenderPricingProcess -> pricingEngine [color=green, style=dashed, label="planned"];
+  TenderDetails -> pricingEngine [color=green, style=dashed, label="planned"];
+  unifiedCalculations -> pricingEngine [color=green, style=dashed, label="planned"];
+
+  // Legend
+  subgraph cluster_legend { label="Legend"; fontsize=9; color=white;
+    legend1 [label="solid: existing import", shape=plaintext];
+    legend2 [label="dashed green: planned adoption", shape=plaintext];
+    legend3 [label="dotted: indirect/value usage", shape=plaintext];
+  }
+}

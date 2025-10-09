@@ -1,0 +1,34 @@
+{
+  "timestamp": "2025-09-15T11:31:34.813Z",
+  "searchResults": {
+    "searchLocations": [],
+    "foundData": {
+      "C:\\Users\\ammn\\AppData\\Roaming\\desktop-management-system-community\\config.json": {
+        "CLIENTS": {
+          "key": "app_clients_data",
+          "data": "[]",
+          "source": "Electron",
+          "filePath": "C:\\Users\\ammn\\AppData\\Roaming\\desktop-management-system-community\\config.json",
+          "extractedAt": "2025-09-15T11:31:35.016Z"
+        }
+      }
+    },
+    "migrationPlan": [],
+    "errors": []
+  },
+  "foundDataSummary": [
+    {
+      "source": "C:\\Users\\ammn\\AppData\\Roaming\\desktop-management-system-community\\config.json",
+      "keys": [
+        "CLIENTS"
+      ],
+      "keyCount": 1
+    }
+  ],
+  "recommendations": [
+    "Found data in 1 location(s)",
+    "Recommend immediate migration to electron-store",
+    "Create automated migration process",
+    "Implement data validation after migration"
+  ]
+}

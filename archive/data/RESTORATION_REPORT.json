@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-09-15T11:47:07.883Z",
+  "status": "SUCCESS",
+  "method": "Automatic Electron Config Restoration",
+  "restoredData": {
+    "tenderCount": 1,
+    "tenderId": "tender_1757843036209_hjt6pa9ei",
+    "materialCount": 1,
+    "totalValue": 363492
+  },
+  "nextSteps": [
+    "The data has been restored to Electron config",
+    "Refresh the application to see your data",
+    "You can now add more pricing details as needed"
+  ]
+}

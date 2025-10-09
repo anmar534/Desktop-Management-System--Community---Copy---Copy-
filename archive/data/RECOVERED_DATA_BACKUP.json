@@ -1,0 +1,20 @@
+{
+  "timestamp": "2025-09-15T09:24:11.433Z",
+  "source": "BinaryDataExtractor",
+  "extraction_method": "LevelDB Binary Analysis",
+  "data": {
+    "000400.log": {
+      "app_clients_data": []
+    }
+  },
+  "summary": {
+    "totalFiles": 1,
+    "totalKeys": 1,
+    "dataTypes": {
+      "app_clients_data": "Array[0]"
+    },
+    "recordCounts": {
+      "app_clients_data": 0
+    }
+  }
+}

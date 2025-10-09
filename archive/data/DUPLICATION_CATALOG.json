@@ -1,0 +1,47 @@
+{
+  "clusters": [
+    {
+      "name": "ArithmeticCore",
+      "pattern": "materials + labor + equipment + subcontractors -> subtotal -> admin/operational/profit -> total",
+      "files": ["src/components/TenderPricingProcess.tsx","src/components/TenderDetails.tsx","src/services/pricingEngine.ts"],
+      "issue": "Manual replication of identical cost breakdown logic",
+      "risk": "High drift potential if defaults or formula change",
+      "consolidation": "Use pricingEngine.computeBreakdown + enrichPricingItems everywhere"
+    },
+    {
+      "name": "DescriptionFallback",
+      "pattern": "description || itemName || name || title ...",
+      "files": ["src/components/TenderPricingProcess.tsx","src/utils/normalizePricing.ts"],
+      "issue": "Multiple fallback chains not synchronized",
+      "risk": "Inconsistent UI labels and search indexing",
+      "consolidation": "Introduce getCanonicalDescription util referencing single alias array"
+    },
+    {
+      "name": "PercentagesDefaults",
+      "pattern": "{ administrative: X, operational: Y, profit: Z }",
+      "files": ["src/components/TenderPricingProcess.tsx","src/services/pricingEngine.ts","src/services/pricingService.ts"],
+      "issue": "Scattered default percentage literals",
+      "risk": "Misalignment of business rules across modules",
+      "consolidation": "Export DEFAULT_PERCENTAGES from pricingEngine and re-export via pricingService if needed"
+    },
+    {
+      "name": "UnitPriceDerivation",
+      "pattern": "unitPrice = total / quantity (with variants)",
+      "files": ["src/utils/normalizePricing.ts","src/services/pricingEngine.ts"],
+      "issue": "Rounding & zero-quantity handling differences",
+      "risk": "Minor monetary discrepancies and UI confusion",
+      "consolidation": "Delegate to pricingEngine.enrichPricingItems rounding policy"
+    },
+    {
+      "name": "TotalsAggregation",
+      "pattern": "reduce over items to sum profit/admin/operational/VAT",
+      "files": ["src/components/TenderDetails.tsx","src/services/pricingEngine.ts"],
+      "issue": "Partial duplicate of aggregateTotals logic",
+      "risk": "Displayed totals may diverge",
+      "consolidation": "Always call pricingEngine.aggregateTotals for summary cards"
+    }
+  ],
+  "summary": "Five duplication clusters identified; ArithmeticCore and PercentagesDefaults highest priority for immediate consolidation",
+  "phasedFixPriority": ["ArithmeticCore","PercentagesDefaults","TotalsAggregation","DescriptionFallback","UnitPriceDerivation"],
+  "notes": "Adoption order minimizes regression risk and test surface expansion"
+}

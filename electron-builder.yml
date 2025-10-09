@@ -1,0 +1,44 @@
+appId: com.mbm.desktop.management
+productName: "نظام إدارة شركة المقاولات"
+files:
+  - dist/**
+  - src/electron/**
+  - package.json
+  - node_modules/**
+directories:
+  output: build/electron
+  buildResources: build/resources
+asar: true
+asarUnpack:
+  - "**/node_modules/better-sqlite3/**"
+  - "**/node_modules/keytar/**"
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  publisherName: ${env.WINDOWS_PUBLISHER_NAME}
+  certificateFile: ${env.WINDOWS_CERT_PATH}
+  certificatePassword: ${env.WINDOWS_CERT_PASSWORD}
+  signingHashAlgorithms:
+    - sha256
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: "نظام إدارة شركة المقاولات"
+extraMetadata:
+  main: src/electron/main.cjs
+publish:
+  provider: generic
+  url: ${env.ELECTRON_UPDATES_URL}
+artifactName: "DesktopManagementSystem-${version}-${os}-${arch}.${ext}"
+extraResources:
+  - from: build/resources/
+    to: resources
+npmRebuild: false
+mac:
+  enabled: false
+linux:
+  enabled: false

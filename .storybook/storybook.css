@@ -1,0 +1,26 @@
+/* Storybook global styles */
+.storybook-wrapper {
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+/* RTL support */
+[dir="rtl"] .storybook-wrapper {
+  text-align: right;
+}
+
+/* Theme-specific backgrounds */
+[data-theme="light"] .storybook-wrapper {
+  background: var(--color-bg-primary, #FFFFFF);
+  color: var(--color-text-primary, #111827);
+}
+
+[data-theme="dark"] .storybook-wrapper {
+  background: var(--color-bg-primary, #030712);
+  color: var(--color-text-primary, #F9FAFB);
+}
+
+[data-theme="high-contrast"] .storybook-wrapper {
+  background: var(--color-bg-primary, #FFFFFF);
+  color: var(--color-text-primary, #000000);
+}

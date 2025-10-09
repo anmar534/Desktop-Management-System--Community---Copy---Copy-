@@ -1,0 +1,474 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Global Styles
+ *
+ * محدّث لاستخدام Design Tokens System الجديد
+ * يدعم: Light Theme، Dark Theme، High Contrast Theme
+ *
+ * @version 2.0.0
+ * @date 2025-10-07
+ */
+
+/* ============================================
+   Electron specific styles
+   ============================================ */
+html, body {
+  -webkit-font-smoothing: antialiased;
+  -webkit-app-region: no-drag;
+}
+
+/* ============================================
+   Base Layer - CSS Variables للسمات
+   ============================================ */
+@layer base {
+  /* Light Theme (default) - Construction Industry Theme */
+  :root {
+    /* Base colors - نظيف واحترافي */
+    --background: 0 0% 99%;
+    --foreground: 0 0% 9%;
+
+    /* Card colors - بطاقات بارزة */
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+
+    /* Popover colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+
+    /* Primary colors - البرتقالي المقاولاتي (Procore-inspired) */
+    --primary: 24 94% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary colors - الأزرق الثانوي */
+    --secondary: 221 83% 53%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted colors */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    /* Accent colors - برتقالي فاتح */
+    --accent: 24 94% 96%;
+    --accent-foreground: 24 94% 30%;
+
+    /* Destructive colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border colors - حدود رفيعة */
+    --border: 0 0% 92%;
+    --input: 0 0% 90%;
+    --ring: 24 94% 50%;
+
+    /* Border radius - حواف حديثة */
+    --radius: 0.75rem;
+
+    /* Semantic colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 9%;
+    --error: 0 84% 60%;
+    --error-foreground: 0 0% 100%;
+    --info: 221 83% 53%;
+    --info-foreground: 0 0% 100%;
+
+    /* Construction-specific status colors (Procore-style) */
+    --status-overdue: 0 84% 60%;
+    --status-due-soon: 45 93% 47%;
+    --status-on-track: 142 76% 36%;
+    --status-completed: 221 83% 53%;
+
+    /* Tender-specific colors */
+    --tender-urgent: 0 84% 60%;
+    --tender-urgent-foreground: 0 0% 100%;
+    --tender-warning: 45 93% 47%;
+    --tender-warning-foreground: 0 0% 9%;
+    --tender-normal: 221 83% 53%;
+    --tender-normal-foreground: 0 0% 100%;
+    --tender-success: 142 76% 36%;
+    --tender-success-foreground: 0 0% 100%;
+
+    /* Chart colors - ألوان مميزة */
+    --chart-1: 24 94% 50%;   /* Orange */
+    --chart-2: 221 83% 53%;  /* Blue */
+    --chart-3: 142 76% 36%;  /* Green */
+    --chart-4: 0 84% 60%;    /* Red */
+    --chart-5: 262 52% 47%;  /* Purple */
+    --chart-6: 45 93% 47%;   /* Yellow */
+    --chart-7: 173 80% 40%;  /* Teal */
+    --chart-8: 330 81% 60%;  /* Pink */
+  }
+
+  /* Dark Theme - Construction Industry Theme */
+  .dark {
+    /* Base colors - خلفية داكنة احترافية */
+    --background: 0 0% 6%;
+    --foreground: 0 0% 98%;
+
+    /* Card colors - بطاقات بارزة */
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 98%;
+
+    /* Popover colors */
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Primary colors - البرتقالي المقاولاتي (محسّن للوضع الداكن) */
+    --primary: 24 94% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary colors - الأزرق الثانوي */
+    --secondary: 221 63% 58%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted colors */
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 65%;
+
+    /* Accent colors - برتقالي داكن */
+    --accent: 24 74% 20%;
+    --accent-foreground: 24 94% 70%;
+
+    /* Destructive colors */
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border colors - حدود واضحة */
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 24 94% 55%;
+
+    /* Semantic colors - ألوان مشبعة بشكل مناسب */
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 93% 55%;
+    --warning-foreground: 0 0% 9%;
+    --error: 0 84% 65%;
+    --error-foreground: 0 0% 100%;
+    --info: 221 63% 60%;
+    --info-foreground: 0 0% 100%;
+
+    /* Construction-specific status colors */
+    --status-overdue: 0 84% 65%;
+    --status-due-soon: 45 93% 55%;
+    --status-on-track: 142 76% 45%;
+    --status-completed: 221 63% 58%;
+
+    /* Tender-specific colors */
+    --tender-urgent: 0 84% 65%;
+    --tender-urgent-foreground: 0 0% 100%;
+    --tender-warning: 45 93% 55%;
+    --tender-warning-foreground: 0 0% 9%;
+    --tender-normal: 221 63% 58%;
+    --tender-normal-foreground: 0 0% 100%;
+    --tender-success: 142 76% 45%;
+    --tender-success-foreground: 0 0% 100%;
+
+    /* Chart colors - محسّنة للوضع الداكن (تقليل التشبع بـ20) */
+    --chart-1: 24 74% 60%;   /* Orange */
+    --chart-2: 221 63% 65%;  /* Blue */
+    --chart-3: 142 56% 50%;  /* Green */
+    --chart-4: 0 64% 70%;    /* Red */
+    --chart-5: 262 32% 60%;  /* Purple */
+    --chart-6: 45 73% 60%;   /* Yellow */
+    --chart-7: 173 60% 55%;  /* Teal */
+    --chart-8: 330 61% 70%;  /* Pink */
+  }
+
+  /* High Contrast Theme - للوصولية */
+  .high-contrast {
+    /* Base colors - أقصى تباين */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    /* Card colors */
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
+
+    /* Popover colors */
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
+
+    /* Primary colors - أصفر فاتح للتباين */
+    --primary: 60 100% 50%;
+    --primary-foreground: 0 0% 0%;
+
+    /* Secondary colors */
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted colors */
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 85%;
+
+    /* Accent colors - سماوي فاتح */
+    --accent: 180 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    /* Destructive colors - أحمر نقي */
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border colors - حدود واضحة */
+    --border: 0 0% 40%;
+    --input: 0 0% 40%;
+    --ring: 60 100% 50%;
+
+    /* Semantic colors - ألوان مشبعة */
+    --success: 120 100% 50%;
+    --success-foreground: 0 0% 0%;
+    --warning: 45 100% 50%;
+    --warning-foreground: 0 0% 0%;
+    --error: 0 100% 50%;
+    --error-foreground: 0 0% 100%;
+    --info: 200 100% 50%;
+    --info-foreground: 0 0% 0%;
+
+    /* Tender-specific colors */
+    --tender-urgent: 0 100% 50%;
+    --tender-urgent-foreground: 0 0% 100%;
+    --tender-normal: 60 100% 50%;
+    --tender-normal-foreground: 0 0% 0%;
+
+    /* Chart colors - ألوان مشبعة للتباين */
+    --chart-1: 220 100% 60%;
+    --chart-2: 120 100% 50%;
+    --chart-3: 60 100% 50%;
+    --chart-4: 0 100% 50%;
+    --chart-5: 280 100% 60%;
+    --chart-6: 30 100% 50%;
+    --chart-7: 180 100% 50%;
+    --chart-8: 320 100% 60%;
+  }
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    direction: rtl;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+
+  /* Links */
+  a {
+    @apply transition-colors;
+  }
+
+  /* Focus visible states */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-md;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-primary/20;
+  }
+}
+
+/* ============================================
+   Component Layer - Utility Classes
+   ============================================ */
+@layer components {
+  /* Tender Status Classes */
+  .tender-urgent {
+    @apply text-destructive;
+  }
+  .tender-urgent-bg {
+    @apply bg-destructive/10;
+  }
+  .tender-urgent-border {
+    @apply border-destructive/20;
+  }
+  .tender-urgent-hover {
+    @apply hover:bg-destructive/20;
+  }
+
+  .tender-warning {
+    @apply text-warning;
+  }
+  .tender-warning-bg {
+    @apply bg-warning/10;
+  }
+  .tender-warning-border {
+    @apply border-warning/20;
+  }
+  .tender-warning-hover {
+    @apply hover:bg-warning/20;
+  }
+
+  .tender-normal {
+    @apply text-primary;
+  }
+  .tender-normal-bg {
+    @apply bg-primary/10;
+  }
+  .tender-normal-border {
+    @apply border-primary/20;
+  }
+  .tender-normal-hover {
+    @apply hover:bg-primary/20;
+  }
+
+  .tender-success {
+    @apply text-success;
+  }
+  .tender-success-bg {
+    @apply bg-success/10;
+  }
+  .tender-success-border {
+    @apply border-success/20;
+  }
+  .tender-success-hover {
+    @apply hover:bg-success/20;
+  }
+
+  /* Card variants */
+  .card-elevated {
+    @apply shadow-lg hover:shadow-xl transition-shadow;
+  }
+
+  .card-interactive {
+    @apply hover:bg-accent/50 transition-colors cursor-pointer;
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-md border border-border/50;
+  }
+
+  /* Gradient backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-br from-primary to-primary/70;
+  }
+
+  .gradient-success {
+    @apply bg-gradient-to-br from-success to-success/70;
+  }
+
+  .gradient-warning {
+    @apply bg-gradient-to-br from-warning to-warning/70;
+  }
+
+  .gradient-error {
+    @apply bg-gradient-to-br from-error to-error/70;
+  }
+
+  /* Text gradients */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  /* Focus states */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+
+  /* Disabled states */
+  .disabled {
+    @apply opacity-50 cursor-not-allowed pointer-events-none;
+  }
+
+  /* FadeIn animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* ============================================
+   Utilities Layer
+   ============================================ */
+@layer utilities {
+  /* RTL utilities */
+  .rtl-flip {
+    transform: scaleX(-1);
+  }
+
+  /* Animations */
+  .animate-in {
+    animation-fill-mode: both;
+  }
+
+  .animate-out {
+    animation-fill-mode: both;
+    animation-direction: reverse;
+  }
+
+  /* Safe area for desktop */
+  .safe-area-inset {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+  body {
+    @apply bg-white text-black;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+}
+
+/* ============================================
+   Accessibility - Reduced Motion
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
