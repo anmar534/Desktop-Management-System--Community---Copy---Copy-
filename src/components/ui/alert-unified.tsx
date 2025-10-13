@@ -136,7 +136,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       >
         {showIcon && (
           <div className="absolute right-4 top-4">
-            {icon || <IconComponent className="h-4 w-4" />}
+            {icon ?? <IconComponent className="h-4 w-4" />}
           </div>
         )}
         <div className={cn(showIcon && 'pr-8', dismissible && 'pl-8')}>
@@ -320,7 +320,7 @@ const StatusAlert = React.forwardRef<HTMLDivElement, StatusAlertProps>(
   ({ status, daysRemaining, children, ...props }, ref) => {
     const statusMessages = {
       overdue: 'متأخر',
-      dueSoon: `يستحق خلال ${daysRemaining || ''} أيام`,
+      dueSoon: `يستحق خلال ${daysRemaining ?? ''} أيام`,
       onTrack: 'على المسار الصحيح',
       completed: 'مكتمل',
     };

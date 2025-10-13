@@ -104,16 +104,16 @@ export function DevelopmentGoalDialog({
 
   // State
   const [formData, setFormData] = useState<Partial<DevelopmentGoal>>(() => ({
-    id: goal?.id || `goal_${Date.now()}`,
-    title: goal?.title || '',
-    description: goal?.description || '',
-    category: goal?.category || 'other',
-    type: goal?.type || 'yearly',
-    unit: goal?.unit || 'number',
-    currentValue: goal?.currentValue || 0,
-    targetValue2025: goal?.targetValue2025 || 0,
-    targetValue2026: goal?.targetValue2026 || 0,
-    targetValue2027: goal?.targetValue2027 || 0,
+    id: goal?.id ?? `goal_${Date.now()}`,
+    title: goal?.title ?? '',
+    description: goal?.description ?? '',
+    category: goal?.category ?? 'other',
+    type: goal?.type ?? 'yearly',
+    unit: goal?.unit ?? 'number',
+    currentValue: goal?.currentValue ?? 0,
+    targetValue2025: goal?.targetValue2025 ?? 0,
+    targetValue2026: goal?.targetValue2026 ?? 0,
+    targetValue2027: goal?.targetValue2027 ?? 0,
   }));
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,16 +122,16 @@ export function DevelopmentGoalDialog({
   React.useEffect(() => {
     if (open) {
       setFormData({
-        id: goal?.id || `goal_${Date.now()}`,
-        title: goal?.title || '',
-        description: goal?.description || '',
-        category: goal?.category || 'other',
-        type: goal?.type || 'yearly',
-        unit: goal?.unit || 'number',
-        currentValue: goal?.currentValue || 0,
-        targetValue2025: goal?.targetValue2025 || 0,
-        targetValue2026: goal?.targetValue2026 || 0,
-        targetValue2027: goal?.targetValue2027 || 0,
+        id: goal?.id ?? `goal_${Date.now()}`,
+        title: goal?.title ?? '',
+        description: goal?.description ?? '',
+        category: goal?.category ?? 'other',
+        type: goal?.type ?? 'yearly',
+        unit: goal?.unit ?? 'number',
+        currentValue: goal?.currentValue ?? 0,
+        targetValue2025: goal?.targetValue2025 ?? 0,
+        targetValue2026: goal?.targetValue2026 ?? 0,
+        targetValue2027: goal?.targetValue2027 ?? 0,
       });
     }
   }, [open, goal]);
@@ -175,7 +175,7 @@ export function DevelopmentGoalDialog({
   // Get category icon
   const getCategoryIcon = () => {
     const category = goalCategories.find((c) => c.value === formData.category);
-    return category?.icon || Target;
+  return category?.icon ?? Target;
   };
 
   const CategoryIcon = getCategoryIcon();
@@ -204,7 +204,7 @@ export function DevelopmentGoalDialog({
               </Label>
               <Input
                 id="title"
-                value={formData.title || ''}
+                value={formData.title ?? ''}
                 onChange={(e) => handleChange('title', e.target.value)}
                 placeholder="مثال: زيادة عدد المشاريع المنفذة"
                 className="text-right"
@@ -219,7 +219,7 @@ export function DevelopmentGoalDialog({
               </Label>
               <Textarea
                 id="description"
-                value={formData.description || ''}
+                value={formData.description ?? ''}
                 onChange={(e) => handleChange('description', e.target.value)}
                 placeholder="وصف تفصيلي للهدف..."
                 className="text-right min-h-[80px]"
@@ -312,9 +312,12 @@ export function DevelopmentGoalDialog({
                   id="currentValue"
                   type="number"
                   step="0.01"
-                  value={formData.currentValue || 0}
+                  value={formData.currentValue ?? 0}
                   onChange={(e) =>
-                    handleChange('currentValue', parseFloat(e.target.value) || 0)
+                    handleChange('currentValue', (() => {
+                      const parsed = Number.parseFloat(e.target.value)
+                      return Number.isNaN(parsed) ? 0 : parsed
+                    })())
                   }
                   placeholder="0"
                   className="text-right"
@@ -342,12 +345,18 @@ export function DevelopmentGoalDialog({
                       type="number"
                       step="0.01"
                       value={
-                        formData[`targetValue${year}` as keyof DevelopmentGoal] as number || 0
+                        (() => {
+                          const raw = formData[`targetValue${year}` as keyof DevelopmentGoal]
+                          return typeof raw === 'number' && !Number.isNaN(raw) ? raw : 0
+                        })()
                       }
                       onChange={(e) =>
                         handleChange(
                           `targetValue${year}` as keyof DevelopmentGoal,
-                          parseFloat(e.target.value) || 0
+                          (() => {
+                            const parsed = Number.parseFloat(e.target.value)
+                            return Number.isNaN(parsed) ? 0 : parsed
+                          })()
                         )
                       }
                       placeholder="0"

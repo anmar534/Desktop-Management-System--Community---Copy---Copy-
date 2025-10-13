@@ -23,15 +23,12 @@ interface DashboardKPICardsProps {
 export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
   const { goals } = useDevelopment()
   const {
-    metrics,
     tenders: { tenders },
     projects: { projects },
   } = useFinancialState()
 
   // حساب القيم الفعلية من البيانات
   const actualValues = useMemo(() => {
-    const currentYear = new Date().getFullYear()
-
     // إجمالي الإيرادات (من المشاريع النشطة)
     const totalRevenue = projects
       .filter(p => p.status === 'active')
@@ -71,8 +68,8 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
     const cards = []
 
     // بطاقة الإيرادات
-    const revenueGoals = goalsByCategory['revenue'] || []
-    const revenueTarget = revenueGoals.find(g => g.type === 'yearly')?.[targetKey] || 0
+  const revenueGoals = goalsByCategory.revenue ?? []
+  const revenueTarget = revenueGoals.find(g => g.type === 'yearly')?.[targetKey] ?? 0
     const revenueActual = actualValues.revenue
     const revenueProgress = revenueTarget > 0 ? Math.min((revenueActual / revenueTarget) * 100, 100) : 0
     const revenueStatus = revenueProgress >= 100 ? 'exceeded' : revenueProgress >= 80 ? 'on-track' : revenueProgress >= 50 ? 'warning' : 'behind'
@@ -86,14 +83,14 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
       status: revenueStatus,
       unit: 'currency',
       icon: DollarSign,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+  color: 'text-success',
+  bgColor: 'bg-success/10',
       link: 'financial',
     })
 
     // بطاقة الأرباح
-    const profitGoals = goalsByCategory['profit'] || []
-    const profitTarget = profitGoals.find(g => g.type === 'yearly')?.[targetKey] || 0
+  const profitGoals = goalsByCategory.profit ?? []
+  const profitTarget = profitGoals.find(g => g.type === 'yearly')?.[targetKey] ?? 0
     const profitActual = actualValues.profit
     const profitProgress = profitTarget > 0 ? Math.min((profitActual / profitTarget) * 100, 100) : 0
     const profitStatus = profitProgress >= 100 ? 'exceeded' : profitProgress >= 80 ? 'on-track' : profitProgress >= 50 ? 'warning' : 'behind'
@@ -107,14 +104,14 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
       status: profitStatus,
       unit: 'currency',
       icon: TrendingUp,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+  color: 'text-info',
+  bgColor: 'bg-info/10',
       link: 'financial',
     })
 
     // بطاقة المنافسات
-    const tendersGoals = goalsByCategory['tenders'] || []
-    const tendersTarget = tendersGoals.find(g => g.type === 'yearly')?.[targetKey] || 0
+  const tendersGoals = goalsByCategory.tenders ?? []
+  const tendersTarget = tendersGoals.find(g => g.type === 'yearly')?.[targetKey] ?? 0
     const tendersActual = actualValues.tenders
     const tendersProgress = tendersTarget > 0 ? Math.min((tendersActual / tendersTarget) * 100, 100) : 0
     const tendersStatus = tendersProgress >= 100 ? 'exceeded' : tendersProgress >= 80 ? 'on-track' : tendersProgress >= 50 ? 'warning' : 'behind'
@@ -128,14 +125,14 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
       status: tendersStatus,
       unit: 'number',
       icon: Trophy,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
+  color: 'text-warning',
+  bgColor: 'bg-warning/10',
       link: 'tenders',
     })
 
     // بطاقة المشاريع
-    const projectsGoals = goalsByCategory['projects'] || []
-    const projectsTarget = projectsGoals.find(g => g.type === 'yearly')?.[targetKey] || 0
+  const projectsGoals = goalsByCategory.projects ?? []
+  const projectsTarget = projectsGoals.find(g => g.type === 'yearly')?.[targetKey] ?? 0
     const projectsActual = actualValues.projects
     const projectsProgress = projectsTarget > 0 ? Math.min((projectsActual / projectsTarget) * 100, 100) : 0
     const projectsStatus = projectsProgress >= 100 ? 'exceeded' : projectsProgress >= 80 ? 'on-track' : projectsProgress >= 50 ? 'warning' : 'behind'
@@ -149,8 +146,8 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
       status: projectsStatus,
       unit: 'number',
       icon: Building2,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+  color: 'text-primary',
+  bgColor: 'bg-primary/10',
       link: 'projects',
     })
 
@@ -160,15 +157,15 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'exceeded':
-        return 'text-green-600 bg-green-50 border-green-200'
+  return 'text-success bg-success/10 border-success/30'
       case 'on-track':
-        return 'text-blue-600 bg-blue-50 border-blue-200'
+  return 'text-info bg-info/10 border-info/30'
       case 'warning':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200'
+  return 'text-warning bg-warning/10 border-warning/30'
       case 'behind':
-        return 'text-red-600 bg-red-50 border-red-200'
+  return 'text-destructive bg-destructive/10 border-destructive/30'
       default:
-        return 'text-gray-600 bg-gray-50 border-gray-200'
+  return 'text-muted-foreground bg-muted/20 border-muted/30'
     }
   }
 
@@ -227,7 +224,7 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <card.icon className={`h-5 w-5 ${card.color}`} />
-                    <h3 className="text-sm font-semibold text-gray-700">
+                    <h3 className="text-sm font-semibold text-foreground">
                       {card.title}
                     </h3>
                   </div>
@@ -239,7 +236,7 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
                     <span className="mr-1">{getStatusText(card.status)}</span>
                   </Badge>
                 </div>
-                <ArrowRight className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </div>
 
@@ -248,14 +245,14 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
               {/* القيم */}
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-gray-500">الفعلي:</span>
+                  <span className="text-xs text-muted-foreground">الفعلي:</span>
                   <span className={`text-xl font-bold ${card.color}`}>
                     {formatValue(card.actual, card.unit)}
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-xs text-gray-500">المستهدف:</span>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-xs text-muted-foreground">المستهدف:</span>
+                  <span className="text-sm font-medium text-foreground">
                     {formatValue(card.target, card.unit)}
                   </span>
                 </div>
@@ -264,7 +261,7 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
               {/* Progress Bar */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">نسبة الإنجاز</span>
+                  <span className="text-muted-foreground">نسبة الإنجاز</span>
                   <span className={`font-semibold ${card.color}`}>
                     {card.progress.toFixed(1)}%
                   </span>
@@ -274,12 +271,12 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
                   className="h-2"
                   indicatorClassName={
                     card.status === 'exceeded'
-                      ? 'bg-green-500'
+                      ? 'bg-success'
                       : card.status === 'on-track'
-                      ? 'bg-blue-500'
+                      ? 'bg-info'
                       : card.status === 'warning'
-                      ? 'bg-yellow-500'
-                      : 'bg-red-500'
+                      ? 'bg-warning'
+                      : 'bg-destructive'
                   }
                 />
               </div>
@@ -288,12 +285,12 @@ export function DashboardKPICards({ onSectionChange }: DashboardKPICardsProps) {
               {card.target > 0 && (
                 <div className="pt-2 border-t">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500">الفرق:</span>
+                    <span className="text-muted-foreground">الفرق:</span>
                     <span
                       className={`font-medium ${
                         card.actual >= card.target
-                          ? 'text-green-600'
-                          : 'text-red-600'
+                          ? 'text-success'
+                          : 'text-destructive'
                       }`}
                     >
                       {card.actual >= card.target ? '+' : ''}

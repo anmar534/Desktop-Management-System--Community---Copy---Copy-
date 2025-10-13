@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge, type StatusBadgeProps } from '@/components/ui/status-badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -26,6 +26,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { EmptyState } from '@/components/PageLayout'
 import {
   AlertTriangle,
@@ -42,6 +43,8 @@ import {
 } from 'lucide-react'
 import { useCurrencyFormatter } from '@/hooks/useCurrencyFormatter'
 import { formatDateValue } from '@/utils/formatters'
+import { RiskAssessmentMatrix } from '../../../components/bidding/RiskAssessmentMatrix'
+import type { RiskAssessment } from '../../../types/templates'
 
 type WizardStepId = 'registration' | 'technical' | 'financial' | 'review' | 'submit'
 
@@ -84,6 +87,7 @@ interface TenderPricingWizardDraft {
     profitMargin: number | null
     vatIncluded: boolean
     riskLevel: 'low' | 'medium' | 'high'
+    riskAssessment: RiskAssessment | null
     checklist: Record<string, boolean>
     notes: string
     lastSavedAt: string | null
@@ -98,6 +102,31 @@ interface TenderPricingWizardDraft {
 interface TenderPricingWizardProps {
   tender?: Tender | null
   onExit?: () => void
+}
+
+type AutoSaveState = 'idle' | 'saving' | 'saved' | 'error'
+
+const AUTO_SAVE_BADGE_STATUS: Record<AutoSaveState, StatusBadgeProps['status']> = {
+  idle: 'info',
+  saving: 'info',
+  saved: 'success',
+  error: 'error',
+}
+
+const UPLOAD_BADGE_META = {
+  completed: { status: 'success' as StatusBadgeProps['status'], label: 'مكتمل' },
+  pending: { status: 'warning' as StatusBadgeProps['status'], label: 'بانتظار' },
+}
+
+const CHECKLIST_BADGE_META = {
+  completed: { status: 'success' as StatusBadgeProps['status'], label: 'مكتمل' },
+  incomplete: { status: 'warning' as StatusBadgeProps['status'], label: 'غير مكتمل' },
+}
+
+const STRATEGY_BADGE_META: Record<TenderPricingWizardDraft['financial']['strategy'], { status: StatusBadgeProps['status']; label: string }> = {
+  boq: { status: 'info', label: 'جداول الكميات (BoQ)' },
+  'lump-sum': { status: 'success', label: 'عقد مقطوعية' },
+  hybrid: { status: 'warning', label: 'استراتيجية هجينة' },
 }
 
 const WIZARD_STEPS: WizardStep[] = [
@@ -231,6 +260,7 @@ function createDefaultDraft(tenderId: string, tender: Tender | null): TenderPric
       profitMargin: 15,
       vatIncluded: true,
       riskLevel: 'medium',
+      riskAssessment: null,
       checklist: {
         pricingDataImported: false,
         totalsReconciled: false,
@@ -291,21 +321,21 @@ function StepIndicator({
                 isCurrent
                   ? 'border-primary bg-primary/5'
                   : status === 'done'
-                    ? 'border-emerald-500/60 bg-emerald-50'
+                    ? 'border-success/30 bg-success/10'
                     : 'border-border bg-card'
               } ${isClickable ? 'hover:border-primary/40 hover:bg-primary/10' : 'cursor-not-allowed opacity-60'}`}
             >
               <div className="flex w-full items-center justify-between">
                 <div className={`rounded-full border p-2 ${
                   status === 'done'
-                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-600'
+                    ? 'border-success/40 bg-success/10 text-success'
                     : isCurrent
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border text-muted-foreground'
                 }`}>
                   {step.icon}
                 </div>
-                {status === 'done' && <CheckCircle2 className="h-4 w-4 text-emerald-600" />}
+                {status === 'done' && <CheckCircle2 className="h-4 w-4 text-success" />}
               </div>
               <div className="flex flex-col gap-1">
                 <span className="text-sm font-semibold text-card-foreground">{step.title}</span>
@@ -329,9 +359,10 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
   const [activeStepIndex, setActiveStepIndex] = useState(0)
   const [draft, setDraft] = useState<TenderPricingWizardDraft | null>(null)
   const [isDraftLoading, setIsDraftLoading] = useState(false)
-  const [autoSaveState, setAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [autoSaveState, setAutoSaveState] = useState<AutoSaveState>('idle')
   const [isSavingRegistration, setIsSavingRegistration] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [riskAssessmentOpen, setRiskAssessmentOpen] = useState(false)
   const skipNextAutoSaveRef = useRef(true)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -599,6 +630,20 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
     }))
   }, [updateDraftState])
 
+  const handleRiskAssessmentSave = useCallback((assessment: RiskAssessment) => {
+    updateDraftState(current => ({
+      ...current,
+      financial: {
+        ...current.financial,
+        riskAssessment: assessment,
+        // Update risk level based on assessment
+        riskLevel: assessment.overallRiskLevel === 'critical' ? 'high' : assessment.overallRiskLevel
+      }
+    }))
+    setRiskAssessmentOpen(false)
+    toast.success('تم حفظ تقييم المخاطر بنجاح')
+  }, [updateDraftState])
+
   const handleTechnicalNext = useCallback((): boolean => {
     if (!draft || !activeTender) {
       toast.error('يرجى اختيار المنافسة المراد تسعيرها أولاً')
@@ -733,6 +778,17 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
     }
   }, [autoSaveState])
 
+  const autoSaveBadgeStatus = useMemo(() => AUTO_SAVE_BADGE_STATUS[autoSaveState], [autoSaveState])
+  const technicalChecklistCompleted = isChecklistComplete(draft?.technical?.checklist ?? {})
+  const financialChecklistCompleted = isChecklistComplete(draft?.financial?.checklist ?? {})
+  const hasUploadedFiles = (draft?.technical?.uploadedFiles?.length ?? 0) > 0
+  const technicalUploadBadge = (hasUploadedFiles || (activeTender?.technicalFilesUploaded ?? false))
+    ? UPLOAD_BADGE_META.completed
+    : UPLOAD_BADGE_META.pending
+  const technicalChecklistBadge = technicalChecklistCompleted ? CHECKLIST_BADGE_META.completed : CHECKLIST_BADGE_META.incomplete
+  const financialChecklistBadge = financialChecklistCompleted ? CHECKLIST_BADGE_META.completed : CHECKLIST_BADGE_META.incomplete
+  const strategyBadge = STRATEGY_BADGE_META[draft?.financial?.strategy ?? 'hybrid']
+
   if (!tenders.length && !tender) {
     return (
       <div className="p-6">
@@ -757,10 +813,17 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={autoSaveState === 'error' ? 'destructive' : 'outline'} className="flex items-center gap-2">
-            {autoSaveState === 'saving' && <Loader2 className="h-3 w-3 animate-spin" />}
-            {autoSaveLabel}
-          </Badge>
+          <StatusBadge
+            status={autoSaveBadgeStatus}
+            showIcon={false}
+            size="sm"
+            className="shadow-none gap-1.5"
+          >
+            <>
+              {autoSaveState === 'saving' && <Loader2 className="h-3.5 w-3.5 animate-spin text-info" />}
+              <span>{autoSaveLabel}</span>
+            </>
+          </StatusBadge>
           <Button variant="outline" onClick={onExit ?? (() => navigate('tenders'))}>
             العودة للمنافسات
           </Button>
@@ -928,7 +991,7 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="flex items-center gap-2 text-amber-600 hover:text-amber-700"
+                          className="flex items-center gap-2 text-warning hover:text-warning"
                           onClick={() => void handleTechnicalFilesReset()}
                         >
                           <XCircle className="h-4 w-4" />
@@ -942,7 +1005,7 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                           <p className="text-card-foreground font-medium">الملفات المرفوعة (يتم حفظها محلياً):</p>
                           <ul className="space-y-1 text-muted-foreground">
                             {draft.technical.uploadedFiles.map(file => (
-                              <li key={file} className="rounded border bg-white/75 px-3 py-1 text-xs">
+                              <li key={file} className="rounded border border-border bg-card/80 px-3 py-1 text-xs">
                                 {file}
                               </li>
                             ))}
@@ -1066,26 +1129,66 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-card-foreground">مستوى المخاطر</label>
-                      <Select
-                        value={draft.financial.riskLevel}
-                        onValueChange={value => updateDraftState(current => ({
-                          ...current,
-                          financial: {
-                            ...current.financial,
-                            riskLevel: value as TenderPricingWizardDraft['financial']['riskLevel']
-                          }
-                        }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="حدد مستوى المخاطر" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">منخفض</SelectItem>
-                          <SelectItem value="medium">متوسط</SelectItem>
-                          <SelectItem value="high">مرتفع</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <label className="mb-2 block text-sm font-medium text-card-foreground">تقييم المخاطر</label>
+                      <div className="space-y-3">
+                        {draft.financial.riskAssessment ? (
+                          <div className="rounded-lg border bg-card p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">مستوى المخاطر:</span>
+                                <StatusBadge
+                                  status={
+                                    draft.financial.riskAssessment.overallRiskLevel === 'low' ? 'success' :
+                                    draft.financial.riskAssessment.overallRiskLevel === 'medium' ? 'warning' :
+                                    draft.financial.riskAssessment.overallRiskLevel === 'high' ? 'destructive' :
+                                    'destructive'
+                                  }
+                                  label={
+                                    draft.financial.riskAssessment.overallRiskLevel === 'low' ? 'منخفض' :
+                                    draft.financial.riskAssessment.overallRiskLevel === 'medium' ? 'متوسط' :
+                                    draft.financial.riskAssessment.overallRiskLevel === 'high' ? 'مرتفع' :
+                                    'حرج'
+                                  }
+                                />
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setRiskAssessmentOpen(true)}
+                              >
+                                تعديل التقييم
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">نقاط المخاطر:</span>
+                                <span className="ml-2 font-medium">{draft.financial.riskAssessment.riskScore.toFixed(1)}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">هامش الربح المقترح:</span>
+                                <span className="ml-2 font-medium">{draft.financial.riskAssessment.recommendedMargin}%</span>
+                              </div>
+                            </div>
+                            {draft.financial.riskAssessment.mitigationPlan && (
+                              <div className="mt-3 pt-3 border-t">
+                                <span className="text-xs text-muted-foreground">خطة التخفيف:</span>
+                                <p className="text-sm mt-1">{draft.financial.riskAssessment.mitigationPlan}</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="rounded-lg border border-dashed bg-muted/10 p-4 text-center">
+                            <p className="text-sm text-muted-foreground mb-3">لم يتم إجراء تقييم مخاطر مفصل بعد</p>
+                            <Button
+                              variant="outline"
+                              onClick={() => setRiskAssessmentOpen(true)}
+                            >
+                              <AlertTriangle className="w-4 h-4 mr-2" />
+                              إجراء تقييم المخاطر
+                            </Button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-card-foreground">ملاحظات مالية</label>
@@ -1146,7 +1249,7 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
             {activeStepId === 'review' && (
               <div className="space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Card className="border-green-200 bg-green-50/50">
+                  <Card className="border-success/30 bg-success/10">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base">ملخص التحقق الفني</CardTitle>
                       <CardDescription>الحالة الحالية للملفات الفنية وقائمة التحقق.</CardDescription>
@@ -1154,20 +1257,28 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                     <CardContent className="space-y-2 text-sm">
                       <div className="flex items-center justify-between">
                         <span>الملفات الفنية مرفوعة</span>
-                        <Badge variant={activeTender.technicalFilesUploaded ? 'success' : 'outline'}>
-                          {activeTender.technicalFilesUploaded ? 'مكتمل' : 'بانتظار' }
-                        </Badge>
+                        <StatusBadge
+                          status={technicalUploadBadge.status}
+                          label={technicalUploadBadge.label}
+                          size="sm"
+                          showIcon={false}
+                          className="shadow-none"
+                        />
                       </div>
                       <div className="flex items-center justify-between">
                         <span>قائمة التحقق الفنية</span>
-                        <Badge variant={isChecklistComplete(draft.technical.checklist) ? 'success' : 'outline'}>
-                          {isChecklistComplete(draft.technical.checklist) ? 'مكتمل' : 'غير مكتمل'}
-                        </Badge>
+                        <StatusBadge
+                          status={technicalChecklistBadge.status}
+                          label={technicalChecklistBadge.label}
+                          size="sm"
+                          showIcon={false}
+                          className="shadow-none"
+                        />
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-blue-200 bg-blue-50/50">
+                  <Card className="border-info/30 bg-info/10">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base">ملخص التحقق المالي</CardTitle>
                       <CardDescription>حالة المهام المالية والمتطلبات المرتبطة.</CardDescription>
@@ -1175,13 +1286,23 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                     <CardContent className="space-y-2 text-sm">
                       <div className="flex items-center justify-between">
                         <span>الاستراتيجية المختارة</span>
-                        <Badge variant="outline">{draft.financial.strategy}</Badge>
+                        <StatusBadge
+                          status={strategyBadge.status}
+                          label={strategyBadge.label}
+                          size="sm"
+                          showIcon={false}
+                          className="shadow-none"
+                        />
                       </div>
                       <div className="flex items-center justify-between">
                         <span>قائمة التحقق المالية</span>
-                        <Badge variant={isChecklistComplete(draft.financial.checklist) ? 'success' : 'outline'}>
-                          {isChecklistComplete(draft.financial.checklist) ? 'مكتمل' : 'غير مكتمل'}
-                        </Badge>
+                        <StatusBadge
+                          status={financialChecklistBadge.status}
+                          label={financialChecklistBadge.label}
+                          size="sm"
+                          showIcon={false}
+                          className="shadow-none"
+                        />
                       </div>
                     </CardContent>
                   </Card>
@@ -1248,15 +1369,15 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                   </p>
                   <ul className="space-y-3 text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-1 h-4 w-4 text-green-600" />
+                      <CheckCircle2 className="mt-1 h-4 w-4 text-success" />
                       <span>سيتم تحديث سجل التدقيق وإشعار الفريق إذا تم تفعيل ذلك.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="mt-1 h-4 w-4 text-green-600" />
+                      <CheckCircle2 className="mt-1 h-4 w-4 text-success" />
                       <span>يتم الاحتفاظ بنسخة احتياطية من التسعير في التخزين الآمن.</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <AlertTriangle className="mt-1 h-4 w-4 text-amber-500" />
+                      <AlertTriangle className="mt-1 h-4 w-4 text-warning" />
                       <span>تأكد من اكتمال جميع الخطوات السابقة قبل الإرسال النهائي، لا يمكن التراجع إلا عبر واجهة المنافسات.</span>
                     </li>
                   </ul>
@@ -1305,6 +1426,24 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
           </CardFooter>
         </Card>
       )}
+
+      {/* Risk Assessment Dialog */}
+      <Dialog open={riskAssessmentOpen} onOpenChange={setRiskAssessmentOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>تقييم مخاطر المنافسة</DialogTitle>
+            <DialogDescription>
+              قم بتقييم العوامل المختلفة للمخاطر لتحديد هامش الربح المناسب
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <RiskAssessmentMatrix
+              initialAssessment={draft?.financial.riskAssessment || undefined}
+              onAssessmentComplete={handleRiskAssessmentSave}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

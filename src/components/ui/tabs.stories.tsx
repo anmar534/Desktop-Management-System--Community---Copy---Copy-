@@ -1,4 +1,3 @@
-import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './card';
@@ -462,15 +461,15 @@ export const DashboardFilters: Story = {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <div className="p-4 bg-info/10 dark:bg-info/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">المناقصات الجديدة</p>
                 <p className="text-3xl font-bold">3</p>
               </div>
-              <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+              <div className="p-4 bg-success/10 dark:bg-success/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">العروض المقدمة</p>
                 <p className="text-3xl font-bold">5</p>
               </div>
-              <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-lg">
+              <div className="p-4 bg-warning/10 dark:bg-warning/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">قيد المراجعة</p>
                 <p className="text-3xl font-bold">2</p>
               </div>
@@ -487,15 +486,15 @@ export const DashboardFilters: Story = {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <div className="p-4 bg-info/10 dark:bg-info/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">المناقصات الجديدة</p>
                 <p className="text-3xl font-bold">12</p>
               </div>
-              <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+              <div className="p-4 bg-success/10 dark:bg-success/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">العروض المقدمة</p>
                 <p className="text-3xl font-bold">28</p>
               </div>
-              <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-lg">
+              <div className="p-4 bg-warning/10 dark:bg-warning/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">قيد المراجعة</p>
                 <p className="text-3xl font-bold">8</p>
               </div>
@@ -512,15 +511,15 @@ export const DashboardFilters: Story = {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <div className="p-4 bg-info/10 dark:bg-info/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">المناقصات الجديدة</p>
                 <p className="text-3xl font-bold">45</p>
               </div>
-              <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+              <div className="p-4 bg-success/10 dark:bg-success/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">العروض المقدمة</p>
                 <p className="text-3xl font-bold">103</p>
               </div>
-              <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-lg">
+              <div className="p-4 bg-warning/10 dark:bg-warning/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">قيد المراجعة</p>
                 <p className="text-3xl font-bold">32</p>
               </div>
@@ -537,15 +536,15 @@ export const DashboardFilters: Story = {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
-              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <div className="p-4 bg-info/10 dark:bg-info/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">المناقصات الجديدة</p>
                 <p className="text-3xl font-bold">428</p>
               </div>
-              <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+              <div className="p-4 bg-success/10 dark:bg-success/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">العروض المقدمة</p>
                 <p className="text-3xl font-bold">1,247</p>
               </div>
-              <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-lg">
+              <div className="p-4 bg-warning/10 dark:bg-warning/20 rounded-lg">
                 <p className="text-sm text-muted-foreground">قيد المراجعة</p>
                 <p className="text-3xl font-bold">189</p>
               </div>
@@ -750,7 +749,7 @@ export const UsageGuide: Story = {
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">المكونات الفرعية</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded">
+          <div className="p-3 bg-info/10 dark:bg-info/20 rounded">
             <h4 className="font-semibold mb-2">Tabs</h4>
             <p className="text-muted-foreground">
               الحاوية الرئيسية - تدير الحالة
@@ -759,7 +758,7 @@ export const UsageGuide: Story = {
               {'<Tabs defaultValue="tab1">'}
             </code>
           </div>
-          <div className="p-3 bg-green-50 dark:bg-green-950 rounded">
+          <div className="p-3 bg-success/10 dark:bg-success/20 rounded">
             <h4 className="font-semibold mb-2">TabsList</h4>
             <p className="text-muted-foreground">
               قائمة التبويبات - الأزرار العلوية
@@ -768,7 +767,7 @@ export const UsageGuide: Story = {
               {'<TabsList>...</TabsList>'}
             </code>
           </div>
-          <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded">
+          <div className="p-3 bg-warning/10 dark:bg-warning/20 rounded">
             <h4 className="font-semibold mb-2">TabsTrigger</h4>
             <p className="text-muted-foreground">
               زر التبويب - للتنقل بين المحتوى
@@ -777,7 +776,7 @@ export const UsageGuide: Story = {
               {'<TabsTrigger value="tab1">'}
             </code>
           </div>
-          <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded">
+          <div className="p-3 bg-accent/10 dark:bg-accent/20 rounded">
             <h4 className="font-semibold mb-2">TabsContent</h4>
             <p className="text-muted-foreground">
               محتوى التبويب - يظهر عند الاختيار
@@ -879,10 +878,10 @@ export const UsageGuide: Story = {
 
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Accessibility</h3>
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm space-y-2">
+  <div className="bg-info/10 dark:bg-info/20 p-4 rounded-lg text-sm space-y-2">
           <p>✅ Keyboard navigation (Arrow keys, Tab)</p>
           <p>✅ Home/End للذهاب للتبويب الأول/الأخير</p>
-          <p>✅ ARIA attributes تلقائية (role="tablist")</p>
+          <p>✅ ARIA attributes تلقائية (role=&quot;tablist&quot;)</p>
           <p>✅ Screen readers تعلن عن التبويب النشط</p>
           <p>✅ Focus indicator واضح</p>
           <p>✅ disabled يمنع التفاعل بشكل صحيح</p>

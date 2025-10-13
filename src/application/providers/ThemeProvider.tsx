@@ -269,4 +269,94 @@ export const ThemeSelector: React.FC = () => {
   );
 };
 
+interface ThemeSwitcherProps {
+  variant?: 'dropdown' | 'buttons' | 'toggle';
+  size?: 'sm' | 'md' | 'lg';
+  showLabels?: boolean;
+}
+
+const themeOptionMeta: Record<ThemeName, { label: string; icon: string }> = {
+  light: { label: 'فاتح', icon: '☀️' },
+  dark: { label: 'داكن', icon: '🌙' },
+  'high-contrast': { label: 'تباين عالي', icon: '◐' },
+};
+
+const sizeClasses: Record<Required<ThemeSwitcherProps>['size'], string> = {
+  sm: 'text-sm px-2 py-1',
+  md: 'text-base px-3 py-2',
+  lg: 'text-lg px-4 py-3',
+};
+
+export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({
+  variant = 'dropdown',
+  size = 'md',
+  showLabels = true,
+}) => {
+  const { theme, availableThemes, setTheme, toggleTheme } = useTheme();
+
+  if (variant === 'toggle') {
+    const nextLabel = theme === 'light' ? 'التبديل للوضع الداكن' : 'التبديل للوضع الفاتح';
+    const icon = theme === 'light' ? '☀️' : '🌙';
+
+    return (
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className={`inline-flex items-center gap-2 rounded-md border border-border bg-card text-card-foreground transition-colors hover:bg-accent hover:text-accent-foreground ${sizeClasses[size]}`}
+        aria-label={nextLabel}
+      >
+        <span aria-hidden>{icon}</span>
+        {showLabels && <span>{themeOptionMeta[theme]?.label ?? 'سمة'}</span>}
+      </button>
+    );
+  }
+
+  if (variant === 'buttons') {
+    return (
+      <div className="inline-flex gap-2 p-1 rounded-lg border border-border bg-background">
+        {availableThemes.map((themeName) => {
+          const isActive = theme === themeName;
+          const { label, icon } = themeOptionMeta[themeName];
+
+          return (
+            <button
+              key={themeName}
+              type="button"
+              onClick={() => setTheme(themeName)}
+              className={`inline-flex items-center gap-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${sizeClasses[size]} ${
+                isActive
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-card text-card-foreground hover:bg-muted'
+              }`}
+              aria-label={`تغيير السمة إلى ${label}`}
+              aria-pressed={isActive ? 'true' : 'false'}
+            >
+              <span aria-hidden>{icon}</span>
+              {showLabels && <span>{label}</span>}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <select
+      value={theme}
+      onChange={(event) => setTheme(event.target.value as ThemeName)}
+      className={`rounded-md border border-border bg-background text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${sizeClasses[size]}`}
+      aria-label="اختيار السمة"
+    >
+      {availableThemes.map((themeName) => {
+        const { label, icon } = themeOptionMeta[themeName];
+        return (
+          <option key={themeName} value={themeName}>
+            {icon} {label}
+          </option>
+        );
+      })}
+    </select>
+  );
+};
+
 export default ThemeProvider;

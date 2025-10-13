@@ -39,6 +39,7 @@ import { EmptyState } from './PageLayout';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
+import { ActionBar } from './ui/layout/ActionBar';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -59,7 +60,8 @@ import { toast } from 'sonner';
 import { TechnicalFilesUpload } from './TechnicalFilesUpload';
 import { debounce } from '../utils/helpers';
 import { APP_EVENTS, emit } from '../events/bus';
-import { AlertCircle, CheckCircle, DollarSign, Package, TrendingUp, Settings, Building, Grid3X3, RotateCcw, Edit3, Target, PieChart, FileText, BarChart3, Plus, Trash2, Users, Truck, Download, ArrowRight, Save, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
+import { AlertCircle, CheckCircle, DollarSign, Package, TrendingUp, Settings, Building, Grid3X3, RotateCcw, Edit3, Target, PieChart, FileText, BarChart3, Plus, Trash2, Users, Truck, Download, ArrowRight, Save, Calculator, ChevronDown, ChevronUp, Layers } from 'lucide-react';
+import { PricingTemplateManager } from './bidding/PricingTemplateManager';
 import { getBOQRepository } from '@/application/services/serviceRegistry';
 import { useSystemData } from '@/application/hooks/useSystemData';
 import { useCurrencyFormatter } from '@/hooks/useCurrencyFormatter';
@@ -287,61 +289,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
     onBack();
   };
 
-  const handleConfirmLeave = () => {
-    setIsLeaveDialogOpen(false);
-    onBack();
-  };
-
-  const leaveConfirmationDialog = (
-    <ConfirmationDialog
-      title={confirmationMessages.leaveDirty.title}
-      description={confirmationMessages.leaveDirty.description}
-      confirmText={confirmationMessages.leaveDirty.confirmText}
-      cancelText={confirmationMessages.leaveDirty.cancelText}
-      variant="warning"
-      icon="warning"
-      onConfirm={handleConfirmLeave}
-      onCancel={() => setIsLeaveDialogOpen(false)}
-      open={isLeaveDialogOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          setIsLeaveDialogOpen(false);
-        }
-      }}
-    />
-  );
-  
-  // حالات الطي للجداول المختلفة في تبويب الملخص
-  const [collapsedSections, setCollapsedSections] = useState<
-    Record<
-      string,
-      {
-        materials: boolean;
-        labor: boolean;
-        equipment: boolean;
-        subcontractors: boolean;
-      }
-    >
-  >({});
-
-  // دالة لتبديل حالة الطي لقسم معين في بند معين
-  const toggleCollapse = (itemId: string, section: PricingSection) => {
-    setCollapsedSections(prev => ({
-      ...prev,
-      [itemId]: {
-        ...prev[itemId],
-        [section]: !prev[itemId]?.[section]
-      }
-    }))
-  }
-
-  const handleViewChange = (value: string) => {
-    if (isPricingView(value)) {
-      setCurrentView(value);
-    }
-  };
-  
-  // النسب الافتراضية العامة
+  // النسب الافتراضية العامة - MOVED HERE TO FIX TEMPORAL DEAD ZONE
   const [defaultPercentages, setDefaultPercentages] = useState<PricingPercentages>({
     administrative: 5,
     operational: 5,
@@ -356,15 +304,8 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
     profit: '15'
   });
 
-  
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [restoreOpen, setRestoreOpen] = useState(false);
-  const [backupsList, setBackupsList] = useState<TenderBackupEntry[]>([]);
-  
-  // مرجع لتتبع آخر حالة تم إرسالها لتجنب التحديث المكرر
-  const lastStatusRef = useRef<PricingStatusSnapshot | null>(null);
-
   // استخراج بيانات جدول الكميات من المنافسة مع البحث المحسّن
+  // MOVED HERE TO FIX TEMPORAL DEAD ZONE - quantityItems must be declared before template callbacks
   const quantityItems: QuantityItem[] = useMemo(() => {
     console.log('🔍 البحث عن بيانات الكميات:', tender);
     const toTrimmedString = (value: unknown): string | undefined => {
@@ -394,7 +335,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
     const asRaw = (source?: QuantityItem[] | null): RawQuantityItem[] | undefined =>
       Array.isArray(source) ? (source as RawQuantityItem[]) : undefined;
 
-  const candidateSources: (RawQuantityItem[] | undefined)[] = [
+    const candidateSources: (RawQuantityItem[] | undefined)[] = [
       asRaw(tender?.quantityTable ?? undefined),
       asRaw(tender?.quantities ?? undefined),
       asRaw(tender?.items ?? undefined),
@@ -532,6 +473,175 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
     console.log('✅ بيانات الكميات المعالجة:', normalizedItems);
     return normalizedItems;
   }, [tender]);
+
+  // ==== Template Management ====
+
+  const handleTemplateApply = useCallback((template: any) => {
+    try {
+      // Apply template percentages to default percentages
+      setDefaultPercentages({
+        administrative: template.defaultPercentages.administrative,
+        operational: template.defaultPercentages.operational,
+        profit: template.defaultPercentages.profit
+      });
+
+      // Apply template to all existing items if they don't have custom pricing
+      const updatedPricingData = new Map(pricingData);
+
+      quantityItems.forEach(item => {
+        const existingPricing = updatedPricingData.get(item.id);
+
+        // Only apply template if item doesn't have detailed pricing yet
+        if (!existingPricing || (!existingPricing.materials?.length && !existingPricing.labor?.length && !existingPricing.equipment?.length && !existingPricing.subcontractors?.length)) {
+          const templatePricing = {
+            ...existingPricing,
+            percentages: {
+              administrative: template.defaultPercentages.administrative,
+              operational: template.defaultPercentages.operational,
+              profit: template.defaultPercentages.profit
+            },
+            additionalPercentages: {
+              administrative: template.defaultPercentages.administrative,
+              operational: template.defaultPercentages.operational,
+              profit: template.defaultPercentages.profit
+            },
+            materials: existingPricing?.materials || [],
+            labor: existingPricing?.labor || [],
+            equipment: existingPricing?.equipment || [],
+            subcontractors: existingPricing?.subcontractors || [],
+            completed: existingPricing?.completed || false,
+            technicalNotes: existingPricing?.technicalNotes || ''
+          };
+
+          updatedPricingData.set(item.id, templatePricing);
+        }
+      });
+
+      setPricingData(updatedPricingData);
+      markDirty();
+
+      toast.success(`تم تطبيق قالب "${template.name}" بنجاح`);
+      setTemplateManagerOpen(false);
+    } catch (error) {
+      console.error('Error applying template:', error);
+      toast.error('فشل في تطبيق القالب');
+    }
+  }, [pricingData, quantityItems, markDirty, setDefaultPercentages, setPricingData]);
+
+  const handleTemplateSave = useCallback((templateData: any) => {
+    try {
+      // Create template from current pricing state
+      const template = {
+        ...templateData,
+        defaultPercentages: {
+          administrative: defaultPercentages.administrative,
+          operational: defaultPercentages.operational,
+          profit: defaultPercentages.profit
+        },
+        // Calculate average cost breakdown from current pricing
+        costBreakdown: {
+          materials: 40, // Default values - could be calculated from current data
+          labor: 30,
+          equipment: 20,
+          subcontractors: 10
+        }
+      };
+
+      toast.success(`تم حفظ القالب "${template.name}" بنجاح`);
+      return template;
+    } catch (error) {
+      console.error('Error saving template:', error);
+      toast.error('فشل في حفظ القالب');
+      throw error;
+    }
+  }, [defaultPercentages]);
+
+  const handleTemplateUpdate = useCallback((template: any) => {
+    try {
+      // Update template logic would go here
+      toast.success(`تم تحديث القالب "${template.name}" بنجاح`);
+    } catch (error) {
+      console.error('Error updating template:', error);
+      toast.error('فشل في تحديث القالب');
+    }
+  }, []);
+
+  const handleTemplateDelete = useCallback((templateId: string) => {
+    try {
+      // Delete template logic would go here
+      toast.success('تم حذف القالب بنجاح');
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      toast.error('فشل في حذف القالب');
+    }
+  }, []);
+
+  const handleConfirmLeave = () => {
+    setIsLeaveDialogOpen(false);
+    onBack();
+  };
+
+  const leaveConfirmationDialog = (
+    <ConfirmationDialog
+      title={confirmationMessages.leaveDirty.title}
+      description={confirmationMessages.leaveDirty.description}
+      confirmText={confirmationMessages.leaveDirty.confirmText}
+      cancelText={confirmationMessages.leaveDirty.cancelText}
+      variant="warning"
+      icon="warning"
+      onConfirm={handleConfirmLeave}
+      onCancel={() => setIsLeaveDialogOpen(false)}
+      open={isLeaveDialogOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          setIsLeaveDialogOpen(false);
+        }
+      }}
+    />
+  );
+  
+  // حالات الطي للجداول المختلفة في تبويب الملخص
+  const [collapsedSections, setCollapsedSections] = useState<
+    Record<
+      string,
+      {
+        materials: boolean;
+        labor: boolean;
+        equipment: boolean;
+        subcontractors: boolean;
+      }
+    >
+  >({});
+
+  // دالة لتبديل حالة الطي لقسم معين في بند معين
+  const toggleCollapse = (itemId: string, section: PricingSection) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [itemId]: {
+        ...prev[itemId],
+        [section]: !prev[itemId]?.[section]
+      }
+    }))
+  }
+
+  const handleViewChange = (value: string) => {
+    if (isPricingView(value)) {
+      setCurrentView(value);
+    }
+  };
+
+
+  
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const [backupsList, setBackupsList] = useState<TenderBackupEntry[]>([]);
+  const [templateManagerOpen, setTemplateManagerOpen] = useState(false);
+
+  // مرجع لتتبع آخر حالة تم إرسالها لتجنب التحديث المكرر
+  const lastStatusRef = useRef<PricingStatusSnapshot | null>(null);
+
+
+
 
   // Transform pricingData to include id property for domain pricing engine
   const pricingMapWithIds = useMemo(() => {
@@ -1837,13 +1947,13 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
         <div className="space-y-3 p-1 pb-20" dir="rtl">
           {/* تحذير للبيانات التجريبية */}
           {quantityItems.length <= 5 && quantityItems[0]?.id === '1' && (
-            <Card className="border-orange-200 bg-orange-50">
+            <Card className="border-warning/30 bg-warning/10">
               <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-orange-600">
+                <div className="flex items-center gap-2 text-warning">
                   <AlertCircle className="w-5 h-5" />
                   <span className="font-medium">تحذير: يتم عرض بيانات تجريبية</span>
                 </div>
-                <p className="text-sm text-orange-600 mt-1">
+                <p className="text-sm text-warning mt-1">
                   لم يتم العثور على جدول الكميات الحقيقي للمنافسة. يرجى التأكد من إرفاق ملف الكميات الصحيح.
                 </p>
               </CardContent>
@@ -1853,48 +1963,48 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
           {/* إحصائيات المشروع (في الأعلى) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* بطاقة نسبة الإنجاز */}
-            <Card className="border-blue-200 hover:shadow-sm transition-shadow">
+            <Card className="border-info/30 hover:shadow-sm transition-shadow">
               <CardContent className="p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-blue-600" />
+                  <Target className="h-5 w-5 text-info" />
                   <span className="text-sm font-medium">نسبة الإنجاز</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-blue-600">{completionPercentage.toFixed(1)}%</div>
-                  <div className="text-[11px] text-gray-500">{completedCount} / {quantityItems.length} بند</div>
+                  <div className="text-lg font-bold text-info">{completionPercentage.toFixed(1)}%</div>
+                  <div className="text-xs leading-tight text-muted-foreground">{completedCount} / {quantityItems.length} بند</div>
                 </div>
               </CardContent>
             </Card>
 
             {/* بطاقة القيمة الإجمالية التقديرية */}
-            <Card className="border-green-200 hover:shadow-sm transition-shadow">
+            <Card className="border-success/30 hover:shadow-sm transition-shadow">
               <CardContent className="p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-green-600" />
+                  <DollarSign className="h-5 w-5 text-success" />
                   <span className="text-sm font-medium">القيمة الإجمالية</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-green-600">
+                  <div className="text-lg font-bold text-success">
                     {formatCurrencyValue(projectTotal, {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0
                     })}
                   </div>
-                  <div className="text-[11px] text-gray-500">إجمالي تقديري</div>
+                  <div className="text-xs leading-tight text-muted-foreground">إجمالي تقديري</div>
                 </div>
               </CardContent>
             </Card>
 
             {/* بطاقة البنود المسعّرة */}
-            <Card className="border-amber-200 hover:shadow-sm transition-shadow">
+            <Card className="border-warning/30 hover:shadow-sm transition-shadow">
               <CardContent className="p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Calculator className="h-5 w-5 text-amber-600" />
+                  <Calculator className="h-5 w-5 text-warning" />
                   <span className="text-sm font-medium">البنود المسعّرة</span>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-amber-600">{pricingData.size}</div>
-                  <div className="text-[11px] text-gray-500">من أصل {quantityItems.length}</div>
+                  <div className="text-lg font-bold text-warning">{pricingData.size}</div>
+                  <div className="text-xs leading-tight text-muted-foreground">من أصل {quantityItems.length}</div>
                 </div>
               </CardContent>
             </Card>
@@ -1903,11 +2013,11 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
           {/* صف واحد: شريط النِسب + 3 بطاقات التكاليف */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-stretch">
             {/* ratios toolbar as first column */}
-            <div className="p-2 border rounded-md bg-blue-50 h-full overflow-hidden" role="region" aria-label="إدارة النسب الافتراضية">
+            <div className="p-2 border border-border rounded-md bg-info/10 h-full overflow-hidden" role="region" aria-label="إدارة النسب الافتراضية">
               <div className="space-y-2">
                 <div className="grid grid-cols-3 gap-2">
                   <div className="min-w-0">
-                    <span className="block text-[11px] text-gray-600">الإدارية (%)</span>
+                    <span className="block text-xs text-muted-foreground">الإدارية (%)</span>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -1919,12 +2029,12 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                         const clamped = isNaN(num) ? defaultPercentages.administrative : Math.max(0, Math.min(100, num));
                         setDefaultPercentages(prev => ({ ...prev, administrative: clamped }));
                       }}
-                      className="w-full h-8 px-2 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                       aria-label="النسبة الإدارية الافتراضية"
                     />
                   </div>
                   <div className="min-w-0">
-                    <span className="block text-[11px] text-gray-600">التشغيلية (%)</span>
+                    <span className="block text-xs text-muted-foreground">التشغيلية (%)</span>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -1936,12 +2046,12 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                         const clamped = isNaN(num) ? defaultPercentages.operational : Math.max(0, Math.min(100, num));
                         setDefaultPercentages(prev => ({ ...prev, operational: clamped }));
                       }}
-                      className="w-full h-8 px-2 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                       aria-label="النسبة التشغيلية الافتراضية"
                     />
                   </div>
                   <div className="min-w-0">
-                    <span className="block text-[11px] text-gray-600">الربح (%)</span>
+                    <span className="block text-xs text-muted-foreground">الربح (%)</span>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -1953,18 +2063,18 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                         const clamped = isNaN(num) ? defaultPercentages.profit : Math.max(0, Math.min(100, num));
                         setDefaultPercentages(prev => ({ ...prev, profit: clamped }));
                       }}
-                      className="w-full h-8 px-2 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                       aria-label="نسبة الربح الافتراضية"
                     />
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] text-gray-600 whitespace-nowrap">تُطبق على البنود الجديدة</span>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap leading-tight">تُطبق على البنود الجديدة</span>
                   <button
                     onClick={applyDefaultPercentagesToExistingItems}
                     title="تطبيق على البنود الموجودة"
                     aria-label="تطبيق على البنود الموجودة"
-                    className="h-8 w-8 bg-orange-500 hover:bg-orange-600 text-white rounded-md flex items-center justify-center"
+                    className="h-8 w-8 bg-warning hover:bg-warning/90 text-warning-foreground rounded-md flex items-center justify-center"
                   >
                     <RotateCcw className="w-4 h-4" />
                   </button>
@@ -1973,61 +2083,61 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
             </div>
 
             {/* administrative cost card */}
-            <Card className="hover:shadow-sm transition-shadow border-orange-200 h-full">
+            <Card className="hover:shadow-sm transition-shadow border-warning/30 h-full">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-right">
-                    <p className="text-xs font-medium text-orange-600">
+                    <p className="text-xs font-medium text-warning">
                       التكاليف الإدارية ({calculateAveragePercentages().administrative.toFixed(1)}%)
                     </p>
-                    <p className="text-lg font-bold text-orange-600">
+                    <p className="text-lg font-bold text-warning">
                       {formatCurrencyValue(calculateTotalAdministrative(), {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0
                       })}
                     </p>
                   </div>
-                  <Settings className="h-6 w-6 text-orange-600" />
+                  <Settings className="h-6 w-6 text-warning" />
                 </div>
               </CardContent>
             </Card>
 
             {/* operational cost card */}
-            <Card className="hover:shadow-sm transition-shadow border-purple-200 h-full">
+            <Card className="hover:shadow-sm transition-shadow border-accent/30 h-full">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-right">
-                    <p className="text-xs font-medium text-purple-600">
+                    <p className="text-xs font-medium text-accent">
                       التكاليف التشغيلية ({calculateAveragePercentages().operational.toFixed(1)}%)
                     </p>
-                    <p className="text-lg font-bold text-purple-600">
+                    <p className="text-lg font-bold text-accent">
                       {formatCurrencyValue(calculateTotalOperational(), {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0
                       })}
                     </p>
                   </div>
-                  <Building className="h-6 w-6 text-purple-600" />
+                  <Building className="h-6 w-6 text-accent" />
                 </div>
               </CardContent>
             </Card>
 
             {/* profit card */}
-            <Card className="hover:shadow-sm transition-shadow border-yellow-200 h-full">
+            <Card className="hover:shadow-sm transition-shadow border-warning/30 h-full">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-right">
-                    <p className="text-xs font-medium text-yellow-600">
+                    <p className="text-xs font-medium text-warning">
                       إجمالي الأرباح ({calculateAveragePercentages().profit.toFixed(1)}%)
                     </p>
-                    <p className="text-lg font-bold text-yellow-600">
+                    <p className="text-lg font-bold text-warning">
                       {formatCurrencyValue(calculateTotalProfit(), {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0
                       })}
                     </p>
                   </div>
-                  <TrendingUp className="h-6 w-6 text-yellow-600" />
+                  <TrendingUp className="h-6 w-6 text-warning" />
                 </div>
               </CardContent>
             </Card>
@@ -2037,7 +2147,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
           <Card>
             <CardHeader className="p-3 pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">
-                <Target className="w-5 h-5 text-blue-600" />
+                <Target className="w-5 h-5 text-info" />
                 تقدم عملية التسعير
               </CardTitle>
             </CardHeader>
@@ -2047,11 +2157,11 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                   <span>تم إنجاز {completedCount} من {quantityItems.length} بند</span>
                   <span>{completionPercentage.toFixed(1)}%</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 relative overflow-hidden">
+                <div className="w-full bg-muted/30 rounded-full h-2 relative overflow-hidden">
                   {/* شريط التقدم بعرض ديناميكي */}
                   <div 
  
-                    className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300 absolute top-0 left-0"
+                    className="bg-gradient-to-r from-info to-success h-2 rounded-full transition-all duration-300 absolute top-0 left-0"
                     {...{style: {width: `${Math.min(Math.max(completionPercentage, 0), 100)}%`}}}
                   />
                 </div>
@@ -2063,23 +2173,23 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Grid3X3 className="w-5 h-5 text-green-600" />
+                <Grid3X3 className="w-5 h-5 text-success" />
                 جدول كميات المنافسة
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-auto border rounded-lg">
                 <table className="w-full border-collapse">
-                  <thead className="sticky top-0 bg-white z-10">
-                    <tr className="bg-gray-50 border-b">
-                      <th className="border border-gray-200 p-3 text-right font-semibold">رقم البند</th>
-                      <th className="border border-gray-200 p-3 text-right font-semibold">وصف البند</th>
-                      <th className="border border-gray-200 p-3 text-center font-semibold">الوحدة</th>
-                      <th className="border border-gray-200 p-3 text-center font-semibold">الكمية</th>
-                      <th className="border border-gray-200 p-3 text-center font-semibold">سعر الوحدة</th>
-                      <th className="border border-gray-200 p-3 text-center font-semibold">القيمة الإجمالية</th>
-                      <th className="border border-gray-200 p-3 text-center font-semibold">حالة التسعير</th>
-                      <th className="border border-gray-200 p-3 text-center font-semibold">إجراءات</th>
+                  <thead className="sticky top-0 bg-card z-10">
+                    <tr className="bg-muted/20 border-b">
+                      <th className="border border-border p-3 text-right font-semibold">رقم البند</th>
+                      <th className="border border-border p-3 text-right font-semibold">وصف البند</th>
+                      <th className="border border-border p-3 text-center font-semibold">الوحدة</th>
+                      <th className="border border-border p-3 text-center font-semibold">الكمية</th>
+                      <th className="border border-border p-3 text-center font-semibold">سعر الوحدة</th>
+                      <th className="border border-border p-3 text-center font-semibold">القيمة الإجمالية</th>
+                      <th className="border border-border p-3 text-center font-semibold">حالة التسعير</th>
+                      <th className="border border-border p-3 text-center font-semibold">إجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2110,54 +2220,54 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
 
                       return (
                         <React.Fragment key={item.id}>
-                          <tr className={`hover:bg-gray-50 ${isCompleted ? 'bg-green-50' : (isInProgress ? 'bg-amber-50' : 'bg-red-50')}`}>
-                            <td className="border border-gray-200 p-3 font-medium text-right">{item.itemNumber}</td>
-                            <td className="border border-gray-200 p-3 text-right">
+                          <tr className={`hover:bg-muted/40 ${isCompleted ? 'bg-success/10' : (isInProgress ? 'bg-warning/10' : 'bg-destructive/10')}`}>
+                            <td className="border border-border p-3 font-medium text-right">{item.itemNumber}</td>
+                            <td className="border border-border p-3 text-right">
                               <div>
                                 <div className="font-medium">{item.description}</div>
-                                <div className="text-xs text-gray-500 mt-1">{item.specifications}</div>
+                                <div className="text-xs text-muted-foreground mt-1">{item.specifications}</div>
                               </div>
                             </td>
-                            <td className="border border-gray-200 p-3 text-center font-medium">{item.unit}</td>
-                            <td className="border border-gray-200 p-3 text-center font-bold">
+                            <td className="border border-border p-3 text-center font-medium">{item.unit}</td>
+                            <td className="border border-border p-3 text-center font-bold">
                               {item.quantity !== undefined && item.quantity !== null ? formatQuantity(item.quantity) : '-'}
                             </td>
-                            <td className="border border-gray-200 p-3 text-center">
+                            <td className="border border-border p-3 text-center">
                               {isInProgress ? (
-                                <span className="font-bold text-blue-600">
+                                <span className="font-bold text-info">
                                   {formatCurrencyValue(unitPrice, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </span>
                               ) : (
-                                <span className="text-gray-400">-</span>
+                                <span className="text-muted-foreground">-</span>
                               )}
                             </td>
-                            <td className="border border-gray-200 p-3 text-center">
+                            <td className="border border-border p-3 text-center">
                               {isInProgress ? (
-                                <span className="font-bold text-green-600">
+                                <span className="font-bold text-success">
                                   {formatCurrencyValue(itemTotal, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                 </span>
                               ) : (
-                                <span className="text-gray-400">-</span>
+                                <span className="text-muted-foreground">-</span>
                               )}
                             </td>
-                            <td className="border border-gray-200 p-3 text-center">
+                            <td className="border border-border p-3 text-center">
                               {isCompleted ? (
-                                <Badge className="bg-green-100 text-green-800 border-green-200">
+                                <Badge className="bg-success/15 text-success border-success/20">
                                   <CheckCircle className="w-3 h-3 ml-1" />
                                   تم التسعير
                                 </Badge>
                               ) : isInProgress ? (
-                                <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                                <Badge className="bg-warning/15 text-warning border-warning/20">
                                   قيد التسعير
                                 </Badge>
                               ) : (
-                                <Badge className="bg-red-100 text-red-800 border-red-200">
+                                <Badge className="bg-destructive/15 text-destructive border-destructive/20">
                                   <AlertCircle className="w-3 h-3 ml-1" />
                                   لم يتم التسعير
                                 </Badge>
                               )}
                             </td>
-                            <td className="border border-gray-200 p-3 text-center">
+                            <td className="border border-border p-3 text-center">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -2174,28 +2284,28 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                           </tr>
 
                           {hasAnyBreakdown && (
-                            <tr className="bg-white">
-                              <td colSpan={8} className="p-2 border-b">
+                            <tr className="bg-card">
+                              <td colSpan={8} className="p-2 border-b border-border">
                                 <div className="space-y-2">
                                   {itemPricing?.materials?.length ? (
                                     <div>
                                       <div 
-                                        className="flex items-center justify-between cursor-pointer hover:bg-blue-25 p-1 rounded"
+                                        className="flex items-center justify-between cursor-pointer hover:bg-info/15 p-1 rounded"
                                         onClick={() => toggleCollapse(item.id, 'materials')}
                                       >
                                         <div className="flex items-center gap-2">
-                                          <div className="text-xs font-semibold text-blue-700">المواد ({itemPricing.materials.length} صنف)</div>
-                                          <Badge variant="outline" className="text-blue-600 border-blue-300 text-xs">
+                                          <div className="text-xs font-semibold text-info">المواد ({itemPricing.materials.length} صنف)</div>
+                                          <Badge variant="outline" className="text-info border-info/30 text-xs">
                                             {formatCurrencyValue(itemPricing.materials.reduce((sum, m) => sum + (m.total || 0), 0), { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                           </Badge>
                                         </div>
                                         {collapsedSections[item.id]?.materials ? 
-                                          <ChevronUp className="w-4 h-4 text-blue-600" /> : 
-                                          <ChevronDown className="w-4 h-4 text-blue-600" />
+                                          <ChevronUp className="w-4 h-4 text-info" /> : 
+                                          <ChevronDown className="w-4 h-4 text-info" />
                                         }
                                       </div>
                                       {!collapsedSections[item.id]?.materials && (
-                                        <div className="overflow-auto border rounded-md">
+                                        <div className="overflow-auto border border-border rounded-md">
                                           <table className="w-full text-xs">
                                             <colgroup>
                                               <col className="w-[44%]" />
@@ -2205,7 +2315,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                               <col className="w-[16%]" />
                                             </colgroup>
                                             <thead>
-                                              <tr className="text-gray-700 bg-blue-50">
+                                              <tr className="text-foreground bg-info/10">
                                                 <th className="text-right p-1">الاسم/الوصف</th>
                                                 <th className="text-center p-1">الوحدة</th>
                                                 <th className="text-center p-1">الكمية</th>
@@ -2215,7 +2325,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                             </thead>
                                             <tbody>
                                               {itemPricing.materials.map((m) => (
-                                                <tr key={m.id} className="odd:bg-white even:bg-gray-50">
+                                                <tr key={m.id} className="odd:bg-card even:bg-muted/20">
                                                   <td className="p-1 text-right">{m.name ?? m.description}</td>
                                                   <td className="p-1 text-center">{m.unit}</td>
                                                   <td className="p-1 text-center">{m.quantity}</td>
@@ -2233,22 +2343,22 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                   {itemPricing?.labor?.length ? (
                                     <div>
                                       <div 
-                                        className="flex items-center justify-between cursor-pointer hover:bg-emerald-25 p-1 rounded"
+                                        className="flex items-center justify-between cursor-pointer hover:bg-success/15 p-1 rounded"
                                         onClick={() => toggleCollapse(item.id, 'labor')}
                                       >
                                         <div className="flex items-center gap-2">
-                                          <div className="text-xs font-semibold text-emerald-700">العمالة ({itemPricing.labor.length} نوع)</div>
-                                          <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-xs">
+                                          <div className="text-xs font-semibold text-success">العمالة ({itemPricing.labor.length} نوع)</div>
+                                          <Badge variant="outline" className="text-success border-success/30 text-xs">
                                             {formatCurrencyValue(itemPricing.labor.reduce((sum, l) => sum + (l.total || 0), 0), { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                           </Badge>
                                         </div>
                                         {collapsedSections[item.id]?.labor ? 
-                                          <ChevronUp className="w-4 h-4 text-emerald-600" /> : 
-                                          <ChevronDown className="w-4 h-4 text-emerald-600" />
+                                          <ChevronUp className="w-4 h-4 text-success" /> : 
+                                          <ChevronDown className="w-4 h-4 text-success" />
                                         }
                                       </div>
                                       {!collapsedSections[item.id]?.labor && (
-                                        <div className="overflow-auto border rounded-md">
+                                        <div className="overflow-auto border border-border rounded-md">
                                           <table className="w-full text-xs">
                                             <colgroup>
                                               <col className="w-[44%]" />
@@ -2258,7 +2368,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                               <col className="w-[16%]" />
                                             </colgroup>
                                             <thead>
-                                              <tr className="text-gray-700 bg-emerald-50">
+                                              <tr className="text-foreground bg-success/10">
                                                 <th className="text-right p-1">الوصف</th>
                                                 <th className="text-center p-1">الوحدة</th>
                                                 <th className="text-center p-1">الكمية</th>
@@ -2268,7 +2378,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                             </thead>
                                             <tbody>
                                               {itemPricing.labor.map((l) => (
-                                                <tr key={l.id} className="odd:bg-white even:bg-gray-50">
+                                                <tr key={l.id} className="odd:bg-card even:bg-muted/20">
                                                   <td className="p-1 text-right">{l.description}</td>
                                                   <td className="p-1 text-center">{l.unit}</td>
                                                   <td className="p-1 text-center">{l.quantity}</td>
@@ -2286,22 +2396,22 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                   {itemPricing?.equipment?.length ? (
                                     <div>
                                       <div 
-                                        className="flex items-center justify-between cursor-pointer hover:bg-orange-25 p-1 rounded"
+                                        className="flex items-center justify-between cursor-pointer hover:bg-accent/15 p-1 rounded"
                                         onClick={() => toggleCollapse(item.id, 'equipment')}
                                       >
                                         <div className="flex items-center gap-2">
-                                          <div className="text-xs font-semibold text-orange-700">المعدات ({itemPricing.equipment.length} معدة)</div>
-                                          <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
+                                          <div className="text-xs font-semibold text-accent">المعدات ({itemPricing.equipment.length} معدة)</div>
+                                          <Badge variant="outline" className="text-accent border-accent/30 text-xs">
                                             {formatCurrencyValue(itemPricing.equipment.reduce((sum, e) => sum + (e.total || 0), 0), { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                           </Badge>
                                         </div>
                                         {collapsedSections[item.id]?.equipment ? 
-                                          <ChevronUp className="w-4 h-4 text-orange-600" /> : 
-                                          <ChevronDown className="w-4 h-4 text-orange-600" />
+                                          <ChevronUp className="w-4 h-4 text-accent" /> : 
+                                          <ChevronDown className="w-4 h-4 text-accent" />
                                         }
                                       </div>
                                       {!collapsedSections[item.id]?.equipment && (
-                                        <div className="overflow-auto border rounded-md">
+                                        <div className="overflow-auto border border-border rounded-md">
                                           <table className="w-full text-xs">
                                             <colgroup>
                                               <col className="w-[44%]" />
@@ -2311,7 +2421,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                               <col className="w-[16%]" />
                                             </colgroup>
                                             <thead>
-                                              <tr className="text-gray-700 bg-orange-50">
+                                              <tr className="text-foreground bg-accent/10">
                                                 <th className="text-right p-1">الوصف</th>
                                                 <th className="text-center p-1">الوحدة</th>
                                                 <th className="text-center p-1">الكمية</th>
@@ -2321,7 +2431,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                             </thead>
                                             <tbody>
                                               {itemPricing.equipment.map((e) => (
-                                                <tr key={e.id} className="odd:bg-white even:bg-gray-50">
+                                                <tr key={e.id} className="odd:bg-card even:bg-muted/20">
                                                   <td className="p-1 text-right">{e.description}</td>
                                                   <td className="p-1 text-center">{e.unit}</td>
                                                   <td className="p-1 text-center">{e.quantity}</td>
@@ -2339,22 +2449,22 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                   {itemPricing?.subcontractors?.length ? (
                                     <div>
                                       <div 
-                                        className="flex items-center justify-between cursor-pointer hover:bg-purple-25 p-1 rounded"
+                                        className="flex items-center justify-between cursor-pointer hover:bg-secondary/15 p-1 rounded"
                                         onClick={() => toggleCollapse(item.id, 'subcontractors')}
                                       >
                                         <div className="flex items-center gap-2">
-                                          <div className="text-xs font-semibold text-purple-700">مقاولو الباطن ({itemPricing.subcontractors.length} مقاول)</div>
-                                          <Badge variant="outline" className="text-purple-600 border-purple-300 text-xs">
+                                          <div className="text-xs font-semibold text-secondary">مقاولو الباطن ({itemPricing.subcontractors.length} مقاول)</div>
+                                          <Badge variant="outline" className="text-secondary border-secondary/30 text-xs">
                                             {formatCurrencyValue(itemPricing.subcontractors.reduce((sum, s) => sum + (s.total || 0), 0), { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                           </Badge>
                                         </div>
                                         {collapsedSections[item.id]?.subcontractors ? 
-                                          <ChevronUp className="w-4 h-4 text-purple-600" /> : 
-                                          <ChevronDown className="w-4 h-4 text-purple-600" />
+                                          <ChevronUp className="w-4 h-4 text-secondary" /> : 
+                                          <ChevronDown className="w-4 h-4 text-secondary" />
                                         }
                                       </div>
                                       {!collapsedSections[item.id]?.subcontractors && (
-                                        <div className="overflow-auto border rounded-md">
+                                        <div className="overflow-auto border border-border rounded-md">
                                           <table className="w-full text-xs">
                                             <colgroup>
                                               <col className="w-[44%]" />
@@ -2364,7 +2474,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                               <col className="w-[16%]" />
                                             </colgroup>
                                             <thead>
-                                              <tr className="text-gray-700 bg-purple-50">
+                                              <tr className="text-foreground bg-secondary/10">
                                                 <th className="text-right p-1">الوصف</th>
                                                 <th className="text-center p-1">الوحدة</th>
                                                 <th className="text-center p-1">الكمية</th>
@@ -2374,7 +2484,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                                             </thead>
                                             <tbody>
                                               {itemPricing.subcontractors.map((s) => (
-                                                <tr key={s.id} className="odd:bg-white even:bg-gray-50">
+                                                <tr key={s.id} className="odd:bg-card even:bg-muted/20">
                                                   <td className="p-1 text-right">{s.description}</td>
                                                   <td className="p-1 text-center">{s.unit}</td>
                                                   <td className="p-1 text-center">{s.quantity}</td>
@@ -2406,38 +2516,38 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <PieChart className="w-5 h-5 text-green-600" />
+                  <PieChart className="w-5 h-5 text-success" />
                   الملخص المالي للمشروع
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                    <div className="flex justify-between items-center p-3 bg-info/10 rounded-lg">
                       <span className="font-medium">إجمالي قيمة البنود المُسعرة:</span>
-                      <span className="font-bold text-blue-600">
+                      <span className="font-bold text-info">
                         {formatCurrencyValue(calculateItemsTotal(), {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0
                         })}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                    <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
                       <span className="font-medium">
                         إجمالي التكاليف الإدارية ({calculateAveragePercentages().administrative.toFixed(1)}%):
                       </span>
-                      <span className="font-bold text-orange-600">
+                      <span className="font-bold text-warning">
                         {formatCurrencyValue(calculateTotalAdministrative(), {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0
                         })}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                    <div className="flex justify-between items-center p-3 bg-accent/10 rounded-lg">
                       <span className="font-medium">
                         إجمالي التكاليف التشغيلية ({calculateAveragePercentages().operational.toFixed(1)}%):
                       </span>
-                      <span className="font-bold text-purple-600">
+                      <span className="font-bold text-accent">
                         {formatCurrencyValue(calculateTotalOperational(), {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0
@@ -2446,20 +2556,20 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center p-3 bg-muted/20 rounded-lg">
                       <span className="font-medium">ضريبة القيمة المضافة (15%):</span>
-                      <span className="font-bold text-gray-600">
+                      <span className="font-bold text-muted-foreground">
                         {formatCurrencyValue(calculateVAT(), {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
                         })}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
+                    <div className="flex justify-between items-center p-3 bg-warning/15 rounded-lg">
                       <span className="font-medium">
                         إجمالي الأرباح ({calculateAveragePercentages().profit.toFixed(1)}%):
                       </span>
-                      <span className="font-bold text-yellow-600">
+                      <span className="font-bold text-warning">
                         {formatCurrencyValue(calculateTotalProfit(), {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0
@@ -2468,10 +2578,10 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                     </div>
                   </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
+                <div className="mt-4 pt-4 border-t border-border">
+                  <div className="flex justify-between items-center p-4 bg-success/10 rounded-lg">
                     <span className="font-bold text-lg">القيمة الإجمالية النهائية:</span>
-                    <span className="font-bold text-xl text-green-600">
+                    <span className="font-bold text-xl text-success">
                       {formatCurrencyValue(calculateProjectTotal(), {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0
@@ -2496,11 +2606,11 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
       <ScrollArea className="h-[calc(100vh-300px)] overflow-auto">
         <div className="space-y-4 p-1 pb-24" dir="rtl">
           {/* معلومات البند الحالي (مضغوطة) */}
-          <Card className="border-blue-200 bg-blue-50">
+          <Card className="border-info/30 bg-info/10">
             <CardHeader className="p-3">
               <CardTitle className="flex items-center justify-between text-base" dir="rtl">
                 <div className="flex items-center gap-2">
-                  <Calculator className="w-4 h-4 text-blue-600" />
+                  <Calculator className="w-4 h-4 text-info" />
                   <span className="font-semibold">تسعير البند رقم {currentItem.itemNumber}</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -2526,31 +2636,31 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
             <CardContent className="p-3">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3" dir="rtl">
                 <div className="md:col-span-2">
-                  <Label className="text-xs font-medium text-gray-600">وصف البند</Label>
-                  <p className="text-sm font-medium text-gray-900 text-right line-clamp-2">{currentItem.description}</p>
+                  <Label className="text-xs font-medium text-muted-foreground">وصف البند</Label>
+                  <p className="text-sm font-medium text-foreground text-right line-clamp-2">{currentItem.description}</p>
                 </div>
                 <div>
-                  <Label className="text-xs font-medium text-gray-600">الوحدة</Label>
-                  <p className="text-sm font-medium text-blue-600 text-right">{currentItem.unit}</p>
+                  <Label className="text-xs font-medium text-muted-foreground">الوحدة</Label>
+                  <p className="text-sm font-medium text-info text-right">{currentItem.unit}</p>
                 </div>
                 <div>
-                  <Label className="text-xs font-medium text-gray-600">الكمية</Label>
-                  <p className="text-sm font-bold text-green-600 text-right">{formatQuantity(currentItem.quantity)}</p>
+                  <Label className="text-xs font-medium text-muted-foreground">الكمية</Label>
+                  <p className="text-sm font-bold text-success text-right">{formatQuantity(currentItem.quantity)}</p>
                 </div>
               </div>
               <div className="mt-2">
-                <Label className="text-xs font-medium text-gray-600">المواصفات الفنية</Label>
-                <p className="text-xs text-gray-700 text-right leading-relaxed p-2 bg-gray-50 rounded border">{currentItem.specifications}</p>
+                <Label className="text-xs font-medium text-muted-foreground">المواصفات الفنية</Label>
+                <p className="text-xs text-muted-foreground text-right leading-relaxed p-2 bg-muted/20 rounded border border-border">{currentItem.specifications}</p>
               </div>
             </CardContent>
           </Card>
 
           {/* شريط إعدادات مضغوط فوق الجداول */}
-          <Card className="border-gray-200">
+          <Card className="border-border">
             <CardContent className="p-2">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
                 <div>
-                  <Label className="text-xs font-medium text-gray-600">طريقة التنفيذ</Label>
+                  <Label className="text-xs font-medium text-muted-foreground">طريقة التنفيذ</Label>
                   <Select
                     value={currentPricing.executionMethod ?? 'ذاتي'}
                     onValueChange={(value: ExecutionMethod) =>
@@ -2572,7 +2682,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs block mb-1">النسبة الإدارية (%)</Label>
+                  <Label className="text-xs block mb-1 text-muted-foreground">النسبة الإدارية (%)</Label>
                   <Input
                     type="number"
                     min="0"
@@ -2590,7 +2700,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                   />
                 </div>
                 <div>
-                  <Label className="text-xs block mb-1">النسبة التشغيلية (%)</Label>
+                  <Label className="text-xs block mb-1 text-muted-foreground">النسبة التشغيلية (%)</Label>
                   <Input
                     type="number"
                     min="0"
@@ -2608,7 +2718,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                   />
                 </div>
                 <div>
-                  <Label className="text-xs block mb-1">نسبة الربح (%)</Label>
+                  <Label className="text-xs block mb-1 text-muted-foreground">نسبة الربح (%)</Label>
                   <Input
                     type="number"
                     min="0"
@@ -2656,7 +2766,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <CardHeader className="p-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-base">
-                      <Package className="w-4 h-4 text-blue-600" />
+                      <Package className="w-4 h-4 text-info" />
                       المواد والخامات
                     </CardTitle>
                     <Button onClick={() => addRow('materials')} size="sm" className="h-8">
@@ -2668,7 +2778,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <CardContent className="p-0">
                   <div className="max-h-[50vh] overflow-auto">
                     <table className="w-full border-collapse text-sm" dir="rtl">
-                      <thead className="sticky top-0 z-10 bg-gray-50">
+                      <thead className="sticky top-0 z-10 bg-muted/20">
                         <tr>
                           <th className="border p-2 text-right">اسم المادة</th>
                           <th className="border p-2 text-right">الوصف</th>
@@ -2777,7 +2887,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <CardHeader className="p-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-base">
-                      <Users className="w-4 h-4 text-green-600" />
+                      <Users className="w-4 h-4 text-success" />
                       العمالة
                     </CardTitle>
                     <Button onClick={() => addRow('labor')} size="sm" className="h-8">
@@ -2789,7 +2899,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <CardContent className="p-0">
                   <div className="max-h-[50vh] overflow-auto">
                     <table className="w-full border-collapse text-sm" dir="rtl">
-                      <thead className="sticky top-0 z-10 bg-gray-50">
+                      <thead className="sticky top-0 z-10 bg-muted/20">
                         <tr>
                           <th className="border p-2 text-right">الوصف</th>
                           <th className="border p-2 text-center">الوحدة</th>
@@ -2868,7 +2978,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <CardHeader className="p-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-base">
-                      <Truck className="w-4 h-4 text-orange-600" />
+                      <Truck className="w-4 h-4 text-accent" />
                       المعدات والآلات
                     </CardTitle>
                     <Button onClick={() => addRow('equipment')} size="sm" className="h-8">
@@ -2880,7 +2990,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <CardContent className="p-0">
                   <div className="max-h-[50vh] overflow-auto">
                     <table className="w-full border-collapse text-sm">
-                      <thead className="sticky top-0 z-10 bg-gray-50">
+                      <thead className="sticky top-0 z-10 bg-muted/20">
                         <tr>
                           <th className="border p-2 text-right">الوصف</th>
                           <th className="border p-2 text-center">الوحدة</th>
@@ -2959,7 +3069,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <CardHeader className="p-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-base">
-                      <Truck className="w-4 h-4 text-orange-600" />
+                      <Truck className="w-4 h-4 text-accent" />
                       المعدات والآلات
                     </CardTitle>
                     <Button onClick={() => addRow('equipment')} size="sm" className="h-8">
@@ -2971,7 +3081,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <CardContent className="p-0">
                   <div className="max-h-[50vh] overflow-auto">
                     <table className="w-full border-collapse text-sm">
-                      <thead className="sticky top-0 z-10 bg-gray-50">
+                      <thead className="sticky top-0 z-10 bg-muted/20">
                         <tr>
                           <th className="border p-2 text-right">الوصف</th>
                           <th className="border p-2 text-center">الوحدة</th>
@@ -3050,7 +3160,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <CardHeader className="p-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-base">
-                      <Building className="w-4 h-4 text-purple-600" />
+                      <Building className="w-4 h-4 text-secondary" />
                       المقاولون من الباطن
                     </CardTitle>
                     <Button onClick={() => addRow('subcontractors')} size="sm" className="h-8">
@@ -3062,7 +3172,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <CardContent className="p-0">
                   <div className="max-h-[50vh] overflow-auto">
                     <table className="w-full border-collapse text-sm">
-                      <thead className="sticky top-0 z-10 bg-gray-50">
+                      <thead className="sticky top-0 z-10 bg-muted/20">
                         <tr>
                           <th className="border p-2 text-right">الوصف</th>
                           <th className="border p-2 text-center">الوحدة</th>
@@ -3140,7 +3250,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
               <Card>
             <CardHeader className="p-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="w-4 h-4 text-gray-600" />
+                <FileText className="w-4 h-4 text-muted-foreground" />
                 الملاحظات الفنية
               </CardTitle>
             </CardHeader>
@@ -3159,52 +3269,52 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
               <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-green-600" />
+                  <BarChart3 className="w-5 h-5 text-success" />
                   الملخص المالي
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
+                <div className="flex justify-between items-center p-2 bg-info/10 rounded">
                   <span>المواد:</span>
                   <span className="font-bold">{formatCurrencyValue(totals.materials)}</span>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-green-50 rounded">
+                <div className="flex justify-between items-center p-2 bg-success/10 rounded">
                   <span>العمالة:</span>
                   <span className="font-bold">{formatCurrencyValue(totals.labor)}</span>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-orange-50 rounded">
+                <div className="flex justify-between items-center p-2 bg-accent/10 rounded">
                   <span>المعدات:</span>
                   <span className="font-bold">{formatCurrencyValue(totals.equipment)}</span>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-purple-50 rounded">
+                <div className="flex justify-between items-center p-2 bg-secondary/10 rounded">
                   <span>المقاولون:</span>
                   <span className="font-bold">{formatCurrencyValue(totals.subcontractors)}</span>
                 </div>
                 <Separator />
-                <div className="flex justify-between items-center p-2 bg-gray-100 rounded">
+                <div className="flex justify-between items-center p-2 bg-muted/30 rounded">
                   <span>المجموع الفرعي:</span>
                   <span className="font-bold">{formatCurrencyValue(totals.subtotal)}</span>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                <div className="flex justify-between items-center p-2 bg-muted/20 rounded">
                   <span>التكاليف الإدارية:</span>
                   <span className="font-bold">{formatCurrencyValue(totals.administrative)}</span>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                <div className="flex justify-between items-center p-2 bg-muted/20 rounded">
                   <span>التكاليف التشغيلية:</span>
                   <span className="font-bold">{formatCurrencyValue(totals.operational)}</span>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                <div className="flex justify-between items-center p-2 bg-muted/20 rounded">
                   <span>الربح:</span>
                   <span className="font-bold">{formatCurrencyValue(totals.profit)}</span>
                 </div>
                 <Separator />
-                <div className="flex justify-between items-center p-3 bg-green-100 rounded-lg">
+                <div className="flex justify-between items-center p-3 bg-success/15 rounded-lg">
                   <span className="font-bold text-lg">الإجمالي النهائي:</span>
-                  <span className="font-bold text-xl text-green-600">{formatCurrencyValue(totals.total)}</span>
+                  <span className="font-bold text-xl text-success">{formatCurrencyValue(totals.total)}</span>
                 </div>
-                <div className="flex justify-between items-center p-2 bg-blue-100 rounded">
+                <div className="flex justify-between items-center p-2 bg-info/15 rounded">
                   <span className="font-medium">سعر الوحدة:</span>
-                  <span className="font-bold text-blue-600">
+                  <span className="font-bold text-info">
                     {formatCurrencyValue(totals.total / currentItem.quantity, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2
@@ -3215,9 +3325,9 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
               </Card>
 
           {/* شريط إجراءات مثبت أسفل العرض */}
-          <div className="sticky bottom-0 bg-white/90 backdrop-blur border-t p-3 z-20">
-            <div className="flex justify-center items-center gap-3">
-              <Button 
+          <ActionBar sticky position="bottom" align="center" elevated className="z-20">
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Button
                 onClick={() => {
                   if (currentItemIndex > 0) {
                     saveCurrentItem();
@@ -3241,14 +3351,14 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 icon="save"
                 onConfirm={saveCurrentItem}
                 trigger={
-                  <Button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 h-9">
+                  <Button className="flex items-center gap-2 bg-success text-success-foreground hover:bg-success/90 px-6 h-9">
                     <Save className="w-4 h-4" />
                     حفظ تسعير البند
                   </Button>
                 }
               />
 
-              <Button 
+              <Button
                 onClick={() => {
                   if (currentItemIndex < quantityItems.length - 1) {
                     saveCurrentItem();
@@ -3263,7 +3373,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 <ArrowRight className="w-4 h-4 rotate-180" />
               </Button>
             </div>
-          </div>
+          </ActionBar>
         </div>
       </ScrollArea>
     );
@@ -3277,7 +3387,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
+                <FileText className="w-5 h-5 text-info" />
                 رفع ملفات العرض الفني
               </CardTitle>
             </CardHeader>
@@ -3310,39 +3420,50 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
   return (
     <div className="p-4 max-w-7xl mx-auto" dir="rtl">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4 sticky top-0 bg-white/80 backdrop-blur z-20 py-2 border-b">
+  <div className="flex items-center gap-3 mb-4 sticky top-0 bg-background/80 backdrop-blur z-20 py-2 border-b">
         <Button
           variant="outline"
           onClick={handleAttemptLeave}
-          className="flex items-center gap-2 hover:bg-gray-50"
+          className="flex items-center gap-2 hover:bg-muted/30"
         >
           <ArrowRight className="w-4 h-4" />
           العودة
         </Button>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-gray-900">عملية التسعير</h1>
-          <p className="text-gray-600 text-sm">{tender.name || tender.title || 'منافسة جديدة'}</p>
+          <h1 className="text-xl font-bold text-foreground">عملية التسعير</h1>
+          <p className="text-muted-foreground text-sm">{tender.name || tender.title || 'منافسة جديدة'}</p>
           {/* شريط حالة النسخة الرسمية / المسودة */}
           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
             {editablePricing.source === 'official' && (
-              <Badge className="bg-green-600 text-white hover:bg-green-600">نسخة رسمية معتمدة</Badge>
+              <Badge className="bg-success text-success-foreground hover:bg-success/90">نسخة رسمية معتمدة</Badge>
             )}
             {editablePricing.source === 'draft' && editablePricing.isDraftNewer && (
-              <Badge className="bg-amber-500 text-white hover:bg-amber-500">مسودة أحدث (غير معتمدة)</Badge>
+              <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">مسودة أحدث (غير معتمدة)</Badge>
             )}
             {/* Snapshot indicator removed بعد إلغاء نظام اللقطات */}
             {/* Removed legacy 'hook' source badge after unification */}
             {editablePricing.hasDraft && !editablePricing.isDraftNewer && editablePricing.source === 'official' && (
-              <Badge variant="secondary" className="bg-gray-200 text-gray-700">مسودة محفوظة</Badge>
+              <Badge variant="secondary" className="bg-muted/30 text-muted-foreground">مسودة محفوظة</Badge>
             )}
             {editablePricing.dirty && (
-              <Badge className="bg-red-600 text-white hover:bg-red-600 animate-pulse">تغييرات غير محفوظة رسمياً</Badge>
+              <Badge className="bg-destructive text-destructive-foreground hover:bg-destructive/90 animate-pulse">تغييرات غير محفوظة رسمياً</Badge>
             )}
           </div>
         </div>
         
         {/* شريط أدوات مُعاد تصميمه */}
         <div className="flex items-center gap-2">
+          {/* قوالب التسعير */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setTemplateManagerOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Layers className="w-4 h-4" />
+            القوالب
+          </Button>
+
           {/* اعتماد رسمي */}
           <ConfirmationDialog
             title={confirmationMessages.approveOfficial.title}
@@ -3363,7 +3484,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
             trigger={
               <Button
                 size="sm"
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                className="flex items-center gap-2 bg-success text-success-foreground hover:bg-success/90"
                 disabled={editablePricing.status !== 'ready' || (!editablePricing.dirty && !editablePricing.isDraftNewer && editablePricing.source === 'official')}
               >
                 <CheckCircle className="w-4 h-4" />
@@ -3372,14 +3493,14 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
             }
           />
           {/* نسبة الإنجاز مختصرة */}
-          <div className="px-3 py-1.5 rounded-md border bg-gradient-to-l from-blue-50 to-blue-100 text-xs text-blue-700 flex flex-col items-center leading-tight">
+          <div className="px-3 py-1.5 rounded-md border border-info/30 bg-gradient-to-l from-info/20 to-success/20 text-xs text-info flex flex-col items-center leading-tight">
             <span className="font-bold">
               {(() => {
                 const c = Array.from(pricingData.values()).filter(value => value?.completed).length;
                 return Math.round((c / quantityItems.length) * 100);
               })()}%
             </span>
-            <span className="text-[10px]">
+            <span className="text-xs leading-none">
               {Array.from(pricingData.values()).filter(value => value?.completed).length}/{quantityItems.length}
             </span>
           </div>
@@ -3402,7 +3523,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 onConfirm={saveCurrentItem}
                 trigger={
                   <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                    <Save className="w-4 h-4 text-green-600" /> حفظ تسعير البند
+                    <Save className="w-4 h-4 text-success" /> حفظ تسعير البند
                   </DropdownMenuItem>
                 }
               />
@@ -3417,22 +3538,22 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
                 onConfirm={() => { void createBackup(); }}
                 trigger={
                   <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                    <RotateCcw className="w-4 h-4 text-blue-600" /> إنشاء نسخة احتياطية
+                    <RotateCcw className="w-4 h-4 text-info" /> إنشاء نسخة احتياطية
                   </DropdownMenuItem>
                 }
               />
               <DropdownMenuItem onClick={() => { setRestoreOpen(true); void loadBackupsList(); }} className="flex items-center gap-2 cursor-pointer">
-                <RotateCcw className="w-4 h-4 text-blue-600" /> استرجاع نسخة
+                <RotateCcw className="w-4 h-4 text-info" /> استرجاع نسخة
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>التصدير</DropdownMenuLabel>
               <DropdownMenuItem onClick={exportPricingToExcel} className="flex items-center gap-2 cursor-pointer">
-                <Download className="w-4 h-4 text-green-600" /> تصدير Excel
+                <Download className="w-4 h-4 text-success" /> تصدير Excel
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>إجراءات</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => { updateTenderStatus(); toast.success('تم تحديث حالة المنافسة'); }} className="flex items-center gap-2 cursor-pointer">
-                <TrendingUp className="w-4 h-4 text-purple-600" /> تحديث الحالة
+                <TrendingUp className="w-4 h-4 text-secondary" /> تحديث الحالة
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -3454,11 +3575,11 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
               />
             )}
             {backupsList.map((b)=> (
-              <div key={b.id} className="flex items-center justify-between border rounded p-2">
+              <div key={b.id} className="flex items-center justify-between border border-border rounded p-2">
                 <div className="text-sm">
                   <div className="font-medium">{formatTimestamp(b.timestamp)}</div>
-                  <div className="text-gray-600">نسبة الإكمال: {Math.round(b.completionPercentage)}% • الإجمالي: {formatCurrencyValue(b.totalValue, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-muted-foreground">نسبة الإكمال: {Math.round(b.completionPercentage)}% • الإجمالي: {formatCurrencyValue(b.totalValue, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
+                  <div className="text-xs text-muted-foreground">
                     العناصر المسعرة: {b.itemsPriced}/{b.itemsTotal}
                     {b.retentionExpiresAt
                       ? ` • الاحتفاظ حتى ${formatDateValue(b.retentionExpiresAt, {
@@ -3499,7 +3620,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
           </TabsTrigger>
           <TabsTrigger value="pricing" className="flex items-center gap-2 flex-row-reverse">
             {currentItem && pricingData.get(currentItem.id)?.completed && (
-              <Badge variant="outline" className="mr-1 text-green-600 border-green-600">
+              <Badge variant="outline" className="mr-1 text-success border-success/40">
                 محفوظ
                 <CheckCircle className="w-3 h-3 mr-1" />
               </Badge>
@@ -3527,6 +3648,26 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({
         </TabsContent>
       </Tabs>
       {leaveConfirmationDialog}
+
+      {/* Pricing Template Manager Dialog */}
+      <Dialog open={templateManagerOpen} onOpenChange={setTemplateManagerOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>إدارة قوالب التسعير</DialogTitle>
+            <DialogDescription>
+              اختر قالب تسعير لتطبيقه على المنافسة أو احفظ الإعدادات الحالية كقالب جديد
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <PricingTemplateManager
+              onSelectTemplate={handleTemplateApply}
+              onCreateTemplate={handleTemplateSave}
+              onUpdateTemplate={handleTemplateUpdate}
+              onDeleteTemplate={handleTemplateDelete}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

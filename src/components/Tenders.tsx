@@ -1,34 +1,29 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback, memo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { APP_EVENTS } from '../events/bus'
 import { toast } from 'sonner'
-import { Card, CardContent } from './ui/card'
-import { Badge } from './ui/badge'
-import { Progress } from './ui/progress'
+
 import { PageLayout, EmptyState, DetailCard } from './PageLayout'
+import { StatusBadge } from './ui/status-badge'
 import { TenderPricingProcess, type TenderWithPricingSources } from './TenderPricingProcess'
 import { safeLocalStorage } from '../utils/storage'
 import {
   Trophy,
   Plus,
-  Calendar,
   DollarSign,
-  Building2,
   Clock,
   AlertTriangle,
+  AlertCircle,
   CheckCircle,
   XCircle,
   Eye,
   FileText,
-  User,
-  AlertCircle,
   TrendingUp,
   Calculator,
   Files,
   Trash2,
   Send,
-  RotateCw,
   Search
 } from 'lucide-react'
 import {
@@ -41,22 +36,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from './ui/alert-dialog'
-import { motion } from 'framer-motion'
+
 import { useFinancialState } from '@/application/context'
-import { useTenderStatus } from '@/application/hooks/useTenderStatus'
+
 import { TenderDetails } from './TenderDetails'
 import { TenderResultsManager } from './TenderResultsManager'
 import type { Tender } from '../data/centralData'
+
+
+import { EnhancedTenderCard } from './bidding/EnhancedTenderCard'
 import {
-  type CurrencyOptions,
-  formatTenderDate,
-  formatTenderName,
-  formatTenderClient,
-  formatTenderType
-} from '../utils/formatters'
-import { EntityActions } from './ui/ActionButtons'
-import { 
-  calculateTenderProgress, 
   getDaysRemaining,
   isTenderExpired
 } from '../utils/tenderProgressCalculator'
@@ -90,261 +79,9 @@ const getTenderDocumentPrice = (tender: Tender): number => {
   return price > 0 ? price : parseNumericValue(tender.bookletPrice)
 }
 
-// TenderCard Component - مكون محسّن مع React.memo
-interface TenderCardProps {
-  tender: Tender
-  index: number
-  onOpenDetails: (tender: Tender) => void
-  onStartPricing: (tender: Tender) => void
-  onSubmitTender: (tender: Tender) => void
-  onEdit: (tender: Tender) => void
-  onDelete: (tender: Tender) => void
-  onOpenResults?: (tender: Tender) => void
-  onRevertStatus?: (tender: Tender, newStatus: Tender['status']) => void
-  formatCurrencyValue: (amount: number | string | null | undefined, options?: CurrencyOptions) => string
-}
+// Using EnhancedTenderCard component from ./bidding/EnhancedTenderCard
 
-const TenderCard = memo<TenderCardProps>(({ 
-  tender, 
-  index, 
-  onOpenDetails, 
-  onStartPricing, 
-  onSubmitTender, 
-  onEdit, 
-  onDelete,
-  onOpenResults,
-  onRevertStatus,
-  formatCurrencyValue
-}) => {
-  const {
-    statusInfo,
-    urgencyInfo,
-    completionInfo,
-    shouldShowSubmitButton,
-    shouldShowPricingButton
-  } = useTenderStatus(tender)
 
-  const handleOpenDetails = useCallback(() => {
-    onOpenDetails(tender)
-  }, [onOpenDetails, tender])
-
-  const handleStartPricing = useCallback(() => {
-    onStartPricing(tender)
-  }, [onStartPricing, tender])
-
-  const handleSubmitTender = useCallback(() => {
-    onSubmitTender(tender)
-  }, [onSubmitTender, tender])
-
-  const handleEdit = useCallback(() => {
-    onEdit(tender)
-  }, [onEdit, tender])
-
-  const handleDelete = useCallback(() => {
-    onDelete(tender)
-  }, [onDelete, tender])
-
-  const documentPrice = getTenderDocumentPrice(tender)
-  const contractValue = typeof tender.totalValue === 'number' && Number.isFinite(tender.totalValue)
-    ? tender.totalValue
-    : typeof tender.value === 'number' && Number.isFinite(tender.value)
-      ? tender.value
-      : 0
-
-  const revertConfig = useMemo(() => {
-    if (tender.status === 'submitted') {
-      return {
-        targetStatus: 'ready_to_submit' as const,
-        label: 'عودة للإرسال',
-        title: 'عودة للإرسال'
-      }
-    }
-
-    if (tender.status === 'won' || tender.status === 'lost') {
-      return {
-        targetStatus: 'submitted' as const,
-        label: 'عودة للنتائج',
-        title: 'عودة للنتائج'
-      }
-    }
-
-    if (
-      tender.status === 'ready_to_submit' ||
-      (tender.status === 'under_action' && shouldShowSubmitButton)
-    ) {
-      return {
-        targetStatus: 'under_action' as const,
-        label: 'عودة للتسعير',
-        title: 'عودة للتسعير'
-      }
-    }
-
-    return null
-  }, [shouldShowSubmitButton, tender.status])
-
-  const handleRevertClick = useCallback(() => {
-    if (revertConfig && onRevertStatus) {
-      onRevertStatus(tender, revertConfig.targetStatus)
-    }
-  }, [onRevertStatus, revertConfig, tender])
-
-  const revertTitle = revertConfig?.title ?? formatTenderType(tender.type)
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-    >
-      <Card className={`bg-card border shadow-sm hover:shadow-md transition-all duration-300 group ${
-        tender.status === 'won' ? 'border-success/40 bg-success/10' : 
-        tender.status === 'lost' ? 'border-destructive/30 bg-destructive/10' : ''
-      }`}>
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 
-                  className="font-semibold text-card-foreground group-hover:text-primary transition-colors underline-offset-2 hover:underline cursor-pointer"
-                  onClick={handleOpenDetails}
-                >
-                  {formatTenderName(tender.name)}
-                </h3>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <User className="h-4 w-4" />
-                <span>{formatTenderClient(tender.client)}</span>
-              </div>
-            </div>
-            
-            <div className="flex flex-col items-end gap-2">
-              <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>
-              {completionInfo.isReadyToSubmit && tender.status !== 'submitted' && tender.status !== 'won' && tender.status !== 'lost' && (
-                <Badge variant="success" className="border-success/30">
-                  جاهزة للإرسال
-                </Badge>
-              )}
-              {completionInfo.isPricingCompleted && !completionInfo.isTechnicalFilesUploaded && tender.status !== 'submitted' && tender.status !== 'won' && tender.status !== 'lost' && (
-                <Badge variant="warning" className="border-warning/30">
-                  يحتاج ملفات فنية
-                </Badge>
-              )}
-              <div className={`text-xs px-2 py-1 rounded-full border ${urgencyInfo.color}`}>
-                {urgencyInfo.text}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <span className="text-muted-foreground">الموعد النهائي:</span>
-                <div className="font-medium text-card-foreground">
-                  {formatTenderDate(tender.deadline)}
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 text-sm">
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <span className="text-muted-foreground">القيمة:</span>
-                <div className="font-medium text-success">
-                  {formatCurrencyValue(contractValue)}
-                </div>
-                {documentPrice > 0 && (
-                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <FileText className="h-3 w-3" />
-                    <span>سعر الكراسة:</span>
-                    <span className="font-medium text-card-foreground">{formatCurrencyValue(documentPrice)}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {tender.status !== 'won' && tender.status !== 'lost' && tender.status !== 'expired' && tender.status !== 'cancelled' && (
-            <div className="mb-3">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground">التقدم</span>
-                <span className="font-medium text-card-foreground">
-                  {Math.round(calculateTenderProgress(tender))}%
-                </span>
-              </div>
-              <Progress value={calculateTenderProgress(tender)} className="h-2" />
-            </div>
-          )}
-
-          <div className="flex items-center justify-between pt-3 border-t border-border">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              {revertConfig ? (
-                <button
-                  type="button"
-                  className="group relative flex items-center gap-2 px-2 py-1 rounded-md hover:bg-muted/50 transition-colors"
-                  title={revertTitle}
-                  onClick={handleRevertClick}
-                >
-                  <RotateCw className="h-4 w-4 text-warning group-hover:text-warning/80" />
-                  <span className="text-sm text-warning group-hover:text-warning/80 font-medium">
-                    {revertConfig.label}
-                  </span>
-                </button>
-              ) : (
-                <span className="text-sm text-muted-foreground">
-                  {formatTenderType(tender.type)}
-                </span>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {tender.status === 'submitted' ? (
-                <EntityActions 
-                  onView={handleOpenDetails}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onPrimary={() => onOpenResults && onOpenResults(tender)}
-                  primaryText="النتيجة"
-                  primaryIcon="FileText"
-                  primaryVariant="primary"
-                />
-              ) : shouldShowSubmitButton ? (
-                <EntityActions 
-                  onView={handleOpenDetails}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onPrimary={handleSubmitTender}
-                  primaryText="ارسال"
-                  primaryIcon="Send"
-                  primaryVariant="success"
-                />
-              ) : shouldShowPricingButton ? (
-                <EntityActions 
-                  onView={handleOpenDetails}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onPrimary={handleStartPricing}
-                  primaryText="تسعير"
-                  primaryIcon="Calculator"
-                  primaryVariant="secondary"
-                />
-              ) : (
-                <EntityActions 
-                  onView={handleOpenDetails}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  )
-})
-
-TenderCard.displayName = 'TenderCard'
 
 interface TendersProps {
   onSectionChange: (section: string, tender?: Tender) => void
@@ -876,28 +613,42 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
   const headerMetadata = (
     <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-      <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-        <DollarSign className="h-3 w-3 text-primary" />
-        <span>العملة الأساسية {baseCurrency}</span>
-        {currency?.isFallback && <span className="text-warning"> (أسعار احتياطية)</span>}
-      </Badge>
-      <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-        <Trophy className="h-3 w-3 text-primary" />
-        <span>نشطة {tenderSummary.active}/{tenderSummary.total}</span>
-      </Badge>
-      <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-        <TrendingUp className="h-3 w-3 text-success" />
-        <span>مقدمة {formatCurrencyValue(tenderSummary.submittedValue, { notation: 'compact' })}</span>
-      </Badge>
-      <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-        <Files className="h-3 w-3 text-warning" />
-        <span>الكراسات {formatCurrencyValue(tenderSummary.totalDocumentValue, { notation: 'compact' })}</span>
-      </Badge>
+      <StatusBadge
+        status="info"
+        label={`العملة الأساسية ${baseCurrency}`}
+        icon={DollarSign}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="onTrack"
+        label={`نشطة ${tenderSummary.active}/${tenderSummary.total}`}
+        icon={Trophy}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="success"
+        label={`مقدمة ${formatCurrencyValue(tenderSummary.submittedValue, { notation: 'compact' })}`}
+        icon={TrendingUp}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="warning"
+        label={`الكراسات ${formatCurrencyValue(tenderSummary.totalDocumentValue, { notation: 'compact' })}`}
+        icon={Files}
+        size="sm"
+        className="shadow-none"
+      />
       {lastUpdatedLabel && (
-        <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-          <Clock className="h-3 w-3 text-muted-foreground" />
-          <span>آخر تحديث {lastUpdatedLabel}</span>
-        </Badge>
+        <StatusBadge
+          status="default"
+          label={`آخر تحديث ${lastUpdatedLabel}`}
+          icon={Clock}
+          size="sm"
+          className="shadow-none"
+        />
       )}
     </div>
   )
@@ -910,14 +661,14 @@ export function Tenders({ onSectionChange }: TendersProps) {
   )
 
   const tabsConfig = [
-    { id: 'all', label: 'الكل', count: tenderSummary.total, icon: Trophy },
-    { id: 'urgent', label: 'العاجلة', count: tenderSummary.urgent, icon: AlertTriangle },
-    { id: 'new', label: 'الجديدة', count: tenderSummary.new, icon: Plus },
-    { id: 'under_action', label: 'تحت الإجراء', count: tenderSummary.underAction + tenderSummary.readyToSubmit, icon: Clock },
-    { id: 'waiting_results', label: 'بانتظار النتائج', count: tenderSummary.waitingResults, icon: Eye },
-    { id: 'won', label: 'فائزة', count: tenderSummary.won, icon: CheckCircle },
-    { id: 'lost', label: 'خاسرة', count: tenderSummary.lost, icon: XCircle },
-    { id: 'expired', label: 'منتهية', count: tenderSummary.expired, icon: AlertCircle }
+    { id: 'all', label: 'الكل', count: tenderSummary.total, icon: Trophy, badgeStatus: 'default' as const },
+    { id: 'urgent', label: 'العاجلة', count: tenderSummary.urgent, icon: AlertTriangle, badgeStatus: 'overdue' as const },
+    { id: 'new', label: 'الجديدة', count: tenderSummary.new, icon: Plus, badgeStatus: 'notStarted' as const },
+    { id: 'under_action', label: 'تحت الإجراء', count: tenderSummary.underAction + tenderSummary.readyToSubmit, icon: Clock, badgeStatus: 'onTrack' as const },
+    { id: 'waiting_results', label: 'بانتظار النتائج', count: tenderSummary.waitingResults, icon: Eye, badgeStatus: 'info' as const },
+    { id: 'won', label: 'فائزة', count: tenderSummary.won, icon: CheckCircle, badgeStatus: 'success' as const },
+    { id: 'lost', label: 'خاسرة', count: tenderSummary.lost, icon: XCircle, badgeStatus: 'error' as const },
+    { id: 'expired', label: 'منتهية', count: tenderSummary.expired, icon: AlertCircle, badgeStatus: 'overdue' as const }
   ]
 
   const trimmedSearch = searchTerm.trim()
@@ -931,11 +682,10 @@ export function Tenders({ onSectionChange }: TendersProps) {
   return (
     <>
       <PageLayout
+        tone="primary"
         title="إدارة المنافسات"
         description="متابعة وإدارة جميع المنافسات والعطاءات بفعالية"
         icon={Trophy}
-        gradientFrom="from-primary"
-        gradientTo="to-primary/80"
         quickStats={quickStats}
         quickActions={quickActions}
         searchPlaceholder="البحث في المنافسات..."
@@ -960,9 +710,13 @@ export function Tenders({ onSectionChange }: TendersProps) {
                 >
                   <tab.icon className={`h-5 w-5 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
                   <span className="text-xs font-semibold">{tab.label}</span>
-                  <Badge variant={isActive ? 'default' : 'secondary'} className={`h-5 ${isActive ? 'bg-primary/15 text-primary-foreground border-primary/30' : ''}`}>
-                    {tab.count}
-                  </Badge>
+                  <StatusBadge
+                    status={isActive ? tab.badgeStatus : 'default'}
+                    label={String(tab.count)}
+                    size="sm"
+                    showIcon={false}
+                    className={`h-5 min-w-[24px] justify-center px-2 py-0.5 text-xs shadow-none ${isActive ? 'bg-primary/15 text-primary-foreground border-primary/30' : ''}`}
+                  />
                 </button>
               )
             })}
@@ -973,7 +727,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
         {filteredTenders.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredTenders.map((tender: Tender, index: number) => (
-              <TenderCard
+              <EnhancedTenderCard
                 key={tender.id}
                 tender={tender}
                 index={index}

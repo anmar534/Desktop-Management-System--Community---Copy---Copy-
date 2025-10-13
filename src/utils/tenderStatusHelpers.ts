@@ -44,8 +44,8 @@ const normalizeTenderStatus = (status: unknown): TenderStatus | null => {
 
 const DEFAULT_STATUS_INFO: TenderStatusInfo = {
   label: 'غير محدد',
-  color: 'text-gray-600',
-  bgColor: 'bg-gray-100',
+  color: 'text-muted-foreground',
+  bgColor: 'bg-muted',
   icon: AlertTriangle,
   description: 'حالة غير معروفة'
 };
@@ -53,57 +53,57 @@ const DEFAULT_STATUS_INFO: TenderStatusInfo = {
 const STATUS_INFO_MAP: Record<TenderStatus, TenderStatusInfo> = {
   new: {
     label: 'جديدة',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
+    color: 'text-info',
+    bgColor: 'bg-info/10',
     icon: FileText,
     description: 'منافسة جديدة لم يبدأ العمل عليها بعد'
   },
   under_action: {
     label: 'تحت الإجراء',
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-100',
+    color: 'text-warning',
+    bgColor: 'bg-warning/10',
     icon: Zap,
     description: 'جاري العمل على التسعير أو رفع الملفات'
   },
   ready_to_submit: {
     label: 'جاهزة للتقديم',
-    color: 'text-green-600',
-    bgColor: 'bg-green-100',
+    color: 'text-success',
+    bgColor: 'bg-success/10',
     icon: CheckCircle,
     description: 'تم إنجاز التسعير والملفات الفنية'
   },
   submitted: {
     label: 'بانتظار النتائج',
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
+    color: 'text-primary',
+    bgColor: 'bg-primary/10',
     icon: Clock,
     description: 'تم تقديم العرض وننتظر إعلان النتائج'
   },
   won: {
     label: 'فائزة 🏆',
-    color: 'text-green-700',
-    bgColor: 'bg-green-200',
+    color: 'text-success-foreground',
+    bgColor: 'bg-success',
     icon: Trophy,
     description: 'تم الفوز بهذه المنافسة'
   },
   lost: {
     label: 'خاسرة',
-    color: 'text-red-600',
-    bgColor: 'bg-red-100',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
     icon: XCircle,
     description: 'لم يتم الفوز بهذه المنافسة'
   },
   expired: {
     label: 'منتهية الصلاحية',
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-100',
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted',
     icon: AlertTriangle,
     description: 'انتهت مدة تقديم العروض'
   },
   cancelled: {
     label: 'ملغاة',
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-100',
+    color: 'text-muted-foreground',
+    bgColor: 'bg-muted',
     icon: XCircle,
     description: 'تم إلغاء هذه المنافسة'
   }

@@ -7,7 +7,8 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
-import { Badge } from './ui/badge'
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
+import { InlineAlert, type InlineAlertVariant } from './ui/inline-alert'
 import {
   Building2,
   MapPin,
@@ -90,8 +91,8 @@ interface PointerSnapshot {
 }
 
 interface LevelInfo {
-  level: string
-  color: string
+  label: string
+  status: StatusBadgeProps['status']
 }
 
 const DEBUG_LOG_DELAY_MS = 400
@@ -183,28 +184,70 @@ const parseNumericValue = (value: string | number | null | undefined): number | 
 
 const computeUrgencyInfo = (daysRemaining: number): LevelInfo => {
   if (daysRemaining <= 7) {
-    return { level: 'عاجل جداً', color: 'bg-destructive/10 text-destructive' }
+    return { label: 'عاجل جداً', status: 'overdue' }
   }
   if (daysRemaining <= 15) {
-    return { level: 'عاجل', color: 'bg-warning/10 text-warning' }
+    return { label: 'عاجل', status: 'dueSoon' }
   }
   if (daysRemaining <= 30) {
-    return { level: 'متوسط', color: 'bg-info/10 text-info' }
+    return { label: 'متوسط', status: 'info' }
   }
-  return { level: 'عادي', color: 'bg-success/10 text-success' }
+  return { label: 'عادي', status: 'success' }
 }
 
 const computeCompetitionInfo = (estimatedValue: number | null): LevelInfo => {
   if (estimatedValue === null) {
-    return { level: 'غير محدد', color: 'bg-muted text-muted-foreground' }
+    return { label: 'غير محدد', status: 'default' }
   }
   if (estimatedValue >= 5_000_000) {
-    return { level: 'منافسة عالية', color: 'bg-destructive/10 text-destructive' }
+    return { label: 'منافسة عالية', status: 'error' }
   }
   if (estimatedValue >= 1_000_000) {
-    return { level: 'منافسة متوسطة', color: 'bg-warning/10 text-warning' }
+    return { label: 'منافسة متوسطة', status: 'warning' }
   }
-  return { level: 'منافسة قليلة', color: 'bg-success/10 text-success' }
+  return { label: 'منافسة قليلة', status: 'success' }
+}
+
+const STATUS_SEVERITY: Partial<Record<StatusBadgeProps['status'], number>> = {
+  overdue: 5,
+  error: 5,
+  overBudget: 5,
+  dueSoon: 4,
+  warning: 4,
+  nearBudget: 4,
+  info: 3,
+  onTrack: 3,
+  onBudget: 3,
+  notStarted: 2,
+  default: 2,
+  success: 1,
+  completed: 1,
+  underBudget: 1,
+}
+
+const STATUS_TO_ALERT_VARIANT: Partial<Record<StatusBadgeProps['status'], InlineAlertVariant>> = {
+  overdue: 'destructive',
+  error: 'destructive',
+  overBudget: 'destructive',
+  dueSoon: 'warning',
+  warning: 'warning',
+  nearBudget: 'warning',
+  info: 'info',
+  onTrack: 'info',
+  onBudget: 'info',
+  notStarted: 'neutral',
+  default: 'neutral',
+  success: 'success',
+  completed: 'success',
+  underBudget: 'success',
+}
+
+const resolveAlertVariant = (status?: StatusBadgeProps['status']): InlineAlertVariant => {
+  return STATUS_TO_ALERT_VARIANT[status ?? 'default'] ?? 'info'
+}
+
+const resolveSeverity = (status?: StatusBadgeProps['status']): number => {
+  return STATUS_SEVERITY[status ?? 'default'] ?? 2
 }
 
 const formatCurrency = (amount: number): string => new Intl.NumberFormat('ar-SA', {
@@ -418,6 +461,37 @@ export function NewTenderForm({ onSave, onBack, existingTender }: NewTenderFormP
     () => formatCurrency(parsedEstimatedValue ?? 0),
     [parsedEstimatedValue]
   )
+  const tenderInsightsAlert = useMemo(() => {
+    if (!formData.deadline && !formData.estimatedValue) {
+      return null
+    }
+
+    const notes: string[] = []
+    const statuses: StatusBadgeProps['status'][] = []
+
+    if (formData.deadline) {
+      statuses.push(urgencyInfo.status)
+      notes.push(`الموعد النهائي بعد ${daysRemaining} أيام (${urgencyInfo.label}).`)
+    }
+
+    if (formData.estimatedValue) {
+      statuses.push(competitionInfo.status)
+      notes.push(`القيمة التقديرية ${formattedEstimatedValue} (${competitionInfo.label}).`)
+    }
+
+    const dominantStatus = statuses.reduce<StatusBadgeProps['status'] | null>((current, status) => {
+      if (!current) {
+        return status
+      }
+      return resolveSeverity(status) > resolveSeverity(current) ? status : current
+    }, null)
+
+    return {
+      variant: resolveAlertVariant(dominantStatus),
+      title: 'مؤشرات المنافسة',
+      description: notes.join(' '),
+    }
+  }, [competitionInfo, daysRemaining, formData.deadline, formData.estimatedValue, formattedEstimatedValue, urgencyInfo])
 
   const isFormValid = useMemo(() => {
     const requiredFields = [
@@ -575,11 +649,10 @@ export function NewTenderForm({ onSave, onBack, existingTender }: NewTenderFormP
 
   return (
     <PageLayout
+      tone="primary"
       title={existingTender ? "تحرير المنافسة" : "منافسة جديدة"}
       description={existingTender ? "تعديل بيانات المنافسة الموجودة" : "إضافة منافسة جديدة وإعداد البيانات المطلوبة"}
       icon={Trophy}
-      gradientFrom="from-primary"
-      gradientTo="to-primary/80"
       quickStats={[]}
       quickActions={quickActions}
       onBack={onBack}
@@ -742,36 +815,51 @@ export function NewTenderForm({ onSave, onBack, existingTender }: NewTenderFormP
 
               {/* تحليل المواعيد والقيمة */}
               {(formData.deadline || formData.estimatedValue) && (
-                <div className="mt-4 rounded-lg border border-warning/20 bg-warning/10 p-4">
-                  <h4 className="mb-3 font-medium text-warning-foreground">تحليل سريع</h4>
-                  <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
-                    {formData.deadline && (
-                      <div>
-                        <span className="text-muted-foreground">الأيام المتبقية:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-warning">{daysRemaining} أيام</span>
-                          <Badge className={urgencyInfo.color}>
-                            {urgencyInfo.level}
-                          </Badge>
-                        </div>
-                      </div>
-                    )}
-                    {formData.estimatedValue && (
-                      <>
+                <div className="mt-4 space-y-3">
+                  {tenderInsightsAlert && (
+                    <InlineAlert
+                      variant={tenderInsightsAlert.variant}
+                      title={tenderInsightsAlert.title}
+                      description={tenderInsightsAlert.description}
+                    />
+                  )}
+                  <div className="rounded-lg border border-border bg-muted/20 p-4">
+                    <h4 className="mb-3 font-medium text-foreground">تحليل سريع</h4>
+                    <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
+                      {formData.deadline && (
                         <div>
-                          <span className="text-muted-foreground">مستوى المنافسة:</span>
-                          <div>
-                            <Badge className={competitionInfo.color}>
-                              {competitionInfo.level}
-                            </Badge>
+                          <span className="text-muted-foreground">الأيام المتبقية:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-warning">{daysRemaining} أيام</span>
+                            <StatusBadge
+                              status={urgencyInfo.status}
+                              label={urgencyInfo.label}
+                              size="sm"
+                              showIcon={false}
+                              className="shadow-none"
+                            />
                           </div>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground">القيمة المنسقة:</span>
-                          <div className="font-medium text-success">{formattedEstimatedValue}</div>
-                        </div>
-                      </>
-                    )}
+                      )}
+                      {formData.estimatedValue && (
+                        <>
+                          <div>
+                            <span className="text-muted-foreground">مستوى المنافسة:</span>
+                            <StatusBadge
+                              status={competitionInfo.status}
+                              label={competitionInfo.label}
+                              size="sm"
+                              showIcon={false}
+                              className="shadow-none"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">القيمة المنسقة:</span>
+                            <div className="font-medium text-success">{formattedEstimatedValue}</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

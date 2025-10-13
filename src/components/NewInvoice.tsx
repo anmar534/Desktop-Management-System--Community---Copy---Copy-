@@ -180,10 +180,10 @@ export function NewInvoice({ onSectionChange }: NewInvoiceProps) {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-primary/5">
       
       {/* الهيدر */}
-      <div className="bg-white border-b shadow-sm">
+      <div className="bg-card border-b border-border shadow-sm">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -383,7 +383,7 @@ export function NewInvoice({ onSectionChange }: NewInvoiceProps) {
                       size="sm"
                       onClick={() => removeItem(item.id)}
                       disabled={formData.items.length === 1}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

@@ -92,7 +92,9 @@ export function BankStatementAnalyzer({
   }, [reconciledTransactions])
 
   const getTransactionTypeColor = (type: 'income' | 'expense') => {
-    return type === 'income' ? 'text-green-600 bg-green-100' : 'text-red-600 bg-red-100'
+    return type === 'income'
+      ? 'text-success bg-success/10 border-success/30'
+      : 'text-destructive bg-destructive/10 border-destructive/30'
   }
 
   const getTransactionTypeIcon = (type: 'income' | 'expense') => {
@@ -109,10 +111,10 @@ export function BankStatementAnalyzer({
       {/* هيدر التحليل */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-bold text-foreground">
             تحليل كشف الحساب البنكي
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             {analysis.totalTransactions} معاملة من {analysis.dateRange.startDate} إلى {analysis.dateRange.endDate}
           </p>
         </div>
@@ -138,13 +140,13 @@ export function BankStatementAnalyzer({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">إجمالي الإيرادات</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-sm text-muted-foreground">إجمالي الإيرادات</p>
+                  <p className="text-2xl font-bold text-success">
                     {formatCurrency(analysis.totalIncome)}
                   </p>
                 </div>
-                <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
+                <div className="p-3 bg-success/10 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-success" />
                 </div>
               </div>
             </CardContent>
@@ -160,13 +162,13 @@ export function BankStatementAnalyzer({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">إجمالي المصروفات</p>
-                  <p className="text-2xl font-bold text-red-600">
+                  <p className="text-sm text-muted-foreground">إجمالي المصروفات</p>
+                  <p className="text-2xl font-bold text-destructive">
                     {formatCurrency(analysis.totalExpenses)}
                   </p>
                 </div>
-                <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg">
-                  <TrendingDown className="h-6 w-6 text-red-600" />
+                <div className="p-3 bg-destructive/10 rounded-lg">
+                  <TrendingDown className="h-6 w-6 text-destructive" />
                 </div>
               </div>
             </CardContent>
@@ -182,20 +184,20 @@ export function BankStatementAnalyzer({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">صافي التدفق</p>
+                  <p className="text-sm text-muted-foreground">صافي التدفق</p>
                   <p className={`text-2xl font-bold ${
-                    analysis.netFlow >= 0 ? 'text-green-600' : 'text-red-600'
+                    analysis.netFlow >= 0 ? 'text-success' : 'text-destructive'
                   }`}>
                     {formatCurrency(analysis.netFlow)}
                   </p>
                 </div>
                 <div className={`p-3 rounded-lg ${
                   analysis.netFlow >= 0 
-                    ? 'bg-green-100 dark:bg-green-900/20' 
-                    : 'bg-red-100 dark:bg-red-900/20'
+                    ? 'bg-success/10' 
+                    : 'bg-destructive/10'
                 }`}>
                   <DollarSign className={`h-6 w-6 ${
-                    analysis.netFlow >= 0 ? 'text-green-600' : 'text-red-600'
+                    analysis.netFlow >= 0 ? 'text-success' : 'text-destructive'
                   }`} />
                 </div>
               </div>
@@ -212,13 +214,13 @@ export function BankStatementAnalyzer({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">عدد المعاملات</p>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-sm text-muted-foreground">عدد المعاملات</p>
+                  <p className="text-2xl font-bold text-info">
                     {analysis.totalTransactions}
                   </p>
                 </div>
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                  <BarChart3 className="h-6 w-6 text-blue-600" />
+                <div className="p-3 bg-info/10 rounded-lg">
+                  <BarChart3 className="h-6 w-6 text-info" />
                 </div>
               </div>
             </CardContent>
@@ -255,7 +257,7 @@ export function BankStatementAnalyzer({
             <Card className="border-0 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-blue-600" />
+                  <Calendar className="h-5 w-5 text-info" />
                   التدفق الشهري
                 </CardTitle>
               </CardHeader>
@@ -265,19 +267,19 @@ export function BankStatementAnalyzer({
                     <div className="flex justify-between text-sm">
                       <span className="font-medium">{month.month}</span>
                       <span className={`font-bold ${
-                        month.netFlow >= 0 ? 'text-green-600' : 'text-red-600'
+                        month.netFlow >= 0 ? 'text-success' : 'text-destructive'
                       }`}>
                         {formatCurrency(month.netFlow)}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                       <div className="flex justify-between">
                         <span>إيرادات:</span>
-                        <span className="text-green-600">{formatCurrency(month.totalIncome)}</span>
+                        <span className="text-success">{formatCurrency(month.totalIncome)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>مصروفات:</span>
-                        <span className="text-red-600">{formatCurrency(month.totalExpenses)}</span>
+                        <span className="text-destructive">{formatCurrency(month.totalExpenses)}</span>
                       </div>
                     </div>
                     <Progress 
@@ -296,7 +298,7 @@ export function BankStatementAnalyzer({
             <Card className="border-0 shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-green-600" />
+                  <Building2 className="h-5 w-5 text-success" />
                   أكبر المشاريع
                 </CardTitle>
               </CardHeader>
@@ -308,21 +310,21 @@ export function BankStatementAnalyzer({
                     <div key={project.projectName} className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="font-medium text-sm">{project.projectName}</p>
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-muted-foreground">
                           {project.transactionCount} معاملة
                         </p>
                       </div>
                       <div className="text-right">
                         <p className={`font-bold text-sm ${
-                          project.netFlow >= 0 ? 'text-green-600' : 'text-red-600'
+                          project.netFlow >= 0 ? 'text-success' : 'text-destructive'
                         }`}>
                           {formatCurrency(project.netFlow)}
                         </p>
                         <div className="flex gap-1 text-xs">
-                          <span className="text-green-600">
+                          <span className="text-success">
                             +{formatCurrency(project.totalIncome)}
                           </span>
-                          <span className="text-red-600">
+                          <span className="text-destructive">
                             -{formatCurrency(project.totalExpenses)}
                           </span>
                         </div>
@@ -347,22 +349,22 @@ export function BankStatementAnalyzer({
                 <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg">{project.projectName}</CardTitle>
-                    <p className="text-sm text-gray-600">{project.transactionCount} معاملة</p>
+                    <p className="text-sm text-muted-foreground">{project.transactionCount} معاملة</p>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-green-600">الإيرادات:</span>
+                        <span className="text-success">الإيرادات:</span>
                         <span className="font-medium">{formatCurrency(project.totalIncome)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-red-600">المصروفات:</span>
+                        <span className="text-destructive">المصروفات:</span>
                         <span className="font-medium">{formatCurrency(project.totalExpenses)}</span>
                       </div>
                       <hr className="my-2" />
                       <div className="flex justify-between font-bold">
                         <span>صافي التدفق:</span>
-                        <span className={project.netFlow >= 0 ? 'text-green-600' : 'text-red-600'}>
+                        <span className={project.netFlow >= 0 ? 'text-success' : 'text-destructive'}>
                           {formatCurrency(project.netFlow)}
                         </span>
                       </div>
@@ -394,7 +396,7 @@ export function BankStatementAnalyzer({
                 <Card className="border-0 shadow-sm">
                   <CardHeader>
                     <CardTitle className="text-lg">{category.categoryName}</CardTitle>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {formatCurrency(category.totalAmount)} • {category.transactionCount} معاملة
                     </p>
                   </CardHeader>
@@ -426,20 +428,20 @@ export function BankStatementAnalyzer({
             <CardContent className="p-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <input
                     type="text"
                     placeholder="البحث في المعاملات..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full pl-10 pr-4 py-2 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
                 
                 <select
                   value={filterProject}
                   onChange={(e) => setFilterProject(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full p-2 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   aria-label="فلترة حسب المشروع"
                 >
                   <option value="all">جميع المشاريع</option>
@@ -451,7 +453,7 @@ export function BankStatementAnalyzer({
                 <select
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full p-2 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   aria-label="فلترة حسب التصنيف"
                 >
                   <option value="all">جميع التصنيفات</option>
@@ -463,7 +465,7 @@ export function BankStatementAnalyzer({
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full p-2 border border-input rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   aria-label="فلترة حسب النوع"
                 >
                   <option value="all">جميع الأنواع</option>
@@ -504,7 +506,7 @@ export function BankStatementAnalyzer({
                       const amount = transaction.transactionType === 'income' ? transaction.credit : transaction.debit
                       
                       return (
-                        <tr key={transaction.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                        <tr key={transaction.id} className="border-b border-border hover:bg-muted/40">
                           <td className="p-2">{transaction.date}</td>
                           <td className="p-2 max-w-xs truncate" title={transaction.description}>
                             {transaction.description}
@@ -518,14 +520,14 @@ export function BankStatementAnalyzer({
                             </div>
                           </td>
                           <td className="p-2 font-medium">
-                            <span className={transaction.transactionType === 'income' ? 'text-green-600' : 'text-red-600'}>
+                            <span className={transaction.transactionType === 'income' ? 'text-success' : 'text-destructive'}>
                               {formatCurrency(amount)}
                             </span>
                           </td>
                           <td className="p-2">
                             <div>
                               <div className="font-medium">{transaction.category}</div>
-                              <div className="text-xs text-gray-500">{transaction.subcategory}</div>
+                              <div className="text-xs text-muted-foreground">{transaction.subcategory}</div>
                             </div>
                           </td>
                           <td className="p-2">
@@ -534,14 +536,14 @@ export function BankStatementAnalyzer({
                                 {transaction.project}
                               </Badge>
                             ) : (
-                              <span className="text-gray-400">غير محدد</span>
+                              <span className="text-muted-foreground">غير محدد</span>
                             )}
                           </td>
                           <td className="p-2">
                             {transaction.isReconciled ? (
-                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <CheckCircle className="h-4 w-4 text-success" />
                             ) : (
-                              <AlertTriangle className="h-4 w-4 text-amber-600" />
+                              <AlertTriangle className="h-4 w-4 text-warning" />
                             )}
                           </td>
                         </tr>
@@ -553,7 +555,7 @@ export function BankStatementAnalyzer({
               
               {filteredTransactions.length > 50 && (
                 <div className="mt-4 text-center">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     يتم عرض أول 50 معاملة من أصل {filteredTransactions.length}
                   </p>
                 </div>

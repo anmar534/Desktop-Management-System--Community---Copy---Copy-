@@ -20,7 +20,7 @@ const ColorPalette = () => {
                 <h3 className="text-lg font-semibold mb-2 capitalize">{colorName}</h3>
                 <div className="flex items-center gap-4">
                   <div 
-                    className="w-32 h-16 rounded-lg border border-gray-300 shadow-sm"
+                    className="w-32 h-16 rounded-lg border border-border shadow-sm"
                     style={{ backgroundColor: colorScale as string }}
                   />
                   <span className="font-mono text-sm">{String(colorScale)}</span>
@@ -41,7 +41,7 @@ const ColorPalette = () => {
                       title={value}
                     />
                     <span className="text-xs mt-1 font-medium">{shade}</span>
-                    <span className="text-xs text-gray-500 font-mono">{value}</span>
+                    <span className="text-xs text-muted-foreground font-mono">{value}</span>
                   </div>
                 ))}
               </div>
@@ -61,12 +61,12 @@ const ColorPalette = () => {
               {Object.entries(colors as Record<string, string>).map(([name, value]) => (
                 <div key={name} className="flex flex-col">
                   <div 
-                    className="w-full h-16 rounded-lg border border-gray-200 shadow-sm"
+                    className="w-full h-16 rounded-lg border border-border shadow-sm"
                     style={{ backgroundColor: value }}
                     title={value}
                   />
                   <span className="text-sm mt-2 font-medium">{name}</span>
-                  <span className="text-xs text-gray-500 font-mono">{value}</span>
+                  <span className="text-xs text-muted-foreground font-mono">{value}</span>
                 </div>
               ))}
             </div>

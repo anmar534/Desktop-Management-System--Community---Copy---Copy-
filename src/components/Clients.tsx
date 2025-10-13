@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { Card, CardContent } from './ui/card'
-import { Badge } from './ui/badge'
+import { InlineAlert } from './ui/inline-alert'
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -42,11 +43,9 @@ interface ClientProjectsSummary {
   total: number
 }
 
-type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' | 'info' | 'primary'
-
-interface BadgeDisplay {
-  text: string
-  variant: BadgeVariant
+interface StatusDisplay {
+  label: string
+  status: StatusBadgeProps['status']
 }
 
 export function Clients({ onSectionChange }: ClientsProps) {
@@ -166,14 +165,14 @@ export function Clients({ onSectionChange }: ClientsProps) {
     {
       label: 'عملاء استراتيجيون',
       value: stats.strategic,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-500/10'
+      color: 'text-accent',
+      bgColor: 'bg-accent/10'
     },
     {
       label: 'جهات حكومية',
       value: stats.government,
-      color: 'text-indigo-500',
-      bgColor: 'bg-indigo-500/10'
+      color: 'text-info',
+      bgColor: 'bg-info/10'
     },
     {
       label: 'شركات خاصة',
@@ -186,8 +185,8 @@ export function Clients({ onSectionChange }: ClientsProps) {
       value: formatCurrency(stats.totalValue),
       trend: 'up' as const,
       trendValue: '+12%',
-      color: 'text-emerald-500',
-      bgColor: 'bg-emerald-500/10'
+      color: 'text-success',
+      bgColor: 'bg-success/10'
     }
   ]
 
@@ -216,7 +215,7 @@ export function Clients({ onSectionChange }: ClientsProps) {
   const getClientTypeIcon = (type: Client['type'] | undefined) => {
     switch (type) {
       case 'government':
-        return <Building2 className="h-4 w-4 text-indigo-500" />
+        return <Building2 className="h-4 w-4 text-info" />
       case 'private':
         return <Users className="h-4 w-4 text-warning" />
       default:
@@ -224,59 +223,44 @@ export function Clients({ onSectionChange }: ClientsProps) {
     }
   }
 
-  const getClientTypeDisplay = (type: Client['type'] | undefined): BadgeDisplay => {
+  const getClientTypeDisplay = (type: Client['type'] | undefined): StatusDisplay => {
     switch (type) {
       case 'government':
-        return { text: 'جهة حكومية', variant: 'info' }
+        return { label: 'جهة حكومية', status: 'info' }
       case 'private':
-        return { text: 'شركة خاصة', variant: 'warning' }
+        return { label: 'شركة خاصة', status: 'warning' }
       case 'individual':
-        return { text: 'عميل فردي', variant: 'secondary' }
+        return { label: 'عميل فردي', status: 'onTrack' }
       default:
-        return { text: 'غير محدد', variant: 'secondary' }
+        return { label: 'غير محدد', status: 'default' }
     }
   }
 
-  const getRelationshipDisplay = (relationship: Client['relationship'] | undefined): BadgeDisplay => {
+  const getRelationshipDisplay = (relationship: Client['relationship'] | undefined): StatusDisplay => {
     switch (relationship) {
       case 'strategic':
-        return { text: 'استراتيجي', variant: 'primary' }
+        return { label: 'استراتيجي', status: 'success' }
       case 'government':
-        return { text: 'حكومي', variant: 'info' }
+        return { label: 'حكومي', status: 'info' }
       case 'regular':
-        return { text: 'عادي', variant: 'secondary' }
+        return { label: 'عادي', status: 'default' }
       default:
-        return { text: 'غير محدد', variant: 'secondary' }
+        return { label: 'غير محدد', status: 'default' }
     }
   }
 
-  const getPaymentRatingColor = (rating: Client['paymentRating'] | undefined) => {
+  const getPaymentRatingDisplay = (rating: Client['paymentRating'] | undefined): StatusDisplay => {
     switch (rating) {
       case 'excellent':
-        return 'text-success'
+        return { label: 'ممتاز', status: 'success' }
       case 'good':
-        return 'text-primary'
+        return { label: 'جيد', status: 'onTrack' }
       case 'average':
-        return 'text-yellow-500'
+        return { label: 'متوسط', status: 'warning' }
       case 'poor':
-        return 'text-destructive'
+        return { label: 'ضعيف', status: 'error' }
       default:
-        return 'text-muted-foreground'
-    }
-  }
-
-  const getPaymentRatingText = (rating: Client['paymentRating'] | undefined) => {
-    switch (rating) {
-      case 'excellent':
-        return 'ممتاز'
-      case 'good':
-        return 'جيد'
-      case 'average':
-        return 'متوسط'
-      case 'poor':
-        return 'ضعيف'
-      default:
-        return 'غير محدد'
+        return { label: 'غير محدد', status: 'default' }
     }
   }
 
@@ -288,6 +272,15 @@ export function Clients({ onSectionChange }: ClientsProps) {
   const ClientCard = ({ client, index }: ClientCardProps) => {
     const typeInfo = getClientTypeDisplay(client.type)
     const relationshipInfo = getRelationshipDisplay(client.relationship)
+    const paymentRatingDisplay = getPaymentRatingDisplay(client.paymentRating)
+    const outstandingPaymentsValue = client.outstandingPayments ?? 0
+    const hasOutstandingPayments = Number.isFinite(outstandingPaymentsValue) && outstandingPaymentsValue > 0
+    const shouldShowPaymentAlert = hasOutstandingPayments || client.paymentRating === 'poor'
+    const paymentAlertVariant = client.paymentRating === 'poor' ? 'destructive' : 'warning'
+    const paymentAlertTitle = client.paymentRating === 'poor' ? 'مخاطر في تحصيل المستحقات' : 'مدفوعات متأخرة'
+    const paymentAlertDescription = hasOutstandingPayments
+      ? `يوجد مستحقات بقيمة ${formatCurrency(outstandingPaymentsValue)} تحتاج متابعة مع العميل.`
+      : 'تقييم الدفع الحالي منخفض ويتطلب خطة متابعة لتحسين السداد.'
     
     // استخدام البيانات الحقيقية من المشاريع
     const clientProjectsData = getClientProjects(client.name)
@@ -324,12 +317,18 @@ export function Clients({ onSectionChange }: ClientsProps) {
                   </h3>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={typeInfo.variant}>
-                    {typeInfo.text}
-                  </Badge>
-                  <Badge variant={relationshipInfo.variant}>
-                    {relationshipInfo.text}
-                  </Badge>
+                  <StatusBadge
+                    status={typeInfo.status}
+                    label={typeInfo.label}
+                    size="sm"
+                    className="shadow-none"
+                  />
+                  <StatusBadge
+                    status={relationshipInfo.status}
+                    label={relationshipInfo.label}
+                    size="sm"
+                    className="shadow-none"
+                  />
                 </div>
               </div>
               
@@ -370,19 +369,32 @@ export function Clients({ onSectionChange }: ClientsProps) {
                 <div className="text-xs text-muted-foreground">مشاريع نشطة</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-indigo-500">{clientProjectsData.completed}</div>
+                <div className="text-lg font-bold text-info">{clientProjectsData.completed}</div>
                 <div className="text-xs text-muted-foreground">مشاريع مكتملة</div>
               </div>
               <div className="text-center">
-                <div className={`text-lg font-bold ${getPaymentRatingColor(client.paymentRating)}`}>
-                  <div className="flex items-center justify-center gap-1">
-                    <Star className="h-4 w-4" />
-                    <span>{getPaymentRatingText(client.paymentRating)}</span>
-                  </div>
+                <div className="flex items-center justify-center">
+                  <StatusBadge
+                    status={paymentRatingDisplay.status}
+                    label={paymentRatingDisplay.label}
+                    size="sm"
+                    icon={Star}
+                    className="shadow-none"
+                  />
                 </div>
                 <div className="text-xs text-muted-foreground">تقييم الدفع</div>
               </div>
             </div>
+
+            {shouldShowPaymentAlert && (
+              <InlineAlert
+                variant={paymentAlertVariant}
+                icon={<AlertCircle className="h-4 w-4" />}
+                title={paymentAlertTitle}
+                description={paymentAlertDescription}
+                className="mb-4"
+              />
+            )}
 
             {/* معلومات إضافية */}
             <div className="flex items-center justify-between text-sm mb-4">
@@ -391,18 +403,26 @@ export function Clients({ onSectionChange }: ClientsProps) {
                 <span>إجمالي المشاريع: {clientProjectsData.total}</span>
               </div>
               {clientProjectsData.total > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  عميل نشط
-                </Badge>
+                <StatusBadge
+                  status="success"
+                  label="عميل نشط"
+                  size="sm"
+                  showIcon={false}
+                  className="shadow-none"
+                />
               )}
             </div>
 
             {/* الإجراءات */}
             <div className="flex items-center justify-between pt-4 border-t border-border">
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-xs">
-                  منذ {new Date(client.establishedDate || '2020-01-01').getFullYear()}
-                </Badge>
+                <StatusBadge
+                  status="default"
+                  label={`منذ ${new Date(client.establishedDate || '2020-01-01').getFullYear()}`}
+                  size="sm"
+                  showIcon={false}
+                  className="shadow-none"
+                />
               </div>
               
               <div className="flex items-center gap-2">
@@ -424,11 +444,10 @@ export function Clients({ onSectionChange }: ClientsProps) {
 
   return (
     <PageLayout
+      tone="success"
       title="إدارة العملاء"
       description="متابعة وإدارة العلاقات مع العملاء والشركاء"
       icon={Users}
-      gradientFrom="from-green-600"
-      gradientTo="to-green-700"
       quickStats={quickStats}
       quickActions={quickActions}
       searchPlaceholder="البحث في العملاء..."
@@ -458,7 +477,7 @@ export function Clients({ onSectionChange }: ClientsProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-red-500" />
+              <AlertCircle className="h-5 w-5 text-destructive" />
               تأكيد حذف العميل
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -471,16 +490,16 @@ export function Clients({ onSectionChange }: ClientsProps) {
                     <p>هل أنت متأكد من أنك تريد حذف العميل &quot;{client?.name}&quot;؟</p>
                     
                     {clientProjectsData.total > 0 && (
-                      <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700">
-                        <div className="text-amber-800 dark:text-amber-200 text-sm font-medium mb-1">
+                      <div className="p-3 bg-warning/10 rounded-lg border border-warning/20">
+                        <div className="text-warning text-sm font-medium mb-1">
                           ⚠️ تحذير: يوجد مشاريع مرتبطة بهذا العميل
                         </div>
-                        <ul className="text-amber-700 dark:text-amber-300 text-sm space-y-1">
+                        <ul className="text-warning text-sm space-y-1">
                           <li>• إجمالي المشاريع: {clientProjectsData.total}</li>
                           <li>• مشاريع نشطة: {clientProjectsData.active}</li>
                           <li>• مشاريع مكتملة: {clientProjectsData.completed}</li>
                         </ul>
-                        <p className="text-amber-800 dark:text-amber-200 text-sm mt-2">
+                        <p className="text-warning text-sm mt-2">
                           حذف العميل سيؤثر على ربط هذه المشاريع.
                         </p>
                       </div>
@@ -497,7 +516,7 @@ export function Clients({ onSectionChange }: ClientsProps) {
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
               onClick={() => clientToDelete && handleDeleteClient(clientToDelete)}
             >
               حذف العميل

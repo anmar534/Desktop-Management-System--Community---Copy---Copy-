@@ -153,10 +153,10 @@ export function NewReport({ onSectionChange }: NewReportProps) {
   const formattedDateRange = `${formatDate(formData.dateRange.startDate)} - ${formatDate(formData.dateRange.endDate)}`
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-primary/5">
       
       {/* الهيدر */}
-      <div className="bg-white border-b shadow-sm">
+      <div className="bg-card border-b border-border shadow-sm">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

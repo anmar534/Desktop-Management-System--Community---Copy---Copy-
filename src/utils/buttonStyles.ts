@@ -4,44 +4,44 @@
 export const BUTTON_STYLES = {
   // أزرار الإجراءات الأساسية
   view: {
-    className: "h-8 px-2 hover:bg-blue-50 hover:text-blue-600 transition-colors group",
+    className: "h-8 px-2 transition-colors group hover:bg-info/10 hover:text-info",
     variant: "ghost" as const,
-    iconClass: "h-4 w-4 group-hover:scale-110 transition-transform"
+    iconClass: "h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-info"
   },
   
   edit: {
-    className: "h-8 px-2 hover:bg-amber-50 hover:text-amber-600 transition-colors group", 
+    className: "h-8 px-2 transition-colors group hover:bg-warning/10 hover:text-warning", 
     variant: "ghost" as const,
-    iconClass: "h-4 w-4 group-hover:scale-110 transition-transform"
+    iconClass: "h-4 w-4 transition-transform group-hover:scale-110 group-hover:text-warning"
   },
   
   delete: {
-    className: "h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors group",
+    className: "h-8 px-2 text-destructive transition-colors group hover:text-destructive hover:bg-destructive/10",
     variant: "ghost" as const,
-    iconClass: "h-4 w-4 group-hover:scale-110 group-hover:text-red-700 transition-all"
+    iconClass: "h-4 w-4 transition-all group-hover:scale-110 group-hover:text-destructive"
   },
   
   // أزرار الإجراءات الرئيسية
   primary: {
-    className: "h-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 group",
+    className: "h-8 bg-primary text-primary-foreground shadow-md transition-all duration-200 group hover:bg-primary/90 hover:shadow-lg",
     variant: "default" as const,
     iconClass: "h-4 w-4 mr-1 group-hover:scale-110 transition-transform"
   },
   
   success: {
-    className: "h-8 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-md hover:shadow-lg transition-all duration-200 group",
+    className: "h-8 bg-success text-success-foreground shadow-md transition-all duration-200 group hover:bg-success/90 hover:shadow-lg",
     variant: "default" as const,
     iconClass: "h-4 w-4 mr-1 group-hover:scale-110 transition-transform"
   },
   
   warning: {
-    className: "h-8 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-md hover:shadow-lg transition-all duration-200 group",
+    className: "h-8 bg-warning text-warning-foreground shadow-md transition-all duration-200 group hover:bg-warning/90 hover:shadow-lg",
     variant: "default" as const,
     iconClass: "h-4 w-4 mr-1 group-hover:scale-110 transition-transform"
   },
   
   secondary: {
-    className: "h-8 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white shadow-md hover:shadow-lg transition-all duration-200 group",
+    className: "h-8 bg-muted text-muted-foreground shadow-md transition-all duration-200 group hover:bg-muted/80 hover:shadow-lg",
     variant: "default" as const,
     iconClass: "h-4 w-4 mr-1 group-hover:scale-110 transition-transform"
   }

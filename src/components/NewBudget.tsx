@@ -178,10 +178,10 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
   const categoryDisplay = getDisplayValue(formData.category)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-primary/5">
       
       {/* الهيدر */}
-      <div className="bg-white border-b shadow-sm">
+      <div className="bg-card border-b border-border shadow-sm">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -356,7 +356,7 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                           size="sm"
                           onClick={() => removeCategory(category.id)}
                           disabled={formData.categories.length === 1}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -385,7 +385,7 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                       </div>
                       <div className="flex justify-between border-t pt-2">
                         <span>المتبقي:</span>
-                        <span className={`font-bold ${remainingAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`font-bold ${remainingAmount >= 0 ? 'text-success' : 'text-destructive'}`}>
                           {formatCurrencyValue(remainingAmount, {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 2,
@@ -393,7 +393,7 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                         </span>
                       </div>
                       {totalAllocated > parseAmount(formData.totalAmount) && (
-                        <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                        <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
                           تحذير: إجمالي المبالغ المخصصة يتجاوز إجمالي الموازنة
                         </div>
                       )}

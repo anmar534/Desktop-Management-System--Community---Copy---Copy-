@@ -29,16 +29,24 @@ const sanitizeRates = (candidate: unknown, fallback: Record<string, number>): Re
   return Object.keys(buffer).length > 0 ? buffer : { ...fallback }
 }
 
-const resolveTimestamp = (payload: any): string => {
+interface ExchangeRatePayload {
+  base_code?: unknown
+  rates?: unknown
+  time_last_update_utc?: unknown
+  time_last_update_unix?: unknown
+}
+
+const resolveTimestamp = (payload: ExchangeRatePayload | null | undefined): string => {
   if (payload?.time_last_update_utc) {
-    const parsed = new Date(payload.time_last_update_utc)
+    const parsed = new Date(String(payload.time_last_update_utc))
     if (!Number.isNaN(parsed.getTime())) {
       return parsed.toISOString()
     }
   }
 
   if (payload?.time_last_update_unix) {
-    const unixDate = new Date(Number(payload.time_last_update_unix) * 1000)
+    const unixTime = Number(payload.time_last_update_unix)
+    const unixDate = new Date(Number.isFinite(unixTime) ? unixTime * 1000 : NaN)
     if (!Number.isNaN(unixDate.getTime())) {
       return unixDate.toISOString()
     }
@@ -68,9 +76,9 @@ export const fetchExchangeRates = async (
       throw new Error(`فشل جلب أسعار الصرف (${response.status})`)
     }
 
-    const payload = await response.json()
-    const sanitizedRates = sanitizeRates(payload?.rates, fallback)
-    const resolvedBase: string = typeof payload?.base_code === 'string' ? payload.base_code : baseCurrency
+  const payload = (await response.json()) as ExchangeRatePayload
+  const sanitizedRates = sanitizeRates(payload?.rates, fallback)
+  const resolvedBase: string = typeof payload?.base_code === 'string' ? payload.base_code : baseCurrency
 
     return {
       baseCurrency: resolvedBase,

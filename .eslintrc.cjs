@@ -83,7 +83,31 @@ module.exports = {
   'react/display-name': 'warn',
   'react/no-unescaped-entities': 'warn',
     'react-hooks/rules-of-hooks': 'warn',
-    'react-hooks/exhaustive-deps': 'warn'
+    'react-hooks/exhaustive-deps': 'warn',
+    'no-restricted-syntax': [
+      'warn',
+      {
+        selector:
+          "Literal[value=/\\b(?:bg|text|border|from|to|via|shadow|ring|stroke|fill)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(?:-(?:[0-9]{2,3}))?\\b/]",
+        message:
+          'Use design-token utility classes (`bg-primary`, `text-muted-foreground`, etc.) instead of Tailwind raw color scale aliases.'
+      },
+      {
+        selector:
+          "TemplateElement[value.raw=/\\b(?:bg|text|border|from|to|via|shadow|ring|stroke|fill)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|black|white)(?:-(?:[0-9]{2,3}))?\\b/]",
+        message:
+          'Use design-token utility classes (`bg-primary`, `text-muted-foreground`, etc.) instead of Tailwind raw color scale aliases.'
+      },
+      {
+        selector: "Literal[value=/\\b(?:bg|text|border|from|to|via|shadow|ring|stroke|fill)-\\[[^\\]]+\\]/]",
+        message: 'Avoid arbitrary color values in Tailwind classes; expose them as tokens first.'
+      },
+      {
+        selector:
+          "TemplateElement[value.raw=/\\b(?:bg|text|border|from|to|via|shadow|ring|stroke|fill)-\\[[^\\]]+\\]/]",
+        message: 'Avoid arbitrary color values in Tailwind classes; expose them as tokens first.'
+      }
+    ]
   },
   overrides: [
     {

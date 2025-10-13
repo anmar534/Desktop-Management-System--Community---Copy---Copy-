@@ -114,10 +114,10 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
   const { formatCurrencyValue } = useCurrencyFormatter(formData.currency)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+  <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-primary/5">
       
       {/* الهيدر */}
-      <div className="bg-white border-b shadow-sm">
+  <div className="bg-card border-b border-border shadow-sm">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -254,11 +254,11 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
                       id="isActive"
                       checked={formData.isActive}
                       onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                      className="rounded border-gray-300"
+                      className="rounded border-input"
                       aria-label="حساب نشط"
                     />
                     <Label htmlFor="isActive" className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <CheckCircle className="h-4 w-4 text-success" />
                       حساب نشط
                     </Label>
                   </div>
@@ -306,7 +306,7 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">حالة الحساب:</span>
-                    <span className={`font-medium ${formData.isActive ? 'text-green-600' : 'text-gray-500'}`}>
+                    <span className={`font-medium ${formData.isActive ? 'text-success' : 'text-muted-foreground'}`}>
                       {formData.isActive ? 'نشط' : 'غير نشط'}
                     </span>
                   </div>

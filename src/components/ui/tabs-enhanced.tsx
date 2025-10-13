@@ -174,7 +174,7 @@ export const EnhancedTabs = React.forwardRef<
     return (
       <TabsPrimitive.Root
         ref={ref}
-        defaultValue={defaultValue || tabs[0]?.value}
+  defaultValue={defaultValue ?? tabs[0]?.value}
         onValueChange={onTabChange}
         className={cn('w-full', className)}
         {...props}
@@ -275,7 +275,7 @@ export const VerticalTabs = React.forwardRef<
     return (
       <TabsPrimitive.Root
         ref={ref}
-        defaultValue={defaultValue || tabs[0]?.value}
+  defaultValue={defaultValue ?? tabs[0]?.value}
         onValueChange={onTabChange}
         className={cn('w-full flex gap-6', className)}
         orientation="vertical"

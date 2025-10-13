@@ -3,6 +3,26 @@
  * Integrated Expense Management System for Construction Companies
  */
 
+import { getDesignTokenExpression, type DesignTokenKey } from '@/utils/designTokens';
+
+const tokenColor = (token: DesignTokenKey): string => getDesignTokenExpression(token);
+
+const EXPENSE_FREQUENCY_COLOR_CLASSES = {
+  MONTHLY: 'bg-info/10 text-info border-info/30',
+  QUARTERLY: 'bg-success/10 text-success border-success/30',
+  ANNUALLY: 'bg-primary/10 text-primary border-primary/30',
+  SEMI_ANNUALLY: 'bg-warning/10 text-warning border-warning/30',
+  WEEKLY: 'bg-accent/10 text-accent border-accent/30',
+  ONE_TIME: 'bg-muted/40 text-muted-foreground border-muted/40',
+} as const;
+
+const PAYMENT_STATUS_COLOR_CLASSES = {
+  PENDING: 'bg-warning/10 text-warning border-warning/30',
+  COMPLETED: 'bg-success/10 text-success border-success/30',
+  OVERDUE: 'bg-error/10 text-error border-error/30',
+  CANCELLED: 'bg-muted/40 text-muted-foreground border-muted/40',
+} as const;
+
 // واجهة تصنيف المصروفات
 export interface ExpenseCategory {
   id: string;
@@ -44,12 +64,12 @@ export interface Expense {
 
 // تردد المصروفات
 export const EXPENSE_FREQUENCIES = {
-  MONTHLY: { id: 'monthly', nameAr: 'شهرية', nameEn: 'Monthly', multiplier: 12, color: 'bg-blue-100 text-blue-800' },
-  QUARTERLY: { id: 'quarterly', nameAr: 'ربع سنوية', nameEn: 'Quarterly', multiplier: 4, color: 'bg-green-100 text-green-800' },
-  ANNUALLY: { id: 'annually', nameAr: 'سنوية', nameEn: 'Annually', multiplier: 1, color: 'bg-purple-100 text-purple-800' },
-  SEMI_ANNUALLY: { id: 'semi_annually', nameAr: 'نصف سنوية', nameEn: 'Semi-Annually', multiplier: 2, color: 'bg-yellow-100 text-yellow-800' },
-  WEEKLY: { id: 'weekly', nameAr: 'أسبوعية', nameEn: 'Weekly', multiplier: 52, color: 'bg-indigo-100 text-indigo-800' },
-  ONE_TIME: { id: 'one_time', nameAr: 'مرة واحدة', nameEn: 'One Time', multiplier: 0, color: 'bg-gray-100 text-gray-800' }
+  MONTHLY: { id: 'monthly', nameAr: 'شهرية', nameEn: 'Monthly', multiplier: 12, color: EXPENSE_FREQUENCY_COLOR_CLASSES.MONTHLY },
+  QUARTERLY: { id: 'quarterly', nameAr: 'ربع سنوية', nameEn: 'Quarterly', multiplier: 4, color: EXPENSE_FREQUENCY_COLOR_CLASSES.QUARTERLY },
+  ANNUALLY: { id: 'annually', nameAr: 'سنوية', nameEn: 'Annually', multiplier: 1, color: EXPENSE_FREQUENCY_COLOR_CLASSES.ANNUALLY },
+  SEMI_ANNUALLY: { id: 'semi_annually', nameAr: 'نصف سنوية', nameEn: 'Semi-Annually', multiplier: 2, color: EXPENSE_FREQUENCY_COLOR_CLASSES.SEMI_ANNUALLY },
+  WEEKLY: { id: 'weekly', nameAr: 'أسبوعية', nameEn: 'Weekly', multiplier: 52, color: EXPENSE_FREQUENCY_COLOR_CLASSES.WEEKLY },
+  ONE_TIME: { id: 'one_time', nameAr: 'مرة واحدة', nameEn: 'One Time', multiplier: 0, color: EXPENSE_FREQUENCY_COLOR_CLASSES.ONE_TIME }
 } as const;
 
 // طرق الدفع
@@ -63,10 +83,10 @@ export const PAYMENT_METHODS = {
 
 // حالات الدفع
 export const PAYMENT_STATUS = {
-  PENDING: { id: 'pending', nameAr: 'في الانتظار', nameEn: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
-  COMPLETED: { id: 'completed', nameAr: 'مكتمل', nameEn: 'Completed', color: 'bg-green-100 text-green-800' },
-  OVERDUE: { id: 'overdue', nameAr: 'متأخر', nameEn: 'Overdue', color: 'bg-red-100 text-red-800' },
-  CANCELLED: { id: 'cancelled', nameAr: 'ملغي', nameEn: 'Cancelled', color: 'bg-gray-100 text-gray-800' }
+  PENDING: { id: 'pending', nameAr: 'في الانتظار', nameEn: 'Pending', color: PAYMENT_STATUS_COLOR_CLASSES.PENDING },
+  COMPLETED: { id: 'completed', nameAr: 'مكتمل', nameEn: 'Completed', color: PAYMENT_STATUS_COLOR_CLASSES.COMPLETED },
+  OVERDUE: { id: 'overdue', nameAr: 'متأخر', nameEn: 'Overdue', color: PAYMENT_STATUS_COLOR_CLASSES.OVERDUE },
+  CANCELLED: { id: 'cancelled', nameAr: 'ملغي', nameEn: 'Cancelled', color: PAYMENT_STATUS_COLOR_CLASSES.CANCELLED }
 } as const;
 
 // التصنيفات الرئيسية للمصروفات
@@ -79,7 +99,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'رواتب الموظفين الإداريين والإدارة العليا',
     isAdministrative: true,
     icon: '👥',
-    color: '#3B82F6',
+  color: tokenColor('chart1'),
     subcategories: [
       { id: 'management_salaries', nameAr: 'رواتب الإدارة العليا', nameEn: 'Management Salaries' },
       { id: 'admin_staff_salaries', nameAr: 'رواتب الموظفين الإداريين', nameEn: 'Administrative Staff Salaries' },
@@ -95,7 +115,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'التأمينات الطبية والاجتماعية للموظفين الإداريين',
     isAdministrative: true,
     icon: '🛡️',
-    color: '#10B981',
+  color: tokenColor('chart2'),
     subcategories: [
       { id: 'health_insurance_admin', nameAr: 'التأمين الطبي الإداري', nameEn: 'Administrative Health Insurance' },
       { id: 'social_insurance_admin', nameAr: 'التأمينات الاجتماعية الإدارية', nameEn: 'Administrative Social Insurance' },
@@ -110,7 +130,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'إيجارات المكاتب الإدارية والمستودعات',
     isAdministrative: true,
     icon: '🏢',
-    color: '#8B5CF6',
+  color: tokenColor('chart3'),
     subcategories: [
       { id: 'main_office_rent', nameAr: 'إيجار المكتب الرئيسي', nameEn: 'Main Office Rent' },
       { id: 'branch_office_rent', nameAr: 'إيجار المكاتب الفرعية', nameEn: 'Branch Office Rent' },
@@ -125,7 +145,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'فواتير الكهرباء والماء والاتصالات',
     isAdministrative: true,
     icon: '⚡',
-    color: '#F59E0B',
+  color: tokenColor('chart4'),
     subcategories: [
       { id: 'electricity', nameAr: 'الكهرباء', nameEn: 'Electricity' },
       { id: 'water', nameAr: 'المياه', nameEn: 'Water' },
@@ -141,7 +161,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'القرطاسية والمستلزمات المكتبية والتقنية',
     isAdministrative: true,
     icon: '📝',
-    color: '#06B6D4',
+  color: tokenColor('chart5'),
     subcategories: [
       { id: 'stationery', nameAr: 'القرطاسية', nameEn: 'Stationery' },
       { id: 'printing_materials', nameAr: 'مواد الطباعة', nameEn: 'Printing Materials' },
@@ -157,7 +177,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'الاستشارات القانونية والمحاسبية والمهنية',
     isAdministrative: true,
     icon: '⚖️',
-    color: '#EF4444',
+  color: tokenColor('chart6'),
     subcategories: [
       { id: 'legal_services', nameAr: 'الخدمات القانونية', nameEn: 'Legal Services' },
       { id: 'audit_services', nameAr: 'خدمات المراجعة والتدقيق', nameEn: 'Audit Services' },
@@ -173,7 +193,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'حملات التسويق والإعلان والعلاقات العامة',
     isAdministrative: true,
     icon: '📢',
-    color: '#EC4899',
+  color: tokenColor('chart7'),
     subcategories: [
       { id: 'digital_marketing', nameAr: 'التسويق الرقمي', nameEn: 'Digital Marketing' },
       { id: 'print_advertising', nameAr: 'الإعلانات المطبوعة', nameEn: 'Print Advertising' },
@@ -189,7 +209,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'تكاليف النقل والمواصلات للإدارة',
     isAdministrative: true,
     icon: '🚗',
-    color: '#84CC16',
+  color: tokenColor('chart8'),
     subcategories: [
       { id: 'vehicle_maintenance_admin', nameAr: 'صيانة المركبات الإدارية', nameEn: 'Administrative Vehicle Maintenance' },
       { id: 'fuel_admin', nameAr: 'وقود المركبات الإدارية', nameEn: 'Administrative Vehicle Fuel' },
@@ -204,7 +224,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'التراخيص والرسوم الحكومية والعضويات',
     isAdministrative: true,
     icon: '📋',
-    color: '#6366F1',
+  color: tokenColor('primary'),
     subcategories: [
       { id: 'business_license', nameAr: 'رخصة تجارية', nameEn: 'Business License' },
       { id: 'chamber_membership', nameAr: 'عضوية غرفة التجارة', nameEn: 'Chamber of Commerce Membership' },
@@ -221,7 +241,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'أجور العمال والفنيين في المشاريع',
     isAdministrative: false,
     icon: '👷',
-    color: '#0EA5E9',
+  color: tokenColor('success'),
     subcategories: [
       { id: 'skilled_workers', nameAr: 'العمال المهرة', nameEn: 'Skilled Workers' },
       { id: 'unskilled_workers', nameAr: 'العمال غير المهرة', nameEn: 'Unskilled Workers' },
@@ -237,7 +257,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'المواد الخام ومواد البناء الأساسية',
     isAdministrative: false,
     icon: '🧱',
-    color: '#DC2626',
+  color: tokenColor('accent'),
     subcategories: [
       { id: 'cement_concrete', nameAr: 'الأسمنت والخرسانة', nameEn: 'Cement & Concrete' },
       { id: 'steel_reinforcement', nameAr: 'الحديد والتسليح', nameEn: 'Steel & Reinforcement' },
@@ -253,7 +273,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'المواد الكهربائية وأعمال السباكة والصحي',
     isAdministrative: false,
     icon: '🔌',
-    color: '#059669',
+  color: tokenColor('info'),
     subcategories: [
       { id: 'electrical_materials', nameAr: 'المواد الكهربائية', nameEn: 'Electrical Materials' },
       { id: 'plumbing_materials', nameAr: 'مواد السباكة والصحي', nameEn: 'Plumbing & Sanitary Materials' },
@@ -268,7 +288,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'مواد التشطيبات الداخلية والخارجية',
     isAdministrative: false,
     icon: '🎨',
-    color: '#7C3AED',
+  color: tokenColor('warning'),
     subcategories: [
       { id: 'paint_coating', nameAr: 'الدهانات والطلاء', nameEn: 'Paint & Coating' },
       { id: 'tiles_ceramics', nameAr: 'البلاط والسيراميك', nameEn: 'Tiles & Ceramics' },
@@ -284,7 +304,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'المعدات الثقيلة وآلات البناء',
     isAdministrative: false,
     icon: '🚜',
-    color: '#0891B2',
+  color: tokenColor('chart1'),
     subcategories: [
       { id: 'heavy_equipment', nameAr: 'المعدات الثقيلة', nameEn: 'Heavy Equipment' },
       { id: 'construction_tools', nameAr: 'أدوات البناء والعدد', nameEn: 'Construction Tools' },
@@ -300,7 +320,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'تكاليف المقاولين الفرعيين والمتخصصين',
     isAdministrative: false,
     icon: '🤝',
-    color: '#BE185D',
+  color: tokenColor('chart2'),
     subcategories: [
       { id: 'electrical_contractors', nameAr: 'مقاولو الكهرباء', nameEn: 'Electrical Contractors' },
       { id: 'plumbing_contractors', nameAr: 'مقاولو السباكة', nameEn: 'Plumbing Contractors' },
@@ -316,7 +336,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'تراخيص البناء والرسوم الحكومية للمشاريع',
     isAdministrative: false,
     icon: '📜',
-    color: '#D97706',
+  color: tokenColor('chart3'),
     subcategories: [
       { id: 'building_permits', nameAr: 'تراخيص البناء', nameEn: 'Building Permits' },
       { id: 'utility_connections', nameAr: 'توصيل المرافق', nameEn: 'Utility Connections' },
@@ -331,7 +351,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'نقل المواد والمعدات والعمالة للمشاريع',
     isAdministrative: false,
     icon: '🚛',
-    color: '#15803D',
+  color: tokenColor('chart4'),
     subcategories: [
       { id: 'material_transportation', nameAr: 'نقل المواد', nameEn: 'Material Transportation' },
       { id: 'equipment_transportation', nameAr: 'نقل المعدات', nameEn: 'Equipment Transportation' },
@@ -346,7 +366,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'معدات ومتطلبات السلامة في المشاريع',
     isAdministrative: false,
     icon: '⛑️',
-    color: '#BE123C',
+  color: tokenColor('destructive'),
     subcategories: [
       { id: 'safety_equipment', nameAr: 'معدات السلامة المهنية', nameEn: 'Occupational Safety Equipment' },
       { id: 'safety_training', nameAr: 'تدريب السلامة', nameEn: 'Safety Training' },
@@ -362,7 +382,7 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
     description: 'الخدمات والمرافق المؤقتة للمشاريع',
     isAdministrative: false,
     icon: '🔧',
-    color: '#0284C7',
+  color: tokenColor('chart5'),
     subcategories: [
       { id: 'temporary_electricity', nameAr: 'الكهرباء المؤقتة', nameEn: 'Temporary Electricity' },
       { id: 'temporary_water', nameAr: 'المياه المؤقتة', nameEn: 'Temporary Water' },

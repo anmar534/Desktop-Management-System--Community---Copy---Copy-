@@ -1,10 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import type { ComponentProps } from 'react'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
+import { InlineAlert, type InlineAlertVariant } from './ui/inline-alert'
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
 import { Progress } from './ui/progress'
 import { PageLayout, DetailCard, EmptyState } from './PageLayout'
 import { DeleteConfirmation } from './ui/confirmation-dialog'
@@ -15,7 +15,6 @@ import {
   Edit,
   TrendingDown,
   AlertTriangle,
-  CheckCircle,
   BarChart3,
   PieChart,
   ArrowRight,
@@ -27,13 +26,12 @@ import { formatDateValue } from '@/utils/formatters'
 import { getProgressColor } from '../utils/statusColors'
 import { useBudgets } from '@/application/hooks/useBudgets'
 
-type BadgeVariant = NonNullable<ComponentProps<typeof Badge>['variant']>
-
-interface BudgetStatusInfo {
-  text: string
-  variant: BadgeVariant
-  color: string
-  bgColor: string
+interface BudgetStatusSummary {
+  badgeStatus: StatusBadgeProps['status']
+  badgeLabel: string
+  alertVariant: InlineAlertVariant
+  alertTitle: string
+  alertDescription: string
 }
 
 interface BudgetsProps {
@@ -78,44 +76,44 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
       value: formatCurrency(budgetsData.overview.totalAllocated),
       trend: 'up' as const,
       trendValue: '+4.1%',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+      color: 'text-primary',
+      bgColor: 'bg-primary/10'
     },
     {
       label: 'المبالغ المصروفة',
       value: formatCurrency(budgetsData.overview.totalSpent),
       trend: 'up' as const,
       trendValue: '+6.2%',
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50'
+      color: 'text-warning',
+      bgColor: 'bg-warning/10'
     },
     {
       label: 'المتبقي من الموازنة',
       value: formatCurrency(budgetsData.overview.totalRemaining),
       trend: 'down' as const,
       trendValue: '-2.3%',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
+      color: 'text-success',
+      bgColor: 'bg-success/10'
     },
     {
       label: 'معدل الاستخدام',
       value: `${budgetsData.overview.utilizationRate}%`,
       trend: 'up' as const,
       trendValue: '+1.8%',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      color: 'text-info',
+      bgColor: 'bg-info/10'
     },
     {
       label: 'موازنات نشطة',
       value: budgetsData.overview.activeBudgets.toString(),
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50'
+      color: 'text-success',
+      bgColor: 'bg-success/10'
     },
     {
       label: 'موازنات تحتاج انتباه',
       value: budgetsData.overview.overBudget.toString(),
-      color: 'text-red-600',
-      bgColor: 'bg-red-50'
+      color: 'text-destructive',
+      bgColor: 'bg-destructive/10'
     }
   ]), [budgetsData])
 
@@ -140,25 +138,74 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
     }
   ]
 
-  const getStatusInfo = (status: string, utilization: number): BudgetStatusInfo => {
+  const resolveBudgetStatusSummary = (
+    status: string,
+    utilization: number,
+    remainingAmount: number
+  ): BudgetStatusSummary => {
     if (utilization > 100) {
-      return { text: 'متجاوزة للحد', variant: 'destructive', color: 'text-red-600', bgColor: 'bg-red-50' }
+      return {
+        badgeStatus: 'error',
+        badgeLabel: 'متجاوزة للحد',
+        alertVariant: 'destructive',
+        alertTitle: 'تم تجاوز السقف المالي',
+        alertDescription: `تجاوزت الموازنة السقف المعتمد بمقدار ${formatCurrency(Math.abs(remainingAmount))}.`
+      }
     }
-    if (utilization < 50 && status === 'active') {
-      return { text: 'استخدام منخفض', variant: 'outline', color: 'text-yellow-600', bgColor: 'bg-yellow-50' }
+
+    if (status === 'active' && utilization < 50) {
+      return {
+        badgeStatus: 'warning',
+        badgeLabel: 'استخدام منخفض',
+        alertVariant: 'warning',
+        alertTitle: 'استخدام أقل من المتوقع',
+        alertDescription: `ما يزال ${100 - utilization}% من الموازنة غير مستغل. راجع خطة الإنفاق.`
+      }
     }
 
     switch (status) {
       case 'draft':
-        return { text: 'مسودة', variant: 'secondary', color: 'text-gray-600', bgColor: 'bg-gray-50' }
+        return {
+          badgeStatus: 'notStarted',
+          badgeLabel: 'مسودة',
+          alertVariant: 'neutral',
+          alertTitle: 'الموازنة في وضع المسودة',
+          alertDescription: 'لم يتم اعتماد هذه الموازنة بعد. أكمل تفاصيلها لاعتمادها.'
+        }
       case 'active':
-        return { text: 'نشطة', variant: 'default', color: 'text-purple-600', bgColor: 'bg-purple-50' }
+        return {
+          badgeStatus: 'onTrack',
+          badgeLabel: 'نشطة',
+          alertVariant: 'info',
+          alertTitle: 'الموازنة نشطة',
+          alertDescription: remainingAmount >= 0
+            ? `المتبقي ${formatCurrency(remainingAmount)} ضمن السقف المعتمد.`
+            : 'تم استخدام معظم الموازنة وفق الخطة المعتمدة.'
+        }
       case 'completed':
-        return { text: 'مكتملة', variant: 'success', color: 'text-green-600', bgColor: 'bg-green-50' }
+        return {
+          badgeStatus: 'completed',
+          badgeLabel: 'مكتملة',
+          alertVariant: 'success',
+          alertTitle: 'تم إكمال الموازنة',
+          alertDescription: 'تم إغلاق الموازنة بعد الانتهاء من جميع عمليات الصرف.'
+        }
       case 'cancelled':
-        return { text: 'ملغاة', variant: 'outline', color: 'text-gray-500', bgColor: 'bg-gray-50' }
+        return {
+          badgeStatus: 'default',
+          badgeLabel: 'ملغاة',
+          alertVariant: 'neutral',
+          alertTitle: 'تم إيقاف الموازنة',
+          alertDescription: 'لن تظهر هذه الموازنة في التقارير أو التحليلات المستقبلية.'
+        }
       default:
-        return { text: 'غير محددة', variant: 'outline', color: 'text-gray-500', bgColor: 'bg-gray-50' }
+        return {
+          badgeStatus: 'default',
+          badgeLabel: 'غير محدد',
+          alertVariant: 'neutral',
+          alertTitle: 'حالة غير معروفة',
+          alertDescription: 'يرجى التحقق من بيانات الموازنة لتحديد حالتها الحالية.'
+        }
     }
   }
 
@@ -169,32 +216,32 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
         value={formatCurrency(budgetsData.overview.totalAllocated)}
         subtitle="جميع الموازنات المعتمدة"
         icon={Target}
-        color="text-purple-600"
-        bgColor="bg-purple-50"
+        color="text-primary"
+        bgColor="bg-primary/10"
       />
       <DetailCard
         title="معدل الاستخدام"
         value={`${budgetsData.overview.utilizationRate}%`}
         subtitle="نسبة الصرف إلى المخصص"
         icon={PieChart}
-        color="text-blue-600"
-        bgColor="bg-blue-50"
+        color="text-info"
+        bgColor="bg-info/10"
       />
       <DetailCard
         title="موازنات متجاوزة"
         value={budgetsData.overview.overBudget.toString()}
         subtitle="تحتاج معالجة عاجلة"
         icon={AlertTriangle}
-        color="text-red-600"
-        bgColor="bg-red-50"
+        color="text-destructive"
+        bgColor="bg-destructive/10"
       />
       <DetailCard
         title="استخدام منخفض"
         value={budgetsData.overview.underUtilized.toString()}
         subtitle="فرص لإعادة التوزيع"
         icon={TrendingDown}
-        color="text-yellow-600"
-        bgColor="bg-yellow-50"
+        color="text-warning"
+        bgColor="bg-warning/10"
       />
     </div>
   )
@@ -217,11 +264,10 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
 
   return (
     <PageLayout
+      tone="primary"
       title="إدارة الموازنة"
       description="إدارة ومتابعة الموازنات والمخصصات المالية"
       icon={Target}
-      gradientFrom="from-purple-600"
-      gradientTo="to-purple-700"
       quickStats={quickStats}
       quickActions={quickActions}
       searchPlaceholder="البحث في الموازنات..."
@@ -265,8 +311,12 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
         <>
           <div className="space-y-4">
             {filteredBudgets.map((budget, index) => {
-              const statusInfo = getStatusInfo(budget.status, budget.utilizationPercentage)
               const remainingAmount = budget.totalAmount - budget.spentAmount
+              const statusSummary = resolveBudgetStatusSummary(
+                budget.status,
+                budget.utilizationPercentage,
+                remainingAmount
+              )
 
               return (
                 <motion.div
@@ -286,9 +336,12 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
                                 <h3 className="text-lg font-semibold text-foreground">
                                   {budget.name}
                                 </h3>
-                                <Badge variant={statusInfo.variant} className={statusInfo.color}>
-                                  {statusInfo.text}
-                                </Badge>
+                                <StatusBadge
+                                  status={statusSummary.badgeStatus}
+                                  label={statusSummary.badgeLabel}
+                                  size="sm"
+                                  className="shadow-none"
+                                />
                               </div>
                               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                                 <span>القسم: {budget.department}</span>
@@ -300,21 +353,21 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
 
                           {/* المبالغ */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div className="p-3 bg-blue-50 rounded-lg">
+                            <div className="p-3 bg-info/10 rounded-lg">
                               <div className="text-sm text-muted-foreground">المخصص</div>
-                              <div className="text-lg font-semibold text-blue-600">
+                              <div className="text-lg font-semibold text-info">
                                 {formatCurrency(budget.totalAmount)}
                               </div>
                             </div>
-                            <div className="p-3 bg-orange-50 rounded-lg">
+                            <div className="p-3 bg-warning/10 rounded-lg">
                               <div className="text-sm text-muted-foreground">المصروف</div>
-                              <div className="text-lg font-semibold text-orange-600">
+                              <div className="text-lg font-semibold text-warning">
                                 {formatCurrency(budget.spentAmount)}
                               </div>
                             </div>
-                            <div className={`p-3 rounded-lg ${remainingAmount >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                            <div className={`p-3 rounded-lg ${remainingAmount >= 0 ? 'bg-success/10' : 'bg-destructive/10'}`}>
                               <div className="text-sm text-muted-foreground">المتبقي</div>
-                              <div className={`text-lg font-semibold ${remainingAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              <div className={`text-lg font-semibold ${remainingAmount >= 0 ? 'text-success' : 'text-destructive'}`}>
                                 {formatCurrency(remainingAmount)}
                               </div>
                             </div>
@@ -362,9 +415,9 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
                             <div className="flex justify-between text-sm mb-2">
                               <span className="text-muted-foreground">نسبة الاستخدام</span>
                               <span className={`font-medium ${
-                                budget.utilizationPercentage > 100 ? 'text-red-600' :
-                                budget.utilizationPercentage > 90 ? 'text-orange-600' :
-                                budget.utilizationPercentage < 50 ? 'text-yellow-600' : 'text-green-600'
+                                budget.utilizationPercentage > 100 ? 'text-destructive' :
+                                budget.utilizationPercentage > 90 ? 'text-warning' :
+                                budget.utilizationPercentage < 50 ? 'text-warning' : 'text-success'
                               }`}>
                                 {budget.utilizationPercentage}%
                               </span>
@@ -372,7 +425,7 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
 
                             <Progress
                               value={Math.min(budget.utilizationPercentage, 100)}
-                              className="h-3 bg-gray-200"
+                              className="h-3 bg-muted"
                               indicatorClassName={`${getProgressColor(budget.utilizationPercentage)} transition-all duration-300`}
                             />
 
@@ -382,27 +435,12 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
                             </div>
                           </div>
 
-                          <div className={`p-3 rounded-lg mb-4 ${statusInfo.bgColor}`}>
-                            <div className="flex items-center gap-2 mb-2">
-                              {budget.utilizationPercentage > 100 ? (
-                                <AlertTriangle className="h-4 w-4 text-red-600" />
-                              ) : budget.utilizationPercentage < 50 ? (
-                                <TrendingDown className="h-4 w-4 text-yellow-600" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                              )}
-                              <span className={`text-sm font-medium ${statusInfo.color}`}>
-                                {statusInfo.text}
-                              </span>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {budget.utilizationPercentage > 100
-                                ? `تجاوز الموازنة بـ ${formatCurrency(Math.abs(remainingAmount))}`
-                                : budget.utilizationPercentage < 50
-                                  ? `استخدام منخفض: ${100 - budget.utilizationPercentage}% غير مستغل`
-                                  : 'في المسار الصحيح'}
-                            </div>
-                          </div>
+                          <InlineAlert
+                            className="mb-4"
+                            variant={statusSummary.alertVariant}
+                            title={statusSummary.alertTitle}
+                            description={statusSummary.alertDescription}
+                          />
 
                           <div className="flex flex-wrap gap-2">
                             <Button
@@ -439,7 +477,7 @@ export function Budgets({ onSectionChange }: BudgetsProps) {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="w-full text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10 hover:border-destructive/40"
                                 >
                                   <Trash2 className="h-4 w-4 mr-1" />
                                   حذف

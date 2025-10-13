@@ -6,7 +6,6 @@ import {
   Save, 
   Plus, 
   RefreshCw, 
-  ChevronRight,
   Check,
   X
 } from 'lucide-react';
@@ -300,8 +299,8 @@ export const ThemeTesting: Story = {
         </div>
       </div>
 
-      <div data-theme="dark" className="p-spacing-6 rounded-lg border bg-gray-900">
-        <h3 className="text-lg font-semibold mb-spacing-4 text-white">Dark Theme</h3>
+      <div data-theme="dark" className="p-spacing-6 rounded-lg border bg-muted text-muted-foreground">
+        <h3 className="text-lg font-semibold mb-spacing-4 text-foreground">Dark Theme</h3>
         <div className="flex flex-wrap gap-spacing-3">
           <Button>افتراضي</Button>
           <Button variant="destructive">حذف</Button>
@@ -311,8 +310,8 @@ export const ThemeTesting: Story = {
         </div>
       </div>
 
-      <div data-theme="high-contrast" className="p-spacing-6 rounded-lg border bg-black">
-        <h3 className="text-lg font-semibold mb-spacing-4 text-white">High Contrast Theme</h3>
+      <div data-theme="high-contrast" className="p-spacing-6 rounded-lg border bg-background text-foreground">
+        <h3 className="text-lg font-semibold mb-spacing-4">High Contrast Theme</h3>
         <div className="flex flex-wrap gap-spacing-3">
           <Button>افتراضي</Button>
           <Button variant="destructive">حذف</Button>
@@ -351,7 +350,7 @@ export const UsageGuide: Story = {
             <Button variant="destructive" className="mt-spacing-2">حذف العنصر</Button>
           </div>
 
-          <div className="border-l-4 border-gray-300 pl-spacing-4">
+          <div className="border-l-4 border-muted pl-spacing-4">
             <h4 className="font-semibold">Outline (محدد)</h4>
             <p className="text-sm text-muted-foreground">
               للإجراءات الثانوية: إلغاء، رجوع، تعديل
@@ -359,7 +358,7 @@ export const UsageGuide: Story = {
             <Button variant="outline" className="mt-spacing-2">إلغاء</Button>
           </div>
 
-          <div className="border-l-4 border-gray-400 pl-spacing-4">
+          <div className="border-l-4 border-muted-foreground pl-spacing-4">
             <h4 className="font-semibold">Secondary (ثانوي)</h4>
             <p className="text-sm text-muted-foreground">
               لإجراءات مساعدة أقل أهمية
@@ -367,7 +366,7 @@ export const UsageGuide: Story = {
             <Button variant="secondary" className="mt-spacing-2">عرض التفاصيل</Button>
           </div>
 
-          <div className="border-l-4 border-gray-200 pl-spacing-4">
+          <div className="border-l-4 border-border pl-spacing-4">
             <h4 className="font-semibold">Ghost (شبحي)</h4>
             <p className="text-sm text-muted-foreground">
               لأزرار التنقل والإجراءات الخفيفة
@@ -375,7 +374,7 @@ export const UsageGuide: Story = {
             <Button variant="ghost" className="mt-spacing-2">تحرير</Button>
           </div>
 
-          <div className="border-l-4 border-blue-500 pl-spacing-4">
+          <div className="border-l-4 border-info pl-spacing-4">
             <h4 className="font-semibold">Link (رابط)</h4>
             <p className="text-sm text-muted-foreground">
               للروابط داخل النصوص
@@ -391,7 +390,7 @@ export const UsageGuide: Story = {
           <li>استخدم أيقونات مع النصوص للوضوح</li>
           <li>الأزرار الأساسية يجب أن تكون واضحة ومميزة</li>
           <li>تجنب استخدام أكثر من زر primary في نفس الصفحة</li>
-          <li>استخدم size="lg" للـ CTAs المهمة</li>
+          <li>استخدم size=&quot;lg&quot; للـ CTAs المهمة</li>
           <li>أضف حالة loading عند إرسال البيانات</li>
         </ul>
       </div>

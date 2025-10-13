@@ -22,13 +22,14 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from './ui/alert-dialog';
-import { Badge } from './ui/badge';
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { toast } from 'sonner';
 import { Plus, Building2, Hammer, Edit, Trash2, TrendingUp, BarChart3, Search, Loader2 } from 'lucide-react';
 import { useCurrencyFormatter } from '@/hooks/useCurrencyFormatter';
 import { formatDateValue } from '@/utils/formatters';
 import { EmptyState } from './PageLayout';
+import { InlineAlert } from './ui/inline-alert';
 
 import type {
   Expense,
@@ -109,6 +110,24 @@ const EXPENSE_FREQUENCY_CONFIG: Record<ExpenseFrequencyId, { label: string; colo
   },
   {} as Record<ExpenseFrequencyId, { label: string; color: string }>
 );
+
+type ExpenseBadgeStatus = StatusBadgeProps['status'];
+
+const PAYMENT_STATUS_BADGE_STATUS: Record<PaymentStatusId, ExpenseBadgeStatus> = {
+  [PAYMENT_STATUS.PENDING.id]: 'warning',
+  [PAYMENT_STATUS.COMPLETED.id]: 'success',
+  [PAYMENT_STATUS.OVERDUE.id]: 'overdue',
+  [PAYMENT_STATUS.CANCELLED.id]: 'default',
+};
+
+const EXPENSE_FREQUENCY_BADGE_STATUS: Record<ExpenseFrequencyId, ExpenseBadgeStatus> = {
+  [EXPENSE_FREQUENCIES.MONTHLY.id]: 'info',
+  [EXPENSE_FREQUENCIES.QUARTERLY.id]: 'onTrack',
+  [EXPENSE_FREQUENCIES.ANNUALLY.id]: 'success',
+  [EXPENSE_FREQUENCIES.SEMI_ANNUALLY.id]: 'dueSoon',
+  [EXPENSE_FREQUENCIES.WEEKLY.id]: 'warning',
+  [EXPENSE_FREQUENCIES.ONE_TIME.id]: 'default',
+};
 
 const isExpenseFrequencyId = (value: string): value is ExpenseFrequencyId => EXPENSE_FREQUENCY_IDS.includes(value as ExpenseFrequencyId);
 const isPaymentMethodId = (value: string): value is PaymentMethodId => PAYMENT_METHOD_IDS.includes(value as PaymentMethodId);
@@ -448,10 +467,10 @@ const ExpenseManagement: React.FC = () => {
   // عرض حالة التحميل للمشاريع والمصروفات
   if (loading || projectsLoading) {
     return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center" dir="rtl">
+      <div className="p-6 bg-muted/20 min-h-screen flex items-center justify-center" dir="rtl">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">جاري تحميل البيانات...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-info" />
+          <p className="text-muted-foreground">جاري تحميل البيانات...</p>
         </div>
       </div>
     );
@@ -460,9 +479,9 @@ const ExpenseManagement: React.FC = () => {
   // عرض رسالة الخطأ
   if (error) {
     return (
-      <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center" dir="rtl">
+      <div className="p-6 bg-muted/20 min-h-screen flex items-center justify-center" dir="rtl">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="text-error mb-4">{error}</p>
           <Button onClick={() => window.location.reload()}>
             إعادة المحاولة
           </Button>
@@ -472,16 +491,16 @@ const ExpenseManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 scroll-smooth" dir="rtl">
+    <div className="p-6 space-y-6 bg-muted/20 scroll-smooth" dir="rtl">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-card rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-4" dir="rtl">
           <div className="text-right">
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3" dir="rtl">
-              <Building2 className="w-8 h-8 text-blue-600" />
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3" dir="rtl">
+              <Building2 className="w-8 h-8 text-info" />
               <span>إدارة التكاليف والمشتريات</span>
             </h1>
-            <p className="text-gray-600 mt-1 text-right">إدارة شاملة للتكاليف التشغيلية ومشتريات المشاريع</p>
+            <p className="text-muted-foreground mt-1 text-right">إدارة شاملة للتكاليف التشغيلية ومشتريات المشاريع</p>
           </div>
           <Dialog 
             open={isAddDialogOpen} 
@@ -498,7 +517,7 @@ const ExpenseManagement: React.FC = () => {
                   resetForm();
                   setIsAddDialogOpen(true);
                 }} 
-                className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+                className="bg-primary hover:bg-primary/85 flex items-center gap-2"
                 dir="rtl"
               >
                 <Plus className="w-4 h-4" />
@@ -530,8 +549,8 @@ const ExpenseManagement: React.FC = () => {
                   </TabsList>
                   
                   {/* توضيح نوع التبويب */}
-                  <div className="mb-4 p-3 rounded-lg bg-blue-50 border-l-4 border-blue-400">
-                    <p className="text-sm text-blue-700">
+                  <div className="mb-4 p-3 rounded-lg bg-info/10 border-l-4 border-info/60">
+                    <p className="text-sm text-info">
                       {formTab === 'administrative' ? (
                         <>
                           <strong>التكاليف الإدارية:</strong> للتكاليف التشغيلية مثل الرواتب، الإيجار، الكهرباء، والمصروفات العامة للشركة
@@ -756,15 +775,15 @@ const ExpenseManagement: React.FC = () => {
 
                 {/* Preview calculations */}
                 {previewAmounts && (
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-semibold text-blue-800 mb-2">معاينة الحسابات:</h4>
+                  <div className="bg-info/10 p-4 rounded-lg">
+                    <h4 className="font-semibold text-info mb-2">معاينة الحسابات:</h4>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-blue-600">المبلغ الشهري المتوقع: </span>
+                        <span className="text-info">المبلغ الشهري المتوقع: </span>
                         <span className="font-bold">{formatCurrencyValue(previewAmounts.monthly, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                       <div>
-                        <span className="text-blue-600">المبلغ السنوي المتوقع: </span>
+                        <span className="text-info">المبلغ السنوي المتوقع: </span>
                         <span className="font-bold">{formatCurrencyValue(previewAmounts.annual, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       </div>
                     </div>
@@ -775,7 +794,7 @@ const ExpenseManagement: React.FC = () => {
                   <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                     إلغاء
                   </Button>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                  <Button type="submit" className="bg-primary hover:bg-primary/85">
                     {editingExpense ? 'تحديث' : 'إضافة'}
                   </Button>
                 </div>
@@ -786,54 +805,54 @@ const ExpenseManagement: React.FC = () => {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-r-4 border-blue-500">
+          <Card className="border-r-4 border-info">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-600 text-right">إجمالي التكاليف الإدارية</p>
-                  <p className="text-2xl font-bold text-blue-600 text-right">{formatCount(adminStats.totalExpenses)}</p>
-                  <p className="text-sm text-gray-500 text-right">{formatCurrencyValue(adminStats.totalAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                  <p className="text-sm font-medium text-muted-foreground text-right">إجمالي التكاليف الإدارية</p>
+                  <p className="text-2xl font-bold text-info text-right">{formatCount(adminStats.totalExpenses)}</p>
+                  <p className="text-sm text-muted-foreground/85 text-right">{formatCurrencyValue(adminStats.totalAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
                 </div>
-                <Building2 className="w-8 h-8 text-blue-500" />
+                <Building2 className="w-8 h-8 text-info" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-r-4 border-orange-500">
+          <Card className="border-r-4 border-warning">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-600 text-right">إجمالي مشتريات المشاريع</p>
-                  <p className="text-2xl font-bold text-orange-600 text-right">{formatCount(projectStats.totalExpenses)}</p>
-                  <p className="text-sm text-gray-500 text-right">{formatCurrencyValue(projectStats.totalAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                  <p className="text-sm font-medium text-muted-foreground text-right">إجمالي مشتريات المشاريع</p>
+                  <p className="text-2xl font-bold text-warning text-right">{formatCount(projectStats.totalExpenses)}</p>
+                  <p className="text-sm text-muted-foreground/85 text-right">{formatCurrencyValue(projectStats.totalAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
                 </div>
-                <Hammer className="w-8 h-8 text-orange-500" />
+                <Hammer className="w-8 h-8 text-warning" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-r-4 border-green-500">
+          <Card className="border-r-4 border-success">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-600 text-right">الإسقاطات الشهرية</p>
-                  <p className="text-2xl font-bold text-green-600 text-right">{formatCurrencyValue(adminStats.monthlyTotal + projectStats.monthlyTotal, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
-                  <p className="text-sm text-gray-500 text-right">شهرياً</p>
+                  <p className="text-sm font-medium text-muted-foreground text-right">الإسقاطات الشهرية</p>
+                  <p className="text-2xl font-bold text-success text-right">{formatCurrencyValue(adminStats.monthlyTotal + projectStats.monthlyTotal, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                  <p className="text-sm text-muted-foreground/85 text-right">شهرياً</p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-green-500" />
+                <TrendingUp className="w-8 h-8 text-success" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-r-4 border-purple-500">
+          <Card className="border-r-4 border-accent">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-600 text-right">الإسقاطات السنوية</p>
-                  <p className="text-2xl font-bold text-purple-600 text-right">{formatCurrencyValue(adminStats.annualTotal + projectStats.annualTotal, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
-                  <p className="text-sm text-gray-500 text-right">سنوياً</p>
+                  <p className="text-sm font-medium text-muted-foreground text-right">الإسقاطات السنوية</p>
+                  <p className="text-2xl font-bold text-accent text-right">{formatCurrencyValue(adminStats.annualTotal + projectStats.annualTotal, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+                  <p className="text-sm text-muted-foreground/85 text-right">سنوياً</p>
                 </div>
-                <BarChart3 className="w-8 h-8 text-purple-500" />
+                <BarChart3 className="w-8 h-8 text-accent" />
               </div>
             </CardContent>
           </Card>
@@ -845,7 +864,7 @@ const ExpenseManagement: React.FC = () => {
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4" dir="rtl">
             <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground/70 w-4 h-4" />
               <Input
                 placeholder="البحث في المصروفات..."
                 value={searchTerm}
@@ -950,26 +969,42 @@ interface ExpenseListProps {
 
 const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onEdit, onDelete, stats, type, projects, onCreate }) => {
   const { formatCurrencyValue } = useCurrencyFormatter();
+  const statusSummaryAlert = useMemo(() => {
+    const overdueExpenses = expenses.filter((expense) => coercePaymentStatusId(expense.paymentStatus) === PAYMENT_STATUS.OVERDUE.id);
+    const pendingExpenses = expenses.filter((expense) => coercePaymentStatusId(expense.paymentStatus) === PAYMENT_STATUS.PENDING.id);
+
+    if (overdueExpenses.length > 0) {
+      return {
+        variant: overdueExpenses.length > 2 ? 'destructive' : 'warning' as const,
+        title: 'مصروفات متأخرة تحتاج متابعة',
+        description: `يوجد ${overdueExpenses.length} مصروف متأخر بإجمالي ${formatCurrencyValue(stats.overdueAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}. يرجى التنسيق مع المالية لإغلاق هذه البنود.`,
+      };
+    }
+
+    if (pendingExpenses.length > 0) {
+      return {
+        variant: 'info' as const,
+        title: 'مصروفات قيد المعالجة',
+        description: `${pendingExpenses.length} مصروف بانتظار التأكيد، بقيمة ${formatCurrencyValue(stats.pendingAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}. تأكد من اعتماد الدفعات قبل نهاية الأسبوع.`,
+      };
+    }
+
+    return null;
+  }, [expenses, formatCurrencyValue, stats.overdueAmount, stats.pendingAmount]);
   const getStatusBadge = (status: string) => {
     const normalizedStatus = coercePaymentStatusId(status);
     const statusConfig = PAYMENT_STATUS_CONFIG[normalizedStatus];
+    const badgeStatus = PAYMENT_STATUS_BADGE_STATUS[normalizedStatus] ?? 'default';
 
-    return (
-      <Badge className={`${statusConfig.color} text-xs`}>
-        {statusConfig.label}
-      </Badge>
-    );
+    return <StatusBadge status={badgeStatus} label={statusConfig.label} size="sm" showIcon={false} className="shadow-none" />;
   };
 
   const getFrequencyBadge = (frequency: string) => {
     const normalizedFrequency = coerceExpenseFrequencyId(frequency);
     const frequencyConfig = EXPENSE_FREQUENCY_CONFIG[normalizedFrequency];
+    const badgeStatus = EXPENSE_FREQUENCY_BADGE_STATUS[normalizedFrequency] ?? 'default';
 
-    return (
-      <Badge variant="outline" className={`${frequencyConfig.color} text-xs`}>
-        {frequencyConfig.label}
-      </Badge>
-    );
+    return <StatusBadge status={badgeStatus} label={frequencyConfig.label} size="sm" showIcon={false} className="shadow-none" />;
   };
 
   const getProjectName = (projectId?: string) => {
@@ -986,40 +1021,43 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onEdit, onDelete, s
 
   return (
     <div className="space-y-4">
+      {statusSummaryAlert && (
+        <InlineAlert variant={statusSummaryAlert.variant} title={statusSummaryAlert.title} description={statusSummaryAlert.description} />
+      )}
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-success/10 border-success/30">
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-sm text-green-600">مدفوع</p>
-              <p className="text-lg font-bold text-green-700">{formatCurrencyValue(stats.completedAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+              <p className="text-sm text-success">مدفوع</p>
+              <p className="text-lg font-bold text-success/90">{formatCurrencyValue(stats.completedAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-yellow-50 border-yellow-200">
+        <Card className="bg-warning/10 border-warning/30">
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-sm text-yellow-600">معلق</p>
-              <p className="text-lg font-bold text-yellow-700">{formatCurrencyValue(stats.pendingAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+              <p className="text-sm text-warning">معلق</p>
+              <p className="text-lg font-bold text-warning/90">{formatCurrencyValue(stats.pendingAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-red-50 border-red-200">
+        <Card className="bg-error/10 border-error/30">
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-sm text-red-600">متأخر</p>
-              <p className="text-lg font-bold text-red-700">{formatCurrencyValue(stats.overdueAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+              <p className="text-sm text-error">متأخر</p>
+              <p className="text-lg font-bold text-error/90">{formatCurrencyValue(stats.overdueAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
             </div>
           </CardContent>
         </Card>
         
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-info/10 border-info/30">
           <CardContent className="p-4">
             <div className="text-center">
-              <p className="text-sm text-blue-600">الإجمالي</p>
-              <p className="text-lg font-bold text-blue-700">{formatCurrencyValue(stats.totalAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+              <p className="text-sm text-info">الإجمالي</p>
+              <p className="text-lg font-bold text-info/90">{formatCurrencyValue(stats.totalAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
             </div>
           </CardContent>
         </Card>
@@ -1031,7 +1069,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onEdit, onDelete, s
           <CardTitle className="flex items-center gap-2">
             {type === 'administrative' ? <Building2 className="w-5 h-5" /> : <Hammer className="w-5 h-5" />}
             {type === 'administrative' ? 'التكاليف الإدارية' : 'مشتريات المشاريع'}
-            <Badge variant="secondary">{expenses.length}</Badge>
+            <StatusBadge status="info" label={`${expenses.length}`} size="sm" showIcon={false} className="shadow-none" />
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -1046,7 +1084,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onEdit, onDelete, s
           ) : (
             <div className="overflow-x-auto" dir="rtl">
               <table className="w-full text-sm text-right">
-                <thead className="bg-gray-50">
+                <thead className="bg-muted/20">
                   <tr>
                     <th className="text-right p-3 border-b font-medium">العنوان</th>
                     <th className="text-right p-3 border-b font-medium">الفئة</th>
@@ -1065,12 +1103,12 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onEdit, onDelete, s
                     const amounts = calculateAmounts(expense.amount, frequencyId);
                     
                     return (
-                      <tr key={expense.id} className="hover:bg-gray-50">
+                      <tr key={expense.id} className="hover:bg-muted/20">
                         <td className="p-3 border-b text-right">
                           <div className="text-right">
                             <p className="font-medium text-right">{expense.title}</p>
                             {expense.description && (
-                              <p className="text-xs text-gray-500 mt-1 text-right">{expense.description}</p>
+                              <p className="text-xs text-muted-foreground/85 mt-1 text-right">{expense.description}</p>
                             )}
                           </div>
                         </td>
@@ -1083,7 +1121,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, onEdit, onDelete, s
                         <td className="p-3 border-b text-right">
                           <div className="text-right">
                             <p className="font-medium text-right">{formatCurrencyValue(expense.amount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
-                            <p className="text-xs text-gray-500 text-right">
+                            <p className="text-xs text-muted-foreground/85 text-right">
                               شهرياً: {formatCurrencyValue(amounts.monthly, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} | سنوياً: {formatCurrencyValue(amounts.annual, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
                           </div>

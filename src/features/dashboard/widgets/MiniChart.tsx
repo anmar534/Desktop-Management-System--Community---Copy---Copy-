@@ -12,6 +12,11 @@ import type { EChartsOption } from 'echarts';
 import type { MiniChartData, BaseWidgetProps } from '../types';
 import EChart from '../../../components/charts/EChart';
 import { WidgetContainer, type WidgetStatusVariant } from './WidgetContainer';
+import {
+  getDesignTokenColor,
+  getDesignTokenExpression,
+  resolveTokenFromExpression,
+} from '@/utils/designTokens';
 
 export interface MiniChartProps extends Omit<BaseWidgetProps, 'data'> {
   data: MiniChartData;
@@ -21,58 +26,47 @@ export const MiniChart: React.FC<MiniChartProps> = ({ data, loading, error, onRe
   const { title, subtitle, chartType, data: chartData, color, showAxis = false, status = 'normal' } = data;
   const statusVariant: WidgetStatusVariant = status === 'normal' ? 'default' : status;
 
-  const fallbackHsl = '221, 83%, 53%';
+  const fallbackColor = getDesignTokenColor('chart1') ?? 'hsl(221, 83%, 53%)';
 
-  const resolveCssVariable = (variableName: string, computedStyle: CSSStyleDeclaration): string => {
-    const normalizedName = variableName || '--primary';
-    const resolvedValue = computedStyle.getPropertyValue(normalizedName).trim();
-    if (resolvedValue) {
-      return `hsl(${resolvedValue.replace(/\s+/g, ', ')})`;
-    }
-    if (normalizedName !== '--primary') {
-      const fallbackValue = computedStyle.getPropertyValue('--primary').trim();
-      if (fallbackValue) {
-        return `hsl(${fallbackValue.replace(/\s+/g, ', ')})`;
-      }
-    }
-    return `hsl(${fallbackHsl})`;
-  };
-
-  // دالة لتحويل متغيرات CSS إلى قيم حقيقية
-  const getCssColor = (cssValue?: string): string => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') {
-      return cssValue && !cssValue.includes('var(') ? cssValue : `hsl(${fallbackHsl})`;
+  const normalizeColor = (value?: string): string => {
+    if (!value) {
+      return fallbackColor;
     }
 
-    if (!cssValue) {
-      const computedStyle = getComputedStyle(document.documentElement);
-      return resolveCssVariable('--primary', computedStyle);
-    }
+    const normalizedValue = value.trim();
 
-    const normalizedValue = cssValue.trim();
-
-    if (normalizedValue.startsWith('#') || normalizedValue.startsWith('rgb') || (normalizedValue.startsWith('hsl(') && !normalizedValue.includes('var('))) {
+    if (normalizedValue.startsWith('#') || normalizedValue.startsWith('rgb(') || (normalizedValue.startsWith('hsl(') && !normalizedValue.includes('var('))) {
       return normalizedValue;
     }
 
-    const computedStyle = getComputedStyle(document.documentElement);
-    const match = /--[\w-]+/.exec(normalizedValue);
-    const variableName = match?.[0];
+    const tokenKey = resolveTokenFromExpression(normalizedValue);
+    if (tokenKey) {
+      return getDesignTokenColor(tokenKey) ?? fallbackColor;
+    }
 
-    return resolveCssVariable(variableName ?? '--primary', computedStyle);
+    return fallbackColor;
   };
 
-  // دالة لإضافة شفافية للون
-  const addOpacity = (cssVar: string, opacity: number): string => {
-    const color = getCssColor(cssVar);
-    // تحويل hsl إلى hsla مع ضمان الفواصل الصحيحة
-    return color.replace('hsl(', 'hsla(').replace(')', `, ${opacity})`);
+  const addOpacity = (value: string, opacity: number): string => {
+    const normalized = normalizeColor(value);
+    const clamped = Math.min(Math.max(opacity, 0), 1);
+
+    if (normalized.startsWith('hsl(')) {
+      return normalized.replace('hsl(', 'hsla(').replace(/\)$/, `, ${clamped})`);
+    }
+
+    const tokenKey = resolveTokenFromExpression(value);
+    if (tokenKey) {
+      return getDesignTokenColor(tokenKey, { alpha: clamped }) ?? fallbackColor;
+    }
+
+    return normalized;
   };
 
   // تكوين الرسم البياني حسب النوع
   const getChartOption = (): EChartsOption => {
-    const resolvedColor = color ?? 'hsl(var(--chart-1))';
-    const defaultColor = getCssColor(resolvedColor);
+    const resolvedColor = color ?? getDesignTokenExpression('chart1');
+    const defaultColor = normalizeColor(resolvedColor);
 
     const baseOption: EChartsOption = {
       grid: {

@@ -20,6 +20,31 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const CharacterCountExample = () => {
+  const [value, setValue] = React.useState('');
+  const maxLength = 200;
+
+  return (
+    <div className="w-[500px] space-y-2">
+      <Label htmlFor="counted">رسالة مع عداد الأحرف</Label>
+      <Textarea
+        id="counted"
+        placeholder="اكتب رسالتك..."
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        maxLength={maxLength}
+        className="min-h-24"
+      />
+      <div className="flex justify-between text-sm text-muted-foreground">
+        <span>الأحرف المتبقية: {maxLength - value.length}</span>
+        <span>
+          {value.length} / {maxLength}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 // ============================================
 // Basic Stories
 // ============================================
@@ -288,28 +313,7 @@ export const FormExamples: Story = {
 };
 
 export const CharacterCount: Story = {
-  render: () => {
-    const [value, setValue] = React.useState('');
-    const maxLength = 200;
-    
-    return (
-      <div className="w-[500px] space-y-2">
-        <Label htmlFor="counted">رسالة مع عداد الأحرف</Label>
-        <Textarea
-          id="counted"
-          placeholder="اكتب رسالتك..."
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          maxLength={maxLength}
-          className="min-h-24"
-        />
-        <div className="flex justify-between text-sm text-muted-foreground">
-          <span>الأحرف المتبقية: {maxLength - value.length}</span>
-          <span>{value.length} / {maxLength}</span>
-        </div>
-      </div>
-    );
-  },
+  render: () => <CharacterCountExample />,
 };
 
 // ============================================
@@ -443,7 +447,7 @@ export const UsageGuide: Story = {
 
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Accessibility</h3>
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm space-y-2">
+  <div className="bg-info/10 dark:bg-info/20 p-4 rounded-lg text-sm space-y-2">
           <p>✅ دائماً استخدم Label مع htmlFor</p>
           <p>✅ أضف aria-invalid للحقول بها أخطاء</p>
           <p>✅ استخدم aria-required للحقول الإجبارية</p>

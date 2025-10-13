@@ -24,30 +24,30 @@
 // --- Internal Maps ---------------------------------------------------------
 
 const STATUS_COLOR_MAP: Record<string, string> = {
-  active: 'text-green-600 bg-green-100',
-  completed: 'text-blue-600 bg-blue-100',
-  delayed: 'text-red-600 bg-red-100',
-  paused: 'text-yellow-600 bg-yellow-100',
-  planning: 'text-purple-600 bg-purple-100',
-  cancelled: 'text-gray-600 bg-gray-100',
+  active: 'text-success bg-success/10',
+  completed: 'text-primary bg-primary/10',
+  delayed: 'text-error bg-error/10',
+  paused: 'text-warning bg-warning/10',
+  planning: 'text-info bg-info/10',
+  cancelled: 'text-muted-foreground bg-muted/20',
 };
 
 const PRIORITY_COLOR_MAP: Record<string, string> = {
-  critical: 'text-red-600 bg-red-100',
-  high: 'text-orange-600 bg-orange-100',
-  medium: 'text-yellow-600 bg-yellow-100',
-  low: 'text-green-600 bg-green-100',
+  critical: 'text-error bg-error/10',
+  high: 'text-warning bg-warning/10',
+  medium: 'text-info bg-info/10',
+  low: 'text-success bg-success/10',
 };
 
 const HEALTH_COLOR_MAP: Record<string, string> = {
   // canonical keys
-  green: 'text-green-600 bg-green-100',
-  yellow: 'text-yellow-600 bg-yellow-100',
-  red: 'text-red-600 bg-red-100',
+  green: 'text-success bg-success/10',
+  yellow: 'text-warning bg-warning/10',
+  red: 'text-error bg-error/10',
   // aliases (Phase 2): semantic health labels
-  good: 'text-green-600 bg-green-100',       // alias of green
-  warning: 'text-yellow-600 bg-yellow-100',  // alias of yellow
-  critical: 'text-red-600 bg-red-100',       // alias of red
+  good: 'text-success bg-success/10',       // alias of green
+  warning: 'text-warning bg-warning/10',    // alias of yellow
+  critical: 'text-error bg-error/10',       // alias of red
 };
 
 // Progress colors are continuous; thresholds kept configurable for future externalization.
@@ -75,13 +75,13 @@ export type ColorDomain = 'status' | 'priority' | 'health';
 export const getSemanticColor = (domain: ColorDomain, key: string): string => {
   switch (domain) {
     case 'status':
-      return STATUS_COLOR_MAP[key] || 'text-gray-600 bg-gray-100';
+      return STATUS_COLOR_MAP[key] || 'text-muted-foreground bg-muted/20';
     case 'priority':
-      return PRIORITY_COLOR_MAP[key] || 'text-gray-600 bg-gray-100';
+      return PRIORITY_COLOR_MAP[key] || 'text-muted-foreground bg-muted/20';
     case 'health':
-      return HEALTH_COLOR_MAP[key] || 'text-gray-600 bg-gray-100';
+      return HEALTH_COLOR_MAP[key] || 'text-muted-foreground bg-muted/20';
     default:
-      return 'text-gray-600 bg-gray-100';
+      return 'text-muted-foreground bg-muted/20';
   }
 };
 
@@ -94,12 +94,12 @@ export const getHealthColor = (health: string): string => getSemanticColor('heal
  * Returns a single background utility class.
  */
 export const getProgressColor = (progress: number, cfg: ProgressColorConfig = DEFAULT_PROGRESS_CONFIG): string => {
-  if (progress >= cfg.ok && progress < cfg.success) return 'bg-blue-500';
-  if (progress >= cfg.caution && progress < cfg.ok) return 'bg-yellow-500';
-  if (progress >= cfg.warning && progress < cfg.caution) return 'bg-orange-500';
-  if (progress >= cfg.critical && progress < cfg.warning) return 'bg-red-500';
-  if (progress >= cfg.success) return 'bg-green-500';
-  return 'bg-red-500';
+  if (progress >= cfg.success) return 'bg-success';
+  if (progress >= cfg.ok) return 'bg-info';
+  if (progress >= cfg.caution) return 'bg-warning';
+  if (progress >= cfg.warning) return 'bg-error/80';
+  if (progress >= cfg.critical) return 'bg-error';
+  return 'bg-error';
 };
 
 // --- Introspection / Future Enhancements ----------------------------------

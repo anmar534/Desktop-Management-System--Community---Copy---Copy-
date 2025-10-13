@@ -172,7 +172,7 @@ export const TenderStatus: Story = {
         <div className="flex items-center gap-2">
           <RadioGroupItem value="draft" id="status-draft" />
           <Label htmlFor="status-draft" className="cursor-pointer flex items-center gap-2">
-            <span className="size-2 rounded-full bg-gray-400" />
+            <span className="size-2 rounded-full bg-muted-foreground" />
             مسودة
           </Label>
         </div>
@@ -180,7 +180,7 @@ export const TenderStatus: Story = {
         <div className="flex items-center gap-2">
           <RadioGroupItem value="open" id="status-open" />
           <Label htmlFor="status-open" className="cursor-pointer flex items-center gap-2">
-            <span className="size-2 rounded-full bg-blue-500" />
+            <span className="size-2 rounded-full bg-info" />
             مفتوحة
           </Label>
         </div>
@@ -188,7 +188,7 @@ export const TenderStatus: Story = {
         <div className="flex items-center gap-2">
           <RadioGroupItem value="evaluation" id="status-eval" />
           <Label htmlFor="status-eval" className="cursor-pointer flex items-center gap-2">
-            <span className="size-2 rounded-full bg-yellow-500" />
+            <span className="size-2 rounded-full bg-warning" />
             قيد التقييم
           </Label>
         </div>
@@ -196,7 +196,7 @@ export const TenderStatus: Story = {
         <div className="flex items-center gap-2">
           <RadioGroupItem value="closed" id="status-closed" />
           <Label htmlFor="status-closed" className="cursor-pointer flex items-center gap-2">
-            <span className="size-2 rounded-full bg-red-500" />
+            <span className="size-2 rounded-full bg-destructive" />
             مغلقة
           </Label>
         </div>
@@ -204,7 +204,7 @@ export const TenderStatus: Story = {
         <div className="flex items-center gap-2">
           <RadioGroupItem value="awarded" id="status-awarded" />
           <Label htmlFor="status-awarded" className="cursor-pointer flex items-center gap-2">
-            <span className="size-2 rounded-full bg-green-500" />
+            <span className="size-2 rounded-full bg-success" />
             تم الترسية
           </Label>
         </div>
@@ -628,7 +628,7 @@ export const UsageGuide: Story = {
 
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Accessibility</h3>
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm space-y-2">
+  <div className="bg-info/10 dark:bg-info/20 p-4 rounded-lg text-sm space-y-2">
           <p>✅ استخدم Label مع htmlFor لكل عنصر</p>
           <p>✅ keyboard navigation (Arrow keys, Space)</p>
           <p>✅ ARIA attributes تلقائية من Radix UI</p>

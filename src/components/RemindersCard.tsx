@@ -53,6 +53,12 @@ interface ReminderDefinition {
 type Reminder = ReminderDefinition & { timeRemaining: TimeRemaining }
 
 export function RemindersCard({ onSectionChange }: RemindersCardProps) {
+  const reminderIconTone: Record<ReminderColor, string> = {
+    blue: 'text-primary',
+    orange: 'text-warning',
+    green: 'text-success'
+  }
+
   // حساب المدة المتبقية
   const calculateTimeRemaining = (
     targetDate: ReminderDefinition['date'],
@@ -161,7 +167,7 @@ export function RemindersCard({ onSectionChange }: RemindersCardProps) {
       <CardContent className="p-3 space-y-2">
         
         {/* إحصائيات مضغوطة */}
-        <div className="grid grid-cols-4 gap-1 p-2 bg-gradient-to-r from-primary/5 to-indigo-500/5 rounded-lg border border-border">
+  <div className="grid grid-cols-4 gap-1 p-2 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border border-border">
           <div className="text-center">
             <div className="text-sm font-bold text-destructive">{stats.urgent}</div>
             <div className="text-xs text-muted-foreground">عاجل</div>
@@ -196,7 +202,7 @@ export function RemindersCard({ onSectionChange }: RemindersCardProps) {
               >
                 
                 {/* الأيقونة والمحتوى */}
-                <div className={`p-1 rounded-md bg-muted text-${reminder.color}-500 flex-shrink-0`}>
+                <div className={`p-1 rounded-md bg-muted ${reminderIconTone[reminder.color]} flex-shrink-0`}>
                   <reminder.icon className="h-3 w-3" />
                 </div>
                 

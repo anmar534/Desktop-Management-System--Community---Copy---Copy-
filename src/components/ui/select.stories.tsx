@@ -191,31 +191,31 @@ export const TenderStatusSelect: Story = {
         <SelectContent>
           <SelectItem value="draft">
             <span className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-gray-400" />
+              <span className="size-2 rounded-full bg-muted-foreground" />
               مسودة
             </span>
           </SelectItem>
           <SelectItem value="open">
             <span className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-blue-500" />
+              <span className="size-2 rounded-full bg-info" />
               مفتوحة
             </span>
           </SelectItem>
           <SelectItem value="evaluation">
             <span className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-yellow-500" />
+              <span className="size-2 rounded-full bg-warning" />
               قيد التقييم
             </span>
           </SelectItem>
           <SelectItem value="closed">
             <span className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-red-500" />
+              <span className="size-2 rounded-full bg-destructive" />
               مغلقة
             </span>
           </SelectItem>
           <SelectItem value="awarded">
             <span className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-green-500" />
+              <span className="size-2 rounded-full bg-success" />
               تم الترسية
             </span>
           </SelectItem>
@@ -595,7 +595,7 @@ export const UsageGuide: Story = {
 
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Accessibility</h3>
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm space-y-2">
+  <div className="bg-info/10 dark:bg-info/20 p-4 rounded-lg text-sm space-y-2">
           <p>✅ دائماً استخدم Label مع htmlFor</p>
           <p>✅ يدعم keyboard navigation (Arrow keys, Enter, Esc)</p>
           <p>✅ يدعم type-ahead search</p>

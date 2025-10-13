@@ -138,27 +138,27 @@ export function Dashboard({ onSectionChange }: DashboardProps) {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted">
       <div className="p-6 space-y-6 max-w-[1920px] mx-auto">
         {/* Header Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-card rounded-2xl shadow-lg border border-border p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* Title & Description */}
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
                 لوحة التحكم التنفيذية
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              <p className="text-sm text-muted-foreground mb-3">
                 نظرة شاملة على مؤشرات الأداء الرئيسية والعمليات التشغيلية
               </p>
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                <Badge variant="outline" className="bg-info/10 text-info border-info/30">
                   آخر تحديث: {dataLastUpdatedLabel}
                 </Badge>
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Badge variant="outline" className="bg-success/10 text-success border-success/30">
                   العملة: {baseCurrency}
                 </Badge>
-                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                   أسعار الصرف: {currencyLastUpdatedLabel}
                 </Badge>
               </div>
@@ -170,44 +170,44 @@ export function Dashboard({ onSectionChange }: DashboardProps) {
               <div className="flex items-center gap-4 bg-gradient-to-r from-primary/10 to-primary/5 px-4 py-3 rounded-xl border border-primary/20">
                 {/* Gregorian Date */}
                 <div className="text-center">
-                  <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                     <CalendarDays className="h-3 w-3" />
                     <span>ميلادي</span>
                   </div>
-                  <div className="text-sm font-semibold text-gray-900">
+                  <div className="text-sm font-semibold text-foreground">
                     {gregorianDate.dayName}
                   </div>
-                  <div className="text-xs text-gray-600">
+                  <div className="text-xs text-muted-foreground">
                     {gregorianDate.day} {gregorianDate.month} {gregorianDate.year}
                   </div>
                 </div>
 
-                <div className="w-px h-12 bg-gray-300"></div>
+                <div className="w-px h-12 bg-border"></div>
 
                 {/* Hijri Date */}
                 <div className="text-center">
-                  <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                     <Calendar className="h-3 w-3" />
                     <span>هجري</span>
                   </div>
-                  <div className="text-sm font-semibold text-gray-900">
+                  <div className="text-sm font-semibold text-foreground">
                     {hijriDate.day} {hijriDate.month}
                   </div>
-                  <div className="text-xs text-gray-600">{hijriDate.year} هـ</div>
+                  <div className="text-xs text-muted-foreground">{hijriDate.year} هـ</div>
                 </div>
 
-                <div className="w-px h-12 bg-gray-300"></div>
+                <div className="w-px h-12 bg-border"></div>
 
                 {/* Time */}
                 <div className="text-center">
-                  <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                     <Clock className="h-3 w-3" />
                     <span>الوقت</span>
                   </div>
                   <div className="text-lg font-bold text-primary font-mono">
                     {formattedTime}
                   </div>
-                  <div className="text-xs text-gray-600">الرياض</div>
+                  <div className="text-xs text-muted-foreground">الرياض</div>
                 </div>
               </div>
 
@@ -231,7 +231,7 @@ export function Dashboard({ onSectionChange }: DashboardProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => onSectionChange("settings")}
-                  className="hover:bg-gray-100"
+                  className="hover:bg-muted/40"
                 >
                   <Settings className="h-4 w-4 ml-2" />
                   الإعدادات
@@ -245,10 +245,10 @@ export function Dashboard({ onSectionChange }: DashboardProps) {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-bold text-foreground">
                 مؤشرات الأداء الرئيسية
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 مقارنة الإنجازات الفعلية مع الأهداف المحددة
               </p>
             </div>
@@ -268,10 +268,10 @@ export function Dashboard({ onSectionChange }: DashboardProps) {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-bold text-foreground">
                 مؤشرات الأداء السنوية
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 تفاصيل الأداء السنوي حسب الأقسام
               </p>
             </div>
@@ -287,10 +287,10 @@ export function Dashboard({ onSectionChange }: DashboardProps) {
           {/* المنافسات - عرض مزدوج */}
           <div className="lg:col-span-2">
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl font-bold text-foreground">
                 حالة المنافسات
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 تحليل شامل لحالة المنافسات الجارية
               </p>
             </div>
@@ -302,10 +302,10 @@ export function Dashboard({ onSectionChange }: DashboardProps) {
             {/* التذكيرات */}
             <div>
               <div className="mb-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                <h2 className="text-xl font-bold text-foreground">
                   التذكيرات
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   المواعيد والمهام المهمة
                 </p>
               </div>
@@ -315,10 +315,10 @@ export function Dashboard({ onSectionChange }: DashboardProps) {
             {/* الملخص المالي */}
             <div>
               <div className="mb-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                <h2 className="text-xl font-bold text-foreground">
                   الملخص المالي
                 </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   نظرة سريعة على الوضع المالي
                 </p>
               </div>
@@ -330,10 +330,10 @@ export function Dashboard({ onSectionChange }: DashboardProps) {
         {/* الصف الرابع: المصاريف الشهرية */}
         <div>
           <div className="mb-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-xl font-bold text-foreground">
               المصاريف الشهرية
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               تحليل المصاريف الشهرية مقارنة بالموازنة
             </p>
           </div>

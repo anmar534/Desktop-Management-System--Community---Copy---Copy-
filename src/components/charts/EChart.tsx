@@ -13,6 +13,7 @@ import * as echarts from 'echarts/core';
 import type { EChartsOption } from 'echarts';
 import type { EChartsType } from 'echarts/core';
 import { useTheme } from '../../application/providers/ThemeProvider';
+import { getDesignTokenColor } from '@/utils/designTokens';
 
 // استيراد المكونات المطلوبة فقط (tree-shaking)
 import {
@@ -135,20 +136,15 @@ export const EChart: React.FC<EChartProps> = ({
     if (!chartInstance.current) return;
 
     if (loading) {
-      // الحصول على القيم الحقيقية للألوان من CSS variables
-      const computedStyle = getComputedStyle(document.documentElement);
-      const primaryHsl = computedStyle.getPropertyValue('--primary').trim();
-      const foregroundHsl = computedStyle.getPropertyValue('--foreground').trim();
-      const backgroundHsl = computedStyle.getPropertyValue('--background').trim();
-
-      // تحويل من "222 47% 11%" إلى "222, 47%, 11%" (Canvas API format)
-      const formatHsl = (hsl: string) => hsl.replace(/\s+/g, ', ');
+      const primaryColor = getDesignTokenColor('primary') ?? '#3b82f6';
+      const foregroundColor = getDesignTokenColor('foreground') ?? '#000000';
+      const maskColor = getDesignTokenColor('background', { alpha: 0.8 }) ?? 'rgba(255, 255, 255, 0.8)';
 
       chartInstance.current.showLoading('default', {
         text: loadingText,
-        color: primaryHsl ? `hsl(${formatHsl(primaryHsl)})` : '#3b82f6',
-        textColor: foregroundHsl ? `hsl(${formatHsl(foregroundHsl)})` : '#000000',
-        maskColor: backgroundHsl ? `hsla(${formatHsl(backgroundHsl)}, 0.8)` : 'rgba(255, 255, 255, 0.8)',
+        color: primaryColor,
+        textColor: foregroundColor,
+        maskColor,
       });
     } else {
       chartInstance.current.hideLoading();

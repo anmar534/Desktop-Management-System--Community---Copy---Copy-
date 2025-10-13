@@ -231,7 +231,7 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
-            <FileText className="h-5 w-5 text-blue-600" />
+            <FileText className="h-5 w-5 text-info" />
             إدارة نتائج المنافسة
           </span>
           <Badge variant={
@@ -252,15 +252,15 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
         {/* معلومات المنافسة */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <DollarSign className="h-4 w-4 text-gray-500" />
-            <span className="text-gray-600">قيمة المنافسة:</span>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">قيمة المنافسة:</span>
             <span className="font-medium">{formatCurrencyValue(tenderBaseValue)}</span>
           </div>
           
           {tender.submissionDate && (
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-gray-500" />
-              <span className="text-gray-600">تاريخ التقديم:</span>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">تاريخ التقديم:</span>
               <span className="font-medium">
                 {formatDateValue(tender.submissionDate, {
                   locale: 'ar-SA',
@@ -274,8 +274,8 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
           
           {tenderResultDate && (
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-gray-500" />
-              <span className="text-gray-600">تاريخ النتيجة:</span>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">تاريخ النتيجة:</span>
               <span className="font-medium">
                 {formatDateValue(tenderResultDate, {
                   locale: 'ar-SA',
@@ -296,7 +296,7 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
               <Button 
                 onClick={handleMarkAsWon}
                 disabled={isUpdating}
-                className="bg-green-600 hover:bg-green-700 gap-2"
+                className="bg-success text-background hover:bg-success/90 gap-2"
               >
                 <Trophy className="h-4 w-4" />
                 ✅ فائزة
@@ -329,10 +329,10 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
         </div>
 
         {/* رسائل إرشادية */}
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="mt-4 p-3 bg-info/10 rounded-lg border border-info/20">
           <div className="flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div className="text-sm text-blue-800 dark:text-blue-200">
+            <AlertCircle className="h-4 w-4 text-info mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-info">
               {currentStatus === 'ready_to_submit' && (
                 <p><strong>المنافسة جاهزة للتقديم!</strong> يمكنك الآن تقديم العرض للعميل.</p>
               )}
@@ -356,7 +356,7 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
       <AlertDialogContent dir="rtl">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-right">
-            <Trophy className="h-5 w-5 text-green-600" />
+            <Trophy className="h-5 w-5 text-success" />
             تأكيد الفوز بالمنافسة
           </AlertDialogTitle>
           <AlertDialogDescription className="text-right">
@@ -369,7 +369,7 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
           <AlertDialogCancel>إلغاء</AlertDialogCancel>
           <AlertDialogAction
             onClick={confirmMarkAsWon}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-success text-background hover:bg-success/90"
             disabled={isUpdating}
           >
             {isUpdating ? 'جاري التحديث...' : 'تأكيد الفوز'}
@@ -383,7 +383,7 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
       <DialogContent dir="rtl" className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-right">
-            <XCircle className="h-5 w-5 text-red-600" />
+            <XCircle className="h-5 w-5 text-destructive" />
             تأكيد خسارة المنافسة
           </DialogTitle>
           <DialogDescription className="text-right">
@@ -407,10 +407,10 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
             />
           </div>
           
-          <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+          <div className="bg-warning/10 p-3 rounded-lg border border-warning/20">
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-yellow-800">
+              <AlertCircle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-warning">
                 <p>ملاحظة: قيمة عرضنا كانت {formatCurrencyValue(tenderBaseValue)}</p>
               </div>
             </div>
@@ -423,7 +423,7 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
           </Button>
           <Button
             onClick={confirmMarkAsLost}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             disabled={isUpdating}
           >
             {isUpdating ? 'جاري التحديث...' : 'تأكيد الخسارة'}

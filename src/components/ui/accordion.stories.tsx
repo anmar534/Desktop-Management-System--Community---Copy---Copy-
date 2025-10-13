@@ -708,7 +708,7 @@ export const UsageGuide: Story = {
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">الأنواع</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded">
+          <div className="p-3 rounded bg-info/10 dark:bg-info/20">
             <h4 className="font-semibold mb-2">Single</h4>
             <p className="text-muted-foreground">
               قسم واحد مفتوح في كل مرة
@@ -717,7 +717,7 @@ export const UsageGuide: Story = {
               {`type="single" collapsible`}
             </code>
           </div>
-          <div className="p-3 bg-green-50 dark:bg-green-950 rounded">
+          <div className="p-3 rounded bg-success/10 dark:bg-success/20">
             <h4 className="font-semibold mb-2">Multiple</h4>
             <p className="text-muted-foreground">
               فتح عدة أقسام في نفس الوقت
@@ -732,25 +732,25 @@ export const UsageGuide: Story = {
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">المكونات الفرعية</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded">
+          <div className="p-3 rounded bg-warning/10 dark:bg-warning/20">
             <h4 className="font-semibold mb-2">Accordion</h4>
             <p className="text-muted-foreground">
               الحاوية الرئيسية - تدير الحالة
             </p>
           </div>
-          <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded">
+          <div className="p-3 rounded bg-primary/10 dark:bg-primary/20">
             <h4 className="font-semibold mb-2">AccordionItem</h4>
             <p className="text-muted-foreground">
               كل قسم في Accordion
             </p>
           </div>
-          <div className="p-3 bg-pink-50 dark:bg-pink-950 rounded">
+          <div className="p-3 rounded bg-accent/10 dark:bg-accent/20">
             <h4 className="font-semibold mb-2">AccordionTrigger</h4>
             <p className="text-muted-foreground">
               العنوان القابل للنقر
             </p>
           </div>
-          <div className="p-3 bg-cyan-50 dark:bg-cyan-950 rounded">
+          <div className="p-3 rounded bg-info/10 dark:bg-info/20">
             <h4 className="font-semibold mb-2">AccordionContent</h4>
             <p className="text-muted-foreground">
               المحتوى القابل للطي
@@ -849,7 +849,7 @@ export const UsageGuide: Story = {
 
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Accessibility</h3>
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm space-y-2">
+        <div className="p-4 text-sm space-y-2 rounded-lg bg-info/10 dark:bg-info/20">
           <p>✅ Keyboard navigation (Space, Enter لفتح/إغلاق)</p>
           <p>✅ Arrow keys للتنقل بين الأقسام</p>
           <p>✅ ARIA attributes تلقائية</p>

@@ -27,6 +27,69 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const WithCheckboxesStory: React.FC = () => {
+  const [selectedRows, setSelectedRows] = React.useState<number[]>([]);
+
+  const toggleRow = (index: number) => {
+    setSelectedRows((prev) =>
+      prev.includes(index)
+        ? prev.filter((i) => i !== index)
+        : [...prev, index]
+    );
+  };
+
+  const toggleAll = () => {
+    setSelectedRows((prev) => (prev.length === 3 ? [] : [0, 1, 2]));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">
+          تم تحديد {selectedRows.length} من 3
+        </span>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-12">
+              <Checkbox
+                checked={selectedRows.length === 3}
+                onCheckedChange={toggleAll}
+              />
+            </TableHead>
+            <TableHead>اسم المشروع</TableHead>
+            <TableHead>المدير</TableHead>
+            <TableHead>الميزانية</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {[
+            { name: 'مشروع التطوير الرقمي', manager: 'محمد أحمد', budget: '2,500,000' },
+            { name: 'تحديث البنية التحتية', manager: 'سارة علي', budget: '1,800,000' },
+            { name: 'تدريب الموظفين', manager: 'خالد محمد', budget: '500,000' },
+          ].map((project, index) => (
+            <TableRow
+              key={index}
+              data-state={selectedRows.includes(index) ? 'selected' : ''}
+            >
+              <TableCell>
+                <Checkbox
+                  checked={selectedRows.includes(index)}
+                  onCheckedChange={() => toggleRow(index)}
+                />
+              </TableCell>
+              <TableCell className="font-medium">{project.name}</TableCell>
+              <TableCell>{project.manager}</TableCell>
+              <TableCell>{project.budget} ر.س</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+};
+
 // ============================================
 // Basic Stories
 // ============================================
@@ -232,68 +295,7 @@ export const WithActions: Story = {
 };
 
 export const WithCheckboxes: Story = {
-  render: () => {
-    const [selectedRows, setSelectedRows] = React.useState<number[]>([]);
-    
-    const toggleRow = (index: number) => {
-      setSelectedRows((prev) =>
-        prev.includes(index)
-          ? prev.filter((i) => i !== index)
-          : [...prev, index]
-      );
-    };
-    
-    const toggleAll = () => {
-      setSelectedRows((prev) => (prev.length === 3 ? [] : [0, 1, 2]));
-    };
-    
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            تم تحديد {selectedRows.length} من 3
-          </span>
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={selectedRows.length === 3}
-                  onCheckedChange={toggleAll}
-                />
-              </TableHead>
-              <TableHead>اسم المشروع</TableHead>
-              <TableHead>المدير</TableHead>
-              <TableHead>الميزانية</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[
-              { name: 'مشروع التطوير الرقمي', manager: 'محمد أحمد', budget: '2,500,000' },
-              { name: 'تحديث البنية التحتية', manager: 'سارة علي', budget: '1,800,000' },
-              { name: 'تدريب الموظفين', manager: 'خالد محمد', budget: '500,000' },
-            ].map((project, index) => (
-              <TableRow
-                key={index}
-                data-state={selectedRows.includes(index) ? 'selected' : ''}
-              >
-                <TableCell>
-                  <Checkbox
-                    checked={selectedRows.includes(index)}
-                    onCheckedChange={() => toggleRow(index)}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{project.name}</TableCell>
-                <TableCell>{project.manager}</TableCell>
-                <TableCell>{project.budget} ر.س</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
-  },
+  render: () => <WithCheckboxesStory />,
 };
 
 // ============================================
@@ -552,7 +554,7 @@ export const ProjectsTracking: Story = {
             <TableCell>
               <div className="flex items-center gap-2">
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-green-500 h-2 rounded-full" style={{ width: '75%' }} />
+                  <div className="bg-success h-2 rounded-full w-[75%]" />
                 </div>
                 <span className="text-sm font-medium">75%</span>
               </div>
@@ -570,7 +572,7 @@ export const ProjectsTracking: Story = {
             <TableCell>
               <div className="flex items-center gap-2">
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-yellow-500 h-2 rounded-full" style={{ width: '45%' }} />
+                  <div className="bg-warning h-2 rounded-full w-[45%]" />
                 </div>
                 <span className="text-sm font-medium">45%</span>
               </div>
@@ -588,7 +590,7 @@ export const ProjectsTracking: Story = {
             <TableCell>
               <div className="flex items-center gap-2">
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: '100%' }} />
+                  <div className="bg-primary h-2 rounded-full w-full" />
                 </div>
                 <span className="text-sm font-medium">100%</span>
               </div>
@@ -606,7 +608,7 @@ export const ProjectsTracking: Story = {
             <TableCell>
               <div className="flex items-center gap-2">
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-orange-500 h-2 rounded-full" style={{ width: '20%' }} />
+                  <div className="bg-muted-foreground h-2 rounded-full w-[20%]" />
                 </div>
                 <span className="text-sm font-medium">20%</span>
               </div>
@@ -651,7 +653,7 @@ export const UserManagement: Story = {
             <TableCell>تقنية المعلومات</TableCell>
             <TableCell>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
+                <div className="w-2 h-2 bg-success rounded-full" />
                 <span>نشط</span>
               </div>
             </TableCell>
@@ -672,7 +674,7 @@ export const UserManagement: Story = {
             <TableCell>التصميم</TableCell>
             <TableCell>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
+                <div className="w-2 h-2 bg-success rounded-full" />
                 <span>نشط</span>
               </div>
             </TableCell>
@@ -693,7 +695,7 @@ export const UserManagement: Story = {
             <TableCell>إدارة المشاريع</TableCell>
             <TableCell>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-gray-500 rounded-full" />
+                <div className="w-2 h-2 bg-muted-foreground rounded-full" />
                 <span>غير متصل</span>
               </div>
             </TableCell>
@@ -714,7 +716,7 @@ export const UserManagement: Story = {
             <TableCell>المبيعات</TableCell>
             <TableCell>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full" />
+                <div className="w-2 h-2 bg-destructive rounded-full" />
                 <span>معطل</span>
               </div>
             </TableCell>
@@ -830,37 +832,37 @@ export const UsageGuide: Story = {
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">المكونات الفرعية</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded">
+          <div className="p-3 bg-info/10 dark:bg-info/20 rounded">
             <h4 className="font-semibold mb-2">Table</h4>
             <p className="text-muted-foreground">
               الحاوية الرئيسية - مع overflow-x-auto
             </p>
           </div>
-          <div className="p-3 bg-green-50 dark:bg-green-950 rounded">
+          <div className="p-3 bg-success/10 dark:bg-success/20 rounded">
             <h4 className="font-semibold mb-2">TableHeader</h4>
             <p className="text-muted-foreground">
               رأس الجدول - يحتوي على TableHead
             </p>
           </div>
-          <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded">
+          <div className="p-3 bg-warning/10 dark:bg-warning/20 rounded">
             <h4 className="font-semibold mb-2">TableBody</h4>
             <p className="text-muted-foreground">
               جسم الجدول - يحتوي على TableRow
             </p>
           </div>
-          <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded">
+          <div className="p-3 bg-accent/10 dark:bg-accent/20 rounded">
             <h4 className="font-semibold mb-2">TableFooter</h4>
             <p className="text-muted-foreground">
               تذييل الجدول - للإجماليات
             </p>
           </div>
-          <div className="p-3 bg-pink-50 dark:bg-pink-950 rounded">
+          <div className="p-3 bg-primary/10 dark:bg-primary/20 rounded">
             <h4 className="font-semibold mb-2">TableRow</h4>
             <p className="text-muted-foreground">
               صف الجدول - مع hover effect
             </p>
           </div>
-          <div className="p-3 bg-cyan-50 dark:bg-cyan-950 rounded">
+          <div className="p-3 bg-info/10 dark:bg-info/20 rounded">
             <h4 className="font-semibold mb-2">TableHead / TableCell</h4>
             <p className="text-muted-foreground">
               خلايا الرأس والبيانات
@@ -891,8 +893,8 @@ export const UsageGuide: Story = {
           <li>أضف text-right للأرقام والمبالغ</li>
           <li>استخدم font-mono لأرقام المراجع (IDs)</li>
           <li>أضف Badge للحالات والأولويات</li>
-          <li>ضع الأزرار في عمود "الإجراءات" في النهاية</li>
-          <li>استخدم Checkbox مع data-state="selected"</li>
+          <li>ضع الأزرار في عمود &quot;الإجراءات&quot; في النهاية</li>
+          <li>استخدم Checkbox مع data-state=&quot;selected&quot;</li>
           <li>تجنب الجداول الواسعة جداً (10+ أعمدة)</li>
           <li>أضف شريط بحث للجداول الكبيرة</li>
         </ul>
@@ -939,7 +941,7 @@ export const UsageGuide: Story = {
 
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Accessibility</h3>
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm space-y-2">
+  <div className="bg-info/10 dark:bg-info/20 p-4 rounded-lg text-sm space-y-2">
           <p>✅ Semantic HTML (table, thead, tbody, tr, th, td)</p>
           <p>✅ TableCaption للسياق</p>
           <p>✅ Screen readers تقرأ الجدول بشكل صحيح</p>

@@ -2,9 +2,10 @@
 
 import type { ComponentType } from 'react'
 import { Card, CardContent } from './ui/card'
-import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Progress } from './ui/progress'
+import { InlineAlert } from './ui/inline-alert'
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
 import {
   DollarSign,
   TrendingUp,
@@ -13,12 +14,12 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   BarChart3,
-  RefreshCcw
+  RefreshCcw,
+  AlertCircle,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatCurrency } from '@/utils/formatters'
 import { useDashboardMetrics } from '@/application/hooks/useDashboardMetrics'
-import { getHealthColor } from '../utils/statusColors'
 
 interface FinancialSummaryCardProps {
   onSectionChange: (
@@ -38,13 +39,31 @@ interface FinancialSummaryCardProps {
   ) => void
 }
 
-type IndicatorStatus = 'good' | 'warning' | 'critical'
+type IndicatorTone = 'success' | 'warning' | 'error' | 'info'
 interface IndicatorConfig {
   label: string
   value: string
-  status: IndicatorStatus
+  tone: IndicatorTone
   icon: ComponentType<{ className?: string }>
-  color: 'green' | 'amber' | 'red'
+}
+
+const indicatorToneStyles: Record<IndicatorTone, { container: string; accent: string }> = {
+  success: {
+    container: 'border-success/25 bg-success/10',
+    accent: 'text-success',
+  },
+  warning: {
+    container: 'border-warning/25 bg-warning/10',
+    accent: 'text-warning',
+  },
+  error: {
+    container: 'border-error/25 bg-error/10',
+    accent: 'text-error',
+  },
+  info: {
+    container: 'border-info/25 bg-info/10',
+    accent: 'text-info',
+  },
 }
 
 export function FinancialSummaryCard({ onSectionChange }: FinancialSummaryCardProps) {
@@ -111,31 +130,45 @@ export function FinancialSummaryCard({ onSectionChange }: FinancialSummaryCardPr
     {
       label: 'السيولة',
       value: formatAmount(cashOnHand),
-      status: balanceRatio >= 100 ? 'good' : balanceRatio >= 60 ? 'warning' : 'critical',
+      tone: balanceRatio >= 100 ? 'success' : balanceRatio >= 60 ? 'warning' : 'error',
       icon: Wallet,
-      color: balanceRatio >= 100 ? 'green' : balanceRatio >= 60 ? 'amber' : 'red'
     },
     {
       label: 'الربح الشهري',
       value: formatAmount(monthlyNetEstimate, 'standard'),
-      status: monthlyNetEstimate >= 0 ? 'good' : 'critical',
+      tone: monthlyNetEstimate >= 0 ? 'success' : 'error',
       icon: TrendingUp,
-      color: monthlyNetEstimate >= 0 ? 'green' : 'red'
     },
     {
       label: 'التدفق النقدي',
       value: formatAmount(netCashMovement, 'standard'),
-      status: netCashMovement >= 0 ? 'good' : 'warning',
+      tone: netCashMovement >= 0 ? 'success' : 'warning',
       icon: netCashMovement >= 0 ? ArrowUpRight : ArrowDownRight,
-      color: netCashMovement >= 0 ? 'green' : 'amber'
-    }
+    },
   ]
 
-  const badgeVariant = cashFlowStatus === 'healthy'
-    ? 'success'
-    : cashFlowStatus === 'warning'
-      ? 'warning'
-      : 'destructive'
+  const cashFlowMeta = {
+    healthy: {
+      badgeStatus: 'success' as StatusBadgeProps['status'],
+      badgeLabel: 'مستقر',
+      alertVariant: 'success' as const,
+      message: 'التدفق النقدي يغطي الالتزامات الحالية ويتيح مجالًا للتوسع الآمن.',
+    },
+    warning: {
+      badgeStatus: 'warning' as StatusBadgeProps['status'],
+      badgeLabel: 'تحذير',
+      alertVariant: 'warning' as const,
+      message: 'تنخفض نسبة التغطية عن المستوى المستهدف، راقب المصروفات لتفادي الضغط المالي.',
+    },
+    critical: {
+      badgeStatus: 'error' as StatusBadgeProps['status'],
+      badgeLabel: 'حرج',
+      alertVariant: 'destructive' as const,
+      message: 'السيولة الحالية غير كافية، نوصي بضخ موارد إضافية أو خفض الإنفاق فورًا.',
+    },
+  } as const
+
+  const { badgeStatus, badgeLabel, alertVariant, message } = cashFlowMeta[cashFlowStatus]
 
   const dataLastUpdatedLabel = formatDateTime(lastUpdated)
   const currencyLastUpdatedLabel = formatDateTime(currencyLastUpdated)
@@ -143,7 +176,7 @@ export function FinancialSummaryCard({ onSectionChange }: FinancialSummaryCardPr
   return (
     <Card className="bg-card border-border shadow-sm">
       <CardContent className="p-3 space-y-2">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
           <span data-testid="currency-base">
             العملة الأساسية:
             {' '}
@@ -154,29 +187,25 @@ export function FinancialSummaryCard({ onSectionChange }: FinancialSummaryCardPr
           </span>
         </div>
 
-        <div
-          className={`p-2 rounded-lg border ${
-            cashFlowStatus === 'healthy'
-              ? 'bg-success/10 border-success/20'
-              : cashFlowStatus === 'warning'
-                ? 'bg-warning/10 border-warning/20'
-                : 'bg-destructive/10 border-destructive/20'
-          }`}
+        <InlineAlert
+          variant={alertVariant}
+          icon={cashFlowStatus === 'healthy' ? <CheckCircle className="h-4 w-4" aria-hidden /> : <AlertCircle className="h-4 w-4" aria-hidden />}
+          title="الوضع المالي"
+          description={message}
+          actions={(
+            <StatusBadge
+              status={badgeStatus}
+              label={badgeLabel}
+              size="sm"
+              showIcon={false}
+              className="shadow-none"
+            />
+          )}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle
-                className={`h-3 w-3 ${
-                  cashFlowStatus === 'healthy' ? 'text-success' : cashFlowStatus === 'warning' ? 'text-warning' : 'text-destructive'
-                }`}
-              />
-              <span className="text-xs font-semibold text-foreground">الوضع المالي</span>
-            </div>
-            <Badge variant={badgeVariant} className="text-xs">
-              {cashFlowStatus === 'healthy' ? 'مستقر' : cashFlowStatus === 'warning' ? 'تحذير' : 'حرج'}
-            </Badge>
-          </div>
-        </div>
+          <span className="text-xs text-muted-foreground">
+            نسبة تغطية المصروفات الحالية: {Math.round(balanceRatio)}%
+          </span>
+        </InlineAlert>
 
         <div className="space-y-1">
           {quickIndicators.map((indicator, index) => (
@@ -186,12 +215,12 @@ export function FinancialSummaryCard({ onSectionChange }: FinancialSummaryCardPr
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <div className={`p-2 rounded-lg border flex items-center justify-between ${getHealthColor(indicator.status)}`}>
+              <div className={`flex items-center justify-between gap-2 rounded-lg border p-2 ${indicatorToneStyles[indicator.tone].container}`}>
                 <div className="flex items-center gap-2">
-                  <indicator.icon className={`h-3 w-3 text-${indicator.color}-500`} />
+                  <indicator.icon className={`h-3 w-3 ${indicatorToneStyles[indicator.tone].accent}`} />
                   <span className="text-xs font-medium text-foreground">{indicator.label}</span>
                 </div>
-                <span className={`text-xs font-bold text-${indicator.color}-500`}>
+                <span className={`text-xs font-bold ${indicatorToneStyles[indicator.tone].accent}`}>
                   {indicator.value}
                 </span>
               </div>
@@ -199,7 +228,7 @@ export function FinancialSummaryCard({ onSectionChange }: FinancialSummaryCardPr
           ))}
         </div>
 
-        <div className="p-2 bg-gradient-to-r from-primary/5 to-indigo-500/5 rounded-lg border border-border">
+        <div className="rounded-lg border border-border bg-primary/10 p-2">
           <div className="flex justify-between items-center mb-1">
             <span className="text-xs text-muted-foreground">هامش الربح الشهري</span>
             <span className="text-sm font-bold text-primary">{profitMarginDisplay}</span>
@@ -207,10 +236,10 @@ export function FinancialSummaryCard({ onSectionChange }: FinancialSummaryCardPr
           <Progress value={profitMarginProgress} className="h-1.5" />
         </div>
 
-        <div className="flex gap-1 pt-2 border-t border-border">
+        <div className="flex gap-1 border-t border-border pt-2">
           <Button
             size="sm"
-            className="flex-1 h-6 text-xs bg-success text-white hover:bg-success/90"
+            className="flex-1 text-xs"
             onClick={() => onSectionChange('financial')}
           >
             <DollarSign className="h-3 w-3 ml-1" />
@@ -234,7 +263,7 @@ export function FinancialSummaryCard({ onSectionChange }: FinancialSummaryCardPr
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 text-[11px] text-muted-foreground hover:text-primary"
+            className="h-6 text-xs text-muted-foreground hover:text-primary"
             onClick={() => {
               void refresh()
             }}

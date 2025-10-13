@@ -42,35 +42,17 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
     });
   }, [items]);
 
-  useEffect(() => {
-    if (!items.length) return;
-    setExpandedBreakdownSections(prev => {
-      if (prev.size > 0) return prev;
-      const next = new Set(prev);
-      items.forEach(item => {
-        const actualBreakdown = item.actual?.breakdown;
-        const estimatedBreakdown = item.estimated?.breakdown;
-  (['materials', 'labor', 'equipment', 'subcontractors'] as (keyof CostBreakdownSet)[]).forEach(sectionKey => {
-          const actualRows = actualBreakdown?.[sectionKey]?.length ?? 0;
-          const estimatedRows = estimatedBreakdown?.[sectionKey]?.length ?? 0;
-          if (actualRows > 0 || estimatedRows > 0) {
-            next.add(`${item.id}:${sectionKey}`);
-          }
-        });
-      });
-      return next.size > prev.size ? next : prev;
-    });
-  }, [items]);
   const severityMap = useMemo(() => {
-    // Simplified severity mapping without costVarianceService dependency
     const map: Record<string, string> = {};
-    // You can implement your own variance analysis logic here if needed
     return map;
   }, []);
 
   const { formatCurrencyValue, baseCurrency } = useCurrencyFormatter();
 
-  const formatCurrency = (value: number | undefined | null, options?: Parameters<typeof formatCurrencyValue>[1]) => {
+  const formatCurrency = (
+    value: number | undefined | null,
+    options?: Parameters<typeof formatCurrencyValue>[1]
+  ) => {
     return formatCurrencyValue(value ?? 0, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -90,8 +72,6 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
     return new Intl.NumberFormat('ar-SA').format(value ?? 0);
   };
 
-  type ActionButtonTone = 'primary' | 'warning' | 'success' | 'danger' | 'neutral';
-
   interface LegacyProjectCostItem extends ProjectCostItem {
     actualQuantity?: number;
     actualUnitPrice?: number;
@@ -99,12 +79,14 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
     totalPrice?: number;
   }
 
+  type ActionButtonTone = 'primary' | 'warning' | 'success' | 'danger' | 'neutral';
+
   const actionToneStyles: Record<ActionButtonTone, string> = {
-    primary: 'border-blue-200 text-blue-600 hover:bg-blue-50',
-    warning: 'border-amber-200 text-amber-600 hover:bg-amber-50',
-    success: 'border-emerald-200 text-emerald-600 hover:bg-emerald-50',
-    danger: 'border-red-200 text-red-600 hover:bg-red-50',
-    neutral: 'border-gray-200 text-gray-600 hover:bg-gray-50'
+    primary: 'border-info/30 text-info hover:bg-info/10 hover:text-info',
+    warning: 'border-warning/30 text-warning hover:bg-warning/10 hover:text-warning',
+    success: 'border-success/30 text-success hover:bg-success/10 hover:text-success',
+    danger: 'border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive',
+    neutral: 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
   };
 
   interface ActionRoundButtonProps {
@@ -121,7 +103,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
       <button
         ref={ref}
         type="button"
-        className={`inline-flex items-center justify-center w-9 h-9 rounded-full border transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-200 ${actionToneStyles[tone]} ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
+        className={`inline-flex items-center justify-center w-9 h-9 rounded-full border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${actionToneStyles[tone]} ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
         title={tooltip}
         aria-label={label}
         onClick={disabled ? undefined : onClick}
@@ -488,25 +470,43 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
     
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="text-sm text-blue-600 mb-1">التكلفة التقديرية</div>
-          <div className="text-2xl font-bold text-blue-700">{formatCurrency(totals.estimatedTotal)}</div>
+        <div className="rounded-lg border border-info/30 bg-info/10 p-4">
+          <div className="mb-1 text-sm text-info">التكلفة التقديرية</div>
+          <div className="text-2xl font-bold text-info">{formatCurrency(totals.estimatedTotal)}</div>
         </div>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="text-sm text-green-600 mb-1">التكلفة الفعلية</div>
-          <div className="text-2xl font-bold text-green-700">{formatCurrency(totals.actualTotal)}</div>
+        <div className="rounded-lg border border-success/30 bg-success/10 p-4">
+          <div className="mb-1 text-sm text-success">التكلفة الفعلية</div>
+          <div className="text-2xl font-bold text-success">{formatCurrency(totals.actualTotal)}</div>
         </div>
-        <div className={`border rounded-lg p-4 ${totals.varianceTotal >= 0 ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200'}`}>
-          <div className={`text-sm mb-1 ${totals.varianceTotal >= 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+        <div
+          className={`rounded-lg border p-4 ${
+            totals.varianceTotal >= 0
+              ? 'border-destructive/20 bg-destructive/10'
+              : 'border-success/20 bg-success/10'
+          }`}
+        >
+          <div
+            className={`mb-1 text-sm ${
+              totals.varianceTotal >= 0 ? 'text-destructive' : 'text-success'
+            }`}
+          >
             فارق التكلفة
           </div>
-          <div className={`text-2xl font-bold ${totals.varianceTotal >= 0 ? 'text-red-700' : 'text-emerald-700'}`}>
+          <div
+            className={`text-2xl font-bold ${
+              totals.varianceTotal >= 0 ? 'text-destructive' : 'text-success'
+            }`}
+          >
             {formatCurrency(Math.abs(totals.varianceTotal))}
           </div>
         </div>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <div className="text-sm text-gray-600 mb-1">نسبة الفارق</div>
-          <div className={`text-2xl font-bold ${totals.variancePct >= 0 ? 'text-red-700' : 'text-emerald-700'}`}>
+        <div className="rounded-lg border border-border bg-muted p-4">
+          <div className="mb-1 text-sm text-muted-foreground">نسبة الفارق</div>
+          <div
+            className={`text-2xl font-bold ${
+              totals.variancePct >= 0 ? 'text-destructive' : 'text-success'
+            }`}
+          >
             {totals.variancePct.toFixed(1)}%
           </div>
         </div>
@@ -516,10 +516,10 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
 
   const renderBreakdownAnalysis = (item: ProjectCostItem) => {
     const sections: { key: keyof CostBreakdownSet; label: string; dotClass: string; badgeClass: string }[] = [
-      { key: 'materials', label: 'المواد', dotClass: 'bg-orange-500', badgeClass: 'bg-orange-100 text-orange-700' },
-      { key: 'labor', label: 'العمالة', dotClass: 'bg-sky-500', badgeClass: 'bg-sky-100 text-sky-700' },
-      { key: 'equipment', label: 'المعدات', dotClass: 'bg-lime-500', badgeClass: 'bg-lime-100 text-lime-700' },
-      { key: 'subcontractors', label: 'مقاولو الباطن', dotClass: 'bg-purple-500', badgeClass: 'bg-purple-100 text-purple-700' }
+      { key: 'materials', label: 'المواد', dotClass: 'bg-warning', badgeClass: 'bg-warning/10 text-warning' },
+      { key: 'labor', label: 'العمالة', dotClass: 'bg-info', badgeClass: 'bg-info/10 text-info' },
+      { key: 'equipment', label: 'المعدات', dotClass: 'bg-success', badgeClass: 'bg-success/10 text-success' },
+      { key: 'subcontractors', label: 'مقاولو الباطن', dotClass: 'bg-accent', badgeClass: 'bg-accent/20 text-accent-foreground' }
     ];
 
     const hasPendingSync = Boolean(item.state?.breakdownDirty);
@@ -547,78 +547,78 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
       <div className="space-y-4">
         <div className="space-y-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-md p-3 text-center">
-              <div className="text-xs text-gray-500 mb-1 flex items-center justify-center gap-1">
+            <div className="rounded-md border border-border bg-card p-3 text-center">
+              <div className="mb-1 flex items-center justify-center gap-1 text-xs text-muted-foreground">
                 <span>التكلفة الأساسية</span>
                 {validateCalculationConsistency(item) ? (
-                  <span className="text-green-600 text-xs bg-green-50 px-1 rounded" title="الحسابات متطابقة">✓</span>
+                  <span className="rounded bg-success/10 px-1 text-xs text-success" title="الحسابات متطابقة">✓</span>
                 ) : (
-                  <span className="text-orange-600 text-xs bg-orange-50 px-1 rounded" title="يحتاج إعادة حساب">⚠</span>
+                  <span className="rounded bg-warning/10 px-1 text-xs text-warning" title="يحتاج إعادة حساب">⚠</span>
                 )}
               </div>
-              <div className="text-lg font-bold text-gray-800">{formatCurrency(baseAmount)}</div>
-              <div className="text-xs text-gray-500">{baseCurrency}</div>
+              <div className="text-lg font-bold text-foreground">{formatCurrency(baseAmount)}</div>
+              <div className="text-xs text-muted-foreground">{baseCurrency}</div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-md p-3 text-center">
-              <div className="text-xs text-blue-600 mb-1 font-medium">التكاليف الإدارية</div>
-              <div className="text-xs text-blue-700 font-bold mb-1 bg-blue-100 px-2 py-0.5 rounded-full inline-block">
+            <div className="rounded-md border border-info/30 bg-info/10 p-3 text-center">
+              <div className="mb-1 text-xs font-medium text-info">التكاليف الإدارية</div>
+              <div className="mb-1 inline-block rounded-full border border-info/40 px-2 py-0.5 text-xs font-bold text-info">
                 {administrativePercent.toFixed(1)}%
               </div>
-              <div className="text-lg font-bold text-blue-800">{formatCurrency(administrativeAmount)}</div>
-              <div className="text-xs text-blue-600">{baseCurrency}</div>
+              <div className="text-lg font-bold text-info">{formatCurrency(administrativeAmount)}</div>
+              <div className="text-xs text-info">{baseCurrency}</div>
             </div>
 
-            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 rounded-md p-3 text-center">
-              <div className="text-xs text-emerald-600 mb-1 font-medium">التكاليف التشغيلية</div>
-              <div className="text-xs text-emerald-700 font-bold mb-1 bg-emerald-100 px-2 py-0.5 rounded-full inline-block">
+            <div className="rounded-md border border-success/30 bg-success/10 p-3 text-center">
+              <div className="mb-1 text-xs font-medium text-success">التكاليف التشغيلية</div>
+              <div className="mb-1 inline-block rounded-full border border-success/40 px-2 py-0.5 text-xs font-bold text-success">
                 {operationalPercent.toFixed(1)}%
               </div>
-              <div className="text-lg font-bold text-emerald-800">{formatCurrency(operationalAmount)}</div>
-              <div className="text-xs text-emerald-600">{baseCurrency}</div>
+              <div className="text-lg font-bold text-success">{formatCurrency(operationalAmount)}</div>
+              <div className="text-xs text-success">{baseCurrency}</div>
             </div>
 
-            <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-md p-3 text-center">
-              <div className="text-xs text-green-600 mb-1 font-medium">إجمالي الربح</div>
-              <div className="text-xs text-green-700 font-bold mb-1 bg-green-100 px-2 py-0.5 rounded-full inline-block">
+            <div className="rounded-md border border-primary/30 bg-primary/10 p-3 text-center">
+              <div className="mb-1 text-xs font-medium text-primary">إجمالي الربح</div>
+              <div className="mb-1 inline-block rounded-full border border-primary/40 px-2 py-0.5 text-xs font-bold text-primary">
                 {profitPercent.toFixed(1)}%
               </div>
-              <div className="text-xl font-bold text-green-800">{formatCurrency(profitAmount)}</div>
-              <div className="text-xs text-green-600 mt-1">{baseCurrency}</div>
+              <div className="text-xl font-bold text-primary">{formatCurrency(profitAmount)}</div>
+              <div className="mt-1 text-xs text-primary">{baseCurrency}</div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-md p-3 text-center">
-              <div className="text-xs text-orange-600 mb-1 font-medium">قيمة الضريبة</div>
-              <div className="text-xs text-orange-700 font-bold mb-1 bg-orange-100 px-2 py-0.5 rounded-full inline-block">15%</div>
-              <div className="text-lg font-bold text-orange-800">{formatCurrency(vatAmount)}</div>
-              <div className="text-xs text-orange-600">{baseCurrency}</div>
+            <div className="rounded-md border border-warning/30 bg-warning/10 p-3 text-center">
+              <div className="mb-1 text-xs font-medium text-warning">قيمة الضريبة</div>
+              <div className="mb-1 inline-block rounded-full border border-warning/40 px-2 py-0.5 text-xs font-bold text-warning">15%</div>
+              <div className="text-lg font-bold text-warning">{formatCurrency(vatAmount)}</div>
+              <div className="text-xs text-warning">{baseCurrency}</div>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-md p-3 text-center">
-              <div className="text-xs text-purple-600 mb-1 font-medium">الإجمالي مع الضريبة</div>
-              <div className="text-lg font-bold text-purple-800">{formatCurrency(totalWithVAT)}</div>
-              <div className="text-xs text-purple-600">{baseCurrency}</div>
+            <div className="rounded-md border border-accent/30 bg-accent/10 p-3 text-center">
+              <div className="mb-1 text-xs font-medium text-accent-foreground">الإجمالي مع الضريبة</div>
+              <div className="text-lg font-bold text-accent-foreground">{formatCurrency(totalWithVAT)}</div>
+              <div className="text-xs text-accent-foreground">{baseCurrency}</div>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-md p-3 text-center">
-              <div className="text-xs text-indigo-600 mb-1 font-medium">سعر البند (للوحدة)</div>
-              <div className="text-lg font-bold text-indigo-800">{formatCurrency(unitPrice)}</div>
-              <div className="text-xs text-indigo-600">{baseCurrency}</div>
+            <div className="rounded-md border border-info/30 bg-info/10 p-3 text-center">
+              <div className="mb-1 text-xs font-medium text-info">سعر البند (للوحدة)</div>
+              <div className="text-lg font-bold text-info">{formatCurrency(unitPrice)}</div>
+              <div className="text-xs text-info">{baseCurrency}</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white border border-dashed border-blue-200 rounded-lg p-4">
+        <div className="rounded-lg border border-dashed border-info/30 bg-card p-4">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-sm font-semibold text-blue-700 flex items-center gap-2">
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-info">
               <Settings className="w-4 h-4" />
               النسب الافتراضية للبند
             </h4>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <label className="flex flex-col gap-1 text-xs text-gray-600">
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               <span>الإدارية (%)</span>
               <input
                 type="number"
@@ -626,11 +626,11 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 max={100}
                 step={0.1}
                 defaultValue={administrativePercent.toFixed(1)}
-                className="border border-blue-200 bg-blue-50 rounded-md px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 onBlur={e => handlePercentagesChange(item.id, 'administrative', e.target.value)}
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs text-gray-600">
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               <span>التشغيلية (%)</span>
               <input
                 type="number"
@@ -638,11 +638,11 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 max={100}
                 step={0.1}
                 defaultValue={operationalPercent.toFixed(1)}
-                className="border border-emerald-200 bg-emerald-50 rounded-md px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 onBlur={e => handlePercentagesChange(item.id, 'operational', e.target.value)}
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs text-gray-600">
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               <span>الربح (%)</span>
               <input
                 type="number"
@@ -650,7 +650,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 max={100}
                 step={0.1}
                 defaultValue={profitPercent.toFixed(1)}
-                className="border border-purple-200 bg-purple-50 rounded-md px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-purple-400"
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 onBlur={e => handlePercentagesChange(item.id, 'profit', e.target.value)}
               />
             </label>
@@ -681,32 +681,32 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
           const actualTotal = sumRows(actualRows);
           const varianceValue = actualTotal - estimatedTotal;
           const variancePct = estimatedTotal > 0 ? (varianceValue / estimatedTotal) * 100 : 0;
-          const varianceClass = varianceValue > 0 ? 'text-red-600' : varianceValue < 0 ? 'text-emerald-600' : 'text-gray-600';
+          const varianceClass = varianceValue > 0 ? 'text-destructive' : varianceValue < 0 ? 'text-success' : 'text-muted-foreground';
           const displayedRowCount = actualRows.length !== 0 ? actualRows.length : estimatedRows.length;
 
           return (
-            <div key={section.key} className="border border-gray-200 rounded-xl bg-white overflow-hidden">
+            <div key={section.key} className="overflow-hidden rounded-xl border border-border bg-card">
               <button
                 type="button"
                 onClick={() => toggleBreakdownSection(item.id, section.key)}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                className="flex w-full items-center justify-between px-4 py-3 transition-colors hover:bg-muted"
                 aria-controls={`${sectionKey}-panel`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 bg-white text-gray-500">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground">
                     {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </span>
                   <div className="flex items-center gap-2">
                     <span className={`inline-block w-2.5 h-2.5 rounded-full ${section.dotClass}`} />
-                    <span className="font-medium text-gray-800">{section.label}</span>
+                    <span className="font-medium text-foreground">{section.label}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${section.badgeClass}`}>
                       {formatInteger(displayedRowCount)} عناصر
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
-                  <span className="text-blue-600">تقديري: {formatCurrency(estimatedTotal)}</span>
-                  <span className="text-green-600">فعلي: {formatCurrency(actualTotal)}</span>
+                  <span className="text-info">تقديري: {formatCurrency(estimatedTotal)}</span>
+                  <span className="text-success">فعلي: {formatCurrency(actualTotal)}</span>
                   <span className={`${varianceClass} font-medium`}>
                     الفارق: {formatCurrency(Math.abs(varianceValue))} ({variancePct.toFixed(1)}%)
                   </span>
@@ -714,11 +714,11 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
               </button>
 
               {isOpen && (
-                <div className="border-t border-gray-100 p-3 md:p-4 space-y-3" id={`${sectionKey}-panel`}>
-                  <div className="flex flex-wrap justify-between items-center gap-2">
-                    <p className="text-sm text-gray-600 font-medium">تفاصيل {section.label}</p>
+                <div className="space-y-3 border-t border-border/40 p-3 md:p-4" id={`${sectionKey}-panel`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-muted-foreground">تفاصيل {section.label}</p>
                     <button
-                      className="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
+                      className="flex items-center gap-1 text-sm text-success hover:text-success"
                       onClick={() => handleAddBreakdownRow(item.id, section.key)}
                     >
                       <Plus className="w-4 h-4" />
@@ -726,9 +726,9 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                     </button>
                   </div>
 
-                  <div className="overflow-x-auto rounded-lg border border-gray-100">
+                  <div className="overflow-x-auto rounded-lg border border-border/40">
                     <table className="w-full text-xs md:text-sm">
-                      <thead className="bg-gray-50 text-gray-600">
+                      <thead className="bg-muted text-muted-foreground">
                         <tr>
                           <th className="px-3 py-2 text-right whitespace-nowrap">الوصف</th>
                           <th className="px-3 py-2 text-center whitespace-nowrap">الوحدة</th>
@@ -760,23 +760,23 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                           const totalCost = quantity * unitCost;
 
                           return (
-                            <tr key={rowId} className="odd:bg-white even:bg-gray-50">
+                            <tr key={rowId} className="odd:bg-background even:bg-muted">
                               <td className="px-3 py-2 align-middle">
                                 {estimatedRow ? (
-                                  <span className="text-gray-700">{estimatedRow.name}</span>
+                                  <span className="text-foreground">{estimatedRow.name}</span>
                                 ) : (
                                   <input
-                                    className="w-full border border-gray-200 rounded px-2 py-1 text-sm"
+                                    className="w-full rounded border border-input bg-background px-2 py-1 text-sm"
                                     defaultValue={fallbackName}
                                     placeholder="وصف العنصر"
                                     onBlur={e => handleBreakdownRowChange(item.id, section.key, rowId, 'name', e.target.value)}
                                   />
                                 )}
                               </td>
-                              <td className="px-3 py-2 text-center align-middle text-gray-600">{unit}</td>
+                              <td className="px-3 py-2 text-center align-middle text-muted-foreground">{unit}</td>
                               <td className="px-3 py-2 text-center">
                                 <input
-                                  className="w-20 md:w-24 border border-gray-200 rounded px-2 py-1 text-sm text-center"
+                                  className="w-20 md:w-24 rounded border border-input bg-background px-2 py-1 text-sm text-center"
                                   defaultValue={quantity.toFixed(2)}
                                   title="الكمية"
                                   placeholder="0.00"
@@ -785,18 +785,18 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                               </td>
                               <td className="px-3 py-2 text-center">
                                 <input
-                                  className="w-20 md:w-24 border border-gray-200 rounded px-2 py-1 text-sm text-center"
+                                  className="w-20 md:w-24 rounded border border-input bg-background px-2 py-1 text-sm text-center"
                                   defaultValue={unitCost.toFixed(2)}
                                   title="سعر الوحدة"
                                   placeholder="0.00"
                                   onBlur={e => handleBreakdownRowChange(item.id, section.key, rowId, 'unitCost', e.target.value)}
                                 />
                               </td>
-                              <td className="px-3 py-2 text-center font-medium">{formatCurrency(totalCost)}</td>
+                              <td className="px-3 py-2 text-center font-medium text-foreground">{formatCurrency(totalCost)}</td>
                               <td className="px-3 py-2 text-center">
                                 <div className="flex items-center justify-center">
                                   {estimatedRow ? (
-                                    <span className="text-xs text-gray-400">—</span>
+                                    <span className="text-xs text-muted-foreground">—</span>
                                   ) : (
                                     <DeleteConfirmation
                                       itemName={fallbackName}
@@ -828,33 +828,33 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
         {(hasPendingSync || !validateCalculationConsistency(item)) && (
           <div className="space-y-3">
             {hasPendingSync && (
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-orange-800">
+              <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning" />
+                <div className="text-sm text-warning">
                   <p className="font-medium">تحديث مطلوب</p>
                   <p>تم تعديل بيانات التكاليف. يرجى النقر على &quot;حفظ وتحديث&quot; لتطبيق التغييرات على سعر البند.</p>
                 </div>
               </div>
             )}
             {!validateCalculationConsistency(item) && !hasPendingSync && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-yellow-800">
+              <div className="flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning" />
+                <div className="text-sm text-warning">
                   <p className="font-medium">تحذير: عدم تطابق في الحسابات</p>
                   <p>الحسابات الحالية لا تتطابق مع سعر البند المعروض. يُنصح بإعادة الحساب للتأكد من الدقة.</p>
                 </div>
               </div>
             )}
 
-            <div className="bg-gray-50 p-4 rounded-lg border border-blue-100 mt-4">
-              <div className="flex flex-col lg:flex-row justify-between gap-4 lg:gap-6 items-center">
+            <div className="mt-4 rounded-lg border border-info/30 bg-muted/10 p-4">
+              <div className="flex flex-col items-center justify-between gap-4 lg:flex-row lg:gap-6">
                 <div className="flex items-center gap-3">
                   {hasPendingSync ? (
                     <SaveConfirmation
                       onConfirm={() => handleRecalculateItemFromBreakdown(item.id)}
                       trigger={
                         <button
-                          className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 animate-pulse shadow-lg font-medium"
+                          className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
                           aria-label="حفظ وتحديث سعر البند"
                           title="حفظ وتحديث سعر البند"
                         >
@@ -865,7 +865,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                     />
                   ) : (
                     <button
-                      className="px-5 py-2.5 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 flex items-center gap-2 shadow-lg font-medium"
+                      className="flex items-center gap-2 rounded-lg bg-warning px-5 py-2.5 font-medium text-warning-foreground shadow-lg transition-colors hover:bg-warning/90"
                       aria-label="حفظ وتحديث سعر البند"
                       title="إعادة حساب سعر البند"
                       onClick={() => handleRecalculateItemFromBreakdown(item.id)}
@@ -878,20 +878,20 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
 
                 <div className="flex flex-wrap items-center gap-2">
                   {validateCalculationConsistency(item) ? (
-                    <div className="flex items-center gap-2 text-green-700 bg-green-100 px-3 py-2 rounded-lg border border-green-200">
-                      <span className="text-green-600">✓</span>
+                    <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-success">
+                      <span className="text-success">✓</span>
                       <span className="text-sm font-medium">الحسابات متطابقة</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 text-orange-700 bg-orange-100 px-3 py-2 rounded-lg border border-orange-200">
-                      <span className="text-orange-600">⚠</span>
+                    <div className="flex items-center gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-warning">
+                      <span className="text-warning">⚠</span>
                       <span className="text-sm font-medium">يحتاج إعادة حساب</span>
                     </div>
                   )}
 
                   {hasPendingSync && (
-                    <div className="flex items-center gap-2 text-blue-700 bg-blue-100 px-3 py-2 rounded-lg border border-blue-200">
-                      <span className="text-blue-600 animate-pulse">💾</span>
+                    <div className="flex items-center gap-2 rounded-lg border border-info/30 bg-info/10 px-3 py-2 text-info">
+                      <span className="animate-pulse text-info">💾</span>
                       <span className="text-sm font-medium">تغييرات غير محفوظة</span>
                     </div>
                   )}
@@ -899,7 +899,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
               </div>
 
               <div className="text-center mt-2">
-                <p className="text-xs text-gray-600">💡 قم بتعديل البيانات في الجداول أعلاه ثم اضغط على زر الحفظ لتحديث السعر النهائي</p>
+                <p className="text-xs text-muted-foreground">💡 قم بتعديل البيانات في الجداول أعلاه ثم اضغط على زر الحفظ لتحديث السعر النهائي</p>
               </div>
             </div>
           </div>
@@ -910,39 +910,39 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="text-lg text-gray-600">جاري التحميل...</div>
+          <div className="text-lg text-muted-foreground">جاري التحميل...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen" dir="rtl">
+    <div className="min-h-screen bg-muted/20" dir="rtl">
       <div className="p-6 space-y-6">
         {actionMessage && (
-          <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm shadow-sm flex items-center gap-2" role="status" aria-live="polite">
+          <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success shadow-sm" role="status" aria-live="polite">
             <span className="text-lg" role="img" aria-hidden="true">✅</span>
             <span>{actionMessage}</span>
           </div>
         )}
         {errorMessage && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm shadow-sm flex items-center gap-2" role="alert">
+          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive shadow-sm" role="alert">
             <span className="text-lg" role="img" aria-hidden="true">⚠️</span>
             <span>{errorMessage}</span>
           </div>
         )}
         
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="flex justify-between items-start mb-4">
+        <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+          <div className="mb-4 flex items-start justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Calculator className="w-6 h-6 text-blue-600" />
+              <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
+                <Calculator className="h-6 w-6 text-info" />
                 بنود التكلفة
               </h1>
-              <p className="text-gray-600 mt-1">إدارة وتحليل التكاليف التقديرية والفعلية للمشروع</p>
+              <p className="mt-1 text-muted-foreground">إدارة وتحليل التكاليف التقديرية والفعلية للمشروع</p>
             </div>
             <div className="flex items-center gap-2">
               {tenderId && (
@@ -950,19 +950,19 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                   type="button"
                   onClick={handleImportFromTender}
                   disabled={isImporting}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="flex items-center gap-2 rounded-lg bg-info px-4 py-2 text-sm text-info-foreground transition-colors hover:bg-info/90 disabled:cursor-not-allowed disabled:opacity-60"
                   aria-label="استيراد بنود التكلفة من المنافسة"
                 >
                   {isImporting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   ) : (
-                    <ExternalLink className="w-4 h-4" />
+                    <ExternalLink className="h-4 w-4" />
                   )}
                   {isImporting ? 'جاري الاستيراد...' : 'استيراد من المنافسة'}
                 </button>
               )}
-              <button className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2">
-                <Settings className="w-4 h-4" />
+              <button className="flex items-center gap-2 rounded-lg bg-muted-foreground px-4 py-2 text-sm text-background transition-colors hover:bg-muted-foreground/90">
+                <Settings className="h-4 w-4" />
                 الإعدادات
               </button>
             </div>
@@ -973,16 +973,16 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
         </div>
 
         {/* Main Table */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-              <Grid3X3 className="w-5 h-5 text-green-600" />
+        <div className="rounded-lg border border-border bg-card shadow-sm">
+          <div className="border-b border-border px-4 py-4">
+            <h2 className="flex items-center gap-2 text-lg font-medium text-foreground">
+              <Grid3X3 className="h-5 w-5 text-success" />
               جدول بنود التكلفة
             </h2>
           </div>
 
           <div className="overflow-x-auto">
-            <table key={`table-${forceUpdateKey}`} className="w-full min-w-[1400px]">
+            <table key={`table-${forceUpdateKey}`} className="w-full min-w-[1400px] table-fixed">
               <colgroup>
                 <col className="w-[5%]" />
                 <col className="w-[6%]" />
@@ -998,21 +998,21 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 <col className="w-[5%]" />
                 <col className="w-[5%]" />
               </colgroup>
-              <thead className="sticky top-0 bg-white z-10">
-                <tr className="bg-gray-50 border-b" style={{ display: 'flex', flexDirection: 'row-reverse', width: '100%' }}>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 5%', minWidth: '50px' }}>إجراءات</th>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 5%', minWidth: '50px' }}>فارق %</th>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 10%', minWidth: '100px' }}>فارق القيمة</th>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 9%', minWidth: '90px' }}>الإجمالي الفعلي</th>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 9%', minWidth: '90px' }}>السعر الفعلي</th>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 8%', minWidth: '80px' }}>الكمية الفعلية</th>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 9%', minWidth: '90px' }}>الإجمالي التقديري</th>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 8%', minWidth: '80px' }}>السعر التقديري</th>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 8%', minWidth: '80px' }}>الكمية التقديرية</th>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 6%', minWidth: '60px' }}>الوحدة</th>
-                  <th className="border border-gray-200 p-3 text-right font-semibold" style={{ flex: '1 1 0%', minWidth: '200px' }}>وصف البند</th>
-                  <th className="border border-gray-200 p-3 text-right font-semibold" style={{ flex: '0 0 6%', minWidth: '60px' }}>رقم البند</th>
-                  <th className="border border-gray-200 p-3 text-center font-semibold" style={{ flex: '0 0 5%', minWidth: '50px' }}>عرض</th>
+              <thead className="sticky top-0 z-10 bg-card">
+                <tr className="border-b border-border bg-muted/40">
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">إجراءات</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">فارق %</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">فارق القيمة</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">الإجمالي الفعلي</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">السعر الفعلي</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">الكمية الفعلية</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">الإجمالي التقديري</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">السعر التقديري</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">الكمية التقديرية</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">الوحدة</th>
+                  <th className="border border-border px-3 py-2 text-right text-sm font-semibold text-muted-foreground">وصف البند</th>
+                  <th className="border border-border px-3 py-2 text-right text-sm font-semibold text-muted-foreground">رقم البند</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">عرض</th>
                 </tr>
               </thead>
               <tbody>
@@ -1050,20 +1050,20 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                   }
                   const varianceValue = actualTotal - estimatedTotal;
                   const variancePct = estimatedTotal ? (varianceValue / estimatedTotal) * 100 : 0;
-                  const varianceClass = varianceValue > 0 ? 'text-red-700' : varianceValue < 0 ? 'text-emerald-700' : 'text-gray-700';
-                  const varianceBg = varianceValue > 0 ? 'bg-red-50' : varianceValue < 0 ? 'bg-emerald-50' : '';
+                  const varianceClass = varianceValue > 0 ? 'text-destructive' : varianceValue < 0 ? 'text-success' : 'text-muted-foreground';
+                  const varianceBg = varianceValue !== 0 ? (varianceValue > 0 ? 'bg-destructive/10' : 'bg-success/10') : 'bg-muted/20';
                   const severity = severityMap[item.id];
                   const severityStyles: Record<string, { label: string; className: string }> = {
-                    critical: { label: 'تجاوز حرج', className: 'bg-red-100 text-red-700' },
-                    warning: { label: 'تنبيه', className: 'bg-amber-100 text-amber-700' },
-                    info: { label: 'ملاحظة', className: 'bg-blue-100 text-blue-700' }
+                    critical: { label: 'تجاوز حرج', className: 'bg-destructive/10 text-destructive' },
+                    warning: { label: 'تنبيه', className: 'bg-warning/10 text-warning' },
+                    info: { label: 'ملاحظة', className: 'bg-info/10 text-info' }
                   };
                   const severityBadge = severity ? severityStyles[severity] : null;
 
                   return (
                     <React.Fragment key={`${item.id}-${actualUnitPrice}-${actualTotal}`}>
-                      <tr className="odd:bg-white even:bg-gray-50 hover:bg-blue-50/50 transition-colors" style={{ display: 'flex', flexDirection: 'row-reverse', width: '100%' }}>
-                        <td className="border border-gray-200 p-2 text-center" style={{ flex: '0 0 5%', minWidth: '50px' }}>
+                      <tr className="border-b border-border bg-card odd:bg-card even:bg-muted/10 transition-colors hover:bg-info/10">
+                        <td className="border border-border px-2 py-2 text-center align-top min-w-[50px] w-[5%]">
                           <div className="flex items-center justify-center gap-2 flex-wrap">
                             {(() => {
                               const hasPendingSync = Boolean(item.state?.breakdownDirty);
@@ -1123,54 +1123,54 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                             />
                           </div>
                         </td>
-                        <td className={`border border-gray-200 p-2 text-center font-semibold ${varianceClass} ${varianceBg}`} style={{ flex: '0 0 5%', minWidth: '50px' }}>
+                        <td className={`border border-border px-2 py-2 text-center font-semibold ${varianceClass} ${varianceBg} min-w-[60px] w-[6%]`}>
                           {variancePct.toFixed(1)}%
                         </td>
-                        <td className={`border border-gray-200 p-2 text-center font-semibold ${varianceClass} ${varianceBg}`} style={{ flex: '0 0 10%', minWidth: '100px' }}>
+                        <td className={`border border-border px-2 py-2 text-center font-semibold ${varianceClass} ${varianceBg} min-w-[120px] w-[24%]`}>
                           {formatCurrency(varianceValue)}
                         </td>
-                        <td className="border border-gray-200 p-2 text-center font-medium text-green-600" style={{ flex: '0 0 9%', minWidth: '90px' }}>
+                        <td className="border border-border px-2 py-2 text-center font-medium text-success min-w-[90px] w-[6%]">
                           {formatCurrency(actualTotal)}
                         </td>
-                        <td className="border border-gray-200 p-2 text-center text-gray-700" style={{ flex: '0 0 9%', minWidth: '90px' }}>
+                        <td className="border border-border px-2 py-2 text-center text-foreground min-w-[90px] w-[8%]">
                           {Number.isFinite(actualUnitPrice) ? formatCurrency(actualUnitPrice) : '—'}
                         </td>
-                        <td className="border border-gray-200 p-2 text-center text-gray-700" style={{ flex: '0 0 8%', minWidth: '80px' }}>
+                        <td className="border border-border px-2 py-2 text-center text-foreground min-w-[80px] w-[8%]">
                           {Number.isFinite(actualQuantity) ? formatDecimal(actualQuantity) : '—'}
                         </td>
-                        <td className="border border-gray-200 p-2 text-center font-medium text-blue-600" style={{ flex: '0 0 9%', minWidth: '90px' }}>
+                        <td className="border border-border px-2 py-2 text-center font-medium text-info min-w-[90px] w-[9%]">
                           {formatCurrency(estimatedTotal)}
                         </td>
-                        <td className="border border-gray-200 p-2 text-center" style={{ flex: '0 0 8%', minWidth: '80px' }}>
+                        <td className="border border-border px-2 py-2 text-center min-w-[80px] w-[8%]">
                           {formatCurrency(estimatedUnitPrice)}
                         </td>
-                        <td className="border border-gray-200 p-2 text-center" style={{ flex: '0 0 8%', minWidth: '80px' }}>
+                        <td className="border border-border px-2 py-2 text-center min-w-[80px] w-[9%]">
                           {formatDecimal(estimatedQuantity)}
                         </td>
-                        <td className="border border-gray-200 p-2 text-center font-medium" style={{ flex: '0 0 6%', minWidth: '60px' }}>
+                        <td className="border border-border px-2 py-2 text-center font-medium min-w-[60px] w-[9%]">
                           {item.unit ?? '-'}
                         </td>
-                        <td className="border border-gray-200 p-2 text-right" style={{ flex: '1 1 0%', minWidth: '200px' }}>
+                        <td className="border border-border px-2 py-2 text-right w-[10%]">
                           <div>
-                            <div className="font-medium text-gray-900">{item.description}</div>
+                            <div className="font-medium text-foreground">{item.description}</div>
                             {item.category && (
-                              <div className="text-xs text-gray-500 mt-1">{item.category}</div>
+                              <div className="mt-1 text-xs text-muted-foreground">{item.category}</div>
                             )}
                             {severityBadge && (
-                              <div className={`mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] ${severityBadge.className}`}>
+                              <div className={`mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${severityBadge.className}`}>
                                 <AlertTriangle className="w-3.5 h-3.5" />
                                 {severityBadge.label}
                               </div>
                             )}
                           </div>
                         </td>
-                        <td className="border border-gray-200 p-2 text-center font-medium" style={{ flex: '0 0 6%', minWidth: '60px' }}>
+                        <td className="border border-border px-2 py-2 text-center font-medium min-w-[60px] w-[5%]">
                           {formatInteger(index + 1)}
                         </td>
-                        <td className="border border-gray-200 p-2 text-center" style={{ flex: '0 0 5%', minWidth: '50px' }}>
+                        <td className="border border-border px-2 py-2 text-center min-w-[50px] w-[5%]">
                           <button
                             onClick={() => toggleExpanded(item.id)}
-                            className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 text-gray-600 hover:text-blue-600 hover:border-blue-400 transition-colors"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-info hover:text-info"
                             title={isExpanded ? 'إخفاء تحليل التكلفة' : 'عرض تحليل التكلفة'}
                             aria-controls={`analysis-${item.id}`}
                           >
@@ -1182,16 +1182,16 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                       {/* Breakdown Analysis Row */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan={13} className="p-0 bg-gray-100">
+                          <td colSpan={13} className="bg-muted/10 p-0">
                             <div
-                              className="bg-white p-4 m-2 rounded-lg border"
+                              className="m-2 rounded-lg border border-border bg-card p-4"
                               id={`analysis-${item.id}`}
                               data-testid={`analysis-panel-${item.id}`}
                             >
                               <div className="mb-3 font-semibold flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <FileText className="w-4 h-4 text-blue-600" />
-                                  <span className="text-blue-600">تحليل تكلفة البند</span>
+                                  <FileText className="w-4 h-4 text-info" />
+                                  <span className="text-info">تحليل تكلفة البند</span>
                                 </div>
                               </div>
                               {renderBreakdownAnalysis(item)}

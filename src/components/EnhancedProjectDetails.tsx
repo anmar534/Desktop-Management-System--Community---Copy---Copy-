@@ -524,15 +524,13 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
   if (!project) {
     return (
       <PageLayout
+        tone="destructive"
         title="تفاصيل المشروع"
         description="المشروع غير موجود"
         icon={Building2}
-        gradientFrom="from-red-600"
-        gradientTo="to-red-700"
         quickStats={[]}
         quickActions={[]}
         showSearch={false}
-        showBackButton={true}
         onBack={onBack}
         backLabel="العودة للمشاريع"
       >
@@ -673,32 +671,32 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
       value: `${project.progress || 0}%`,
       trend: 'up' as const,
       trendValue: '+5.2%',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50 dark:bg-green-900/20'
+      color: 'text-success',
+      bgColor: 'bg-success/10 dark:bg-success/20'
     },
     {
       label: 'التكلفة الفعلية',
       value: formatCurrency(actualCost),
       trend: 'up' as const,
       trendValue: `${spentPercentage.toFixed(1)}%`,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50 dark:bg-blue-900/20'
+      color: 'text-info',
+      bgColor: 'bg-info/10 dark:bg-info/20'
     },
     {
       label: 'الربح الفعلي',
       value: formatCurrency(actualProfit),
       trend: actualProfit >= expectedProfit ? 'up' as const : 'down' as const,
       trendValue: `${profitMargin.toFixed(1)}%`,
-      color: actualProfit >= 0 ? 'text-green-600' : 'text-red-600',
-      bgColor: actualProfit >= 0 ? 'bg-green-50' : 'bg-red-50'
+      color: actualProfit >= 0 ? 'text-success' : 'text-destructive',
+      bgColor: actualProfit >= 0 ? 'bg-success/10' : 'bg-destructive/10'
     },
     {
       label: 'عدد المشتريات',
       value: projectExpenses.length.toString(),
       trend: 'stable' as const,
       trendValue: '0',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50 dark:bg-purple-900/20'
+      color: 'text-accent',
+      bgColor: 'bg-accent/10 dark:bg-accent/20'
     }
     ,
     {
@@ -706,8 +704,8 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
       value: `${financialVariance >= 0 ? '+' : ''}${formatCurrency(financialVariance)}`,
       trend: financialVariance <= 0 ? 'up' as const : 'down' as const,
       trendValue: financialVariance.toFixed(0),
-      color: financialVariance <= 0 ? 'text-green-600' : 'text-red-600',
-      bgColor: financialVariance <= 0 ? 'bg-green-50' : 'bg-red-50'
+      color: financialVariance <= 0 ? 'text-success' : 'text-destructive',
+      bgColor: financialVariance <= 0 ? 'bg-success/10' : 'bg-destructive/10'
     }
   ]
 
@@ -767,17 +765,17 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'active':
-        return { text: 'نشط', variant: 'default' as const, color: 'text-green-600' }
+        return { text: 'نشط', variant: 'default' as const, color: 'text-success' }
       case 'completed':
-        return { text: 'مكتمل', variant: 'default' as const, color: 'text-blue-600' }
+        return { text: 'مكتمل', variant: 'default' as const, color: 'text-info' }
       case 'planning':
-        return { text: 'تحت التخطيط', variant: 'secondary' as const, color: 'text-yellow-600' }
+        return { text: 'تحت التخطيط', variant: 'secondary' as const, color: 'text-warning' }
       case 'paused':
-        return { text: 'متوقف مؤقتاً', variant: 'secondary' as const, color: 'text-orange-600' }
+        return { text: 'متوقف مؤقتاً', variant: 'secondary' as const, color: 'text-muted-foreground' }
       case 'delayed':
-        return { text: 'متأخر', variant: 'destructive' as const, color: 'text-red-600' }
+        return { text: 'متأخر', variant: 'destructive' as const, color: 'text-destructive' }
       default:
-        return { text: 'غير محدد', variant: 'secondary' as const, color: 'text-gray-600' }
+        return { text: 'غير محدد', variant: 'secondary' as const, color: 'text-muted-foreground' }
     }
   }
 
@@ -785,15 +783,13 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
 
   return (
     <PageLayout
+      tone="primary"
       title={`تفاصيل المشروع: ${project.name}`}
       description="عرض شامل لجميع تفاصيل ومعلومات المشروع والتكاليف"
       icon={Building2}
-      gradientFrom="from-indigo-600"
-      gradientTo="to-indigo-700"
       quickStats={quickStats}
       quickActions={quickActions}
       showSearch={false}
-      showBackButton={true}
       onBack={onBack}
       backLabel="العودة للمشاريع"
     >
@@ -954,25 +950,25 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">قيمة العقد (الإيرادات)</span>
-                    <span className="font-semibold text-blue-600">{formatCurrency(contractValue)}</span>
+                    <span className="font-semibold text-info">{formatCurrency(contractValue)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">التكلفة التقديرية (الميزانية المخططة)</span>
-                    <span className="font-semibold text-orange-600">{formatCurrency(estimatedCost)}</span>
+                    <span className="font-semibold text-warning">{formatCurrency(estimatedCost)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">التكلفة الفعلية</span>
-                    <span className="font-semibold text-red-600">{formatCurrency(actualCost)}</span>
+                    <span className="font-semibold text-destructive">{formatCurrency(actualCost)}</span>
                   </div>
                   <div className="flex justify-between items-center border-t pt-2">
                     <span className="text-sm text-muted-foreground">الربح الفعلي</span>
-                    <span className={`font-semibold ${actualProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`font-semibold ${actualProfit >= 0 ? 'text-success' : 'text-destructive'}`}>
                       {formatCurrency(actualProfit)} ({profitMargin.toFixed(1)}%)
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-muted-foreground">الانحراف المالي</span>
-                    <span className={`font-semibold ${financialVariance <= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`font-semibold ${financialVariance <= 0 ? 'text-success' : 'text-destructive'}`}>
                       {financialVariance >= 0 ? '+' : ''}{formatCurrency(financialVariance)}
                     </span>
                   </div>
@@ -986,9 +982,9 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
         <TabsContent value="costs" className="space-y-4">
           <div className="space-y-4">
             {relatedTender && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <BarChart3 className="h-4 w-4 text-gray-500" />
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-muted bg-muted/10 px-4 py-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
                   أدوات تسعير المشروع
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1005,7 +1001,7 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
             )}
 
             <SimplifiedProjectCostView projectId={project.id} tenderId={relatedTender?.id} />
-            <div className="text-[11px] text-muted-foreground leading-relaxed border border-dashed border-gray-200 rounded-lg px-4 py-3">
+            <div className="text-xs text-muted-foreground leading-relaxed border border-dashed border-muted rounded-lg px-4 py-3">
               تم تطبيق العرض المبسط الجديد لإدارة التكاليف المستوحى من تصميم صفحات التسعير في المناقصات. التصميم يركز على الوضوح والبساطة.
             </div>
           </div>
@@ -1031,64 +1027,64 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
               {budgetLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                    <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
                     <p className="text-sm text-muted-foreground">جاري تحميل بيانات المقارنة...</p>
                   </div>
                 </div>
               ) : budgetSummary ? (
                 <div className="space-y-6">
                   {/* ملخص المقارنة */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="grid grid-cols-1 gap-4 rounded-lg bg-muted/10 p-4 md:grid-cols-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{budgetSummary.totalItems}</div>
+                      <div className="text-2xl font-bold text-info">{budgetSummary.totalItems}</div>
                       <div className="text-sm text-muted-foreground">إجمالي البنود</div>
                     </div>
                     <div className="text-center">
-                      <div className={`text-2xl font-bold ${budgetSummary.totalVariance > 0 ? 'text-red-600' : budgetSummary.totalVariance < 0 ? 'text-green-600' : 'text-gray-600'}`}>
+                      <div className={`text-2xl font-bold ${budgetSummary.totalVariance > 0 ? 'text-destructive' : budgetSummary.totalVariance < 0 ? 'text-success' : 'text-muted-foreground'}`}>
                         {budgetSummary.totalVariancePercentage > 0 ? '+' : ''}{budgetSummary.totalVariancePercentage.toFixed(1)}%
                       </div>
                       <div className="text-sm text-muted-foreground">إجمالي الفارق</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-red-600">{budgetSummary.overBudgetItems}</div>
+                      <div className="text-2xl font-bold text-destructive">{budgetSummary.overBudgetItems}</div>
                       <div className="text-sm text-muted-foreground">بنود تجاوزت الميزانية</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-orange-600">{budgetSummary.criticalAlerts}</div>
+                      <div className="text-2xl font-bold text-warning">{budgetSummary.criticalAlerts}</div>
                       <div className="text-sm text-muted-foreground">تنبيهات حرجة</div>
                     </div>
                   </div>
 
                   {/* جدول المقارنة التفصيلي */}
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-gray-300">
+                    <table className="w-full border-collapse border border-border">
                       <thead>
-                        <tr className="bg-gray-100">
-                          <th className="border border-gray-300 p-2 text-right">البند</th>
-                          <th className="border border-gray-300 p-2 text-center">الوحدة</th>
-                          <th className="border border-gray-300 p-2 text-center">الكمية</th>
-                          <th className="border border-gray-300 p-2 text-center">التكلفة التقديرية</th>
-                          <th className="border border-gray-300 p-2 text-center">التكلفة الفعلية</th>
-                          <th className="border border-gray-300 p-2 text-center">الفارق</th>
-                          <th className="border border-gray-300 p-2 text-center">الحالة</th>
+                        <tr className="bg-muted/20">
+                          <th className="border border-border p-2 text-right">البند</th>
+                          <th className="border border-border p-2 text-center">الوحدة</th>
+                          <th className="border border-border p-2 text-center">الكمية</th>
+                          <th className="border border-border p-2 text-center">التكلفة التقديرية</th>
+                          <th className="border border-border p-2 text-center">التكلفة الفعلية</th>
+                          <th className="border border-border p-2 text-center">الفارق</th>
+                          <th className="border border-border p-2 text-center">الحالة</th>
                         </tr>
                       </thead>
                       <tbody>
                         {budgetComparison.map((item) => (
-                          <tr key={item.itemId} className="hover:bg-gray-50">
-                            <td className="border border-gray-300 p-2">
+                          <tr key={item.itemId} className="transition-colors hover:bg-muted/40">
+                            <td className="border border-border p-2">
                               <div className="font-medium">{item.description}</div>
                               {item.variance.alerts.length > 0 && (
-                                <div className="text-xs text-orange-600 mt-1">
+                                <div className="mt-1 text-xs text-warning">
                                   {item.variance.alerts.map((alert, i) => (
                                     <div key={i}>{alert}</div>
                                   ))}
                                 </div>
                               )}
                             </td>
-                            <td className="border border-gray-300 p-2 text-center">{item.unit}</td>
-                            <td className="border border-gray-300 p-2 text-center">{formatQuantity(item.quantity)}</td>
-                            <td className="border border-gray-300 p-2 text-center">
+                            <td className="border border-border p-2 text-center">{item.unit}</td>
+                            <td className="border border-border p-2 text-center">{formatQuantity(item.quantity)}</td>
+                            <td className="border border-border p-2 text-center">
                               <div className="text-sm">
                                 <div>{formatCurrency(item.estimated.total)}</div>
                                 <div className="text-xs text-muted-foreground">
@@ -1096,7 +1092,7 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
                                 </div>
                               </div>
                             </td>
-                            <td className="border border-gray-300 p-2 text-center">
+                            <td className="border border-border p-2 text-center">
                               <div className="text-sm">
                                 <div>{formatCurrency(item.actual.total)}</div>
                                 <div className="text-xs text-muted-foreground">
@@ -1104,27 +1100,27 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
                                 </div>
                               </div>
                             </td>
-                            <td className="border border-gray-300 p-2 text-center">
+                            <td className="border border-border p-2 text-center">
                               <div className={`font-medium ${
-                                item.variance.amount > 0 ? 'text-red-600' : 
-                                item.variance.amount < 0 ? 'text-green-600' : 'text-gray-600'
+                                item.variance.amount > 0 ? 'text-destructive' : 
+                                item.variance.amount < 0 ? 'text-success' : 'text-muted-foreground'
                               }`}>
                                 {item.variance.amount > 0 ? '+' : ''}{formatCurrency(item.variance.amount)}
                               </div>
                               <div className={`text-xs ${
-                                item.variance.percentage > 0 ? 'text-red-600' : 
-                                item.variance.percentage < 0 ? 'text-green-600' : 'text-gray-600'
+                                item.variance.percentage > 0 ? 'text-destructive' : 
+                                item.variance.percentage < 0 ? 'text-success' : 'text-muted-foreground'
                               }`}>
                                 ({item.variance.percentage > 0 ? '+' : ''}{item.variance.percentage.toFixed(1)}%)
                               </div>
                             </td>
-                            <td className="border border-gray-300 p-2 text-center">
+                            <td className="border border-border p-2 text-center">
                               <Badge 
                                 variant={
                                   item.variance.status === 'over-budget' ? 'destructive' : 
                                   item.variance.status === 'under-budget' ? 'secondary' : 'outline'
                                 }
-                                className={item.variance.status === 'under-budget' ? 'bg-green-100 text-green-800' : ''}
+                                className={item.variance.status === 'under-budget' ? 'bg-success/10 text-success' : ''}
                               >
                                 {item.variance.status === 'over-budget' ? 'تجاوز الميزانية' :
                                  item.variance.status === 'under-budget' ? 'توفير' : 'ضمن الميزانية'}
@@ -1356,7 +1352,7 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <AlertTriangle className="h-5 w-5 text-destructive" />
               تأكيد حذف المشروع
             </DialogTitle>
             <DialogDescription>
@@ -1442,9 +1438,9 @@ function TimelineCard(props: { project: { startDate: string; endDate: string; pr
           <span>النهاية: {dateFormatter.format(new Date(end))}</span>
         </div>
         <div className="w-full h-4 rounded overflow-hidden flex">
-          <div className="h-full bg-blue-500 flex-[2]" title="تخطيط" />
-          <div className="h-full bg-emerald-500 flex-[7]" title="تنفيذ" />
-          <div className="h-full bg-amber-500 flex-[1]" title="تسليم" />
+          <div className="h-full bg-info flex-[2]" title="تخطيط" />
+          <div className="h-full bg-success flex-[7]" title="تنفيذ" />
+          <div className="h-full bg-warning flex-[1]" title="تسليم" />
         </div>
         <div className="text-sm flex justify-between">
           <span>تخطيط: {planning}%</span>

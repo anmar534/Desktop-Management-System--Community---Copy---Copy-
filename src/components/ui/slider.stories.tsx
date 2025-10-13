@@ -21,6 +21,259 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const WithValueStory: React.FC = () => {
+  const [value, setValue] = React.useState<number[]>([25]);
+
+  return (
+    <div className="w-[400px] space-y-4">
+      <div className="flex items-center justify-between">
+        <Label>القيمة الحالية</Label>
+        <span className="text-sm font-medium">{value[0]}</span>
+      </div>
+      <Slider value={value} onValueChange={setValue} max={100} step={1} />
+    </div>
+  );
+};
+
+const RangeStory: React.FC = () => {
+  const [value, setValue] = React.useState<number[]>([25, 75]);
+
+  return (
+    <div className="w-[400px] space-y-4">
+      <div className="flex items-center justify-between">
+        <Label>النطاق السعري</Label>
+        <span className="text-sm font-medium">
+          {value[0]} - {value[1]} ألف ر.س
+        </span>
+      </div>
+      <Slider value={value} onValueChange={setValue} max={100} step={1} />
+    </div>
+  );
+};
+
+const WithStepsStory: React.FC = () => {
+  const [value, setValue] = React.useState<number[]>([50]);
+
+  return (
+    <div className="w-[400px] space-y-4">
+      <div className="flex items-center justify-between">
+        <Label>خطوات 10</Label>
+        <span className="text-sm font-medium">{value[0]}</span>
+      </div>
+      <Slider value={value} onValueChange={setValue} max={100} step={10} />
+    </div>
+  );
+};
+
+const BudgetFilterStory: React.FC = () => {
+  const [budget, setBudget] = React.useState<number[]>([10000, 500000]);
+
+  return (
+    <div className="w-[500px] space-y-4 p-4 border rounded-lg">
+      <h3 className="font-semibold">فلترة حسب الميزانية</h3>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label>نطاق الميزانية</Label>
+          <span className="text-sm font-medium">
+            {budget[0].toLocaleString()} - {budget[1].toLocaleString()} ر.س
+          </span>
+        </div>
+
+        <Slider
+          value={budget}
+          onValueChange={setBudget}
+          min={0}
+          max={1000000}
+          step={10000}
+        />
+
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>0 ر.س</span>
+          <span>مليون ر.س</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProjectProgressStory: React.FC = () => {
+  const [progress, setProgress] = React.useState<number[]>([65]);
+
+  return (
+    <div className="w-[450px] space-y-4 p-4 border rounded-lg">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold">تقدم المشروع</h3>
+          <p className="text-sm text-muted-foreground">مشروع التطوير الرقمي</p>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl font-bold">{progress[0]}%</div>
+          <div className="text-xs text-muted-foreground">مكتمل</div>
+        </div>
+      </div>
+
+      <Slider
+        value={progress}
+        onValueChange={setProgress}
+        max={100}
+        step={5}
+        className="w-full"
+      />
+
+      <div className="flex justify-between text-xs">
+        <span className="text-muted-foreground">0%</span>
+        <span className="text-muted-foreground">25%</span>
+        <span className="text-muted-foreground">50%</span>
+        <span className="text-muted-foreground">75%</span>
+        <span className="text-muted-foreground">100%</span>
+      </div>
+    </div>
+  );
+};
+
+const QualityScoreStory: React.FC = () => {
+  const [score, setScore] = React.useState<number[]>([8]);
+
+  const getScoreColor = (value: number) => {
+    if (value <= 3) return 'text-destructive';
+    if (value <= 6) return 'text-warning';
+    return 'text-success';
+  };
+
+  const getScoreLabel = (value: number) => {
+    if (value <= 3) return 'ضعيف';
+    if (value <= 6) return 'متوسط';
+    if (value <= 8) return 'جيد';
+    return 'ممتاز';
+  };
+
+  return (
+    <div className="w-[400px] space-y-4 p-4 border rounded-lg">
+      <div className="flex items-center justify-between">
+        <Label>تقييم الجودة</Label>
+        <div className="text-right">
+          <div className={`text-xl font-bold ${getScoreColor(score[0])}`}>
+            {score[0]}/10
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {getScoreLabel(score[0])}
+          </div>
+        </div>
+      </div>
+
+      <Slider value={score} onValueChange={setScore} min={1} max={10} step={1} />
+
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>1 - ضعيف</span>
+        <span>10 - ممتاز</span>
+      </div>
+    </div>
+  );
+};
+
+const PriorityLevelStory: React.FC = () => {
+  const [priority, setPriority] = React.useState<number[]>([2]);
+
+  const priorities = ['منخفضة', 'متوسطة', 'عالية', 'عاجل'] as const;
+  const colors = [
+    'text-success',
+    'text-warning',
+    'text-primary',
+    'text-destructive',
+  ] as const;
+
+  return (
+    <div className="w-[400px] space-y-4 p-4 border rounded-lg">
+      <div className="flex items-center justify-between">
+        <Label>مستوى الأولوية</Label>
+        <div className={`text-lg font-semibold ${colors[priority[0]]}`}>
+          {priorities[priority[0]]}
+        </div>
+      </div>
+
+      <Slider value={priority} onValueChange={setPriority} min={0} max={3} step={1} />
+
+      <div className="flex justify-between text-xs">
+        {priorities.map((p, i) => (
+          <span
+            key={p}
+            className={priority[0] === i ? colors[i] : 'text-muted-foreground'}
+          >
+            {p}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const TimelineFilterStory: React.FC = () => {
+  const [months, setMonths] = React.useState<number[]>([1, 6]);
+
+  return (
+    <div className="w-[500px] space-y-4 p-4 border rounded-lg">
+      <h3 className="font-semibold">فترة المشروع</h3>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Label>المدة الزمنية</Label>
+          <span className="text-sm font-medium">
+            {months[0]} - {months[1]} شهر
+          </span>
+        </div>
+
+        <Slider value={months} onValueChange={setMonths} min={1} max={12} step={1} />
+
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>شهر واحد</span>
+          <span>12 شهر</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MultipleRangesStory: React.FC = () => {
+  const [range1, setRange1] = React.useState<number[]>([20, 80]);
+  const [range2, setRange2] = React.useState<number[]>([30, 60]);
+  const [range3, setRange3] = React.useState<number[]>([40, 70]);
+
+  return (
+    <div className="w-[500px] space-y-6">
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <Label>النطاق 1</Label>
+          <span className="text-sm text-muted-foreground">
+            {range1[0]} - {range1[1]}
+          </span>
+        </div>
+        <Slider value={range1} onValueChange={setRange1} max={100} />
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <Label>النطاق 2</Label>
+          <span className="text-sm text-muted-foreground">
+            {range2[0]} - {range2[1]}
+          </span>
+        </div>
+        <Slider value={range2} onValueChange={setRange2} max={100} />
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <Label>النطاق 3</Label>
+          <span className="text-sm text-muted-foreground">
+            {range3[0]} - {range3[1]}
+          </span>
+        </div>
+        <Slider value={range3} onValueChange={setRange3} max={100} />
+      </div>
+    </div>
+  );
+};
+
 // ============================================
 // Basic Stories
 // ============================================
@@ -46,47 +299,11 @@ export const WithLabel: Story = {
 };
 
 export const WithValue: Story = {
-  render: () => {
-    const [value, setValue] = React.useState([25]);
-    
-    return (
-      <div className="w-[400px] space-y-4">
-        <div className="flex items-center justify-between">
-          <Label>القيمة الحالية</Label>
-          <span className="text-sm font-medium">{value[0]}</span>
-        </div>
-        <Slider
-          value={value}
-          onValueChange={setValue}
-          max={100}
-          step={1}
-        />
-      </div>
-    );
-  },
+  render: () => <WithValueStory />,
 };
 
 export const Range: Story = {
-  render: () => {
-    const [value, setValue] = React.useState([25, 75]);
-    
-    return (
-      <div className="w-[400px] space-y-4">
-        <div className="flex items-center justify-between">
-          <Label>النطاق السعري</Label>
-          <span className="text-sm font-medium">
-            {value[0]} - {value[1]} ألف ر.س
-          </span>
-        </div>
-        <Slider
-          value={value}
-          onValueChange={setValue}
-          max={100}
-          step={1}
-        />
-      </div>
-    );
-  },
+  render: () => <RangeStory />,
 };
 
 export const Disabled: Story = {
@@ -99,24 +316,7 @@ export const Disabled: Story = {
 };
 
 export const WithSteps: Story = {
-  render: () => {
-    const [value, setValue] = React.useState([50]);
-    
-    return (
-      <div className="w-[400px] space-y-4">
-        <div className="flex items-center justify-between">
-          <Label>خطوات 10</Label>
-          <span className="text-sm font-medium">{value[0]}</span>
-        </div>
-        <Slider
-          value={value}
-          onValueChange={setValue}
-          max={100}
-          step={10}
-        />
-      </div>
-    );
-  },
+  render: () => <WithStepsStory />,
 };
 
 // ============================================
@@ -124,202 +324,23 @@ export const WithSteps: Story = {
 // ============================================
 
 export const BudgetFilter: Story = {
-  render: () => {
-    const [budget, setBudget] = React.useState([10000, 500000]);
-    
-    return (
-      <div className="w-[500px] space-y-4 p-4 border rounded-lg">
-        <h3 className="font-semibold">فلترة حسب الميزانية</h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>نطاق الميزانية</Label>
-            <span className="text-sm font-medium">
-              {budget[0].toLocaleString()} - {budget[1].toLocaleString()} ر.س
-            </span>
-          </div>
-          
-          <Slider
-            value={budget}
-            onValueChange={setBudget}
-            min={0}
-            max={1000000}
-            step={10000}
-          />
-          
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>0 ر.س</span>
-            <span>مليون ر.س</span>
-          </div>
-        </div>
-      </div>
-    );
-  },
+  render: () => <BudgetFilterStory />,
 };
 
 export const ProjectProgress: Story = {
-  render: () => {
-    const [progress, setProgress] = React.useState([65]);
-    
-    return (
-      <div className="w-[450px] space-y-4 p-4 border rounded-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold">تقدم المشروع</h3>
-            <p className="text-sm text-muted-foreground">
-              مشروع التطوير الرقمي
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold">{progress[0]}%</div>
-            <div className="text-xs text-muted-foreground">مكتمل</div>
-          </div>
-        </div>
-        
-        <Slider
-          value={progress}
-          onValueChange={setProgress}
-          max={100}
-          step={5}
-          className="w-full"
-        />
-        
-        <div className="flex justify-between text-xs">
-          <span className="text-muted-foreground">0%</span>
-          <span className="text-muted-foreground">25%</span>
-          <span className="text-muted-foreground">50%</span>
-          <span className="text-muted-foreground">75%</span>
-          <span className="text-muted-foreground">100%</span>
-        </div>
-      </div>
-    );
-  },
+  render: () => <ProjectProgressStory />,
 };
 
 export const QualityScore: Story = {
-  render: () => {
-    const [score, setScore] = React.useState([8]);
-    
-    const getScoreColor = (value: number) => {
-      if (value <= 3) return 'text-red-600';
-      if (value <= 6) return 'text-yellow-600';
-      return 'text-green-600';
-    };
-    
-    const getScoreLabel = (value: number) => {
-      if (value <= 3) return 'ضعيف';
-      if (value <= 6) return 'متوسط';
-      if (value <= 8) return 'جيد';
-      return 'ممتاز';
-    };
-    
-    return (
-      <div className="w-[400px] space-y-4 p-4 border rounded-lg">
-        <div className="flex items-center justify-between">
-          <Label>تقييم الجودة</Label>
-          <div className="text-right">
-            <div className={`text-xl font-bold ${getScoreColor(score[0])}`}>
-              {score[0]}/10
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {getScoreLabel(score[0])}
-            </div>
-          </div>
-        </div>
-        
-        <Slider
-          value={score}
-          onValueChange={setScore}
-          min={1}
-          max={10}
-          step={1}
-        />
-        
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>1 - ضعيف</span>
-          <span>10 - ممتاز</span>
-        </div>
-      </div>
-    );
-  },
+  render: () => <QualityScoreStory />,
 };
 
 export const PriorityLevel: Story = {
-  render: () => {
-    const [priority, setPriority] = React.useState([2]);
-    
-    const priorities = ['منخفضة', 'متوسطة', 'عالية', 'عاجل'];
-    const colors = [
-      'text-green-600',
-      'text-yellow-600',
-      'text-orange-600',
-      'text-red-600',
-    ];
-    
-    return (
-      <div className="w-[400px] space-y-4 p-4 border rounded-lg">
-        <div className="flex items-center justify-between">
-          <Label>مستوى الأولوية</Label>
-          <div className={`text-lg font-semibold ${colors[priority[0]]}`}>
-            {priorities[priority[0]]}
-          </div>
-        </div>
-        
-        <Slider
-          value={priority}
-          onValueChange={setPriority}
-          min={0}
-          max={3}
-          step={1}
-        />
-        
-        <div className="flex justify-between text-xs">
-          {priorities.map((p, i) => (
-            <span
-              key={p}
-              className={priority[0] === i ? colors[i] : 'text-muted-foreground'}
-            >
-              {p}
-            </span>
-          ))}
-        </div>
-      </div>
-    );
-  },
+  render: () => <PriorityLevelStory />,
 };
 
 export const TimelineFilter: Story = {
-  render: () => {
-    const [months, setMonths] = React.useState([1, 6]);
-    
-    return (
-      <div className="w-[500px] space-y-4 p-4 border rounded-lg">
-        <h3 className="font-semibold">فترة المشروع</h3>
-        
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>المدة الزمنية</Label>
-            <span className="text-sm font-medium">
-              {months[0]} - {months[1]} شهر
-            </span>
-          </div>
-          
-          <Slider
-            value={months}
-            onValueChange={setMonths}
-            min={1}
-            max={12}
-            step={1}
-          />
-          
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>شهر واحد</span>
-            <span>12 شهر</span>
-          </div>
-        </div>
-      </div>
-    );
-  },
+  render: () => <TimelineFilterStory />,
 };
 
 // ============================================
@@ -383,45 +404,7 @@ export const DifferentRanges: Story = {
 };
 
 export const MultipleRanges: Story = {
-  render: () => {
-    const [range1, setRange1] = React.useState([20, 80]);
-    const [range2, setRange2] = React.useState([30, 60]);
-    const [range3, setRange3] = React.useState([40, 70]);
-    
-    return (
-      <div className="w-[500px] space-y-6">
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <Label>النطاق 1</Label>
-            <span className="text-sm text-muted-foreground">
-              {range1[0]} - {range1[1]}
-            </span>
-          </div>
-          <Slider value={range1} onValueChange={setRange1} max={100} />
-        </div>
-        
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <Label>النطاق 2</Label>
-            <span className="text-sm text-muted-foreground">
-              {range2[0]} - {range2[1]}
-            </span>
-          </div>
-          <Slider value={range2} onValueChange={setRange2} max={100} />
-        </div>
-        
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <Label>النطاق 3</Label>
-            <span className="text-sm text-muted-foreground">
-              {range3[0]} - {range3[1]}
-            </span>
-          </div>
-          <Slider value={range3} onValueChange={setRange3} max={100} />
-        </div>
-      </div>
-    );
-  },
+  render: () => <MultipleRangesStory />,
 };
 
 // ============================================
@@ -482,7 +465,7 @@ export const UsageGuide: Story = {
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">الأنواع</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded">
+          <div className="p-3 bg-info/10 dark:bg-info/20 rounded">
             <h4 className="font-semibold mb-2">Single Value</h4>
             <p className="text-muted-foreground">
               قيمة واحدة - مثل مستوى الصوت أو التقدم
@@ -491,7 +474,7 @@ export const UsageGuide: Story = {
               {`defaultValue={[50]}`}
             </code>
           </div>
-          <div className="p-3 bg-green-50 dark:bg-green-950 rounded">
+          <div className="p-3 bg-success/10 dark:bg-success/20 rounded">
             <h4 className="font-semibold mb-2">Range</h4>
             <p className="text-muted-foreground">
               نطاق - مثل السعر من...إلى
@@ -587,7 +570,7 @@ export const UsageGuide: Story = {
 
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Accessibility</h3>
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm space-y-2">
+  <div className="bg-info/10 dark:bg-info/20 p-4 rounded-lg text-sm space-y-2">
           <p>✅ keyboard navigation (Arrow keys)</p>
           <p>✅ Home/End للذهاب للحد الأدنى/الأقصى</p>
           <p>✅ Page Up/Down للقفز بخطوات كبيرة</p>

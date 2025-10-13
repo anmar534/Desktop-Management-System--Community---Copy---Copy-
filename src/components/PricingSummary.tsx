@@ -23,13 +23,13 @@ interface PricingSummaryProps {
  */
 export const PricingSummary: React.FC<PricingSummaryProps> = ({ totals, dir = 'rtl' }) => {
   console.log('🎯 [PricingSummary] Rendering with totals:', totals)
-  
+
+  const { formatCurrencyValue } = useCurrencyFormatter()
+
   if (!totals) {
     console.log('⚠️ [PricingSummary] No totals provided - not rendering')
     return null
   }
-  
-  const { formatCurrencyValue } = useCurrencyFormatter()
 
   const {
     totalValue,
@@ -52,33 +52,95 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({ totals, dir = 'r
     adminOperationalPercentage,
     vatRate
   })
+  const summaryItems: {
+    label: string
+    amount: number
+    tone: 'primary' | 'warning' | 'success' | 'info' | 'secondary'
+    subLabel: string
+  }[] = [
+    {
+      label: 'إجمالي المشروع',
+      amount: totalValue,
+      tone: 'primary',
+      subLabel: 'ر.س (قبل الضريبة)'
+    },
+    {
+      label: `ضريبة القيمة المضافة (${(vatRate * 100).toFixed(0)}%)`,
+      amount: vatAmount,
+      tone: 'warning',
+      subLabel: 'ر.س'
+    },
+    {
+      label: 'الإجمالي شامل الضريبة',
+      amount: totalWithVat,
+      tone: 'success',
+      subLabel: 'ر.س'
+    },
+    {
+      label: `إجمالي الربح (${profitPercentage?.toFixed(2)}%)`,
+      amount: profit,
+      tone: 'info',
+      subLabel: 'ر.س'
+    },
+    {
+      label: `التكاليف الإدارية + التشغيلية (${adminOperationalPercentage?.toFixed(2)}%)`,
+      amount: adminOperational,
+      tone: 'secondary',
+      subLabel: 'ر.س'
+    },
+  ]
+
+  const toneStyles: Record<
+    'primary' | 'warning' | 'success' | 'info' | 'secondary',
+    { container: string; heading: string; value: string }
+  > = {
+    primary: {
+      container: 'bg-primary/10 border-primary/20',
+      heading: 'text-primary',
+      value: 'text-primary'
+    },
+    warning: {
+      container: 'bg-warning/10 border-warning/20',
+      heading: 'text-warning',
+      value: 'text-warning'
+    },
+    success: {
+      container: 'bg-success/10 border-success/20',
+      heading: 'text-success',
+      value: 'text-success'
+    },
+    info: {
+      container: 'bg-info/10 border-info/20',
+      heading: 'text-info',
+      value: 'text-info'
+    },
+    secondary: {
+      container: 'bg-muted/20 border-muted/30',
+      heading: 'text-muted-foreground',
+      value: 'text-muted-foreground'
+    }
+  }
+
   return (
-    <div className="mb-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3" dir={dir}>
-      <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200 flex flex-col items-center text-center">
-        <div className="text-blue-600 text-[11px] font-medium tracking-wide">إجمالي المشروع</div>
-        <div className="text-lg font-bold text-blue-800 mt-1 leading-tight">{formatCurrencyValue(totalValue, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
-        <div className="text-blue-600 text-[11px] mt-0.5">ر.س (قبل الضريبة)</div>
-      </div>
-      <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-3 rounded-lg border border-orange-200 flex flex-col items-center text-center">
-        <div className="text-orange-600 text-[11px] font-medium tracking-wide">ضريبة القيمة المضافة ({(vatRate*100).toFixed(0)}%)</div>
-        <div className="text-lg font-bold text-orange-800 mt-1 leading-tight">{formatCurrencyValue(vatAmount, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
-        <div className="text-orange-600 text-[11px] mt-0.5">ر.س</div>
-      </div>
-      <div className="bg-gradient-to-r from-green-50 to-green-100 p-3 rounded-lg border border-green-200 flex flex-col items-center text-center">
-        <div className="text-green-600 text-[11px] font-medium tracking-wide">الإجمالي شامل الضريبة</div>
-        <div className="text-lg font-bold text-green-800 mt-1 leading-tight">{formatCurrencyValue(totalWithVat, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
-        <div className="text-green-600 text-[11px] mt-0.5">ر.س</div>
-      </div>
-      <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-3 rounded-lg border border-purple-200 flex flex-col items-center text-center">
-        <div className="text-purple-600 text-[11px] font-medium tracking-wide">إجمالي الربح ({profitPercentage?.toFixed(2)}%)</div>
-        <div className="text-lg font-bold text-purple-800 mt-1 leading-tight">{formatCurrencyValue(profit, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
-        <div className="text-purple-600 text-[11px] mt-0.5">ر.س</div>
-      </div>
-      <div className="bg-gradient-to-r from-pink-50 to-pink-100 p-3 rounded-lg border border-pink-200 flex flex-col items-center text-center">
-        <div className="text-pink-600 text-[11px] font-medium tracking-wide">التكاليف الإدارية + التشغيلية ({adminOperationalPercentage?.toFixed(2)}%)</div>
-        <div className="text-lg font-bold text-pink-800 mt-1 leading-tight">{formatCurrencyValue(adminOperational, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>
-        <div className="text-pink-600 text-[11px] mt-0.5">ر.س</div>
-      </div>
+    <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-5" dir={dir}>
+      {summaryItems.map((item) => {
+        const style = toneStyles[item.tone]
+        return (
+          <div
+            key={item.label}
+            className={`flex flex-col items-center rounded-lg border p-3 text-center ${style.container}`}
+          >
+            <div className={`text-xs font-medium tracking-wide ${style.heading}`}>{item.label}</div>
+            <div className={`mt-1 text-lg font-bold leading-tight ${style.value}`}>
+              {formatCurrencyValue(item.amount, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+              })}
+            </div>
+            <div className={`mt-0.5 text-xs ${style.heading}`}>{item.subLabel}</div>
+          </div>
+        )
+      })}
     </div>
   )
 }

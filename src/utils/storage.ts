@@ -11,6 +11,14 @@ import { recordAuditEvent } from './auditLog';
 
 export { STORAGE_KEYS } from '../config/storageKeys';
 
+// Analytics-specific storage utilities
+export interface AnalyticsStorageOptions {
+  enableIndexing?: boolean;
+  enableCaching?: boolean;
+  maxCacheSize?: number;
+  compressionLevel?: 'none' | 'low' | 'high';
+}
+
 export const STORAGE_READY_EVENT = 'system-storage-ready';
 
 type PersistedValue = unknown;

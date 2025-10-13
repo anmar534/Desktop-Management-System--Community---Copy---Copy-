@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar'
 import { Toaster } from 'sonner'
 import { syncStorage } from './utils/storage'
 import { FinancialStateProvider, NavigationProvider, useNavigation, useFinancialState } from '@/application/context'
+import type { FinancialTabValue } from '@/components/Financial'
 import { RepositoryProvider } from '@/application/services/RepositoryProvider'
 import { ThemeProvider } from '@/application/providers/ThemeProvider'
 import type { Tender } from '@/data/centralData'
@@ -17,6 +18,7 @@ const SECTIONS_WITH_ON_SECTION_CHANGE: AppSection[] = [
   'dashboard',
   'projects',
   'tenders',
+  'analytics',
   'financial',
   'invoices',
   'bank-accounts',
@@ -28,6 +30,14 @@ const SECTIONS_WITH_ON_SECTION_CHANGE: AppSection[] = [
   'new-report',
   'reports'
 ]
+
+const FINANCIAL_SECTION_TABS: Partial<Record<AppSection, FinancialTabValue>> = {
+  financial: 'overview',
+  invoices: 'invoices',
+  budgets: 'budgets',
+  'bank-accounts': 'bank-accounts',
+  'financial-reports': 'reports'
+}
 
 function resolveModuleLoader(modulePath: string): ViewModuleLoader | undefined {
   const normalized = modulePath.replace(/^@\//, './')
@@ -133,6 +143,12 @@ const AppShell = () => {
     }
     if (section === 'settings') {
       return {}
+    }
+    if (section in FINANCIAL_SECTION_TABS) {
+      return {
+        onSectionChange: handleSectionChange,
+        initialTab: FINANCIAL_SECTION_TABS[section] ?? 'overview'
+      }
     }
     if (SECTIONS_WITH_ON_SECTION_CHANGE.includes(section)) {
       return {

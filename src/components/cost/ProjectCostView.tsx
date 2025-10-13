@@ -464,7 +464,7 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
   }
   if (!items) {
     return (
-      <div className="flex flex-col h-screen bg-gray-50" data-testid="project-cost-view" dir="rtl">
+      <div className="flex flex-col h-screen bg-muted/20" data-testid="project-cost-view" dir="rtl">
         <div className="flex-1 flex items-center justify-center">
           <EmptyState
             icon={ClipboardList}
@@ -479,34 +479,36 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50" data-testid="project-cost-view" dir="rtl">
+    <div className="flex flex-col h-screen bg-muted/20" data-testid="project-cost-view" dir="rtl">
       {/* Header محسّن مع ألوان أفضل وتخطيط محدود */}
-  <header className="flex-shrink-0 bg-white border-b border-gray-200 shadow-sm">
+  <header className="flex-shrink-0 bg-card border-b border-border shadow-sm">
         <div className="flex justify-between items-center px-6 py-4">
           <div className="flex items-center gap-4">
             <div>
-              <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
                 بنود التكلفة 
-                <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded-full">
+                <span className="bg-info/10 text-info text-sm font-medium px-2.5 py-0.5 rounded-full">
                   {items.length}
                 </span>
               </h1>
-              <p className="text-sm text-gray-600 mt-1">إدارة وتحليل التكاليف التقديرية والفعلية للمشروع</p>
+              <p className="text-sm text-muted-foreground mt-1">إدارة وتحليل التكاليف التقديرية والفعلية للمشروع</p>
             </div>
             
             {/* مؤشرات الحالة السريعة */}
             <div className="flex items-center gap-3 mr-6">
               <div className="flex items-center gap-1.5 text-sm">
-                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                <span className="text-gray-600">تقديري: {formatCurrencyValue(draftTotals.estimatedTotal, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <div className="w-3 h-3 bg-info rounded-full"></div>
+                <span className="text-muted-foreground">تقديري: {formatCurrencyValue(draftTotals.estimatedTotal, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="flex items-center gap-1.5 text-sm">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-gray-600">فعلي: {formatCurrencyValue(draftTotals.actualTotal, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <div className="w-3 h-3 bg-success rounded-full"></div>
+                <span className="text-muted-foreground">فعلي: {formatCurrencyValue(draftTotals.actualTotal, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="flex items-center gap-1.5 text-sm">
-                <div className={`w-3 h-3 rounded-full ${draftTotals.varianceTotal > 0 ? 'bg-red-500' : draftTotals.varianceTotal < 0 ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                <span className="text-gray-600">فارق: {formatCurrencyValue(draftTotals.varianceTotal, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <div
+                  className={`w-3 h-3 rounded-full ${draftTotals.varianceTotal > 0 ? 'bg-error' : draftTotals.varianceTotal < 0 ? 'bg-success' : 'bg-border opacity-60'}`}
+                ></div>
+                <span className="text-muted-foreground">فارق: {formatCurrencyValue(draftTotals.varianceTotal, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             </div>
           </div>
@@ -515,7 +517,7 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
             {tenderId && (
               <button
                 onClick={() => { setAutoMerging(true); autoMergedRef.current = false; }}
-                className="px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center gap-2 shadow-sm"
+                className="px-4 py-2.5 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/85 focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors flex items-center gap-2 shadow-sm"
                 disabled={autoMerging}
               >
                 <FileDown className="w-4 h-4" />
@@ -524,7 +526,7 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
             )}
             <button
               onClick={() => promote()}
-              className="px-4 py-2.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-colors flex items-center gap-2 shadow-sm"
+              className="px-4 py-2.5 text-sm font-medium text-success-foreground bg-success rounded-lg hover:bg-success/80 focus:ring-2 focus:ring-success focus:ring-offset-2 transition-colors flex items-center gap-2 shadow-sm"
             >
               <FileUp className="w-4 h-4" />
               ترقية للاعتماد
@@ -532,7 +534,7 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
             <button
               onClick={handleUndo}
               disabled={undo.size === 0}
-              className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted rounded-lg hover:bg-muted/80 focus:ring-2 focus:ring-muted-foreground focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               <Undo className="w-4 h-4" />
               تراجع ({undo.size})
@@ -546,9 +548,9 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
         
         {/* Sidebar محسّن وقابل للإخفاء */}
   <div className="w-80 flex-shrink-0 space-y-4">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900 text-sm">ملخص التكاليف</h3>
+          <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+            <div className="bg-gradient-to-r from-info/10 to-primary/10 px-4 py-3 border-b border-border">
+              <h3 className="font-semibold text-foreground text-sm">ملخص التكاليف</h3>
             </div>
             <CostBaselineTotals
               estimated={draftTotals.estimatedTotal}
@@ -558,9 +560,9 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
             />
           </div>
           
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900 text-sm">النسب الإضافية</h3>
+          <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+            <div className="bg-gradient-to-r from-success/10 to-success/5 px-4 py-3 border-b border-border">
+              <h3 className="font-semibold text-foreground text-sm">النسب الإضافية</h3>
             </div>
             <CostPercentagesPanel
               value={defaultPercentages}
@@ -569,20 +571,20 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
           </div>
           
           {/* احصائيات سريعة إضافية */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <h3 className="font-semibold text-gray-900 text-sm mb-3">إحصائيات سريعة</h3>
+          <div className="bg-card rounded-xl shadow-sm border border-border p-4">
+            <h3 className="font-semibold text-foreground text-sm mb-3">إحصائيات سريعة</h3>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between py-1">
-                <span className="text-gray-600">البنود المكتملة:</span>
+                <span className="text-muted-foreground">البنود المكتملة:</span>
                 <span className="font-medium">{items.filter(i => (i.actual?.totalPrice || 0) > 0).length}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-gray-600">البنود المعلقة:</span>
-                <span className="font-medium text-amber-600">{items.filter(i => !(i.actual?.totalPrice || 0)).length}</span>
+                <span className="text-muted-foreground">البنود المعلقة:</span>
+                <span className="font-medium text-warning">{items.filter(i => !(i.actual?.totalPrice || 0)).length}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-gray-600">نسبة الإنجاز:</span>
-                <span className="font-medium text-blue-600">
+                <span className="text-muted-foreground">نسبة الإنجاز:</span>
+                <span className="font-medium text-info">
                   {items.length ? Math.round((items.filter(i => (i.actual?.totalPrice || 0) > 0).length / items.length) * 100) : 0}%
                 </span>
               </div>
@@ -591,9 +593,9 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
         </div>
 
         {/* المحتوى الرئيسي محسّن */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col min-h-0">
+        <div className="flex-1 bg-card rounded-xl shadow-sm border border-border flex flex-col min-h-0">
           {/* شريط الأدوات محسّن */}
-          <div className="flex-shrink-0 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-5 border-b border-gray-200">
+          <div className="flex-shrink-0 bg-gradient-to-r from-muted/40 to-muted px-6 py-5 border-b border-border">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-4">
                 {/* بحث محسّن مع اختصارات لوحة المفاتيح */}
@@ -608,20 +610,20 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                         searchInputRef.current?.blur();
                       }
                     }}
-                    className="border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm w-80 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 pl-10 bg-white shadow-sm" 
+                    className="border-2 border-border rounded-xl px-4 py-2.5 text-sm w-80 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 pl-10 bg-background shadow-sm" 
                     placeholder="🔍 بحث سريع... (اضغط Ctrl+K)"
                   />
                   {query && (
                     <button 
                       onClick={()=>setQuery('')} 
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200"
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 rounded-full transition-all duration-200"
                       title="مسح البحث (Esc)"
                     >
                       ✕
                     </button>
                   )}
                   <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                    <kbd className="hidden sm:inline-block px-2 py-0.5 text-xs text-gray-400 bg-gray-100 border border-gray-200 rounded">
+                    <kbd className="hidden sm:inline-block px-2 py-0.5 text-xs text-muted-foreground/70 bg-muted/60 border border-border rounded">
                       Ctrl+K
                     </kbd>
                   </div>
@@ -633,8 +635,8 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                     onClick={() => setSelectedFilter('all')}
                     className={`px-3 py-2 text-sm transition-all duration-200 border rounded-lg ${
                       selectedFilter === 'all' 
-                        ? 'text-blue-700 bg-blue-100 border-blue-300 shadow-sm' 
-                        : 'text-gray-600 bg-white border-gray-200 hover:bg-gray-50'
+                        ? 'text-info bg-info/10 border-info/40 shadow-sm' 
+                        : 'text-muted-foreground bg-background border-border hover:bg-muted/40'
                     }`}
                   >
                     الكل ({items.length})
@@ -643,8 +645,8 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                     onClick={() => setSelectedFilter('pending')}
                     className={`px-3 py-2 text-sm transition-all duration-200 border rounded-lg ${
                       selectedFilter === 'pending' 
-                        ? 'text-amber-700 bg-amber-100 border-amber-300 shadow-sm' 
-                        : 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100'
+                        ? 'text-warning bg-warning/10 border-warning/40 shadow-sm' 
+                        : 'text-warning bg-warning/5 border-warning/20 hover:bg-warning/10'
                     }`}
                   >
                     معلق ({items.filter(i => !(i.actual?.totalPrice || 0)).length})
@@ -653,8 +655,8 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                     onClick={() => setSelectedFilter('completed')}
                     className={`px-3 py-2 text-sm transition-all duration-200 border rounded-lg ${
                       selectedFilter === 'completed' 
-                        ? 'text-green-700 bg-green-100 border-green-300 shadow-sm' 
-                        : 'text-green-600 bg-green-50 border-green-200 hover:bg-green-100'
+                        ? 'text-success bg-success/10 border-success/40 shadow-sm' 
+                        : 'text-success bg-success/5 border-success/20 hover:bg-success/10'
                     }`}
                   >
                     مكتمل ({items.filter(i => (i.actual?.totalPrice || 0) > 0).length})
@@ -665,14 +667,14 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => setAddingActualOnly(true)} 
-                  className="px-4 py-2.5 text-sm font-medium text-white bg-cyan-600 rounded-xl hover:bg-cyan-700 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 transition-all flex items-center gap-2 shadow-sm"
+                  className="px-4 py-2.5 text-sm font-medium text-primary-foreground bg-info rounded-xl hover:bg-info/80 focus:ring-2 focus:ring-info focus:ring-offset-2 transition-all flex items-center gap-2 shadow-sm"
                 >
                   <PlusCircle className="w-4 h-4" />
                   بند فعلي سريع
                 </button>
                 <button 
                   onClick={() => upsertItem({})} 
-                  className="px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all flex items-center gap-2 shadow-sm"
+                  className="px-4 py-2.5 text-sm font-medium text-primary-foreground bg-primary rounded-xl hover:bg-primary/85 focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all flex items-center gap-2 shadow-sm"
                 >
                   <Plus className="w-4 h-4" />
                   بند كامل
@@ -683,13 +685,13 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
           
           {/* نموذج إضافة سريع محسّن */}
           {addingActualOnly && (
-            <div className="mx-6 my-4 p-4 bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-xl shadow-sm">
+            <div className="mx-6 my-4 p-4 bg-gradient-to-r from-info/10 to-primary/10 border-2 border-info/30 rounded-xl shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="flex-1">
                   <input
                     type="text"
                     placeholder="وصف البند الفعلي (مثال: مصاريف إضافية غير متوقعة)"
-                    className="w-full border-2 border-white rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none shadow-sm bg-white"
+                    className="w-full border-2 border-background rounded-lg px-4 py-2.5 text-sm focus:border-info focus:outline-none shadow-sm bg-background"
                     value={actualOnlyDescription}
                     onChange={e => setActualOnlyDescription(e.target.value)}
                   />
@@ -698,20 +700,20 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                   <input
                     type="text"
                     placeholder="المبلغ الإجمالي"
-                    className="w-full border-2 border-white rounded-lg px-4 py-2.5 text-sm focus:border-cyan-500 focus:outline-none shadow-sm bg-white text-left"
+                    className="w-full border-2 border-background rounded-lg px-4 py-2.5 text-sm focus:border-info focus:outline-none shadow-sm bg-background text-left"
                     value={actualOnlyAmount}
                     onChange={e => setActualOnlyAmount(e.target.value)}
                   />
                 </div>
                 <button
                   onClick={handleSaveActualOnlyItem}
-                  className="px-6 py-2.5 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 transition-all shadow-sm"
+                  className="px-6 py-2.5 text-sm font-medium text-primary-foreground bg-info rounded-lg hover:bg-info/80 focus:ring-2 focus:ring-info focus:ring-offset-2 transition-all shadow-sm"
                 >
                   ✓ حفظ
                 </button>
                 <button
                   onClick={() => setAddingActualOnly(false)}
-                  className="px-4 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-all"
+                  className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-background border border-border rounded-lg hover:bg-muted/40 focus:ring-2 focus:ring-muted-foreground/40 focus:ring-offset-2 transition-all"
                 >
                   ✕ إلغاء
                 </button>
@@ -720,91 +722,91 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
           )}
 
           {/* الجدول محسّن بتخطيط أفضل */}
-          <div className="flex-1 mx-6 mb-6 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+          <div className="flex-1 mx-6 mb-6 border border-border rounded-xl overflow-hidden shadow-sm">
             <div className="overflow-auto h-full">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gradient-to-r from-gray-100 to-gray-200 sticky top-0 z-10">
+              <table className="min-w-full divide-y divide-border text-sm">
+                <thead className="bg-gradient-to-r from-muted to-muted/80 sticky top-0 z-10">
                   <tr>
                     <th scope="col" className="w-12 px-2 py-4"></th>
-                    <th scope="col" className="px-4 py-4 text-right font-bold text-gray-700 min-w-[250px]">
+                    <th scope="col" className="px-4 py-4 text-right font-bold text-muted-foreground min-w-[250px]">
                       <div className="flex items-center gap-2">
                         <span>الوصف والتصنيف</span>
                         <button 
                           onClick={() => { setSortKey('description'); setSortDir(d => d === 'asc' ? 'desc' : 'asc'); }}
-                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          className="p-1 hover:bg-muted/60 rounded transition-colors"
                           title="ترتيب حسب الوصف"
                         >
-                          <ArrowUpDown className="w-4 h-4 text-gray-500" />
+                          <ArrowUpDown className="w-4 h-4 text-muted-foreground/70" />
                         </button>
                       </div>
                     </th>
-                    <th scope="col" className="px-3 py-4 text-center font-bold text-gray-700 w-20">الوحدة</th>
+                    <th scope="col" className="px-3 py-4 text-center font-bold text-muted-foreground w-20">الوحدة</th>
                     
                     {/* مجموعة التقديري */}
-                    <th scope="col" className="px-3 py-4 text-center font-bold text-blue-700 bg-blue-50 w-24 border-l-2 border-blue-200">
+                    <th scope="col" className="px-3 py-4 text-center font-bold text-info bg-info/10 w-24 border-l-2 border-info/40">
                       <div className="flex flex-col">
-                        <span className="text-xs text-blue-600">تقديري</span>
+                        <span className="text-xs text-info">تقديري</span>
                         <span>كمية</span>
                       </div>
                     </th>
-                    <th scope="col" className="px-3 py-4 text-center font-bold text-blue-700 bg-blue-50 w-24">
+                    <th scope="col" className="px-3 py-4 text-center font-bold text-info bg-info/10 w-24">
                       <div className="flex flex-col">
-                        <span className="text-xs text-blue-600">تقديري</span>
+                        <span className="text-xs text-info">تقديري</span>
                         <span>سعر</span>
                       </div>
                     </th>
-                    <th scope="col" className="px-3 py-4 text-center font-bold text-blue-700 bg-blue-100 w-32 border-r-2 border-blue-200">
+                    <th scope="col" className="px-3 py-4 text-center font-bold text-info bg-info/15 w-32 border-r-2 border-info/40">
                       <div className="flex flex-col">
-                        <span className="text-xs text-blue-600">تقديري</span>
+                        <span className="text-xs text-info">تقديري</span>
                         <span>إجمالي</span>
                       </div>
                     </th>
                     
                     {/* مجموعة الفعلي */}
-                    <th scope="col" className="px-3 py-4 text-center font-bold text-green-700 bg-green-50 w-24 border-l-2 border-green-200">
+                    <th scope="col" className="px-3 py-4 text-center font-bold text-success bg-success/10 w-24 border-l-2 border-success/40">
                       <div className="flex flex-col">
-                        <span className="text-xs text-green-600">فعلي</span>
+                        <span className="text-xs text-success">فعلي</span>
                         <span>كمية</span>
                       </div>
                     </th>
-                    <th scope="col" className="px-3 py-4 text-center font-bold text-green-700 bg-green-50 w-24">
+                    <th scope="col" className="px-3 py-4 text-center font-bold text-success bg-success/10 w-24">
                       <div className="flex flex-col">
-                        <span className="text-xs text-green-600">فعلي</span>
+                        <span className="text-xs text-success">فعلي</span>
                         <span>سعر</span>
                       </div>
                     </th>
-                    <th scope="col" className="px-3 py-4 text-center font-bold text-green-700 bg-green-100 w-32 border-r-2 border-green-200">
+                    <th scope="col" className="px-3 py-4 text-center font-bold text-success bg-success/15 w-32 border-r-2 border-success/40">
                       <div className="flex flex-col">
-                        <span className="text-xs text-green-600">فعلي</span>
+                        <span className="text-xs text-success">فعلي</span>
                         <span>إجمالي</span>
                       </div>
                     </th>
                     
                     {/* مجموعة المقارنة */}
-                    <th scope="col" className="px-3 py-4 text-center font-bold text-amber-700 bg-amber-50 w-24 border-l-2 border-amber-200">
+                    <th scope="col" className="px-3 py-4 text-center font-bold text-warning bg-warning/10 w-24 border-l-2 border-warning/40">
                       <div className="flex flex-col">
-                        <span className="text-xs text-amber-600">مقارنة</span>
+                        <span className="text-xs text-warning">مقارنة</span>
                         <span>فارق %</span>
                       </div>
                     </th>
-                    <th scope="col" className="px-3 py-4 text-center font-bold text-amber-700 bg-amber-50 w-32">
+                    <th scope="col" className="px-3 py-4 text-center font-bold text-warning bg-warning/10 w-32">
                       <div className="flex flex-col">
-                        <span className="text-xs text-amber-600">مقارنة</span>
+                        <span className="text-xs text-warning">مقارنة</span>
                         <span>فارق قيمة</span>
                       </div>
                     </th>
-                    <th scope="col" className="px-3 py-4 text-center font-bold text-gray-700 w-20 border-l-2 border-gray-300">إجراءات</th>
+                    <th scope="col" className="px-3 py-4 text-center font-bold text-muted-foreground w-20 border-l-2 border-border">إجراءات</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
+                <tbody className="bg-card divide-y divide-muted/30">
                   {filteredItems.map((orig, index) => {
                     const i = normalizedItems.find(x=>x.id===orig.id) || orig;
                     const estimated = (i.estimated as any)?.total || 0;
                     const actual = (i.actual as any)?.total || 0;
                     const variancePct = estimated ? ((actual - estimated) / estimated) * 100 : 0;
-                    const varianceColor = variancePct > 10 ? 'text-red-600' : variancePct > 0 ? 'text-amber-600' : variancePct < -5 ? 'text-emerald-600' : 'text-gray-700';
+                    const varianceColor = variancePct > 10 ? 'text-error' : variancePct > 0 ? 'text-warning' : variancePct < -5 ? 'text-success' : 'text-muted-foreground';
                     const sev = severityMap[i.id];
-                    const sevDot = sev === 'critical' ? 'bg-red-500' : sev === 'warning' ? 'bg-amber-500' : sev === 'info' ? 'bg-blue-500' : 'bg-transparent';
+                    const sevDot = sev === 'critical' ? 'bg-error' : sev === 'warning' ? 'bg-warning' : sev === 'info' ? 'bg-info' : 'bg-transparent';
                     const isExpanded = openBreakdowns.has(i.id);
                     const isCompleted = (i.actual?.totalPrice || 0) > 0;
 
@@ -812,17 +814,17 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                       <React.Fragment key={i.id}>
                         <tr className={`
                           transition-colors duration-150
-                          ${isExpanded ? 'bg-blue-50 border-l-4 border-blue-400' : 'hover:bg-gray-50'} 
-                          ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}
-                          ${isCompleted ? 'border-r-4 border-r-green-400' : ''}
+                          ${isExpanded ? 'bg-info/10 border-l-4 border-info/50' : 'hover:bg-muted/40'} 
+                          ${index % 2 === 0 ? 'bg-card' : 'bg-muted/20'}
+                          ${isCompleted ? 'border-r-4 border-r-success/50' : ''}
                         `}>
                           <td className="px-2 py-4 text-center">
                             <button
                               onClick={() => toggleBreakdown(i.id)}
                               className={`
                                 w-8 h-8 inline-flex items-center justify-center rounded-lg transition-all duration-200
-                                ${isExpanded ? 'bg-blue-100 text-blue-600 border-2 border-blue-300' : 'border-2 border-gray-200 bg-white hover:bg-gray-100 text-gray-600'}
-                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                                ${isExpanded ? 'bg-info/10 text-info border-2 border-info/40' : 'border-2 border-border bg-background hover:bg-muted/40 text-muted-foreground'}
+                                focus:outline-none focus:ring-2 focus:ring-info focus:ring-offset-2
                               `}
                               title={isExpanded ? 'إخفاء التحليل' : 'عرض التحليل التفصيلي'}
                             >
@@ -834,14 +836,14 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                             <div className="flex items-start gap-3">
                               <div className="flex flex-col gap-1">
                                 <span className={`inline-block w-3 h-3 rounded-full ${sevDot} mt-1`} title={sev ? `شدة الانحراف: ${sev}` : 'لا يوجد إنذار'}></span>
-                                {isCompleted && <span className="inline-block w-3 h-3 rounded-full bg-green-500" title="مكتمل"></span>}
+                                {isCompleted && <span className="inline-block w-3 h-3 rounded-full bg-success" title="مكتمل"></span>}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <div className="font-semibold text-gray-900 truncate" title={i.description}>
+                                <div className="font-semibold text-foreground truncate" title={i.description}>
                                   {i.description}
                                 </div>
                                 {i.category && (
-                                  <div className="text-xs text-gray-500 mt-1 bg-gray-100 px-2 py-0.5 rounded-full inline-block">
+                                  <div className="text-xs text-muted-foreground mt-1 bg-muted/30 px-2 py-0.5 rounded-full inline-block">
                                     {i.category}
                                   </div>
                                 )}
@@ -849,25 +851,25 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                             </div>
                           </td>
                           
-                          <td className="px-3 py-4 text-center text-gray-600 font-mono text-xs bg-gray-50">
+                          <td className="px-3 py-4 text-center text-muted-foreground font-mono text-xs bg-muted/20">
                             {i.unit || '—'}
                           </td>
                           
                           {/* التقديري */}
-                          <td className="px-3 py-4 text-center text-blue-700 font-mono bg-blue-50 border-l-2 border-blue-200">
+                          <td className="px-3 py-4 text-center text-info font-mono bg-info/10 border-l-2 border-info/40">
                             {formatDecimal(i.estimated?.quantity ?? 0)}
                           </td>
-                          <td className="px-3 py-4 text-center text-blue-700 font-mono bg-blue-50">
+                          <td className="px-3 py-4 text-center text-info font-mono bg-info/10">
                             {formatCurrencyValue(i.estimated?.unitPrice ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
-                          <td className="px-3 py-4 text-center text-blue-800 font-bold font-mono bg-blue-100 border-r-2 border-blue-200">
+                          <td className="px-3 py-4 text-center text-info/90 font-bold font-mono bg-info/15 border-r-2 border-info/40">
                             {formatCurrencyValue(i.estimated?.totalPrice ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           
                           {/* الفعلي */}
-                          <td className="px-3 py-4 bg-green-50 border-l-2 border-green-200">
+                          <td className="px-3 py-4 bg-success/10 border-l-2 border-success/40">
                             <input
-                              className="w-full border-2 border-green-200 rounded-lg px-3 py-2 text-center focus:border-green-500 focus:outline-none font-mono text-sm bg-white transition-colors"
+                              className="w-full border-2 border-success/40 rounded-lg px-3 py-2 text-center focus:border-success focus:outline-none font-mono text-sm bg-background transition-colors"
                               defaultValue={(i.actual?.quantity ?? 0).toFixed(2)}
                               onBlur={e => enhancedHandleItemActualChange(i.id, 'quantity', e.target.value)}
                               onFocus={e => e.target.select()}
@@ -875,9 +877,9 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                               placeholder="0.00"
                             />
                           </td>
-                          <td className="px-3 py-4 bg-green-50">
+                          <td className="px-3 py-4 bg-success/10">
                             <input
-                              className="w-full border-2 border-green-200 rounded-lg px-3 py-2 text-center focus:border-green-500 focus:outline-none font-mono text-sm bg-white transition-colors"
+                              className="w-full border-2 border-success/40 rounded-lg px-3 py-2 text-center focus:border-success focus:outline-none font-mono text-sm bg-background transition-colors"
                               defaultValue={(i.actual?.unitPrice ?? 0).toFixed(2)}
                               onBlur={e => enhancedHandleItemActualChange(i.id, 'unitPrice', e.target.value)}
                               onFocus={e => e.target.select()}
@@ -885,42 +887,42 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                               placeholder="0.00"
                             />
                           </td>
-                          <td className="px-3 py-4 text-center text-green-800 font-bold font-mono bg-green-100 border-r-2 border-green-200">
+                          <td className="px-3 py-4 text-center text-success/90 font-bold font-mono bg-success/15 border-r-2 border-success/40">
                             {formatCurrencyValue(i.actual?.totalPrice ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           
                           {/* المقارنة */}
-                          <td className={`px-3 py-4 text-center font-bold font-mono bg-amber-50 border-l-2 border-amber-200 ${varianceColor}`}>
+                          <td className={`px-3 py-4 text-center font-bold font-mono bg-warning/10 border-l-2 border-warning/40 ${varianceColor}`}>
                             {variancePct.toFixed(1)}%
                           </td>
-                          <td className={`px-3 py-4 text-center font-mono bg-amber-50 ${varianceColor}`}>
+                          <td className={`px-3 py-4 text-center font-mono bg-warning/10 ${varianceColor}`}>
                             {formatCurrencyValue((i.actual?.totalPrice || 0) - (i.estimated?.totalPrice || 0), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           {/* إجراءات محسّنة */}
-                          <td className="px-3 py-4 text-center border-l-2 border-gray-300">
+                          <td className="px-3 py-4 text-center border-l-2 border-border">
                             <DropdownMenu.Root>
                               <DropdownMenu.Trigger asChild>
                                 <button
-                                  className="w-10 h-10 inline-flex items-center justify-center rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+                                  className="w-10 h-10 inline-flex items-center justify-center rounded-xl border-2 border-border bg-background hover:bg-muted/40 hover:border-border focus:outline-none focus:ring-2 focus:ring-info focus:ring-offset-2 transition-all duration-200 shadow-sm"
                                   aria-label="قائمة الإجراءات"
                                   title="المزيد من الإجراءات"
                                 >
-                                  <EllipsisVertical className="w-5 h-5 text-gray-600" />
+                                  <EllipsisVertical className="w-5 h-5 text-muted-foreground" />
                                 </button>
                               </DropdownMenu.Trigger>
                               <DropdownMenu.Portal>
-                                <DropdownMenu.Content className="bg-white border rounded-lg shadow-lg text-sm min-w-[220px] p-1.5" sideOffset={4}>
+                                <DropdownMenu.Content className="bg-card border border-border rounded-lg shadow-lg text-sm min-w-[220px] p-1.5" sideOffset={4}>
                                   <DropdownMenu.Item
-                                    className="px-3 py-1.5 rounded-md hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                                    className="px-3 py-1.5 rounded-md hover:bg-muted/40 cursor-pointer flex items-center gap-2"
                                     onSelect={() => {
                                       undo.push(JSON.parse(JSON.stringify(items)));
                                       upsertItem({ id: i.id, description: i.description + ' *' });
                                     }}
                                   >
-                                    <Edit className="w-4 h-4 text-gray-500" /> تعديل البند
+                                    <Edit className="w-4 h-4 text-muted-foreground/70" /> تعديل البند
                                   </DropdownMenu.Item>
                                   <DropdownMenu.Item
-                                    className="px-3 py-1.5 rounded-md hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                                    className="px-3 py-1.5 rounded-md hover:bg-muted/40 cursor-pointer flex items-center gap-2"
                                     onSelect={() => {
                                       try {
                                         projectCostService.openExpenseModal(projectId, i.id);
@@ -932,7 +934,7 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                                     تسجيل مصروف للبند
                                   </DropdownMenu.Item>
                                   <DropdownMenu.Item
-                                    className="px-3 py-1.5 rounded-md hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                                    className="px-3 py-1.5 rounded-md hover:bg-muted/40 cursor-pointer flex items-center gap-2"
                                     onSelect={async () => {
                                       try {
                                         const { purchaseOrderService } = await import('@/application/services/purchaseOrderService');
@@ -961,11 +963,11 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                                       }
                                     }}
                                   >
-                                    <ShoppingCart className="w-4 h-4 text-gray-500" /> إنشاء أمر شراء للبند
+                                    <ShoppingCart className="w-4 h-4 text-muted-foreground/70" /> إنشاء أمر شراء للبند
                                   </DropdownMenu.Item>
-                                  <DropdownMenu.Separator className="h-[1px] bg-gray-200 my-1" />
+                                  <DropdownMenu.Separator className="h-[1px] bg-muted/40 my-1" />
                                   <DropdownMenu.Item
-                                    className="px-3 py-1.5 rounded-md hover:bg-red-50 text-red-600 cursor-pointer flex items-center gap-2"
+                                    className="px-3 py-1.5 rounded-md hover:bg-error/10 text-error cursor-pointer flex items-center gap-2"
                                     onSelect={() => {
                                       const normalizedVariance =
                                         i.variance && 'value' in i.variance && 'pct' in i.variance
@@ -986,21 +988,21 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                         </tr>
                         {openBreakdowns.has(i.id) && (
                           <tr>
-                            <td colSpan={12} className="p-0 bg-gray-100">
-                              <div className="bg-white p-4 m-2 rounded-lg border">
+                            <td colSpan={12} className="p-0 bg-muted/20">
+                              <div className="bg-card p-4 m-2 rounded-lg border border-border">
                                 <div className="mb-3 font-semibold flex items-center justify-between">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-blue-600">تحليل تكلفة البند</span>
-                                    <span className="text-gray-500 text-xs font-normal">(الأسعار التقديرية للعرض فقط – أدخل القيم الفعلية)</span>
+                                    <span className="text-info">تحليل تكلفة البند</span>
+                                    <span className="text-muted-foreground text-xs font-normal">(الأسعار التقديرية للعرض فقط – أدخل القيم الفعلية)</span>
                                   </div>
                                 </div>
                                 {(() => {
                                   const section = (activeSectionByItem[i.id] || 'materials') as BreakdownSectionKey;
                                   const sections: Array<{key: 'materials'|'labor'|'equipment'|'subcontractors'; label:string; color:string}> = [
-                                    { key: 'materials', label: 'المواد', color: 'bg-orange-500' },
-                                    { key: 'labor', label: 'العمالة', color: 'bg-sky-500' },
-                                    { key: 'equipment', label: 'المعدات', color: 'bg-lime-500' },
-                                    { key: 'subcontractors', label: 'مقاولو الباطن', color: 'bg-purple-500' },
+                                    { key: 'materials', label: 'المواد', color: 'bg-warning' },
+                                    { key: 'labor', label: 'العمالة', color: 'bg-info' },
+                                    { key: 'equipment', label: 'المعدات', color: 'bg-success' },
+                                    { key: 'subcontractors', label: 'مقاولو الباطن', color: 'bg-accent' },
                                   ];
                                   
                                   const sumRows = (rows: any[]): number => rows.reduce((s: number, r: any) => s + (r.totalCost || ((r.quantity || 0) * (r.unitCost || 0)) || 0), 0);
@@ -1022,19 +1024,19 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                                   return (
                                     <div>
                                       <div className="flex items-center justify-between mb-3">
-                                        <div className="flex border border-gray-200 rounded-md p-0.5">
+                                        <div className="flex border border-border rounded-md p-0.5">
                                           {sections.map(s => (
                                             <button
                                               key={s.key}
                                               onClick={() => handleSectionChange(i.id, s.key)}
-                                              className={`px-4 py-1.5 text-sm font-medium rounded-md ${section === s.key ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                                              className={`px-4 py-1.5 text-sm font-medium rounded-md ${section === s.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted/40'}`}
                                             >
                                               {s.label}
                                             </button>
                                           ))}
                                         </div>
                                         <button
-                                          className="px-3 py-1.5 text-sm rounded-md bg-green-600 text-white hover:bg-green-700 flex items-center gap-2"
+                                          className="px-3 py-1.5 text-sm rounded-md bg-success text-success-foreground hover:bg-success/80 flex items-center gap-2"
                                           onClick={() => {
                                             const newRowId = `r-${Date.now()}`;
                                             projectCostService.saveDraft(projectId, (d:any) => {
@@ -1050,56 +1052,56 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                                         </button>
                                       </div>
 
-                                      <div className="mb-3 border rounded-lg bg-gray-50 p-2 text-xs flex flex-row gap-2 overflow-x-auto whitespace-nowrap items-stretch" aria-label="تفكيك تكلفة البند">
-                                        <div className="px-3 py-1.5 bg-white rounded-md border inline-flex flex-col shrink-0">
-                                          <div className="font-semibold text-gray-600 text-[10px]" data-testid="decomposition-label">الأساس</div>
-                                          <div className="font-bold text-lg tabular-nums text-gray-800">{formatCurrencyValue(baseAll, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                      <div className="mb-3 border border-border rounded-lg bg-muted/20 p-2 text-xs flex flex-row gap-2 overflow-x-auto whitespace-nowrap items-stretch" aria-label="تفكيك تكلفة البند">
+                                        <div className="px-3 py-1.5 bg-card rounded-md border border-border inline-flex flex-col shrink-0">
+                                          <div className="font-semibold text-muted-foreground text-[10px]" data-testid="decomposition-label">الأساس</div>
+                                          <div className="font-bold text-lg tabular-nums text-foreground">{formatCurrencyValue(baseAll, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
-                                        <div className="px-3 py-1.5 bg-white rounded-md border inline-flex flex-col shrink-0">
-                                          <div className="text-gray-600 text-[10px]" data-testid="decomposition-label">الإدارية ({pAdmin.toFixed(1)}%)</div>
+                                        <div className="px-3 py-1.5 bg-card rounded-md border border-border inline-flex flex-col shrink-0">
+                                          <div className="text-muted-foreground text-[10px]" data-testid="decomposition-label">الإدارية ({pAdmin.toFixed(1)}%)</div>
                                           <div className="font-semibold tabular-nums">{formatCurrencyValue(vAdmin, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
-                                        <div className="px-3 py-1.5 bg-white rounded-md border inline-flex flex-col shrink-0">
-                                          <div className="text-gray-600 text-[10px]" data-testid="decomposition-label">التشغيلية ({pOp.toFixed(1)}%)</div>
+                                        <div className="px-3 py-1.5 bg-card rounded-md border border-border inline-flex flex-col shrink-0">
+                                          <div className="text-muted-foreground text-[10px]" data-testid="decomposition-label">التشغيلية ({pOp.toFixed(1)}%)</div>
                                           <div className="font-semibold tabular-nums">{formatCurrencyValue(vOp, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
-                                        <div className="px-3 py-1.5 bg-white rounded-md border inline-flex flex-col shrink-0">
-                                          <div className="text-gray-600 text-[10px]" data-testid="decomposition-label">الربح ({pProfit.toFixed(1)}%)</div>
-                                          <div className="font-semibold tabular-nums text-emerald-700">{formatCurrencyValue(vProfit, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                        <div className="px-3 py-1.5 bg-card rounded-md border border-border inline-flex flex-col shrink-0">
+                                          <div className="text-muted-foreground text-[10px]" data-testid="decomposition-label">الربح ({pProfit.toFixed(1)}%)</div>
+                                          <div className="font-semibold tabular-nums text-success">{formatCurrencyValue(vProfit, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
-                                        <div className="px-3 py-1.5 bg-white rounded-md border inline-flex flex-col shrink-0">
-                                          <div className="text-gray-600 text-[10px]" data-testid="decomposition-label">قبل الضريبة</div>
+                                        <div className="px-3 py-1.5 bg-card rounded-md border border-border inline-flex flex-col shrink-0">
+                                          <div className="text-muted-foreground text-[10px]" data-testid="decomposition-label">قبل الضريبة</div>
                                           <div className="font-semibold tabular-nums">{formatCurrencyValue(beforeTax, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
-                                        <div className="px-3 py-1.5 bg-white rounded-md border inline-flex flex-col shrink-0">
-                                          <div className="text-gray-600 text-[10px]" data-testid="decomposition-label">الضريبة ({(getPricingConfig().vatRate*100).toFixed(1)}%)</div>
-                                          <div className="font-semibold tabular-nums text-indigo-700">{formatCurrencyValue(tax, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                        <div className="px-3 py-1.5 bg-card rounded-md border border-border inline-flex flex-col shrink-0">
+                                          <div className="text-muted-foreground text-[10px]" data-testid="decomposition-label">الضريبة ({(getPricingConfig().vatRate*100).toFixed(1)}%)</div>
+                                          <div className="font-semibold tabular-nums text-primary">{formatCurrencyValue(tax, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
-                                        <div className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-md border border-blue-300 inline-flex flex-col shrink-0">
+                                        <div className="px-3 py-1.5 bg-info/10 text-info rounded-md border border-info/40 inline-flex flex-col shrink-0">
                                           <div className="font-semibold text-[10px]" data-testid="decomposition-label">الإجمالي مع الضريبة</div>
                                           <div className="font-bold text-lg tabular-nums">{formatCurrencyValue(withTax, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                         </div>
                                       </div>
 
-                                      <div className="overflow-auto border rounded-lg">
+                                      <div className="overflow-auto border border-border rounded-lg">
                                         <table className="w-full border-collapse text-xs">
-                                          <thead className="bg-gray-100 text-gray-600 font-semibold">
+                                          <thead className="bg-muted/30 text-muted-foreground font-semibold">
                                             <tr>
                                               <th className="p-2 text-right w-[30%]">الوصف</th>
                                               <th className="p-2 text-center w-[10%]">الوحدة</th>
                                               <th className="p-2 text-center w-[10%]">كمية تقديرية</th>
                                               <th className="p-2 text-center w-[10%]">سعر تقديري</th>
-                                              <th className="p-2 text-center w-[12%] bg-blue-50">إجمالي تقديري</th>
+                                              <th className="p-2 text-center w-[12%] bg-info/10">إجمالي تقديري</th>
                                               <th className="p-2 text-center w-[10%]">كمية فعلية</th>
                                               <th className="p-2 text-center w-[10%]">سعر فعلي</th>
-                                              <th className="p-2 text-center w-[12%] bg-green-50">إجمالي فعلي</th>
+                                              <th className="p-2 text-center w-[12%] bg-success/10">إجمالي فعلي</th>
                                               <th className="p-2 text-center w-[8%]">إجراء</th>
                                             </tr>
                                           </thead>
                                           <tbody>
                                             {allRowIds.length === 0 && (
                                               <tr>
-                                                <td colSpan={9} className="p-4 text-center text-gray-500">
+                                                <td colSpan={9} className="p-4 text-center text-muted-foreground">
                                                   لا يوجد صفوف في هذا القسم.
                                                 </td>
                                               </tr>
@@ -1118,13 +1120,13 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                                               const rowName = (ar?.name || er?.name || 'هذا الصف') as string;
 
                                               return (
-                                                <tr key={rid} className="odd:bg-white even:bg-gray-50 group hover:bg-blue-50/50">
+                                                <tr key={rid} className="odd:bg-card even:bg-muted/20 group hover:bg-info/10">
                                                   <td className="p-2 text-right whitespace-nowrap max-w-[280px]" title={er?.name || ar?.name || 'عنصر'}>
                                                     {er ? (
-                                                      <span className="text-gray-800">{er.name}</span>
+                                                      <span className="text-foreground">{er.name}</span>
                                                     ) : (
                                                       <input
-                                                        className="border rounded-md px-2 h-7 text-xs w-full focus:border-blue-400 focus:outline-none"
+                                                        className="border border-border rounded-md px-2 h-7 text-xs w-full focus:border-info focus:outline-none"
                                                         defaultValue={ar?.name || ''}
                                                         placeholder="وصف العنصر"
                                                         onBlur={e => handleBreakdownRowChange(i.id, section, rid, 'name', e.target.value)}
@@ -1134,7 +1136,7 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                                                   <td className="p-2 text-center tabular-nums">
                                                     {er ? (er?.unit||'-') : (
                                                       <input
-                                                        className="border rounded-md px-1 h-7 text-xs w-16 text-center focus:border-blue-400 focus:outline-none"
+                                                        className="border border-border rounded-md px-1 h-7 text-xs w-16 text-center focus:border-info focus:outline-none"
                                                         defaultValue={ar?.unit || '-'
                                                         }
                                                         title="وحدة القياس"
@@ -1144,12 +1146,12 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                                                       />
                                                     )}
                                                   </td>
-                                                  <td className="p-2 text-center text-gray-600 tabular-nums">{displayQtyEst}</td>
-                                                  <td className="p-2 text-center text-gray-600 tabular-nums">{displayUnitEst}</td>
-                                                  <td className="p-2 text-center text-blue-600 font-medium tabular-nums bg-blue-50">{displayTotalEst}</td>
+                                                  <td className="p-2 text-center text-muted-foreground tabular-nums">{displayQtyEst}</td>
+                                                  <td className="p-2 text-center text-muted-foreground tabular-nums">{displayUnitEst}</td>
+                                                  <td className="p-2 text-center text-info font-medium tabular-nums bg-info/10">{displayTotalEst}</td>
                                                   <td className="p-2 text-center">
                                                     <input
-                                                      className="border rounded-md px-1 h-7 text-xs w-20 text-center focus:border-blue-400 focus:outline-none tabular-nums"
+                                                      className="border border-border rounded-md px-1 h-7 text-xs w-20 text-center focus:border-success focus:outline-none tabular-nums"
                                                       defaultValue={(actualQty||0).toFixed(2)}
                                                       onBlur={e=>handleBreakdownRowChange(i.id, section, rid, 'quantity', e.target.value)}
                                                       title="الكمية الفعلية"
@@ -1158,17 +1160,17 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                                                   </td>
                                                   <td className="p-2 text-center">
                                                     <input
-                                                      className="border rounded-md px-1 h-7 text-xs w-20 text-center focus:border-blue-400 focus:outline-none tabular-nums"
+                                                      className="border border-border rounded-md px-1 h-7 text-xs w-20 text-center focus:border-success focus:outline-none tabular-nums"
                                                       defaultValue={(actualUnit||0).toFixed(2)}
                                                       onBlur={e=>handleBreakdownRowChange(i.id, section, rid, 'unitCost', e.target.value)}
                                                       title="السعر الفعلي"
                                                       aria-label="السعر الفعلي"
                                                     />
                                                   </td>
-                                                  <td className="p-2 text-center text-green-600 font-medium tabular-nums bg-green-50">{formatCurrencyValue(actualQty * actualUnit, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                                  <td className="p-2 text-center text-success font-medium tabular-nums bg-success/10">{formatCurrencyValue(actualQty * actualUnit, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                   <td className="p-2 text-center">
                                                     <button
-                                                      className="w-7 h-7 inline-flex items-center justify-center rounded-md text-red-600 hover:bg-red-100"
+                                                      className="w-7 h-7 inline-flex items-center justify-center rounded-md text-error hover:bg-error/10"
                                                       title="حذف الصف"
                                                       onClick={() => {
                                                         setRowDeleteTarget({
@@ -1226,7 +1228,7 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                           <div className="flex justify-center mt-4">
                             <button
                               onClick={() => { setAutoMerging(true); autoMergedRef.current = false; }}
-                              className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
+                              className="px-6 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/85 transition-colors flex items-center gap-2 shadow-sm"
                             >
                               <FileDown className="w-5 h-5" />
                               استيراد من المنافسة
@@ -1240,12 +1242,12 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
                     <tr>
                       <td colSpan={12} className="p-12 text-center">
                         <div className="flex flex-col items-center gap-4">
-                          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
-                            <FileDown className="w-8 h-8 text-blue-600" />
+                          <div className="w-16 h-16 bg-info/10 rounded-full flex items-center justify-center animate-pulse">
+                            <FileDown className="w-8 h-8 text-info" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-1">جاري الاستيراد</h3>
-                            <p className="text-gray-500">يتم الآن استيراد البنود من المنافسة...</p>
+                            <h3 className="text-lg font-medium text-foreground mb-1">جاري الاستيراد</h3>
+                            <p className="text-muted-foreground">يتم الآن استيراد البنود من المنافسة...</p>
                           </div>
                         </div>
                       </td>
@@ -1258,28 +1260,28 @@ export const ProjectCostView: React.FC<ProjectCostViewProps> = ({ projectId, ten
         </div>
         
         {/* شريط الحالة السفلي */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 px-6 py-3">
-          <div className="flex justify-between items-center text-sm text-gray-600">
+        <div className="flex-shrink-0 bg-card border-t border-border px-6 py-3">
+          <div className="flex justify-between items-center text-sm text-muted-foreground">
             <div className="flex items-center gap-6">
               <span>المجموع: {items.length} بند</span>
               <span>مكتمل: {items.filter(i => (i.actual?.totalPrice || 0) > 0).length}</span>
               <span>معلق: {items.filter(i => !(i.actual?.totalPrice || 0)).length}</span>
-              {query && <span className="text-blue-600">البحث: {filteredItems.length} نتيجة</span>}
+              {query && <span className="text-info">البحث: {filteredItems.length} نتيجة</span>}
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
                 {isAutoSaving && (
-                  <div className="flex items-center gap-1 text-blue-600">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <div className="flex items-center gap-1 text-info">
+                    <div className="w-2 h-2 bg-info rounded-full animate-pulse"></div>
                     <span className="text-xs">جاري الحفظ...</span>
                   </div>
                 )}
                 <span className="text-xs">آخر حفظ: {formatTime(new Date())}</span>
                 <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-green-600">متصل</span>
+                  <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+                  <span className="text-xs text-success">متصل</span>
                 </div>
-                <div className="text-xs text-gray-400 hidden lg:block">
+                <div className="text-xs text-muted-foreground hidden lg:block">
                   اختصارات: Ctrl+K للبحث • Ctrl+N بند جديد • Ctrl+Z تراجع
                 </div>
               </div>

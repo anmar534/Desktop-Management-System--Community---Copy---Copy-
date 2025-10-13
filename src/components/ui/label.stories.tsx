@@ -41,7 +41,7 @@ export const Required: Story = {
     <div className="space-y-2">
       <Label htmlFor="email">
         البريد الإلكتروني
-        <span className="text-red-500 mr-1">*</span>
+  <span className="text-destructive mr-1">*</span>
       </Label>
       <Input id="email" type="email" placeholder="example@domain.com" required />
     </div>
@@ -80,7 +80,7 @@ export const TextInputField: Story = {
     <div className="w-[400px] space-y-2">
       <Label htmlFor="tender-name">
         اسم المناقصة
-        <span className="text-red-500 mr-1">*</span>
+  <span className="text-destructive mr-1">*</span>
       </Label>
       <Input
         id="tender-name"
@@ -99,7 +99,7 @@ export const TextareaField: Story = {
     <div className="w-[500px] space-y-2">
       <Label htmlFor="description">
         وصف المشروع
-        <span className="text-red-500 mr-1">*</span>
+  <span className="text-destructive mr-1">*</span>
       </Label>
       <Textarea
         id="description"
@@ -118,7 +118,7 @@ export const SelectField: Story = {
     <div className="w-[400px] space-y-2">
       <Label htmlFor="status">
         حالة المشروع
-        <span className="text-red-500 mr-1">*</span>
+  <span className="text-destructive mr-1">*</span>
       </Label>
       <Select>
         <SelectTrigger id="status">
@@ -212,7 +212,7 @@ export const TenderCreationForm: Story = {
         <div className="space-y-2">
           <Label htmlFor="tender-title">
             عنوان المناقصة
-            <span className="text-red-500 mr-1">*</span>
+            <span className="text-destructive mr-1">*</span>
           </Label>
           <Input
             id="tender-title"
@@ -224,7 +224,7 @@ export const TenderCreationForm: Story = {
         <div className="space-y-2">
           <Label htmlFor="tender-type">
             نوع المناقصة
-            <span className="text-red-500 mr-1">*</span>
+            <span className="text-destructive mr-1">*</span>
           </Label>
           <Select>
             <SelectTrigger id="tender-type">
@@ -243,7 +243,7 @@ export const TenderCreationForm: Story = {
           <div className="space-y-2">
             <Label htmlFor="budget">
               الميزانية (ر.س)
-              <span className="text-red-500 mr-1">*</span>
+              <span className="text-destructive mr-1">*</span>
             </Label>
             <Input
               id="budget"
@@ -256,7 +256,7 @@ export const TenderCreationForm: Story = {
           <div className="space-y-2">
             <Label htmlFor="duration">
               المدة (أشهر)
-              <span className="text-red-500 mr-1">*</span>
+              <span className="text-destructive mr-1">*</span>
             </Label>
             <Input
               id="duration"
@@ -270,7 +270,7 @@ export const TenderCreationForm: Story = {
         <div className="space-y-2">
           <Label htmlFor="description">
             الوصف
-            <span className="text-red-500 mr-1">*</span>
+            <span className="text-destructive mr-1">*</span>
           </Label>
           <Textarea
             id="description"
@@ -305,7 +305,7 @@ export const UserProfileForm: Story = {
           <div className="space-y-2">
             <Label htmlFor="first-name">
               الاسم الأول
-              <span className="text-red-500 mr-1">*</span>
+              <span className="text-destructive mr-1">*</span>
             </Label>
             <Input id="first-name" placeholder="محمد" />
           </div>
@@ -313,7 +313,7 @@ export const UserProfileForm: Story = {
           <div className="space-y-2">
             <Label htmlFor="last-name">
               اسم العائلة
-              <span className="text-red-500 mr-1">*</span>
+              <span className="text-destructive mr-1">*</span>
             </Label>
             <Input id="last-name" placeholder="أحمد" />
           </div>
@@ -322,7 +322,7 @@ export const UserProfileForm: Story = {
         <div className="space-y-2">
           <Label htmlFor="email">
             البريد الإلكتروني
-            <span className="text-red-500 mr-1">*</span>
+            <span className="text-destructive mr-1">*</span>
           </Label>
           <Input
             id="email"
@@ -386,7 +386,7 @@ export const ProjectSettingsForm: Story = {
         <div className="space-y-2">
           <Label htmlFor="project-name">
             اسم المشروع
-            <span className="text-red-500 mr-1">*</span>
+            <span className="text-destructive mr-1">*</span>
           </Label>
           <Input id="project-name" defaultValue="مشروع التطوير الرقمي" />
         </div>
@@ -555,7 +555,7 @@ export const LabelWithBadge: Story = {
       <div className="space-y-2">
         <Label htmlFor="feature1" className="flex items-center gap-2">
           الميزة الجديدة
-          <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded-full">
+          <span className="px-2 py-0.5 text-xs bg-info/10 text-info dark:bg-info/20 rounded-full">
             جديد
           </span>
         </Label>
@@ -565,7 +565,7 @@ export const LabelWithBadge: Story = {
       <div className="space-y-2">
         <Label htmlFor="beta" className="flex items-center gap-2">
           الوضع التجريبي
-          <span className="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300 rounded-full">
+          <span className="px-2 py-0.5 text-xs bg-warning/10 text-warning dark:bg-warning/20 rounded-full">
             تجريبي
           </span>
         </Label>
@@ -575,7 +575,7 @@ export const LabelWithBadge: Story = {
       <div className="space-y-2">
         <Label htmlFor="premium" className="flex items-center gap-2">
           ميزة مميزة
-          <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 rounded-full">
+          <span className="px-2 py-0.5 text-xs bg-primary/10 text-primary dark:bg-primary/20 rounded-full">
             مميز
           </span>
         </Label>
@@ -598,7 +598,7 @@ export const ThemeTesting: Story = {
           <div className="space-y-2">
             <Label htmlFor="light-input">
               اسم المشروع
-              <span className="text-red-500 mr-1">*</span>
+              <span className="text-destructive mr-1">*</span>
             </Label>
             <Input id="light-input" placeholder="أدخل اسم المشروع" />
           </div>
@@ -618,7 +618,7 @@ export const ThemeTesting: Story = {
           <div className="space-y-2">
             <Label htmlFor="dark-input">
               اسم المشروع
-              <span className="text-red-500 mr-1">*</span>
+              <span className="text-destructive mr-1">*</span>
             </Label>
             <Input id="dark-input" placeholder="أدخل اسم المشروع" />
           </div>
@@ -664,7 +664,7 @@ export const UsageGuide: Story = {
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">الأنماط</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded">
+          <div className="p-3 bg-info/10 dark:bg-info/20 rounded">
             <h4 className="font-semibold mb-2">مع Input</h4>
             <p className="text-muted-foreground">
               استخدم htmlFor للربط مع id الحقل
@@ -673,7 +673,7 @@ export const UsageGuide: Story = {
               {'<Label htmlFor="name">الاسم</Label>'}
             </code>
           </div>
-          <div className="p-3 bg-green-50 dark:bg-green-950 rounded">
+          <div className="p-3 bg-success/10 dark:bg-success/20 rounded">
             <h4 className="font-semibold mb-2">مع Checkbox</h4>
             <p className="text-muted-foreground">
               اجعله قابل للنقر cursor-pointer
@@ -682,16 +682,16 @@ export const UsageGuide: Story = {
               {'className="font-normal cursor-pointer"'}
             </code>
           </div>
-          <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded">
+          <div className="p-3 bg-warning/10 dark:bg-warning/20 rounded">
             <h4 className="font-semibold mb-2">حقل مطلوب</h4>
             <p className="text-muted-foreground">
               أضف علامة * حمراء
             </p>
             <code className="block mt-2 text-xs">
-              {'<span className="text-red-500">*</span>'}
+              {'<span className="text-destructive">*</span>'}
             </code>
           </div>
-          <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded">
+          <div className="p-3 bg-accent/10 dark:bg-accent/20 rounded">
             <h4 className="font-semibold mb-2">مع أيقونة</h4>
             <p className="text-muted-foreground">
               استخدم flex items-center gap-2
@@ -737,7 +737,7 @@ export const UsageGuide: Story = {
               {`<div className="space-y-2">
   <Label htmlFor="email">
     البريد الإلكتروني
-    <span className="text-red-500 mr-1">*</span>
+  <span className="text-destructive mr-1">*</span>
   </Label>
   <Input id="email" type="email" />
 </div>`}
@@ -776,7 +776,7 @@ export const UsageGuide: Story = {
 
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Accessibility</h3>
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm space-y-2">
+  <div className="bg-info/10 dark:bg-info/20 p-4 rounded-lg text-sm space-y-2">
           <p>✅ htmlFor يربط Label بالـ Input تلقائياً</p>
           <p>✅ النقر على Label يُفعّل الحقل</p>
           <p>✅ Screen readers تقرأ Label مع الحقل</p>
@@ -792,7 +792,7 @@ export const UsageGuide: Story = {
           <div className="space-y-2">
             <Label htmlFor="demo">
               حقل تجريبي
-              <span className="text-red-500 mr-1">*</span>
+              <span className="text-destructive mr-1">*</span>
             </Label>
             <Input id="demo" placeholder="انقر على Label أعلاه" />
             <p className="text-sm text-muted-foreground">

@@ -1,12 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import type { ComponentProps } from 'react'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
 import { PageLayout, EmptyState } from './PageLayout'
 import { DeleteConfirmation } from './ui/confirmation-dialog'
+import { InlineAlert } from './ui/inline-alert'
 import {
   FileBarChart,
   Plus,
@@ -29,13 +29,9 @@ import { useFinancialReports } from '@/application/hooks/useFinancialReports'
 import type { FinancialReport } from '@/data/centralData'
 import { formatDateValue } from '@/utils/formatters'
 
-type BadgeVariant = NonNullable<ComponentProps<typeof Badge>['variant']>
-
 interface FinancialReportStatusInfo {
-  text: string
-  variant: BadgeVariant
-  color: string
-  bgColor: string
+  label: string
+  status: StatusBadgeProps['status']
   icon: typeof CheckCircle
 }
 
@@ -47,42 +43,32 @@ const getStatusInfo = (status: FinancialReport['status']): FinancialReportStatus
   switch (status) {
     case 'completed':
       return {
-        text: 'مكتمل',
-        variant: 'success',
-        color: 'text-green-600',
-        bgColor: 'bg-green-50',
+        label: 'مكتمل',
+        status: 'success',
         icon: CheckCircle,
       }
     case 'pending':
       return {
-        text: 'تحت المعالجة',
-        variant: 'warning',
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-50',
+        label: 'تحت المعالجة',
+        status: 'warning',
         icon: Clock,
       }
     case 'generating':
       return {
-        text: 'قيد التوليد',
-        variant: 'warning',
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50',
+        label: 'قيد التوليد',
+        status: 'info',
         icon: Clock,
       }
     case 'failed':
       return {
-        text: 'فشل',
-        variant: 'destructive',
-        color: 'text-red-600',
-        bgColor: 'bg-red-50',
+        label: 'فشل',
+        status: 'error',
         icon: AlertCircle,
       }
     default:
       return {
-        text: status ?? 'غير محدد',
-        variant: 'outline',
-        color: 'text-gray-600',
-        bgColor: 'bg-gray-50',
+        label: status ?? 'غير محدد',
+        status: 'default',
         icon: FileText,
       }
   }
@@ -231,40 +217,40 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
         value: reportsData.overview.totalReports.toString(),
         trend: 'up' as const,
         trendValue: '+4',
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-50',
+        color: 'text-info',
+        bgColor: 'bg-info/10',
       },
       {
         label: 'هذا الشهر',
         value: reportsData.overview.generatedThisMonth.toString(),
         trend: 'up' as const,
         trendValue: '+25%',
-        color: 'text-green-600',
-        bgColor: 'bg-green-50',
+        color: 'text-success',
+        bgColor: 'bg-success/10',
       },
       {
         label: 'تقارير تلقائية',
         value: reportsData.overview.automaticReports.toString(),
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-50',
+        color: 'text-accent',
+        bgColor: 'bg-accent/10',
       },
       {
         label: 'تقارير مخصصة',
         value: reportsData.overview.customReports.toString(),
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-50',
+        color: 'text-warning',
+        bgColor: 'bg-warning/10',
       },
       {
         label: 'متوسط وقت الإنتاج',
         value: formatMinutes(reportsData.overview.averageGenerationTime),
-        color: 'text-emerald-600',
-        bgColor: 'bg-emerald-50',
+        color: 'text-success',
+        bgColor: 'bg-success/10',
       },
       {
         label: 'جاهز للتحميل',
         value: reportsData.overview.completedReports.toString(),
-        color: 'text-yellow-600',
-        bgColor: 'bg-yellow-50',
+        color: 'text-warning',
+        bgColor: 'bg-warning/10',
       },
     ],
     [reportsData.overview],
@@ -289,6 +275,29 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
       return matchesSearch && matchesType && matchesPeriod
     })
   }, [reports, searchTerm, typeFilter, periodFilter])
+
+  const reportsAlert = useMemo(() => {
+    const failedReports = reports.filter((report) => report.status === 'failed')
+    const generatingReports = reports.filter((report) => report.status === 'generating')
+
+    if (failedReports.length > 0) {
+      return {
+        variant: 'destructive' as const,
+        title: 'تقارير فاشلة تحتاج متابعة',
+        description: `${failedReports.length} تقرير لم يكتمل إنتاجه. راجع مصادر البيانات أو أعد تشغيل المهمة قبل مشاركة النتائج.`,
+      }
+    }
+
+    if (generatingReports.length > 0) {
+      return {
+        variant: 'info' as const,
+        title: 'تقارير قيد التوليد',
+        description: `${generatingReports.length} تقرير قيد الإنتاج حالياً. سيتم إشعارك عند اكتمالها.`,
+      }
+    }
+
+    return null
+  }, [reports])
 
   const handleViewReport = (reportId: string) => {
     onSectionChange(`report-details?id=${reportId}`)
@@ -347,14 +356,18 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
 
   return (
     <PageLayout
+      tone="accent"
       title="التقارير المالية"
       description="إدارة ومراقبة التقارير المالية"
       icon={FileBarChart}
-      gradientFrom="from-purple-600"
-      gradientTo="to-blue-600"
       quickActions={quickActions}
       quickStats={quickStats}
     >
+      {reportsAlert && (
+        <div className="mb-6">
+          <InlineAlert variant={reportsAlert.variant} title={reportsAlert.title} description={reportsAlert.description} />
+        </div>
+      )}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         {quickStats.map((stat, index) => (
           <motion.div
@@ -366,7 +379,7 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
           >
             <div className="text-center">
               <div className={`text-lg font-bold ${stat.color}`}>{stat.value}</div>
-              <div className="text-xs text-gray-600 mt-1">{stat.label}</div>
+              <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
               {stat.trend && (
                 <div className={`text-xs mt-1 ${stat.color}`}>
                   <TrendingUp className="h-3 w-3 inline mr-1" />
@@ -379,43 +392,43 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
+        <div className="bg-card p-4 rounded-lg shadow-sm border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">إجمالي التقارير</p>
-              <p className="text-2xl font-bold text-gray-900">{reportsData.overview.totalReports}</p>
+              <p className="text-sm font-medium text-muted-foreground">إجمالي التقارير</p>
+              <p className="text-2xl font-bold text-foreground">{reportsData.overview.totalReports}</p>
             </div>
-            <FileText className="h-8 w-8 text-blue-600" />
+            <FileText className="h-8 w-8 text-info" />
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
+        <div className="bg-card p-4 rounded-lg shadow-sm border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">التقارير المكتملة</p>
-              <p className="text-2xl font-bold text-green-600">{reportsData.overview.completedReports}</p>
+              <p className="text-sm font-medium text-muted-foreground">التقارير المكتملة</p>
+              <p className="text-2xl font-bold text-success">{reportsData.overview.completedReports}</p>
             </div>
-            <CheckCircle2 className="h-8 w-8 text-green-600" />
+            <CheckCircle2 className="h-8 w-8 text-success" />
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
+        <div className="bg-card p-4 rounded-lg shadow-sm border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">تحت المعالجة</p>
-              <p className="text-2xl font-bold text-orange-600">{reportsData.overview.pendingReports}</p>
+              <p className="text-sm font-medium text-muted-foreground">تحت المعالجة</p>
+              <p className="text-2xl font-bold text-warning">{reportsData.overview.pendingReports}</p>
             </div>
-            <Clock className="h-8 w-8 text-orange-600" />
+            <Clock className="h-8 w-8 text-warning" />
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
+        <div className="bg-card p-4 rounded-lg shadow-sm border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">هذا الشهر</p>
-              <p className="text-2xl font-bold text-purple-600">{reportsData.overview.generatedThisMonth}</p>
+              <p className="text-sm font-medium text-muted-foreground">هذا الشهر</p>
+              <p className="text-2xl font-bold text-accent">{reportsData.overview.generatedThisMonth}</p>
             </div>
-            <Calendar className="h-8 w-8 text-purple-600" />
+            <Calendar className="h-8 w-8 text-accent" />
           </div>
         </div>
       </div>
@@ -424,21 +437,21 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">بحث في التقارير</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">بحث في التقارير</label>
               <input
                 type="text"
                 placeholder="ابحث عن تقرير..."
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">نوع التقرير</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">نوع التقرير</label>
               <select
                 value={typeFilter}
                 onChange={(event) => setTypeFilter(event.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="نوع التقرير"
               >
                 <option value="all">جميع الأنواع</option>
@@ -450,11 +463,11 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">الفترة الزمنية</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">الفترة الزمنية</label>
               <select
                 value={periodFilter}
                 onChange={(event) => setPeriodFilter(event.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="الفترة الزمنية"
               >
                 <option value="all">جميع الفترات</option>
@@ -489,14 +502,17 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{report.name}</h3>
-                          <Badge variant={statusInfo.variant} className={`${statusInfo.bgColor} ${statusInfo.color}`}>
-                            <StatusIcon className="h-3 w-3 ml-1" />
-                            {statusInfo.text}
-                          </Badge>
+                          <h3 className="text-lg font-semibold text-foreground">{report.name}</h3>
+                          <StatusBadge
+                            status={statusInfo.status}
+                            label={statusInfo.label}
+                            size="sm"
+                            icon={StatusIcon}
+                            className="shadow-none"
+                          />
                         </div>
-                        <p className="text-gray-600 mb-3">{report.description}</p>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                        <p className="text-muted-foreground mb-3">{report.description}</p>
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground/80">
                           <span>النوع: {getTypeLabel(report.type)}</span>
                           <span>الفترة: {getTypeLabel(normalizeFrequency(report))}</span>
                           <span>التاريخ: {formatDateValue(report.createdAt, { locale: 'ar-SA' })}</span>

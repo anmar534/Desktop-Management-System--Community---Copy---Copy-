@@ -136,7 +136,8 @@ export default defineConfig({
         "style-src-elem 'self' 'unsafe-inline'",
         "img-src 'self' data: blob:",
         "font-src 'self' data:",
-        "connect-src 'self' ws: wss:",
+  // Allow exchange-rate API calls during local development
+  "connect-src 'self' ws: wss: https://open.er-api.com https://*.er-api.com",
         "worker-src 'self' blob:"
       ].join('; ')
     }

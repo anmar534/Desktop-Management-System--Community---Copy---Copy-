@@ -15,7 +15,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge, type StatusBadgeProps } from '@/components/ui/status-badge';
 import { DataGrid } from '@/components/datagrid/DataGrid';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -909,9 +909,7 @@ export const AdvancedDashboard: FC = () => {
             <h2 className="text-2xl font-semibold text-foreground">لوحة التحكم المتقدمة</h2>
             <p className="text-sm text-muted-foreground">تحليلات فورية، عناصر قابلة للتخصيص، وأداء بصري بسرعة 60 إطار في الثانية.</p>
           </div>
-          <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs">
-            مرحلة 4
-          </Badge>
+          <StatusBadge status="info" label="مرحلة 4" size="sm" showIcon={false} className="rounded-full px-3 py-1 shadow-none" />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" onClick={handleRefresh} className="flex items-center gap-2">
@@ -959,13 +957,9 @@ export const AdvancedDashboard: FC = () => {
                         </span>
                       </label>
                       {visibleWidgets.has(widget.id) ? (
-                        <Badge variant="outline" className="text-xs">
-                          مرئي
-                        </Badge>
+                        <StatusBadge status="success" label="مرئي" size="sm" showIcon={false} className="shadow-none" />
                       ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          مخفي
-                        </Badge>
+                        <StatusBadge status="default" label="مخفي" size="sm" showIcon={false} className="shadow-none" />
                       )}
                     </div>
                   ))}
@@ -1088,6 +1082,40 @@ export const AdvancedDashboard: FC = () => {
   );
 };
 
+type DashboardBadgeStatus = StatusBadgeProps['status'];
+
+const resolveProjectStatusBadge = (status: string): { status: DashboardBadgeStatus; label: string } => {
+  switch (status) {
+    case 'active':
+      return { status: 'onTrack', label: 'نشط' };
+    case 'completed':
+      return { status: 'completed', label: 'مكتمل' };
+    case 'planning':
+      return { status: 'info', label: 'تحت التخطيط' };
+    case 'paused':
+      return { status: 'warning', label: 'متوقف مؤقتاً' };
+    default:
+      return { status: 'default', label: 'غير محدد' };
+  }
+};
+
+const resolveInvoiceStatusBadge = (status: string): { status: DashboardBadgeStatus; label: string } => {
+  switch (status) {
+    case 'draft':
+      return { status: 'default', label: 'مسودة' };
+    case 'sent':
+      return { status: 'info', label: 'مرسلة' };
+    case 'paid':
+      return { status: 'success', label: 'مدفوعة' };
+    case 'overdue':
+      return { status: 'overdue', label: 'متأخرة' };
+    case 'cancelled':
+      return { status: 'warning', label: 'ملغاة' };
+    default:
+      return { status: 'default', label: 'غير محددة' };
+  }
+};
+
 const projectColumns: ColumnDef<ReturnType<typeof useWidgetData>['projectRows'][number]>[] = [
   {
     accessorKey: 'name',
@@ -1119,13 +1147,14 @@ const projectColumns: ColumnDef<ReturnType<typeof useWidgetData>['projectRows'][
     accessorKey: 'status',
     header: 'الحالة',
     size: 100,
-    cell: ({ getValue }) => (
-      <div className="flex justify-end" dir="rtl">
-        <Badge variant="outline" className="capitalize">
-          {String(getValue<string>())}
-        </Badge>
-      </div>
-    ),
+    cell: ({ getValue }) => {
+      const { status, label } = resolveProjectStatusBadge(String(getValue<string>() ?? ''));
+      return (
+        <div className="flex justify-end" dir="rtl">
+          <StatusBadge status={status} label={label} size="sm" showIcon={false} className="shadow-none" />
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'manager',
@@ -1184,11 +1213,14 @@ const invoiceColumns: ColumnDef<ReturnType<typeof useWidgetData>['invoiceRows'][
     accessorKey: 'status',
     header: 'الحالة',
     size: 100,
-    cell: ({ getValue }) => (
-      <div className="flex justify-end" dir="rtl">
-        <Badge variant="secondary">{String(getValue<string>())}</Badge>
-      </div>
-    ),
+    cell: ({ getValue }) => {
+      const { status, label } = resolveInvoiceStatusBadge(String(getValue<string>() ?? ''));
+      return (
+        <div className="flex justify-end" dir="rtl">
+          <StatusBadge status={status} label={label} size="sm" showIcon={false} className="shadow-none" />
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'total',

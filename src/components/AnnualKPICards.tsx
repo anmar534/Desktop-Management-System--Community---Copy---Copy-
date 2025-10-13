@@ -1,8 +1,8 @@
 'use client'
 
 import { Card, CardContent } from './ui/card'
-import { Badge } from './ui/badge'
 import { Progress } from './ui/progress'
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
 import { 
   Trophy,
   Building2,
@@ -136,9 +136,9 @@ export function AnnualKPICards({ onSectionChange }: AnnualKPICardsProps) {
       change: tenderStats.winRate >= 70 ? `+${tenderStats.winRate - 65}%` : `${tenderStats.winRate - 70}%`,
       changeValue: Math.round((tenderStats.winRate / 80) * 100),
       icon: Trophy,
-      color: 'text-orange-500',
-      bgColor: 'bg-orange-500/10',
-      borderColor: 'border-orange-500/20',
+  color: 'text-warning',
+  bgColor: 'bg-warning/10',
+  borderColor: 'border-warning/30',
       description: 'من إجمالي المنافسات المقدمة',
       details: tenderStats.details,
       action: () => onSectionChange('tenders')
@@ -155,7 +155,7 @@ export function AnnualKPICards({ onSectionChange }: AnnualKPICardsProps) {
       icon: Building2,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
-      borderColor: 'border-primary/20',
+  borderColor: 'border-primary/20',
       description: 'المشاريع المنفذة والجارية',
       details: projectStats.details,
       action: () => onSectionChange('projects')
@@ -170,9 +170,9 @@ export function AnnualKPICards({ onSectionChange }: AnnualKPICardsProps) {
       change: revenueStats.current >= 40 ? `+${(revenueStats.current - 32.8).toFixed(1)}M` : `${(revenueStats.current - 40).toFixed(1)}M`,
       changeValue: Math.round((revenueStats.current / 60) * 100),
       icon: DollarSign,
-      color: 'text-green-500',
-      bgColor: 'bg-green-500/10',
-      borderColor: 'border-green-500/20',
+  color: 'text-success',
+  bgColor: 'bg-success/10',
+  borderColor: 'border-success/30',
       description: 'الإيرادات المحققة لهذا العام',
       details: revenueStats.details,
       action: () => onSectionChange('financial')
@@ -187,9 +187,9 @@ export function AnnualKPICards({ onSectionChange }: AnnualKPICardsProps) {
       change: performanceStats.performance >= 85 ? `+${performanceStats.performance - 82}%` : `${performanceStats.performance - 90}%`,
       changeValue: Math.round((performanceStats.performance / 90) * 100),
       icon: BarChart3,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-500/10',
-      borderColor: 'border-purple-500/20',
+  color: 'text-info',
+  bgColor: 'bg-info/10',
+  borderColor: 'border-info/30',
       description: 'متوسط الأداء العام للمشاريع',
       details: performanceStats.details,
       action: () => onSectionChange('projects')
@@ -200,11 +200,11 @@ export function AnnualKPICards({ onSectionChange }: AnnualKPICardsProps) {
 
   const getStatusBadge = (
     percentage: number
-  ): { text: string; variant: 'success' | 'info' | 'warning' | 'destructive' } => {
-    if (percentage >= 90) return { text: 'ممتاز', variant: 'success' }
-    if (percentage >= 70) return { text: 'جيد', variant: 'info' }
-    if (percentage >= 50) return { text: 'متوسط', variant: 'warning' }
-    return { text: 'يحتاج تحسين', variant: 'destructive' }
+  ): { label: string; status: StatusBadgeProps['status'] } => {
+    if (percentage >= 90) return { label: 'ممتاز', status: 'success' }
+    if (percentage >= 70) return { label: 'جيد', status: 'onTrack' }
+    if (percentage >= 50) return { label: 'متوسط', status: 'warning' }
+    return { label: 'يحتاج تحسين', status: 'error' }
   }
 
   const calculatePercentage = (current: number, target: number) => {
@@ -213,9 +213,9 @@ export function AnnualKPICards({ onSectionChange }: AnnualKPICardsProps) {
 
   const getVarianceIcon = (current: number, target: number) => {
     const percentage = calculatePercentage(current, target)
-    if (percentage >= 95) return <CheckCircle className="h-4 w-4 text-success" />
-    if (percentage >= 70) return <TrendingUp className="h-4 w-4 text-primary" />
-    return <AlertTriangle className="h-4 w-4 text-warning" />
+    if (percentage >= 95) return <CheckCircle className="h-4 w-4 text-status-completed" />
+    if (percentage >= 70) return <TrendingUp className="h-4 w-4 text-status-on-track" />
+    return <AlertTriangle className="h-4 w-4 text-status-overdue" />
   }
 
   return (
@@ -252,9 +252,12 @@ export function AnnualKPICards({ onSectionChange }: AnnualKPICardsProps) {
                   
                   <div className="flex items-center gap-1">
                     {getVarianceIcon(kpi.current, kpi.target)}
-                    <Badge variant={status.variant} className="text-xs">
-                      {status.text}
-                    </Badge>
+                    <StatusBadge
+                      status={status.status}
+                      label={status.label}
+                      size="sm"
+                      className="shadow-none"
+                    />
                   </div>
                 </div>
 

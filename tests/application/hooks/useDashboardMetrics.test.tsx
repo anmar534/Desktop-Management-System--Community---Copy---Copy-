@@ -4,154 +4,147 @@ import type { Project, Tender, Invoice, BankAccount } from '@/data/centralData'
 import type { Expense } from '@/data/expenseCategories'
 import { useDashboardMetrics } from '@/application/hooks/useDashboardMetrics'
 
-let mockFinancialState: any
-let mockExpensesHook: any
-let mockBankAccountsHook: any
-
 const refreshCurrencyMock = vi.fn(() => Promise.resolve({ USD: 3.75, EUR: 4.05, GBP: 4.75 }))
 
-const refreshAllMock = vi.fn()
-const refreshExpensesMock = vi.fn()
-const refreshAccountsMock = vi.fn()
+const refreshAllMock = vi.fn(() => Promise.resolve())
+const refreshExpensesMock = vi.fn(() => Promise.resolve())
+const refreshAccountsMock = vi.fn(() => Promise.resolve())
 
-const makeProject = (overrides: Partial<Project> = {}): Project => ({
-  id: overrides.id ?? 'project-1',
-  name: overrides.name ?? 'مشروع',
-  client: overrides.client ?? 'عميل',
-  status: overrides.status ?? 'active',
-  priority: overrides.priority ?? 'medium',
-  progress: overrides.progress ?? 70,
-  contractValue: overrides.contractValue ?? 100000,
-  estimatedCost: overrides.estimatedCost ?? 70000,
-  actualCost: overrides.actualCost ?? 65000,
-  spent: overrides.spent ?? 65000,
-  remaining: overrides.remaining ?? 35000,
-  expectedProfit: overrides.expectedProfit ?? 30000,
-  actualProfit: overrides.actualProfit,
-  startDate: overrides.startDate ?? new Date('2025-01-01').toISOString(),
-  endDate: overrides.endDate ?? new Date('2025-06-01').toISOString(),
-  manager: overrides.manager ?? 'مدير',
-  team: overrides.team ?? 'الفريق',
-  location: overrides.location ?? 'الرياض',
-  phase: overrides.phase ?? 'التنفيذ',
-  health: overrides.health ?? 'green',
-  lastUpdate: overrides.lastUpdate ?? new Date('2025-03-01').toISOString(),
-  nextMilestone: overrides.nextMilestone,
-  milestoneDate: overrides.milestoneDate,
-  category: overrides.category ?? 'إنشاءات',
-  efficiency: overrides.efficiency ?? 90,
-  riskLevel: overrides.riskLevel ?? 'low',
-  budget: overrides.budget ?? 100000,
-  value: overrides.value ?? 100000,
-  type: overrides.type ?? 'عام'
-})
+function makeProject(overrides: Partial<Project> = {}): Project {
+  return {
+    id: overrides.id ?? 'project-1',
+    name: overrides.name ?? 'مشروع',
+    client: overrides.client ?? 'عميل',
+    status: overrides.status ?? 'active',
+    priority: overrides.priority ?? 'medium',
+    progress: overrides.progress ?? 70,
+    contractValue: overrides.contractValue ?? 100000,
+    estimatedCost: overrides.estimatedCost ?? 70000,
+    actualCost: overrides.actualCost ?? 65000,
+    spent: overrides.spent ?? 65000,
+    remaining: overrides.remaining ?? 35000,
+    expectedProfit: overrides.expectedProfit ?? 30000,
+    actualProfit: overrides.actualProfit,
+    startDate: overrides.startDate ?? new Date('2025-01-01').toISOString(),
+    endDate: overrides.endDate ?? new Date('2025-06-01').toISOString(),
+    manager: overrides.manager ?? 'مدير',
+    team: overrides.team ?? 'الفريق',
+    location: overrides.location ?? 'الرياض',
+    phase: overrides.phase ?? 'التنفيذ',
+    health: overrides.health ?? 'green',
+    lastUpdate: overrides.lastUpdate ?? new Date('2025-03-01').toISOString(),
+    nextMilestone: overrides.nextMilestone,
+    milestoneDate: overrides.milestoneDate,
+    category: overrides.category ?? 'إنشاءات',
+    efficiency: overrides.efficiency ?? 90,
+    riskLevel: overrides.riskLevel ?? 'low',
+    budget: overrides.budget ?? 100000,
+    value: overrides.value ?? 100000,
+    type: overrides.type ?? 'عام'
+  }
+}
 
-const makeTender = (overrides: Partial<Tender> = {}): Tender => ({
-  id: overrides.id ?? 'tender-1',
-  name: overrides.name ?? 'منافسة',
-  title: overrides.title ?? 'مشروع',
-  client: overrides.client ?? 'وزارة',
-  value: overrides.value ?? 150000,
-  totalValue: overrides.totalValue ?? 150000,
-  documentPrice: overrides.documentPrice ?? 100,
-  bookletPrice: overrides.bookletPrice ?? null,
-  status: overrides.status ?? 'submitted',
-  totalItems: overrides.totalItems ?? 10,
-  pricedItems: overrides.pricedItems ?? 10,
-  itemsPriced: overrides.itemsPriced ?? 10,
-  technicalFilesUploaded: overrides.technicalFilesUploaded ?? true,
-  phase: overrides.phase ?? 'التقديم',
-  deadline: overrides.deadline ?? new Date('2025-04-01').toISOString(),
-  daysLeft: overrides.daysLeft ?? 5,
-  progress: overrides.progress ?? 80,
-  completionPercentage: overrides.completionPercentage ?? 80,
-  priority: overrides.priority ?? 'high',
-  team: overrides.team ?? 'الفريق',
-  manager: overrides.manager ?? 'مدير',
-  winChance: overrides.winChance ?? 60,
-  competition: overrides.competition ?? 'عامة',
-  submissionDate: overrides.submissionDate ?? new Date('2025-02-15').toISOString(),
-  lastAction: overrides.lastAction ?? 'تم التقديم',
-  lastUpdate: overrides.lastUpdate ?? new Date('2025-02-20').toISOString(),
-  category: overrides.category ?? 'حكومي',
-  location: overrides.location ?? 'الرياض',
-  type: overrides.type ?? 'تشغيل',
-  resultNotes: overrides.resultNotes,
-  winningBidValue: overrides.winningBidValue,
-  ourBidValue: overrides.ourBidValue,
-  winDate: overrides.winDate,
-  lostDate: overrides.lostDate,
-  resultDate: overrides.resultDate,
-  cancelledDate: overrides.cancelledDate
-})
+function makeTender(overrides: Partial<Tender> = {}): Tender {
+  return {
+    id: overrides.id ?? 'tender-1',
+    name: overrides.name ?? 'منافسة',
+    title: overrides.title ?? 'مشروع',
+    client: overrides.client ?? 'وزارة',
+    value: overrides.value ?? 150000,
+    totalValue: overrides.totalValue ?? 150000,
+    documentPrice: overrides.documentPrice ?? 100,
+    bookletPrice: overrides.bookletPrice ?? null,
+    status: overrides.status ?? 'submitted',
+    totalItems: overrides.totalItems ?? 10,
+    pricedItems: overrides.pricedItems ?? 10,
+    itemsPriced: overrides.itemsPriced ?? 10,
+    technicalFilesUploaded: overrides.technicalFilesUploaded ?? true,
+    phase: overrides.phase ?? 'التقديم',
+    deadline: overrides.deadline ?? new Date('2025-04-01').toISOString(),
+    daysLeft: overrides.daysLeft ?? 5,
+    progress: overrides.progress ?? 80,
+    completionPercentage: overrides.completionPercentage ?? 80,
+    priority: overrides.priority ?? 'high',
+    team: overrides.team ?? 'الفريق',
+    manager: overrides.manager ?? 'مدير',
+    winChance: overrides.winChance ?? 60,
+    competition: overrides.competition ?? 'عامة',
+    submissionDate: overrides.submissionDate ?? new Date('2025-02-15').toISOString(),
+    lastAction: overrides.lastAction ?? 'تم التقديم',
+    lastUpdate: overrides.lastUpdate ?? new Date('2025-02-20').toISOString(),
+    category: overrides.category ?? 'حكومي',
+    location: overrides.location ?? 'الرياض',
+    type: overrides.type ?? 'تشغيل',
+    resultNotes: overrides.resultNotes,
+    winningBidValue: overrides.winningBidValue,
+    ourBidValue: overrides.ourBidValue,
+    winDate: overrides.winDate,
+    lostDate: overrides.lostDate,
+    resultDate: overrides.resultDate,
+    cancelledDate: overrides.cancelledDate
+  }
+}
 
-const makeInvoice = (overrides: Partial<Invoice> = {}): Invoice => ({
-  id: overrides.id ?? 'invoice-1',
-  invoiceNumber: overrides.invoiceNumber ?? 'INV-001',
-  clientName: overrides.clientName ?? 'عميل',
-  clientEmail: overrides.clientEmail ?? 'client@example.com',
-  projectName: overrides.projectName ?? 'مشروع',
-  issueDate: overrides.issueDate ?? new Date('2025-01-10').toISOString(),
-  dueDate: overrides.dueDate ?? new Date('2025-02-10').toISOString(),
-  paymentTerms: overrides.paymentTerms,
-  status: overrides.status ?? 'sent',
-  subtotal: overrides.subtotal ?? 90000,
-  tax: overrides.tax ?? 15000,
-  total: overrides.total ?? 105000,
-  items: overrides.items ?? [],
-  notes: overrides.notes ?? '',
-  createdAt: overrides.createdAt ?? new Date('2025-01-05').toISOString(),
-  paidAt: overrides.paidAt
-})
+function makeInvoice(overrides: Partial<Invoice> = {}): Invoice {
+  return {
+    id: overrides.id ?? 'invoice-1',
+    invoiceNumber: overrides.invoiceNumber ?? 'INV-001',
+    clientName: overrides.clientName ?? 'عميل',
+    clientEmail: overrides.clientEmail ?? 'client@example.com',
+    projectName: overrides.projectName ?? 'مشروع',
+    issueDate: overrides.issueDate ?? new Date('2025-01-10').toISOString(),
+    dueDate: overrides.dueDate ?? new Date('2025-02-10').toISOString(),
+    paymentTerms: overrides.paymentTerms,
+    status: overrides.status ?? 'sent',
+    subtotal: overrides.subtotal ?? 90000,
+    tax: overrides.tax ?? 15000,
+    total: overrides.total ?? 105000,
+    items: overrides.items ?? [],
+    notes: overrides.notes ?? '',
+    createdAt: overrides.createdAt ?? new Date('2025-01-05').toISOString(),
+    paidAt: overrides.paidAt
+  }
+}
 
-const makeExpense = (overrides: Partial<Expense> = {}): Expense => ({
-  id: overrides.id ?? 'expense-1',
-  title: overrides.title ?? 'شراء مواد',
-  amount: overrides.amount ?? 20000,
-  categoryId: overrides.categoryId ?? 'materials',
-  subcategoryId: overrides.subcategoryId,
-  frequency: overrides.frequency ?? 'one_time',
-  paymentMethod: overrides.paymentMethod ?? 'bank_transfer',
-  paymentStatus: overrides.paymentStatus ?? 'completed',
-  dueDate: overrides.dueDate,
-  paidDate: overrides.paidDate ?? new Date('2025-01-18').toISOString(),
-  projectId: overrides.projectId,
-  isAdministrative: overrides.isAdministrative ?? false,
-  createdAt: overrides.createdAt ?? new Date('2025-01-18').toISOString(),
-  updatedAt: overrides.updatedAt ?? new Date('2025-01-18').toISOString(),
-  description: overrides.description
-})
+function makeExpense(overrides: Partial<Expense> = {}): Expense {
+  return {
+    id: overrides.id ?? 'expense-1',
+    title: overrides.title ?? 'شراء مواد',
+    amount: overrides.amount ?? 20000,
+    categoryId: overrides.categoryId ?? 'materials',
+    subcategoryId: overrides.subcategoryId,
+    frequency: overrides.frequency ?? 'one_time',
+    paymentMethod: overrides.paymentMethod ?? 'bank_transfer',
+    paymentStatus: overrides.paymentStatus ?? 'completed',
+    dueDate: overrides.dueDate,
+    paidDate: overrides.paidDate ?? new Date('2025-01-18').toISOString(),
+    projectId: overrides.projectId,
+    isAdministrative: overrides.isAdministrative ?? false,
+    createdAt: overrides.createdAt ?? new Date('2025-01-18').toISOString(),
+    updatedAt: overrides.updatedAt ?? new Date('2025-01-18').toISOString(),
+    description: overrides.description
+  }
+}
 
-const makeBankAccount = (overrides: Partial<BankAccount> = {}): BankAccount => ({
-  id: overrides.id ?? 'account-1',
-  accountName: overrides.accountName ?? 'الرئيسي',
-  bankName: overrides.bankName ?? 'بنك الرياض',
-  accountNumber: overrides.accountNumber ?? '1234567890',
-  iban: overrides.iban ?? 'SA12345678901234567890',
-  accountType: overrides.accountType ?? 'current',
-  currentBalance: overrides.currentBalance ?? 75000,
-  currency: overrides.currency ?? 'SAR',
-  isActive: overrides.isActive ?? true,
-  lastTransactionDate: overrides.lastTransactionDate ?? new Date('2025-02-01').toISOString(),
-  monthlyInflow: overrides.monthlyInflow ?? 45000,
-  monthlyOutflow: overrides.monthlyOutflow ?? 30000
-})
+function makeBankAccount(overrides: Partial<BankAccount> = {}): BankAccount {
+  return {
+    id: overrides.id ?? 'account-1',
+    accountName: overrides.accountName ?? 'الرئيسي',
+    bankName: overrides.bankName ?? 'بنك الرياض',
+    accountNumber: overrides.accountNumber ?? '1234567890',
+    iban: overrides.iban ?? 'SA12345678901234567890',
+    accountType: overrides.accountType ?? 'current',
+    currentBalance: overrides.currentBalance ?? 75000,
+    currency: overrides.currency ?? 'SAR',
+    isActive: overrides.isActive ?? true,
+    lastTransactionDate: overrides.lastTransactionDate ?? new Date('2025-02-01').toISOString(),
+    monthlyInflow: overrides.monthlyInflow ?? 45000,
+    monthlyOutflow: overrides.monthlyOutflow ?? 30000
+  }
+}
 
-vi.mock('@/application/context', () => ({
-  useFinancialState: () => mockFinancialState
-}))
-
-vi.mock('@/application/hooks/useExpenses', () => ({
-  useExpenses: () => mockExpensesHook
-}))
-
-vi.mock('@/application/hooks/useBankAccounts', () => ({
-  useBankAccounts: () => mockBankAccountsHook
-}))
-
-beforeEach(() => {
-  vi.clearAllMocks()
-  mockFinancialState = {
+function createMockFinancialState() {
+  return {
     projects: {
       projects: [makeProject()],
       isLoading: false,
@@ -314,15 +307,19 @@ beforeEach(() => {
     lastRefreshAt: new Date('2025-03-01T00:00:00Z').toISOString(),
     refreshAll: refreshAllMock
   }
+}
 
-  mockExpensesHook = {
+function createMockExpensesHook() {
+  return {
     expenses: [makeExpense()],
     loading: false,
     error: null,
     refreshExpenses: refreshExpensesMock
   }
+}
 
-  mockBankAccountsHook = {
+function createMockBankAccountsHook() {
+  return {
     accounts: [makeBankAccount()],
     isLoading: false,
     refreshAccounts: refreshAccountsMock,
@@ -330,12 +327,36 @@ beforeEach(() => {
     updateAccount: vi.fn(),
     deleteAccount: vi.fn()
   }
+}
+
+type FinancialStateMock = ReturnType<typeof createMockFinancialState>
+type ExpensesHookMock = ReturnType<typeof createMockExpensesHook>
+type BankAccountsHookMock = ReturnType<typeof createMockBankAccountsHook>
+
+let mockFinancialState: FinancialStateMock
+let mockExpensesHook: ExpensesHookMock
+let mockBankAccountsHook: BankAccountsHookMock
+
+vi.mock('@/application/context', () => ({
+  useFinancialState: () => mockFinancialState
+}))
+
+vi.mock('@/application/hooks/useExpenses', () => ({
+  useExpenses: () => mockExpensesHook
+}))
+
+vi.mock('@/application/hooks/useBankAccounts', () => ({
+  useBankAccounts: () => mockBankAccountsHook
+}))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  mockFinancialState = createMockFinancialState()
+  mockExpensesHook = createMockExpensesHook()
+  mockBankAccountsHook = createMockBankAccountsHook()
 })
 
 afterEach(() => {
-  mockFinancialState = undefined
-  mockExpensesHook = undefined
-  mockBankAccountsHook = undefined
   refreshCurrencyMock.mockClear()
 })
 
@@ -348,8 +369,8 @@ describe('useDashboardMetrics', () => {
     expect(result.current.data.totals.activeProjects).toBe(1)
     expect(result.current.data.totals.cashOnHand).toBeGreaterThan(0)
     expect(result.current.data.cashflow.totals.startingBalance).toBeGreaterThan(0)
-  expect(result.current.data.currency.base).toBe('SAR')
-  expect(result.current.data.currency.lastUpdated).toBe(mockFinancialState.currency.lastUpdated)
+    expect(result.current.data.currency.base).toBe('SAR')
+    expect(result.current.data.currency.lastUpdated).toBe(mockFinancialState.currency.lastUpdated)
     expect(refreshCurrencyMock).not.toHaveBeenCalled()
   })
 
@@ -377,7 +398,7 @@ describe('useDashboardMetrics', () => {
         monthlyOutflow: 100
       })
     ]
-    mockFinancialState.currency.rates = { USD: 3.75 }
+    mockFinancialState.currency.rates.USD = 3.75
 
     const { result } = renderHook(() => useDashboardMetrics())
 

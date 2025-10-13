@@ -167,8 +167,8 @@ export const StatusBadge = React.forwardRef<HTMLDivElement, StatusBadgeProps>(
     },
     ref
   ) => {
-    const Icon = icon || (status ? statusIconMap[status] : statusIconMap.default);
-    const displayLabel = label || (status ? statusLabels[status] : '');
+    const Icon = icon ?? (status ? statusIconMap[status] : statusIconMap.default);
+    const displayLabel = label ?? (status ? statusLabels[status] : '');
 
     return (
       <Badge
@@ -178,10 +178,12 @@ export const StatusBadge = React.forwardRef<HTMLDivElement, StatusBadgeProps>(
         {...props}
       >
         {showIcon && Icon && <Icon className="h-3.5 w-3.5" />}
-        {children || (
+        {children ?? (
           <>
             {displayLabel}
-            {value && <span className="font-semibold">({value})</span>}
+            {value !== undefined && value !== null && (
+              <span className="font-semibold">({value})</span>
+            )}
           </>
         )}
       </Badge>
@@ -276,8 +278,15 @@ export const FinancialStatusBadge = React.forwardRef<
   HTMLDivElement,
   FinancialStatusBadgeProps
 >(({ planned, actual, warningThreshold = 0.9, ...props }, ref) => {
+  const normaliseRatio = () => {
+    if (!Number.isFinite(planned) || planned <= 0) {
+      return Number.POSITIVE_INFINITY;
+    }
+    return actual / planned;
+  };
+
   const calculateFinancialStatus = (): 'underBudget' | 'onBudget' | 'nearBudget' | 'overBudget' => {
-    const percentage = actual / planned;
+    const percentage = normaliseRatio();
 
     if (percentage > 1) return 'overBudget';
     if (percentage >= warningThreshold) return 'nearBudget';
@@ -286,8 +295,11 @@ export const FinancialStatusBadge = React.forwardRef<
   };
 
   const getPercentage = (): string => {
-    const percentage = (actual / planned) * 100;
-    return `${percentage.toFixed(1)}%`;
+    const ratio = normaliseRatio();
+    if (!Number.isFinite(ratio)) {
+      return '0.0%';
+    }
+    return `${(ratio * 100).toFixed(1)}%`;
   };
 
   const status = calculateFinancialStatus();
@@ -364,7 +376,7 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
     default: 'bg-muted-foreground',
   };
 
-  const displayLabel = label || (status ? statusLabels[status] : '');
+  const displayLabel = label ?? (status ? statusLabels[status] : '');
 
   return (
     <div className={cn('inline-flex items-center gap-2', className)}>

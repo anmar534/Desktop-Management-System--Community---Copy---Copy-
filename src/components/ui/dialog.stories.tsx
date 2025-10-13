@@ -321,8 +321,8 @@ export const SubmitBidDialog: Story = {
             />
           </div>
           
-          <div className="bg-amber-50 dark:bg-amber-950 p-4 rounded-lg">
-            <p className="text-sm text-amber-900 dark:text-amber-100">
+          <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+            <p className="text-sm text-warning-foreground">
               ⚠️ تنبيه: بمجرد تقديم العطاء، لن تتمكن من تعديله. يرجى مراجعة
               جميع المعلومات بعناية.
             </p>
@@ -652,12 +652,12 @@ export const UsageGuide: Story = {
 
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Accessibility</h3>
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm space-y-2">
-          <p>✅ يُغلق بالضغط على Escape</p>
-          <p>✅ Focus trap - التركيز يبقى داخل النافذة</p>
-          <p>✅ ARIA attributes تلقائية من Radix UI</p>
-          <p>✅ Screen reader support كامل</p>
-          <p>✅ Overlay يمنع التفاعل مع الخلفية</p>
+        <div className="rounded-lg border border-info/30 bg-info/10 p-4 text-sm space-y-2">
+          <p className="text-info-foreground">✅ يُغلق بالضغط على Escape</p>
+          <p className="text-info-foreground">✅ Focus trap - التركيز يبقى داخل النافذة</p>
+          <p className="text-info-foreground">✅ ARIA attributes تلقائية من Radix UI</p>
+          <p className="text-info-foreground">✅ Screen reader support كامل</p>
+          <p className="text-info-foreground">✅ Overlay يمنع التفاعل مع الخلفية</p>
         </div>
       </div>
 

@@ -136,17 +136,17 @@ export const ProjectCostAnalyzer: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   
                   {/* الميزانية المخطط لها */}
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <div className="rounded-lg bg-info/10 p-3">
                     <div className="text-xs text-muted-foreground mb-1">الميزانية المخططة</div>
-                    <div className="text-lg font-bold text-blue-600">
+                    <div className="text-lg font-bold text-info">
                       {formatCurrency(project.budget)}
                     </div>
                   </div>
 
                   {/* التكلفة الفعلية من المشتريات */}
-                  <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg">
+                  <div className="rounded-lg bg-warning/10 p-3">
                     <div className="text-xs text-muted-foreground mb-1">التكلفة الفعلية</div>
-                    <div className="text-lg font-bold text-orange-600">
+                    <div className="text-lg font-bold text-warning">
                       {formatCurrency(project.actualCost)}
                     </div>
                     {hasExpenses && (
@@ -157,10 +157,10 @@ export const ProjectCostAnalyzer: React.FC = () => {
                   </div>
 
                   {/* انحراف الميزانية */}
-                  <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                  <div className="rounded-lg bg-accent/10 p-3">
                     <div className="text-xs text-muted-foreground mb-1">انحراف الميزانية</div>
                     <div className={`text-lg font-bold flex items-center gap-1 ${
-                      project.budgetVariance > 0 ? 'text-red-600' : 'text-green-600'
+                      project.budgetVariance > 0 ? 'text-destructive' : 'text-success'
                     }`}>
                       {project.budgetVariance > 0 ? (
                         <TrendingUp className="h-4 w-4" />
@@ -172,9 +172,9 @@ export const ProjectCostAnalyzer: React.FC = () => {
                   </div>
 
                   {/* هامش الربح */}
-                  <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg">
+                  <div className="rounded-lg bg-success/10 p-3">
                     <div className="text-xs text-muted-foreground mb-1">هامش الربح</div>
-                    <div className="text-lg font-bold text-green-600">
+                    <div className="text-lg font-bold text-success">
                       {project.profitMargin.toFixed(1)}%
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -185,8 +185,8 @@ export const ProjectCostAnalyzer: React.FC = () => {
 
                 {/* تحذير إذا لم توجد مصروفات */}
                 {!hasExpenses && (
-                  <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                    <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
+                  <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-3">
+                    <div className="flex items-center gap-2 text-warning">
                       <AlertTriangle className="h-4 w-4" />
                       <span className="text-sm">
                         لا توجد مصروفات مسجلة لهذا المشروع. قم بإضافة المشتريات والتكاليف لحساب الربحية الفعلية.
@@ -221,12 +221,12 @@ export const ProjectCostAnalyzer: React.FC = () => {
       </div>
 
       {/* ملاحظة تعليمية */}
-      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+      <Card className="border border-info/30 bg-info/10">
         <CardContent className="p-4">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+          <h3 className="mb-2 font-semibold text-info">
             📊 كيفية عمل ربط التكاليف
           </h3>
-          <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+          <ul className="space-y-1 text-sm text-info">
             <li>• يتم ربط كل مصروف بمشروع محدد من خلال <code>projectId</code></li>
             <li>• التكلفة الفعلية = مجموع جميع المصروفات المرتبطة بالمشروع</li>
             <li>• انحراف الميزانية = (التكلفة الفعلية / الميزانية المخططة - 1) × 100</li>

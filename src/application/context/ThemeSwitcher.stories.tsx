@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { ThemeSwitcher } from '../../application/context/ThemeProvider';
+import { ThemeProvider, ThemeSwitcher } from '../providers/ThemeProvider';
 
 /**
  * مكون ThemeSwitcher لتبديل السمات
@@ -20,6 +20,15 @@ const meta = {
       },
     },
   },
+  decorators: [
+    (Story) => (
+      <ThemeProvider>
+        <div dir="rtl" className="p-6 bg-background text-foreground rounded-xl border border-border shadow-sm">
+          <Story />
+        </div>
+      </ThemeProvider>
+    ),
+  ],
   tags: ['autodocs'],
   argTypes: {
     variant: {

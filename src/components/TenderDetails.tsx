@@ -264,10 +264,12 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
         )}
         {/* divergence UI removed */}
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600">عدد البنود: {finalQuantityData.length}</p>
+          <p className="text-sm text-muted-foreground">عدد البنود: {finalQuantityData.length}</p>
           <div className="flex gap-2 items-center">
-            <Badge className="bg-blue-100 text-blue-800 border-blue-300">{sourceLabelMap[unified.source]}</Badge>
-            {hasPricingData && <Badge className="bg-green-100 text-green-800 border-green-300">يتضمن أسعار</Badge>}
+            <Badge className="bg-info/10 text-info border-info/30">{sourceLabelMap[unified.source]}</Badge>
+            {hasPricingData && (
+              <Badge className="bg-success/10 text-success border-success/30">يتضمن أسعار</Badge>
+            )}
             <Button
               size="sm"
               variant="outline"
@@ -297,20 +299,20 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
               <col className="w-[8%]" />
               <col className="w-[6%]" />
             </colgroup>
-            <thead className="sticky top-0 bg-white z-10">
-              <tr className="bg-gray-50 border-b">
-                <th className="border border-gray-200 p-2 text-right font-semibold text-sm">رقم البند</th>
-                <th className="border border-gray-200 p-2 text-right font-semibold text-sm">وصف البند</th>
-                <th className="border border-gray-200 p-2 text-center font-semibold text-sm">الوحدة</th>
-                <th className="border border-gray-200 p-2 text-center font-semibold text-sm">الكمية</th>
+            <thead className="sticky top-0 bg-background z-10">
+              <tr className="bg-muted/40 border-b border-border">
+                <th className="border border-border p-2 text-right font-semibold text-sm">رقم البند</th>
+                <th className="border border-border p-2 text-right font-semibold text-sm">وصف البند</th>
+                <th className="border border-border p-2 text-center font-semibold text-sm">الوحدة</th>
+                <th className="border border-border p-2 text-center font-semibold text-sm">الكمية</th>
                 {hasPricingData && (
                   <>
-                    <th className="border border-gray-200 p-2 text-center font-semibold text-sm">سعر الوحدة</th>
-                    <th className="border border-gray-200 p-2 text-center font-semibold text-sm">القيمة الإجمالية</th>
+                    <th className="border border-border p-2 text-center font-semibold text-sm">سعر الوحدة</th>
+                    <th className="border border-border p-2 text-center font-semibold text-sm">القيمة الإجمالية</th>
                   </>
                 )}
-                <th className="border border-gray-200 p-2 text-center font-semibold text-sm">حالة التسعير</th>
-                <th className="border border-gray-200 p-2 text-center font-semibold text-sm">إجراءات</th>
+                <th className="border border-border p-2 text-center font-semibold text-sm">حالة التسعير</th>
+                <th className="border border-border p-2 text-center font-semibold text-sm">إجراءات</th>
               </tr>
             </thead>
             <tbody>
@@ -363,11 +365,11 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                   }
                 return (
                   <React.Fragment key={renderKey}>
-                    <tr className={`hover:bg-gray-50 ${isCompleted ? 'bg-green-50' : (isInProgress ? 'bg-amber-50' : 'bg-red-50')}`}>
-                      <td className="border border-gray-200 p-2 font-medium text-right text-sm">
+                    <tr className={`hover:bg-muted/40 ${isCompleted ? 'bg-success/10' : isInProgress ? 'bg-warning/10' : 'bg-destructive/10'}`}>
+                      <td className="border border-border p-2 font-medium text-right text-sm">
                         {item.itemNumber || item.number || String(index + 1).padStart(2, '0')}
                       </td>
-                      <td className="border border-gray-200 p-2 text-right">
+                      <td className="border border-border p-2 text-right">
                         <div>
                           {/* الوصف القياسي */}
                           <div className="font-medium text-sm whitespace-pre-line leading-relaxed">
@@ -375,74 +377,74 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                           </div>
                           {/* إذا كان الوصف الأصلي مختلفاً عن القياسي وأطول/أقصر نعرضه للمراجعة */}
                           {item.canonicalDescription && item.description && item.canonicalDescription !== item.description && (
-                            <div className="text-[10px] text-gray-400 mt-1">
+                            <div className="text-xs text-muted-foreground mt-1">
                               <span className="font-semibold">الوصف الأصلي:</span> {item.description}
                             </div>
                           )}
                           {/* عرض المواصفات من مصادر متعددة */}
                           {(item.specifications || item.spec || item.notes || item.technicalNotes) && (
-                            <div className="text-xs text-gray-500 mt-1 leading-relaxed whitespace-pre-line">
+                            <div className="text-xs text-muted-foreground mt-1 leading-relaxed whitespace-pre-line">
                               {item.specifications || item.spec || item.notes || item.technicalNotes}
                             </div>
                           )}
                           {/* وصف تفصيلي */}
                           {item.detailedDescription && (
-                            <div className="text-xs text-blue-600 mt-1 italic whitespace-pre-line">
+                            <div className="text-xs text-info mt-1 italic whitespace-pre-line">
                               {item.detailedDescription}
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="border border-gray-200 p-2 text-center font-medium text-sm">{item.unit || item.uom || '-'}</td>
-                      <td className="border border-gray-200 p-2 text-center font-bold text-sm">
+                      <td className="border border-border p-2 text-center font-medium text-sm">{item.unit || item.uom || '-'}</td>
+                      <td className="border border-border p-2 text-center font-bold text-sm">
                         {item.quantity !== undefined && item.quantity !== null ? formatQuantity(item.quantity) : '-'}
                       </td>
                       {hasPricingData && (
                         <>
-                          <td className="border border-gray-200 p-2 text-center">
+                          <td className="border border-border p-2 text-center">
                             {isCompleted || isInProgress ? (
-                              <span className="font-bold text-blue-600 text-sm">
+                              <span className="font-bold text-info text-sm">
                                 {formatCurrencyValue(item.unitPrice, {
                                   minimumFractionDigits: 2,
                                   maximumFractionDigits: 2,
                                 })}
                               </span>
                             ) : (
-                              <span className="text-gray-400 text-sm">-</span>
+                              <span className="text-muted-foreground text-sm opacity-80">-</span>
                             )}
                           </td>
-                          <td className="border border-gray-200 p-2 text-center">
+                          <td className="border border-border p-2 text-center">
                             {isCompleted || isInProgress ? (
-                              <span className="font-bold text-green-600 text-sm">
+                              <span className="font-bold text-success text-sm">
                                 {formatCurrencyValue(item.totalPrice, {
                                   minimumFractionDigits: 0,
                                   maximumFractionDigits: 0,
                                 })}
                               </span>
                             ) : (
-                              <span className="text-gray-400 text-sm">-</span>
+                              <span className="text-muted-foreground text-sm opacity-80">-</span>
                             )}
                           </td>
                         </>
                       )}
-                      <td className="border border-gray-200 p-2 text-center">
+                      <td className="border border-border p-2 text-center">
                         {isCompleted ? (
-                          <Badge className="bg-green-100 text-green-800 border-green-200 text-xs">
+                          <Badge className="bg-success/10 text-success border-success/30 text-xs">
                             <CheckCircle className="w-3 h-3 ml-1" />
                             تم التسعير
                           </Badge>
                         ) : isInProgress ? (
-                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-xs">
+                          <Badge className="bg-warning/10 text-warning border-warning/30 text-xs">
                             قيد التسعير
                           </Badge>
                         ) : (
-                          <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">
+                          <Badge className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
                             <AlertCircle className="w-3 h-3 ml-1" />
                             لم يتم التسعير
                           </Badge>
                         )}
                       </td>
-                      <td className="border border-gray-200 p-2 text-center">
+                      <td className="border border-border p-2 text-center">
                         <Button
                           size="sm"
                           variant="outline"
@@ -469,72 +471,72 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
 
                     {/* جداول تحليل التكلفة تحت كل بند - مطابقة لتبويب الملخص */}
                     {finalHasBreakdownData && (
-                      <tr className="bg-white">
+                      <tr className="bg-card">
                         <td colSpan={hasPricingData ? 8 : 6} className="p-2 border-b">
                           <div className="space-y-2">
                             {/* عرض ملخص التكاليف إذا لم تكن الجداول التفصيلية موجودة */}
                             {!item.materials?.length && !item.labor?.length && !item.equipment?.length && !item.subcontractors?.length && item.breakdown && (
-                              <div className="bg-gray-50 p-3 rounded-lg border">
-                                <div className="text-xs font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <div className="bg-muted/40 p-3 rounded-lg border border-border">
+                                <div className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-info rounded-full"></div>
                                   ملخص تحليل التكلفة لهذا البند
                                 </div>
                                 
                                 {/* الإجماليات الأساسية */}
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mb-3">
                                   {item.breakdown.materials > 0 && (
-                                    <div className="bg-blue-50 p-2 rounded border">
-                                      <div className="text-blue-600 text-xs mb-1">المواد</div>
-                                      <div className="font-bold text-blue-800">{formatCurrencyValue(item.breakdown.materials, { maximumFractionDigits: 0 })}</div>
+                                    <div className="bg-info/10 p-2 rounded border border-info/30">
+                                      <div className="text-info text-xs mb-1">المواد</div>
+                                      <div className="font-bold text-info">{formatCurrencyValue(item.breakdown.materials, { maximumFractionDigits: 0 })}</div>
                                     </div>
                                   )}
                                   {item.breakdown.labor > 0 && (
-                                    <div className="bg-emerald-50 p-2 rounded border">
-                                      <div className="text-emerald-600 text-xs mb-1">العمالة</div>
-                                      <div className="font-bold text-emerald-800">{formatCurrencyValue(item.breakdown.labor, { maximumFractionDigits: 0 })}</div>
+                                    <div className="bg-success/10 p-2 rounded border border-success/30">
+                                      <div className="text-success text-xs mb-1">العمالة</div>
+                                      <div className="font-bold text-success">{formatCurrencyValue(item.breakdown.labor, { maximumFractionDigits: 0 })}</div>
                                     </div>
                                   )}
                                   {item.breakdown.equipment > 0 && (
-                                    <div className="bg-orange-50 p-2 rounded border">
-                                      <div className="text-orange-600 text-xs mb-1">المعدات</div>
-                                      <div className="font-bold text-orange-800">{formatCurrencyValue(item.breakdown.equipment, { maximumFractionDigits: 0 })}</div>
+                                    <div className="bg-warning/10 p-2 rounded border border-warning/30">
+                                      <div className="text-warning text-xs mb-1">المعدات</div>
+                                      <div className="font-bold text-warning">{formatCurrencyValue(item.breakdown.equipment, { maximumFractionDigits: 0 })}</div>
                                     </div>
                                   )}
                                   {item.breakdown.subcontractors > 0 && (
-                                    <div className="bg-purple-50 p-2 rounded border">
-                                      <div className="text-purple-600 text-xs mb-1">مقاولو الباطن</div>
-                                      <div className="font-bold text-purple-800">{formatCurrencyValue(item.breakdown.subcontractors, { maximumFractionDigits: 0 })}</div>
+                                    <div className="bg-accent/10 p-2 rounded border border-accent/30">
+                                      <div className="text-accent text-xs mb-1">مقاولو الباطن</div>
+                                      <div className="font-bold text-accent">{formatCurrencyValue(item.breakdown.subcontractors, { maximumFractionDigits: 0 })}</div>
                                     </div>
                                   )}
                                 </div>
                                 
                                 {/* النسب والتكاليف الإضافية */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs pt-2 border-t border-gray-200">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs pt-2 border-t border-border">
                                   {item.breakdown.administrative > 0 && (
-                                    <div className="bg-red-50 p-2 rounded border">
-                                      <div className="text-red-600 text-xs mb-1">تكاليف إدارية</div>
-                                      <div className="font-bold text-red-800">{formatCurrencyValue(item.breakdown.administrative, { maximumFractionDigits: 0 })}</div>
+                                    <div className="bg-destructive/10 p-2 rounded border border-destructive/30">
+                                      <div className="text-destructive text-xs mb-1">تكاليف إدارية</div>
+                                      <div className="font-bold text-destructive">{formatCurrencyValue(item.breakdown.administrative, { maximumFractionDigits: 0 })}</div>
                                     </div>
                                   )}
                                   {item.breakdown.operational > 0 && (
-                                    <div className="bg-yellow-50 p-2 rounded border">
-                                      <div className="text-yellow-600 text-xs mb-1">تكاليف تشغيلية</div>
-                                      <div className="font-bold text-yellow-800">{formatCurrencyValue(item.breakdown.operational, { maximumFractionDigits: 0 })}</div>
+                                    <div className="bg-warning/10 p-2 rounded border border-warning/30">
+                                      <div className="text-warning text-xs mb-1">تكاليف تشغيلية</div>
+                                      <div className="font-bold text-warning">{formatCurrencyValue(item.breakdown.operational, { maximumFractionDigits: 0 })}</div>
                                     </div>
                                   )}
                                   {item.breakdown.profit > 0 && (
-                                    <div className="bg-green-50 p-2 rounded border">
-                                      <div className="text-green-600 text-xs mb-1">هامش الربح</div>
-                                      <div className="font-bold text-green-800">{formatCurrencyValue(item.breakdown.profit, { maximumFractionDigits: 0 })}</div>
+                                    <div className="bg-success/10 p-2 rounded border border-success/30">
+                                      <div className="text-success text-xs mb-1">هامش الربح</div>
+                                      <div className="font-bold text-success">{formatCurrencyValue(item.breakdown.profit, { maximumFractionDigits: 0 })}</div>
                                     </div>
                                   )}
                                 </div>
                                 
                                 {/* إجمالي البند */}
-                                <div className="mt-3 pt-2 border-t border-gray-300">
-                                  <div className="bg-gray-100 p-2 rounded flex justify-between items-center">
-                                    <span className="text-gray-700 font-semibold text-sm">إجمالي البند:</span>
-                                    <span className="font-bold text-gray-900 text-sm">
+                                <div className="mt-3 pt-2 border-t border-border/60">
+                                  <div className="bg-muted p-2 rounded flex justify-between items-center">
+                                    <span className="text-foreground font-semibold text-sm">إجمالي البند:</span>
+                                    <span className="font-bold text-foreground text-sm">
                                       {formatCurrencyValue(
                                         (
                                           (item.breakdown.materials || 0) +
@@ -557,13 +559,13 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                             {item.materials?.length ? (
                               <div>
                                 <div 
-                                  className="flex items-center justify-between cursor-pointer hover:bg-blue-50 p-2 rounded-md border border-blue-200"
+                                  className="flex items-center justify-between cursor-pointer hover:bg-info/10 p-2 rounded-md border border-info/30"
                                   onClick={() => toggleCollapse(item.id || index.toString(), 'materials')}
                                 >
                                   <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                    <div className="text-sm font-semibold text-blue-800">المواد والخامات ({item.materials.length} صنف)</div>
-                                    <Badge variant="outline" className="text-blue-700 border-blue-400 text-xs bg-blue-50">
+                                    <div className="w-3 h-3 bg-info rounded-full"></div>
+                                    <div className="text-sm font-semibold text-info">المواد والخامات ({item.materials.length} صنف)</div>
+                                    <Badge variant="outline" className="text-info border-info/30 text-xs bg-info/10">
                                       إجمالي: {formatCurrencyValue(
                                         item.materials.reduce((sum: number, m: any) => sum + (m.total || 0), 0),
                                         { maximumFractionDigits: 0 }
@@ -571,13 +573,13 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                     </Badge>
                                   </div>
                                   {collapsedSections[item.id || index.toString()]?.materials ? 
-                                    <ChevronUp className="w-5 h-5 text-blue-600" /> : 
-                                    <ChevronDown className="w-5 h-5 text-blue-600" />
+                                    <ChevronUp className="w-5 h-5 text-info" /> : 
+                                    <ChevronDown className="w-5 h-5 text-info" />
                                   }
                                 </div>
                                 {!collapsedSections[item.id || index.toString()]?.materials && (
                                   <div className="mt-2 overflow-x-auto border rounded-lg shadow-sm">
-                                    <table className="w-full text-xs bg-white">
+                                    <table className="w-full text-xs bg-card">
                                       <colgroup>
                                         <col className="w-[40%]" />
                                         <col className="w-[10%]" />
@@ -587,7 +589,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                         <col className="w-[8%]" />
                                       </colgroup>
                                       <thead>
-                                        <tr className="text-gray-800 bg-blue-100 border-b-2 border-blue-200">
+                                        <tr className="text-foreground bg-info/20 border-b-2 border-info/30">
                                           <th className="text-right p-2 font-semibold">اسم المادة / الوصف التفصيلي</th>
                                           <th className="text-center p-2 font-semibold">الوحدة</th>
                                           <th className="text-center p-2 font-semibold">الكمية المطلوبة</th>
@@ -598,21 +600,21 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                       </thead>
                                       <tbody>
                                         {item.materials.map((m: any, mIndex: number) => (
-                                          <tr key={m.id || mIndex} className="odd:bg-white even:bg-blue-25 hover:bg-blue-50 border-b border-gray-200">
+                                          <tr key={m.id || mIndex} className="odd:bg-card even:bg-muted/40 hover:bg-info/10 border-b border-border">
                                             <td className="p-2 text-right">
-                                              <div className="font-medium text-gray-900">{m.name || m.description || 'مادة غير محددة'}</div>
+                                              <div className="font-medium text-foreground">{m.name || m.description || 'مادة غير محددة'}</div>
                                               {m.specifications && (
-                                                <div className="text-xs text-gray-600 mt-1">{m.specifications}</div>
+                                                <div className="text-xs text-muted-foreground mt-1">{m.specifications}</div>
                                               )}
                                               {m.brand && (
-                                                <div className="text-xs text-blue-600 mt-1">العلامة التجارية: {m.brand}</div>
+                                                <div className="text-xs text-info mt-1">العلامة التجارية: {m.brand}</div>
                                               )}
                                             </td>
                                             <td className="p-2 text-center font-medium">{m.unit || m.uom || '-'}</td>
-                                            <td className="p-2 text-center font-bold text-blue-700">
+                                            <td className="p-2 text-center font-bold text-info">
                                               {typeof m.quantity === 'number' ? formatQuantity(m.quantity, { maximumFractionDigits: 2 }) : (m.quantity || '-')}
                                             </td>
-                                            <td className="p-2 text-center font-medium text-green-700">
+                                            <td className="p-2 text-center font-medium text-success">
                                               {m.price !== undefined && m.price !== null && m.price !== ''
                                                 ? formatCurrencyValue(m.price, {
                                                     minimumFractionDigits: 2,
@@ -620,7 +622,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                                   })
                                                 : '-'}
                                             </td>
-                                            <td className="p-2 text-center font-bold text-green-800 bg-green-50">
+                                            <td className="p-2 text-center font-bold text-success bg-success/10">
                                               {m.total !== undefined && m.total !== null && m.total !== ''
                                                 ? formatCurrencyValue(m.total, {
                                                     minimumFractionDigits: 2,
@@ -628,14 +630,14 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                                   })
                                                 : '-'}
                                             </td>
-                                            <td className="p-2 text-center text-xs text-gray-600">
+                                            <td className="p-2 text-center text-xs text-muted-foreground">
                                               {m.notes || m.remarks || '-'}
                                             </td>
                                           </tr>
                                         ))}
-                                        <tr className="bg-blue-100 border-t-2 border-blue-300 font-bold">
-                                          <td colSpan={4} className="p-2 text-right text-blue-800">إجمالي تكلفة المواد:</td>
-                                          <td className="p-2 text-center text-blue-900 bg-blue-200">
+                                        <tr className="bg-info/20 border-t-2 border-info/30 font-bold">
+                                          <td colSpan={4} className="p-2 text-right text-info">إجمالي تكلفة المواد:</td>
+                                          <td className="p-2 text-center text-info bg-info/10">
                                             {formatCurrencyValue(
                                               item.materials.reduce((sum: number, m: any) => sum + (m.total || 0), 0),
                                               { minimumFractionDigits: 2, maximumFractionDigits: 2 }
@@ -654,13 +656,13 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                             {item.labor?.length ? (
                               <div>
                                 <div 
-                                  className="flex items-center justify-between cursor-pointer hover:bg-emerald-50 p-2 rounded-md border border-emerald-200"
+                                  className="flex items-center justify-between cursor-pointer hover:bg-success/10 p-2 rounded-md border border-success/30"
                                   onClick={() => toggleCollapse(item.id || index.toString(), 'labor')}
                                 >
                                   <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                                    <div className="text-sm font-semibold text-emerald-800">العمالة والأيدي العاملة ({item.labor.length} نوع)</div>
-                                    <Badge variant="outline" className="text-emerald-700 border-emerald-400 text-xs bg-emerald-50">
+                                    <div className="w-3 h-3 bg-success rounded-full"></div>
+                                    <div className="text-sm font-semibold text-success">العمالة والأيدي العاملة ({item.labor.length} نوع)</div>
+                                    <Badge variant="outline" className="text-success border-success/30 text-xs bg-success/10">
                                       إجمالي: {formatCurrencyValue(
                                         item.labor.reduce((sum: number, l: any) => sum + (l.total || 0), 0),
                                         { maximumFractionDigits: 0 }
@@ -668,13 +670,13 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                     </Badge>
                                   </div>
                                   {collapsedSections[item.id || index.toString()]?.labor ? 
-                                    <ChevronUp className="w-5 h-5 text-emerald-600" /> : 
-                                    <ChevronDown className="w-5 h-5 text-emerald-600" />
+                                    <ChevronUp className="w-5 h-5 text-success" /> : 
+                                    <ChevronDown className="w-5 h-5 text-success" />
                                   }
                                 </div>
                                 {!collapsedSections[item.id || index.toString()]?.labor && (
                                   <div className="mt-2 overflow-x-auto border rounded-lg shadow-sm">
-                                    <table className="w-full text-xs bg-white">
+                                    <table className="w-full text-xs bg-card">
                                       <colgroup>
                                         <col className="w-[40%]" />
                                         <col className="w-[10%]" />
@@ -684,7 +686,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                         <col className="w-[8%]" />
                                       </colgroup>
                                       <thead>
-                                        <tr className="text-gray-800 bg-emerald-100 border-b-2 border-emerald-200">
+                                        <tr className="text-foreground bg-success/20 border-b-2 border-success/30">
                                           <th className="text-right p-2 font-semibold">نوع العمالة / التخصص</th>
                                           <th className="text-center p-2 font-semibold">الوحدة</th>
                                           <th className="text-center p-2 font-semibold">عدد الساعات/الأيام</th>
@@ -695,21 +697,21 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                       </thead>
                                       <tbody>
                                         {item.labor.map((l: any, lIndex: number) => (
-                                          <tr key={l.id || lIndex} className="odd:bg-white even:bg-emerald-25 hover:bg-emerald-50 border-b border-gray-200">
+                                          <tr key={l.id || lIndex} className="odd:bg-card even:bg-muted/40 hover:bg-success/10 border-b border-border">
                                             <td className="p-2 text-right">
-                                              <div className="font-medium text-gray-900">{l.description || l.type || 'عمالة غير محددة'}</div>
+                                              <div className="font-medium text-foreground">{l.description || l.type || 'عمالة غير محددة'}</div>
                                               {l.skill && (
-                                                <div className="text-xs text-gray-600 mt-1">المهارة: {l.skill}</div>
+                                                <div className="text-xs text-muted-foreground mt-1">المهارة: {l.skill}</div>
                                               )}
                                               {l.experience && (
-                                                <div className="text-xs text-emerald-600 mt-1">الخبرة: {l.experience}</div>
+                                                <div className="text-xs text-success mt-1">الخبرة: {l.experience}</div>
                                               )}
                                             </td>
                                             <td className="p-2 text-center font-medium">{l.unit || l.uom || 'ساعة'}</td>
-                                            <td className="p-2 text-center font-bold text-emerald-700">
+                                            <td className="p-2 text-center font-bold text-success">
                                               {typeof l.quantity === 'number' ? formatQuantity(l.quantity, { maximumFractionDigits: 1 }) : (l.quantity || '-')}
                                             </td>
-                                            <td className="p-2 text-center font-medium text-green-700">
+                                            <td className="p-2 text-center font-medium text-success">
                                               {l.price !== undefined && l.price !== null && l.price !== ''
                                                 ? formatCurrencyValue(l.price, {
                                                     minimumFractionDigits: 2,
@@ -717,7 +719,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                                   })
                                                 : '-'}
                                             </td>
-                                            <td className="p-2 text-center font-bold text-green-800 bg-green-50">
+                                            <td className="p-2 text-center font-bold text-success bg-success/10">
                                               {l.total !== undefined && l.total !== null && l.total !== ''
                                                 ? formatCurrencyValue(l.total, {
                                                     minimumFractionDigits: 2,
@@ -725,14 +727,14 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                                   })
                                                 : '-'}
                                             </td>
-                                            <td className="p-2 text-center text-xs text-gray-600">
+                                            <td className="p-2 text-center text-xs text-muted-foreground">
                                               {l.notes || l.remarks || '-'}
                                             </td>
                                           </tr>
                                         ))}
-                                        <tr className="bg-emerald-100 border-t-2 border-emerald-300 font-bold">
-                                          <td colSpan={4} className="p-2 text-right text-emerald-800">إجمالي تكلفة العمالة:</td>
-                                          <td className="p-2 text-center text-emerald-900 bg-emerald-200">
+                                        <tr className="bg-success/20 border-t-2 border-success/40 font-bold">
+                                          <td colSpan={4} className="p-2 text-right text-success">إجمالي تكلفة العمالة:</td>
+                                          <td className="p-2 text-center text-success bg-success/10">
                                             {formatCurrencyValue(
                                               item.labor.reduce((sum: number, l: any) => sum + (l.total || 0), 0),
                                               { minimumFractionDigits: 2, maximumFractionDigits: 2 }
@@ -751,13 +753,13 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                             {item.equipment?.length ? (
                               <div>
                                 <div 
-                                  className="flex items-center justify-between cursor-pointer hover:bg-orange-50 p-2 rounded-md border border-orange-200"
+                                  className="flex items-center justify-between cursor-pointer hover:bg-warning/10 p-2 rounded-md border border-warning/30"
                                   onClick={() => toggleCollapse(item.id || index.toString(), 'equipment')}
                                 >
                                   <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                    <div className="text-sm font-semibold text-orange-800">المعدات والآلات ({item.equipment.length} معدة)</div>
-                                    <Badge variant="outline" className="text-orange-700 border-orange-400 text-xs bg-orange-50">
+                                    <div className="w-3 h-3 bg-warning rounded-full"></div>
+                                    <div className="text-sm font-semibold text-warning">المعدات والآلات ({item.equipment.length} معدة)</div>
+                                    <Badge variant="outline" className="text-warning border-warning/30 text-xs bg-warning/10">
                                       إجمالي: {formatCurrencyValue(
                                         item.equipment.reduce((sum: number, e: any) => sum + (e.total || 0), 0),
                                         { maximumFractionDigits: 0 }
@@ -765,13 +767,13 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                     </Badge>
                                   </div>
                                   {collapsedSections[item.id || index.toString()]?.equipment ? 
-                                    <ChevronUp className="w-5 h-5 text-orange-600" /> : 
-                                    <ChevronDown className="w-5 h-5 text-orange-600" />
+                                    <ChevronUp className="w-5 h-5 text-warning" /> : 
+                                    <ChevronDown className="w-5 h-5 text-warning" />
                                   }
                                 </div>
                                 {!collapsedSections[item.id || index.toString()]?.equipment && (
                                   <div className="mt-2 overflow-x-auto border rounded-lg shadow-sm">
-                                    <table className="w-full text-xs bg-white">
+                                    <table className="w-full text-xs bg-card">
                                       <colgroup>
                                         <col className="w-[40%]" />
                                         <col className="w-[10%]" />
@@ -781,7 +783,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                         <col className="w-[8%]" />
                                       </colgroup>
                                       <thead>
-                                        <tr className="text-gray-800 bg-orange-100 border-b-2 border-orange-200">
+                                        <tr className="text-foreground bg-warning/20 border-b-2 border-warning/30">
                                           <th className="text-right p-2 font-semibold">نوع المعدة / الوصف التقني</th>
                                           <th className="text-center p-2 font-semibold">الوحدة</th>
                                           <th className="text-center p-2 font-semibold">عدد الساعات/الأيام</th>
@@ -792,21 +794,21 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                       </thead>
                                       <tbody>
                                         {item.equipment.map((e: any, eIndex: number) => (
-                                          <tr key={e.id || eIndex} className="odd:bg-white even:bg-orange-25 hover:bg-orange-50 border-b border-gray-200">
+                                          <tr key={e.id || eIndex} className="odd:bg-card even:bg-muted/40 hover:bg-warning/10 border-b border-border">
                                             <td className="p-2 text-right">
-                                              <div className="font-medium text-gray-900">{e.description || e.name || 'معدة غير محددة'}</div>
+                                              <div className="font-medium text-foreground">{e.description || e.name || 'معدة غير محددة'}</div>
                                               {e.model && (
-                                                <div className="text-xs text-gray-600 mt-1">الطراز: {e.model}</div>
+                                                <div className="text-xs text-muted-foreground mt-1">الطراز: {e.model}</div>
                                               )}
                                               {e.capacity && (
-                                                <div className="text-xs text-orange-600 mt-1">السعة: {e.capacity}</div>
+                                                <div className="text-xs text-warning mt-1">السعة: {e.capacity}</div>
                                               )}
                                             </td>
                                             <td className="p-2 text-center font-medium">{e.unit || e.uom || 'ساعة'}</td>
-                                            <td className="p-2 text-center font-bold text-orange-700">
+                                            <td className="p-2 text-center font-bold text-warning">
                                               {typeof e.quantity === 'number' ? formatQuantity(e.quantity, { maximumFractionDigits: 1 }) : (e.quantity || '-')}
                                             </td>
-                                            <td className="p-2 text-center font-medium text-green-700">
+                                            <td className="p-2 text-center font-medium text-success">
                                               {e.price !== undefined && e.price !== null && e.price !== ''
                                                 ? formatCurrencyValue(e.price, {
                                                     minimumFractionDigits: 2,
@@ -814,7 +816,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                                   })
                                                 : '-'}
                                             </td>
-                                            <td className="p-2 text-center font-bold text-green-800 bg-green-50">
+                                            <td className="p-2 text-center font-bold text-success bg-success/10">
                                               {e.total !== undefined && e.total !== null && e.total !== ''
                                                 ? formatCurrencyValue(e.total, {
                                                     minimumFractionDigits: 2,
@@ -822,14 +824,14 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                                   })
                                                 : '-'}
                                             </td>
-                                            <td className="p-2 text-center text-xs text-gray-600">
+                                            <td className="p-2 text-center text-xs text-muted-foreground">
                                               {e.notes || e.remarks || '-'}
                                             </td>
                                           </tr>
                                         ))}
-                                        <tr className="bg-orange-100 border-t-2 border-orange-300 font-bold">
-                                          <td colSpan={4} className="p-2 text-right text-orange-800">إجمالي تكلفة المعدات:</td>
-                                          <td className="p-2 text-center text-orange-900 bg-orange-200">
+                                        <tr className="bg-warning/20 border-t-2 border-warning/40 font-bold">
+                                          <td colSpan={4} className="p-2 text-right text-warning">إجمالي تكلفة المعدات:</td>
+                                          <td className="p-2 text-center text-warning bg-warning/10">
                                             {formatCurrencyValue(
                                               item.equipment.reduce((sum: number, e: any) => sum + (e.total || 0), 0),
                                               { minimumFractionDigits: 2, maximumFractionDigits: 2 }
@@ -848,13 +850,13 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                             {item.subcontractors?.length ? (
                               <div>
                                 <div 
-                                  className="flex items-center justify-between cursor-pointer hover:bg-purple-50 p-2 rounded-md border border-purple-200"
+                                  className="flex items-center justify-between cursor-pointer hover:bg-accent/10 p-2 rounded-md border border-accent/30"
                                   onClick={() => toggleCollapse(item.id || index.toString(), 'subcontractors')}
                                 >
                                   <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                                    <div className="text-sm font-semibold text-purple-800">مقاولو الباطن والمتخصصون ({item.subcontractors.length} مقاول)</div>
-                                    <Badge variant="outline" className="text-purple-700 border-purple-400 text-xs bg-purple-50">
+                                    <div className="w-3 h-3 bg-accent rounded-full"></div>
+                                    <div className="text-sm font-semibold text-accent">مقاولو الباطن والمتخصصون ({item.subcontractors.length} مقاول)</div>
+                                    <Badge variant="outline" className="text-accent border-accent/30 text-xs bg-accent/10">
                                       إجمالي: {formatCurrencyValue(
                                         item.subcontractors.reduce((sum: number, s: any) => sum + (s.total || 0), 0),
                                         { maximumFractionDigits: 0 }
@@ -862,13 +864,13 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                     </Badge>
                                   </div>
                                   {collapsedSections[item.id || index.toString()]?.subcontractors ? 
-                                    <ChevronUp className="w-5 h-5 text-purple-600" /> : 
-                                    <ChevronDown className="w-5 h-5 text-purple-600" />
+                                    <ChevronUp className="w-5 h-5 text-accent" /> : 
+                                    <ChevronDown className="w-5 h-5 text-accent" />
                                   }
                                 </div>
                                 {!collapsedSections[item.id || index.toString()]?.subcontractors && (
                                   <div className="mt-2 overflow-x-auto border rounded-lg shadow-sm">
-                                    <table className="w-full text-xs bg-white">
+                                    <table className="w-full text-xs bg-card">
                                       <colgroup>
                                         <col className="w-[40%]" />
                                         <col className="w-[10%]" />
@@ -878,7 +880,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                         <col className="w-[8%]" />
                                       </colgroup>
                                       <thead>
-                                        <tr className="text-gray-800 bg-purple-100 border-b-2 border-purple-200">
+                                        <tr className="text-foreground bg-accent/20 border-b-2 border-accent/30">
                                           <th className="text-right p-2 font-semibold">اسم المقاول / نوع الخدمة</th>
                                           <th className="text-center p-2 font-semibold">الوحدة</th>
                                           <th className="text-center p-2 font-semibold">الكمية المطلوبة</th>
@@ -889,21 +891,21 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                       </thead>
                                       <tbody>
                                         {item.subcontractors.map((s: any, sIndex: number) => (
-                                          <tr key={s.id || sIndex} className="odd:bg-white even:bg-purple-25 hover:bg-purple-50 border-b border-gray-200">
+                                          <tr key={s.id || sIndex} className="odd:bg-card even:bg-muted/40 hover:bg-accent/10 border-b border-border">
                                             <td className="p-2 text-right">
-                                              <div className="font-medium text-gray-900">{s.description || s.name || s.contractor || 'مقاول غير محدد'}</div>
+                                              <div className="font-medium text-foreground">{s.description || s.name || s.contractor || 'مقاول غير محدد'}</div>
                                               {s.specialty && (
-                                                <div className="text-xs text-gray-600 mt-1">التخصص: {s.specialty}</div>
+                                                <div className="text-xs text-muted-foreground mt-1">التخصص: {s.specialty}</div>
                                               )}
                                               {s.company && (
-                                                <div className="text-xs text-purple-600 mt-1">الشركة: {s.company}</div>
+                                                <div className="text-xs text-accent mt-1">الشركة: {s.company}</div>
                                               )}
                                             </td>
                                             <td className="p-2 text-center font-medium">{s.unit || s.uom || 'مقطوعية'}</td>
-                                            <td className="p-2 text-center font-bold text-purple-700">
+                                            <td className="p-2 text-center font-bold text-accent">
                                               {typeof s.quantity === 'number' ? formatQuantity(s.quantity, { maximumFractionDigits: 2 }) : (s.quantity || '-')}
                                             </td>
-                                            <td className="p-2 text-center font-medium text-green-700">
+                                            <td className="p-2 text-center font-medium text-success">
                                               {s.price !== undefined && s.price !== null && s.price !== ''
                                                 ? formatCurrencyValue(s.price, {
                                                     minimumFractionDigits: 2,
@@ -911,7 +913,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                                   })
                                                 : '-'}
                                             </td>
-                                            <td className="p-2 text-center font-bold text-green-800 bg-green-50">
+                                            <td className="p-2 text-center font-bold text-success bg-success/10">
                                               {s.total !== undefined && s.total !== null && s.total !== ''
                                                 ? formatCurrencyValue(s.total, {
                                                     minimumFractionDigits: 2,
@@ -919,14 +921,14 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                                                   })
                                                 : '-'}
                                             </td>
-                                            <td className="p-2 text-center text-xs text-gray-600">
+                                            <td className="p-2 text-center text-xs text-muted-foreground">
                                               {s.notes || s.remarks || '-'}
                                             </td>
                                           </tr>
                                         ))}
-                                        <tr className="bg-purple-100 border-t-2 border-purple-300 font-bold">
-                                          <td colSpan={4} className="p-2 text-right text-purple-800">إجمالي تكلفة مقاولي الباطن:</td>
-                                          <td className="p-2 text-center text-purple-900 bg-purple-200">
+                                        <tr className="bg-accent/20 border-t-2 border-accent/40 font-bold">
+                                          <td colSpan={4} className="p-2 text-right text-accent">إجمالي تكلفة مقاولي الباطن:</td>
+                                          <td className="p-2 text-center text-accent bg-accent/10">
                                             {formatCurrencyValue(
                                               item.subcontractors.reduce((sum: number, s: any) => sum + (s.total || 0), 0),
                                               { minimumFractionDigits: 2, maximumFractionDigits: 2 }
@@ -950,18 +952,18 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
             </tbody>
             {hasPricingData && unified?.totals && (
               <tfoot>
-                <tr className="bg-gray-100 font-bold">
-                  <td colSpan={hasPricingData ? 6 : 4} className="border border-gray-200 p-2 text-right text-sm">
+                <tr className="bg-muted font-bold">
+                  <td colSpan={hasPricingData ? 6 : 4} className="border border-border p-2 text-right text-sm">
                     الإجمالي العام (من صفحة التسعير):
                   </td>
-                  <td className="border border-gray-200 p-2 text-center text-green-700 text-sm font-bold">
+                  <td className="border border-border p-2 text-center text-success text-sm font-bold">
                     {formatCurrencyValue(unified.totals.totalValue ?? 0, {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })}
                   </td>
-                  <td className="border border-gray-200 p-2"></td>
-                  <td className="border border-gray-200 p-2"></td>
+                  <td className="border border-border p-2"></td>
+                  <td className="border border-border p-2"></td>
                 </tr>
               </tfoot>
             )}
@@ -969,7 +971,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
   </div>
   )}
         
-        <div className="text-sm text-gray-500 text-center mt-4">
+        <div className="text-sm text-muted-foreground text-center mt-4">
           إجمالي البنود: {finalQuantityData.length} • المصدر: {sourceLabelMap[unified.source]}
         </div>
       </div>
@@ -1049,17 +1051,17 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
         case 'pdf':
         case 'specifications':
         case 'report':
-          return <FileText className="w-5 h-5 text-red-600" />;
+          return <FileText className="w-5 h-5 text-destructive" />;
         case 'excel':
         case 'quantity':
-          return <Grid3X3 className="w-5 h-5 text-green-600" />;
+          return <Grid3X3 className="w-5 h-5 text-success" />;
         case 'dwg':
         case 'drawings':
-          return <Building2 className="w-5 h-5 text-blue-600" />;
+          return <Building2 className="w-5 h-5 text-info" />;
         case 'technical':
-          return <CheckCircle className="w-5 h-5 text-purple-600" />;
+          return <CheckCircle className="w-5 h-5 text-accent" />;
         default:
-          return <FileText className="w-5 h-5 text-gray-600" />;
+          return <FileText className="w-5 h-5 text-muted-foreground" />;
       }
     };
 
@@ -1082,12 +1084,12 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
     return (
       <div className="space-y-4">
         {technicalFiles.length > 0 && (
-          <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-            <div className="flex items-center gap-2 text-purple-800">
-              <CheckCircle className="w-5 h-5" />
+          <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
+            <div className="flex items-center gap-2 text-accent">
+              <CheckCircle className="w-5 h-5 text-accent" />
               <p className="font-medium">الملفات الفنية من التسعير</p>
             </div>
-            <p className="text-sm text-purple-700 mt-1">
+            <p className="text-sm text-accent mt-1">
               تم العثور على {technicalFiles.length} ملف فني تم رفعه من خلال صفحة التسعير.
             </p>
           </div>
@@ -1098,7 +1100,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gray-100 rounded-lg">
+                  <div className="p-2 bg-muted rounded-lg">
                     {getFileIcon(attachment.type)}
                   </div>
                   <div>
@@ -1106,12 +1108,12 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                       <p className="font-medium">{attachment.name || `مرفق ${index + 1}`}</p>
                       <Badge 
                         variant={attachment.source === 'technical' ? 'secondary' : 'outline'}
-                        className={attachment.source === 'technical' ? 'bg-purple-100 text-purple-800 border-purple-300' : ''}
+                        className={attachment.source === 'technical' ? 'bg-accent/10 text-accent border-accent/30' : ''}
                       >
                         {attachment.source === 'technical' ? 'ملف فني' : 'مرفق أساسي'}
                       </Badge>
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {attachment.type && `نوع: ${attachment.type}`}
                       {attachment.size && ` • حجم: ${attachment.size}`}
                       {attachment.uploadDate && ` • تاريخ: ${attachment.uploadDate}`}
@@ -1172,7 +1174,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
   };
 
   return (
-    <div className="p-4 lg:p-6 min-h-screen bg-gray-50 overflow-y-auto" dir="rtl">
+    <div className="p-4 lg:p-6 min-h-screen bg-muted overflow-y-auto" dir="rtl">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -1181,7 +1183,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
             </Button>
             <div>
               <h1 className="text-xl lg:text-2xl font-bold">{tender.name}</h1>
-              <p className="text-sm text-gray-600">{tender.client || tender.ownerEntity || 'غير محدد'}</p>
+              <p className="text-sm text-muted-foreground">{tender.client || tender.ownerEntity || 'غير محدد'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -1189,7 +1191,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
             {(tender.status === 'ready_to_submit' || isReadyToSubmit) && (
               <Button 
                 onClick={handleSubmitTender} 
-                className="gap-2 bg-green-600 hover:bg-green-700"
+                className="gap-2 bg-success text-success-foreground hover:bg-success/90"
               >
                 <Send className="h-4 w-4" />
                 ارسال
@@ -1207,12 +1209,12 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
             
             {/* معلومات إضافية حول جاهزية المنافسة */}
             {isReadyToSubmit && tender.status !== 'submitted' && (
-              <Badge className="bg-green-100 text-green-800 border-green-300">
+              <Badge className="bg-success/10 text-success border-success/30">
                 جاهزة للإرسال
               </Badge>
             )}
             {isPricingCompleted && !isTechnicalFilesUploaded && tender.status !== 'submitted' && (
-              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
+              <Badge className="bg-warning/10 text-warning border-warning/30">
                 يحتاج ملفات فنية
               </Badge>
             )}
@@ -1251,36 +1253,36 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
             <TabsContent value="general" className="mt-6" dir="rtl">
           {/* تنبيه حالة التسعير والملفات الفنية */}
           {isReadyToSubmit && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2 text-green-800">
+            <div className="mb-4 p-4 bg-success/10 border border-success/30 rounded-lg">
+              <div className="flex items-center gap-2 text-success">
                 <CheckCircle className="w-5 h-5" />
                 <p className="font-medium">جاهزة للإرسال</p>
               </div>
-              <p className="text-sm text-green-700 mt-1">
+              <p className="text-sm text-success mt-1 opacity-80">
                 تم إكمال التسعير ورفع الملفات الفنية بنجاح. يمكنك الآن إرسال العرض للمنافسة.
               </p>
             </div>
           )}
           
           {isPricingCompleted && !isTechnicalFilesUploaded && (
-            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-center gap-2 text-yellow-800">
+            <div className="mb-4 p-4 bg-warning/10 border border-warning/30 rounded-lg">
+              <div className="flex items-center gap-2 text-warning">
                 <AlertCircle className="w-5 h-5" />
                 <p className="font-medium">يحتاج ملفات فنية</p>
               </div>
-              <p className="text-sm text-yellow-700 mt-1">
+              <p className="text-sm text-warning mt-1 opacity-90">
                 تم إكمال التسعير ولكن لم يتم رفع الملفات الفنية بعد. يرجى الذهاب إلى صفحة التسعير وتبويب &quot;العرض الفني&quot; لرفع الملفات المطلوبة.
               </p>
             </div>
           )}
           
           {!isPricingCompleted && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center gap-2 text-blue-800">
+            <div className="mb-4 p-4 bg-info/10 border border-info/30 rounded-lg">
+              <div className="flex items-center gap-2 text-info">
                 <AlertCircle className="w-5 h-5" />
                 <p className="font-medium">التسعير غير مكتمل</p>
               </div>
-              <p className="text-sm text-blue-700 mt-1">
+              <p className="text-sm text-info mt-1 opacity-90">
                 لم يتم إكمال تسعير هذه المنافسة بعد. يرجى الذهاب إلى صفحة التسعير لإكمال العملية قبل إرسال العرض.
               </p>
             </div>
@@ -1313,7 +1315,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                   </div>
                   <div className="col-span-2">
                     <div className="text-muted-foreground mb-1">الوصف</div>
-                    <div className="font-medium text-gray-700">
+                    <div className="font-medium text-muted-foreground">
                       {tender.description || tender.scope || 'لا يوجد وصف متاح'}
                     </div>
                   </div>
@@ -1374,7 +1376,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                       <DollarSign className="h-4 w-4"/>
                       القيمة المتوقعة
                     </div>
-                    <div className="font-bold text-lg text-green-600">
+                    <div className="font-bold text-lg text-success">
                       {/* أولوية للقيمة المحسوبة من التسعير، ثم القيمة الأساسية */}
                       {tender.totalValue !== undefined && tender.totalValue !== null
                         ? `${formatCurrencyValue(tender.totalValue)} (من التسعير)`
@@ -1456,37 +1458,66 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                     : '-'
                 )
                 const pct = (v: any) => (typeof v === 'number' ? `${v.toFixed(2)}%` : '—')
+                const toneStyles: Record<'primary' | 'warning' | 'success' | 'accent' | 'info', {
+                  container: string
+                  value: string
+                }> = {
+                  primary: { container: 'bg-primary/10 border border-primary/20', value: 'text-primary' },
+                  warning: { container: 'bg-warning/10 border border-warning/30', value: 'text-warning' },
+                  success: { container: 'bg-success/10 border border-success/30', value: 'text-success' },
+                  accent: { container: 'bg-accent/10 border border-accent/30', value: 'text-accent' },
+                  info: { container: 'bg-info/10 border border-info/30', value: 'text-info' }
+                }
+                const summaryCards = [
+                  {
+                    key: 'totalValue',
+                    label: 'إجمالي المشروع',
+                    value: fmt(t.totalValue),
+                    hint: 'ر.س (قبل الضريبة)',
+                    tone: 'primary' as const
+                  },
+                  {
+                    key: 'vatAmount',
+                    label: `ضريبة القيمة المضافة (${t.vatRate != null ? (t.vatRate * 100).toFixed(0) : '15'}%)`,
+                    value: fmt(t.vatAmount),
+                    hint: 'ر.س',
+                    tone: 'warning' as const
+                  },
+                  {
+                    key: 'totalWithVat',
+                    label: 'الإجمالي شامل الضريبة',
+                    value: fmt(t.totalWithVat),
+                    hint: 'ر.س',
+                    tone: 'success' as const
+                  },
+                  {
+                    key: 'profit',
+                    label: `إجمالي الربح (${pct(t.profitPercentage)})`,
+                    value: fmt(t.profit),
+                    hint: 'ر.س',
+                    tone: 'accent' as const
+                  },
+                  {
+                    key: 'adminOperational',
+                    label: `التكاليف الإدارية + التشغيلية (${pct(t.adminOperationalPercentage)})`,
+                    value: fmt(t.adminOperational),
+                    hint: 'ر.س',
+                    tone: 'info' as const
+                  }
+                ]
                 
                 return (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                      <div className={`${cardBase} bg-indigo-50 border-indigo-200`}>
-                        <span className="text-[11px] text-indigo-700 font-medium">إجمالي المشروع</span>
-                        <span className="text-xl font-bold text-indigo-800 ltr-numbers">{fmt(t.totalValue)}</span>
-                        <span className="text-[10px] text-indigo-600">ر.س (قبل الضريبة)</span>
-                      </div>
-                      <div className={`${cardBase} bg-amber-50 border-amber-200`}>
-                        <span className="text-[11px] text-amber-700 font-medium">ضريبة القيمة المضافة ({t.vatRate != null ? (t.vatRate * 100).toFixed(0) : '15'}%)</span>
-                        <span className="text-xl font-bold text-amber-800 ltr-numbers">{fmt(t.vatAmount)}</span>
-                        <span className="text-[10px] text-amber-600">ر.س</span>
-                      </div>
-                      <div className={`${cardBase} bg-green-50 border-green-200`}>
-                        <span className="text-[11px] text-green-700 font-medium">الإجمالي شامل الضريبة</span>
-                        <span className="text-xl font-bold text-green-800 ltr-numbers">{fmt(t.totalWithVat)}</span>
-                        <span className="text-[10px] text-green-600">ر.س</span>
-                      </div>
-                      <div className={`${cardBase} bg-purple-50 border-purple-200`}>
-                        <span className="text-[11px] text-purple-700 font-medium">إجمالي الربح ({pct(t.profitPercentage)})</span>
-                        <span className="text-xl font-bold text-purple-800 ltr-numbers">{fmt(t.profit)}</span>
-                        <span className="text-[10px] text-purple-600">ر.س</span>
-                      </div>
-                      <div className={`${cardBase} bg-rose-50 border-rose-200`}>
-                        <span className="text-[11px] text-rose-700 font-medium">التكاليف الإدارية + التشغيلية ({pct(t.adminOperationalPercentage)})</span>
-                        <span className="text-xl font-bold text-rose-800 ltr-numbers">{fmt(t.adminOperational)}</span>
-                        <span className="text-[10px] text-rose-600">ر.س</span>
-                      </div>
+                      {summaryCards.map(card => (
+                        <div key={card.key} className={`${cardBase} ${toneStyles[card.tone].container}`}>
+                          <span className="text-xs font-medium text-muted-foreground">{card.label}</span>
+                          <span className={`text-xl font-bold ltr-numbers ${toneStyles[card.tone].value}`}>{card.value}</span>
+                          <span className="text-xs text-muted-foreground">{card.hint}</span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                    <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
                       📊 القيم مصدرها {unified.source === 'central-boq' ? 'النظام المركزي (BOQ)' : unified.source === 'legacy' ? 'البيانات التقليدية (Legacy)' : 'غير متوفر'} – لا يعاد حسابها هنا.
                     </div>
                   </div>
@@ -1529,43 +1560,43 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-start gap-4 p-4 bg-blue-50 rounded-lg">
-                  <div className="p-2 bg-blue-200 rounded-full">
-                    <Calendar className="w-4 h-4 text-blue-600" />
+                <div className="flex items-start gap-4 p-4 bg-info/10 rounded-lg">
+                  <div className="p-2 bg-info/20 rounded-full">
+                    <Calendar className="w-4 h-4 text-info" />
                   </div>
                   <div>
                     <p className="font-medium">تاريخ النشر</p>
-                    <p className="text-sm text-gray-600">{tender.publishDate || 'غير محدد'}</p>
+                    <p className="text-sm text-muted-foreground">{tender.publishDate || 'غير محدد'}</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start gap-4 p-4 bg-yellow-50 rounded-lg">
-                  <div className="p-2 bg-yellow-200 rounded-full">
-                    <ExternalLink className="w-4 h-4 text-yellow-600" />
+                <div className="flex items-start gap-4 p-4 bg-warning/10 rounded-lg">
+                  <div className="p-2 bg-warning/20 rounded-full">
+                    <ExternalLink className="w-4 h-4 text-warning" />
                   </div>
                   <div>
                     <p className="font-medium">آخر موعد للاستفسارات</p>
-                    <p className="text-sm text-gray-600">{tender.inquiryDeadline || 'غير محدد'}</p>
+                    <p className="text-sm text-muted-foreground">{tender.inquiryDeadline || 'غير محدد'}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4 p-4 bg-red-50 rounded-lg">
-                  <div className="p-2 bg-red-200 rounded-full">
-                    <Clock className="w-4 h-4 text-red-600" />
+                <div className="flex items-start gap-4 p-4 bg-destructive/10 rounded-lg">
+                  <div className="p-2 bg-destructive/20 rounded-full">
+                    <Clock className="w-4 h-4 text-destructive" />
                   </div>
                   <div>
                     <p className="font-medium">آخر موعد للتقديم</p>
-                    <p className="text-sm text-gray-600">{tender.deadline || 'غير محدد'}</p>
+                    <p className="text-sm text-muted-foreground">{tender.deadline || 'غير محدد'}</p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4 p-4 bg-green-50 rounded-lg">
-                  <div className="p-2 bg-green-200 rounded-full">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
+                <div className="flex items-start gap-4 p-4 bg-success/10 rounded-lg">
+                  <div className="p-2 bg-success/20 rounded-full">
+                    <CheckCircle className="w-4 h-4 text-success" />
                   </div>
                   <div>
                     <p className="font-medium">تاريخ إعلان النتائج</p>
-                    <p className="text-sm text-gray-600">{tender.resultDate || 'غير محدد'}</p>
+                    <p className="text-sm text-muted-foreground">{tender.resultDate || 'غير محدد'}</p>
                   </div>
                 </div>
               </div>
@@ -1605,7 +1636,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5 text-green-600" />
+              <Send className="h-5 w-5 text-success" />
               تأكيد تقديم العرض
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -1618,7 +1649,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmSubmit}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-success text-success-foreground hover:bg-success/90"
             >
               تأكيد الارسال
             </AlertDialogAction>

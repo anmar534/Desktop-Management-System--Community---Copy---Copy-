@@ -48,11 +48,33 @@ const getDateFormatter = (options: DateTimeFormatOptionsWithLocale = {}): Intl.D
   return formatter;
 };
 
+const ARABIC_INDIC_DIGITS_REGEX = /[\u0660-\u0669\u06F0-\u06F9]/g
+
+const normalizeLocalizedDigits = (value: string): string =>
+  value.replace(ARABIC_INDIC_DIGITS_REGEX, (digit) => {
+    const codePoint = digit.codePointAt(0) ?? 0
+    // Arabic-Indic digits (٠ - ٩)
+    if (codePoint >= 0x0660 && codePoint <= 0x0669) {
+      return String(codePoint - 0x0660)
+    }
+    // Eastern Arabic-Indic digits (Persian) (۰ - ۹)
+    if (codePoint >= 0x06F0 && codePoint <= 0x06F9) {
+      return String(codePoint - 0x06F0)
+    }
+    return digit
+  })
+
 const sanitizeNumber = (value: number | string | null | undefined): number | null => {
   if (value === null || value === undefined) return null;
   if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-  if (typeof value === 'string' && value.trim() === '') return null;
-  const parsed = Number(value);
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (trimmed === '') return null
+    const normalized = normalizeLocalizedDigits(trimmed)
+    const parsed = Number(normalized)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : null;
 };
 
@@ -243,10 +265,20 @@ export const formatLargeNumber = (num: number): string => {
 
 // ===== دوال تنسيق النسب =====
 
-export const formatPercentage = (percentage: number, decimals = 1): string => {
-  const normalized = sanitizeNumber(percentage) ?? 0;
-  return `${normalized.toFixed(decimals)}%`;
-};
+export const formatPercentage = (
+  percentage: number,
+  decimals = 1,
+  options?: { locale?: string }
+): string => {
+  const normalized = sanitizeNumber(percentage) ?? 0
+  const locale = options?.locale ?? DEFAULT_LOCALE
+  return getNumberFormatter({
+    style: 'percent',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+    locale
+  }).format(normalized / 100)
+}
 
 export const formatPercentageIntl = (
   value: number,

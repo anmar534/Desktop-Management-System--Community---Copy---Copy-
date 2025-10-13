@@ -89,21 +89,21 @@ export function TenderStatusManager({ tender, trigger }: TenderStatusManagerProp
 
   const getAvailableStatuses = (): StatusOption[] => {
     const baseOptions: StatusOption[] = [
-      { value: 'cancelled', label: 'ملغاة', icon: X, color: 'text-gray-600' },
+      { value: 'cancelled', label: 'ملغاة', icon: X, color: 'text-muted-foreground' },
     ];
 
     if (tender.status === 'submitted') {
       return [
         ...baseOptions,
-        { value: 'won', label: 'فائزة', icon: Trophy, color: 'text-green-600' },
-        { value: 'lost', label: 'خاسرة', icon: XCircle, color: 'text-red-600' },
+        { value: 'won', label: 'فائزة', icon: Trophy, color: 'text-success' },
+        { value: 'lost', label: 'خاسرة', icon: XCircle, color: 'text-destructive' },
       ];
     }
 
     if (tender.status === 'ready_to_submit') {
       return [
         ...baseOptions,
-        { value: 'submitted', label: 'تم التقديم', icon: FileText, color: 'text-blue-600' },
+        { value: 'submitted', label: 'تم التقديم', icon: FileText, color: 'text-info' },
       ];
     }
 
@@ -281,7 +281,7 @@ export function TenderStatusManager({ tender, trigger }: TenderStatusManagerProp
               <div className="space-y-2">
                 <Label htmlFor="winningBid" className="flex items-center gap-1">
                   <DollarSign className="h-4 w-4" />
-                  قيمة العرض الفائز <span className="text-red-500">*</span>
+                  قيمة العرض الفائز <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="winningBid"
@@ -291,13 +291,13 @@ export function TenderStatusManager({ tender, trigger }: TenderStatusManagerProp
                   onChange={(event) => setWinningBidValue(event.target.value)}
                   required
                 />
-                <p className="text-xs text-gray-500">مطلوب لتحسين التسعيرات المستقبلية</p>
+                <p className="text-xs text-muted-foreground">مطلوب لتحسين التسعيرات المستقبلية</p>
               </div>
 
-              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <div className="bg-info/10 p-3 rounded-lg border border-info/20">
                 <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-blue-800">
+                  <AlertTriangle className="h-4 w-4 text-info mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-info">
                     <p>ملاحظة: قيمة عرضنا كانت {formatCurrencyValue(tenderBaseValue)}</p>
                   </div>
                 </div>
@@ -306,10 +306,10 @@ export function TenderStatusManager({ tender, trigger }: TenderStatusManagerProp
           )}
 
           {selectedStatusIs('won') && (
-            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+            <div className="bg-success/10 p-3 rounded-lg border border-success/20">
               <div className="flex items-start gap-2">
-                <Trophy className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-green-800">
+                <Trophy className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-success">
                   <p>
                     <strong>تهانينا!</strong> عرضنا بقيمة {formatCurrencyValue(tenderBaseValue)} هو العرض الفائز.
                   </p>
@@ -330,12 +330,12 @@ export function TenderStatusManager({ tender, trigger }: TenderStatusManagerProp
           </div>
 
           {selectedStatusIs('cancelled') && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-center gap-2 text-yellow-800">
+            <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+              <div className="flex items-center gap-2 text-warning">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="text-sm font-medium">تحذير</span>
               </div>
-              <p className="text-sm text-yellow-700 mt-1">
+              <p className="text-sm text-warning mt-1">
                 سيتم إلغاء المنافسة نهائياً ولن يتم احتسابها في الإحصائيات.
               </p>
             </div>
@@ -355,13 +355,13 @@ export function TenderStatusManager({ tender, trigger }: TenderStatusManagerProp
             disabled={!selectedStatus || isLoading}
             className={
               selectedStatusIs('won')
-                ? 'bg-green-600 hover:bg-green-700'
+                ? 'bg-success text-background hover:bg-success/90'
                 : selectedStatusIs('lost')
-                ? 'bg-red-600 hover:bg-red-700'
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
                 : selectedStatusIs('submitted')
-                ? 'bg-blue-600 hover:bg-blue-700'
+                ? 'bg-info text-background hover:bg-info/90'
                 : selectedStatusIs('cancelled')
-                ? 'bg-gray-600 hover:bg-gray-700'
+                ? 'bg-muted text-foreground hover:bg-muted/90'
                 : ''
             }
           >

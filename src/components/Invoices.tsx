@@ -1,10 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import type { ComponentProps } from 'react'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
 import { Progress } from './ui/progress'
 import { PageLayout, DetailCard, EmptyState } from './PageLayout'
 import { 
@@ -24,13 +22,12 @@ import { formatDateValue } from '@/utils/formatters'
 import { toast } from 'sonner'
 import { useInvoices } from '@/application/hooks/useInvoices'
 import { DeleteConfirmation } from './ui/confirmation-dialog'
-
-type BadgeVariant = NonNullable<ComponentProps<typeof Badge>['variant']>;
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
+import { InlineAlert } from './ui/inline-alert'
 
 interface InvoiceStatusInfo {
   text: string;
-  variant: BadgeVariant;
-  color: string;
+  status: StatusBadgeProps['status'];
 }
 
 interface InvoicesProps {
@@ -104,48 +101,48 @@ export function Invoices({ onSectionChange }: InvoicesProps) {
       value: invoicesData.overview.totalInvoices.toString(),
       trend: 'up' as const,
       trendValue: '+12',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      color: 'text-primary',
+      bgColor: 'bg-primary/10'
     },
     {
       label: 'القيمة الإجمالية',
       value: formatCurrency(invoicesData.overview.totalValue),
       trend: 'up' as const,
       trendValue: '+8.5%',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
+      color: 'text-success',
+      bgColor: 'bg-success/10'
     },
     {
       label: 'المبالغ المدفوعة',
       value: formatCurrency(invoicesData.overview.paidAmount),
       trend: 'up' as const,
       trendValue: '+15.2%',
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50'
+      color: 'text-success',
+      bgColor: 'bg-success/10'
     },
     {
       label: 'المعلقة للدفع',
       value: formatCurrency(invoicesData.overview.pendingAmount),
       trend: 'up' as const,
       trendValue: '+3',
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50'
+      color: 'text-warning',
+      bgColor: 'bg-warning/10'
     },
     {
       label: 'المتأخرة',
       value: formatCurrency(invoicesData.overview.overdueAmount),
       trend: 'down' as const,
       trendValue: '-8.1%',
-      color: 'text-red-600',
-      bgColor: 'bg-red-50'
+      color: 'text-destructive',
+      bgColor: 'bg-destructive/10'
     },
     {
       label: 'متوسط قيمة الفاتورة',
       value: formatCurrency(invoicesData.overview.averageValue),
       trend: 'up' as const,
       trendValue: '+2.3%',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
+      color: 'text-info',
+      bgColor: 'bg-info/10'
     }
   ]), [invoicesData])
 
@@ -180,17 +177,17 @@ export function Invoices({ onSectionChange }: InvoicesProps) {
   const getStatusInfo = (status: string): InvoiceStatusInfo => {
     switch (status) {
       case 'draft':
-        return { text: 'مسودة', variant: 'secondary', color: 'text-gray-600' }
+        return { text: 'مسودة', status: 'default' }
       case 'sent':
-        return { text: 'مرسلة', variant: 'default', color: 'text-blue-600' }
+        return { text: 'مرسلة', status: 'info' }
       case 'paid':
-        return { text: 'مدفوعة', variant: 'success', color: 'text-green-600' }
+        return { text: 'مدفوعة', status: 'success' }
       case 'overdue':
-        return { text: 'متأخرة', variant: 'destructive', color: 'text-red-600' }
+        return { text: 'متأخرة', status: 'overdue' }
       case 'cancelled':
-        return { text: 'ملغاة', variant: 'outline', color: 'text-gray-500' }
+        return { text: 'ملغاة', status: 'warning' }
       default:
-        return { text: 'غير محدد', variant: 'outline', color: 'text-gray-500' }
+        return { text: 'غير محددة', status: 'default' }
     }
   }
 
@@ -202,32 +199,32 @@ export function Invoices({ onSectionChange }: InvoicesProps) {
         value={`${invoicesData.overview.totalValue > 0 ? Math.round((invoicesData.overview.paidAmount / invoicesData.overview.totalValue) * 100) : 0}%`}
         subtitle="من إجمالي المبالغ"
         icon={CheckCircle}
-        color="text-green-600"
-        bgColor="bg-green-50"
+        color="text-success"
+        bgColor="bg-success/10"
       />
       <DetailCard
         title="متوسط مدة التحصيل"
         value="25 يوم"
         subtitle="من تاريخ الإصدار"
         icon={Clock}
-        color="text-blue-600"
-        bgColor="bg-blue-50"
+        color="text-primary"
+        bgColor="bg-primary/10"
       />
       <DetailCard
         title="المتأخرة عن الدفع"
         value={invoicesData.statusCounts.overdue.toString()}
         subtitle="فاتورة متأخرة"
         icon={AlertTriangle}
-        color="text-red-600"
-        bgColor="bg-red-50"
+        color="text-destructive"
+        bgColor="bg-destructive/10"
       />
       <DetailCard
         title="هذا الشهر"
         value={invoicesData.overview.thisMonth.toString()}
         subtitle="فاتورة جديدة"
         icon={Calendar}
-        color="text-purple-600"
-        bgColor="bg-purple-50"
+        color="text-info"
+        bgColor="bg-info/10"
       />
     </div>
   )
@@ -248,11 +245,10 @@ export function Invoices({ onSectionChange }: InvoicesProps) {
 
   return (
     <PageLayout
+      tone="primary"
       title="إدارة الفواتير"
       description="إدارة وتتبع الفواتير والمدفوعات"
       icon={FileText}
-      gradientFrom="from-blue-600"
-      gradientTo="to-blue-700"
       quickStats={quickStats}
       quickActions={quickActions}
       searchPlaceholder="البحث في الفواتير..."
@@ -295,6 +291,16 @@ export function Invoices({ onSectionChange }: InvoicesProps) {
         </div>
       </div>
 
+      {invoicesData.statusCounts.overdue > 0 && (
+        <div className="mb-6">
+          <InlineAlert
+            variant={invoicesData.statusCounts.overdue > 2 ? 'destructive' : 'warning'}
+            title="تنبيه الفواتير المتأخرة"
+            description={`يوجد ${invoicesData.statusCounts.overdue} فاتورة متأخرة بإجمالي ${formatCurrency(invoicesData.overview.overdueAmount)}. يُنصح بمتابعة التحصيل خلال هذا الأسبوع.`}
+          />
+        </div>
+      )}
+
       {/* قائمة الفواتير */}
       {isLoading ? (
         <div className="py-12 text-center text-muted-foreground">
@@ -325,9 +331,13 @@ export function Invoices({ onSectionChange }: InvoicesProps) {
                             <h3 className="text-lg font-semibold text-foreground">
                               {invoice.invoiceNumber}
                             </h3>
-                            <Badge variant={statusInfo.variant} className={statusInfo.color}>
-                              {statusInfo.text}
-                            </Badge>
+                            <StatusBadge
+                              status={statusInfo.status}
+                              label={statusInfo.text}
+                              size="sm"
+                              showIcon={false}
+                              className="shadow-none"
+                            />
                           </div>
                           <p className="text-sm text-muted-foreground mb-1">
                             العميل: {invoice.clientName}
@@ -354,7 +364,7 @@ export function Invoices({ onSectionChange }: InvoicesProps) {
                         </div>
                         <div>
                           <span className="text-muted-foreground block">المبلغ المتبقي</span>
-                          <span className={`font-medium ${invoice.status !== 'paid' ? 'text-orange-600' : 'text-green-600'}`}>
+                          <span className={`font-medium ${invoice.status !== 'paid' ? 'text-warning' : 'text-success'}`}>
                             {invoice.status === 'paid' ? 'مدفوع بالكامل' : formatCurrency(invoice.total)}
                           </span>
                         </div>

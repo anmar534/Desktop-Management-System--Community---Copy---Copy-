@@ -377,8 +377,8 @@ export const ThemeTesting: Story = {
         </div>
       </div>
 
-      <div data-theme="dark" className="p-spacing-6 rounded-lg border bg-gray-900">
-        <h3 className="text-lg font-semibold mb-spacing-4 text-white">Dark Theme</h3>
+      <div data-theme="dark" className="p-spacing-6 rounded-lg border bg-muted text-muted-foreground">
+        <h3 className="text-lg font-semibold mb-spacing-4 text-foreground">Dark Theme</h3>
         <div className="flex flex-wrap gap-spacing-3">
           <Badge variant="default">افتراضي</Badge>
           <Badge variant="primary">أساسي</Badge>
@@ -391,8 +391,8 @@ export const ThemeTesting: Story = {
         </div>
       </div>
 
-      <div data-theme="high-contrast" className="p-spacing-6 rounded-lg border bg-black">
-        <h3 className="text-lg font-semibold mb-spacing-4 text-white">High Contrast Theme</h3>
+      <div data-theme="high-contrast" className="p-spacing-6 rounded-lg border bg-background text-foreground">
+        <h3 className="text-lg font-semibold mb-spacing-4">High Contrast Theme</h3>
         <div className="flex flex-wrap gap-spacing-3">
           <Badge variant="default">افتراضي</Badge>
           <Badge variant="primary">أساسي</Badge>
@@ -418,7 +418,7 @@ export const UsageGuide: Story = {
         <h3 className="text-xl font-bold mb-spacing-3">متى تستخدم كل شكل؟</h3>
         
         <div className="space-y-spacing-4">
-          <div className="border-l-4 border-green-500 pl-spacing-4">
+          <div className="border-l-4 border-success pl-spacing-4">
             <h4 className="font-semibold flex items-center gap-2">
               <Badge variant="success">Success</Badge>
               حالات إيجابية
@@ -428,7 +428,7 @@ export const UsageGuide: Story = {
             </p>
           </div>
 
-          <div className="border-l-4 border-amber-500 pl-spacing-4">
+          <div className="border-l-4 border-warning pl-spacing-4">
             <h4 className="font-semibold flex items-center gap-2">
               <Badge variant="warning">Warning</Badge>
               تحتاج انتباه
@@ -438,7 +438,7 @@ export const UsageGuide: Story = {
             </p>
           </div>
 
-          <div className="border-l-4 border-red-500 pl-spacing-4">
+          <div className="border-l-4 border-destructive pl-spacing-4">
             <h4 className="font-semibold flex items-center gap-2">
               <Badge variant="destructive">Destructive</Badge>
               حالات سلبية
@@ -448,7 +448,7 @@ export const UsageGuide: Story = {
             </p>
           </div>
 
-          <div className="border-l-4 border-blue-500 pl-spacing-4">
+          <div className="border-l-4 border-info pl-spacing-4">
             <h4 className="font-semibold flex items-center gap-2">
               <Badge variant="info">Info</Badge>
               معلومات جديدة
@@ -458,7 +458,7 @@ export const UsageGuide: Story = {
             </p>
           </div>
 
-          <div className="border-l-4 border-gray-400 pl-spacing-4">
+          <div className="border-l-4 border-border pl-spacing-4">
             <h4 className="font-semibold flex items-center gap-2">
               <Badge variant="outline">Outline</Badge>
               حالات محايدة

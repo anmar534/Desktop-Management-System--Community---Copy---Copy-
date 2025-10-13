@@ -116,10 +116,10 @@ export function Development() {
   // دالة للحصول على لون المؤشر
   const getIndicatorColor = (current: number, target: number): string => {
     const percentage = (current / target) * 100
-    if (percentage >= 100) return 'text-green-600'
-    if (percentage >= 80) return 'text-blue-600'
-    if (percentage >= 60) return 'text-orange-600'
-    return 'text-red-600'
+    if (percentage >= 100) return 'text-success'
+    if (percentage >= 80) return 'text-primary'
+    if (percentage >= 60) return 'text-warning'
+    return 'text-destructive'
   }
 
   // دالة للحصول على أيقونة الفئة
@@ -144,20 +144,20 @@ export function Development() {
     {
       label: `أهداف ${selectedYear}`,
       value: goals.length,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
+      color: 'text-info',
+      bgColor: 'bg-info/10'
     },
     {
       label: 'الأهداف الشهرية',
       value: goals.filter((g: DevelopmentGoal) => g.type === 'monthly').length,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100'
+      color: 'text-success',
+      bgColor: 'bg-success/10'
     },
     {
       label: 'الأهداف السنوية',
       value: goals.filter((g: DevelopmentGoal) => g.type === 'yearly').length,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
+      color: 'text-accent',
+      bgColor: 'bg-accent/10'
     }
   ]
 
@@ -174,12 +174,6 @@ export function Development() {
   // فتح Dialog لإضافة هدف جديد
   const openAddGoalDialog = () => {
     setEditingGoal(null)
-    setIsGoalDialogOpen(true)
-  }
-
-  // فتح Dialog لتعديل هدف
-  const openEditGoalDialog = (goal: DevelopmentGoal) => {
-    setEditingGoal(goal)
     setIsGoalDialogOpen(true)
   }
 
@@ -224,11 +218,10 @@ export function Development() {
 
   return (
     <PageLayout
+      tone="info"
       title="إدارة التطوير"
       description="إدارة الأهداف الاستراتيجية وخطط التطوير للسنوات القادمة"
       icon={Target}
-      gradientFrom="from-blue-600"
-      gradientTo="to-purple-600"
       quickStats={quickStats}
       quickActions={quickActions}
     >
@@ -256,16 +249,16 @@ export function Development() {
                       className={`
                         relative flex items-center gap-2 px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200 flex-1 justify-center
                         ${isActive 
-                          ? 'bg-primary text-white shadow-lg shadow-primary/25 transform scale-[0.98]' 
+                          ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 transform scale-[0.98]' 
                           : 'text-muted-foreground hover:bg-primary/10 hover:text-foreground'
                         }
                       `}
                     >
-                      <Calendar className={`h-4 w-4 ${isActive ? 'text-white' : 'text-primary'}`} />
+                      <Calendar className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-primary'}`} />
                       <span className="whitespace-nowrap">خطة {year}</span>
                       
                       {isActive && (
-                        <div className="absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-white rounded-full" />
+                        <div className="absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-primary-foreground rounded-full" />
                       )}
                     </button>
                   )
@@ -306,7 +299,7 @@ export function Development() {
                     <span className="text-sm text-muted-foreground">القيمة الحالية:</span>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{formatValue(currentValue, goal.unit)}</span>
-                      <div className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full" title="محدث تلقائياً من النظام">
+                      <div className="text-xs text-success bg-success/10 px-2 py-1 rounded-full" title="محدث تلقائياً من النظام">
                         ⚡ محدث
                       </div>
                     </div>
@@ -361,7 +354,7 @@ export function Development() {
                         {Math.min(100, Math.round((currentValue / targetValue) * 100))}%
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-2">
                       <div 
                         className={`bg-primary rounded-full h-2 transition-all duration-300`}
                         data-width={Math.min(100, (currentValue / targetValue) * 100)}
@@ -372,9 +365,9 @@ export function Development() {
                   {/* الفجوة */}
                   <div className="text-xs text-center">
                     {currentValue >= targetValue ? (
-                      <span className="text-green-600">✅ تم تحقيق الهدف</span>
+                      <span className="text-success">✅ تم تحقيق الهدف</span>
                     ) : (
-                      <span className="text-orange-600">
+                      <span className="text-warning">
                         الفجوة: {formatValue(targetValue - currentValue, goal.unit)}
                       </span>
                     )}
@@ -385,20 +378,20 @@ export function Development() {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/20" 
+                      className="h-8 w-8 p-0 hover:bg-info/10" 
                       onClick={() => startEdit(goal.id, getTargetValue(goal, selectedYear))}
                       title="تعديل الهدف"
                     >
-                      <Edit className="h-4 w-4 text-blue-600" />
+                      <Edit className="h-4 w-4 text-info" />
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-900/20"
+                      className="h-8 w-8 p-0 hover:bg-destructive/10"
                       onClick={() => requestDeleteGoal(goal)}
                       title="حذف الهدف"
                     >
-                      <Trash2 className="h-4 w-4 text-red-600" />
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 </CardContent>
@@ -432,9 +425,9 @@ export function Development() {
                       <div className="flex-1 bg-background rounded-full h-1.5">
                         <div 
                           className={`h-1.5 rounded-full transition-all duration-300 ${
-                            achievement >= 100 ? 'bg-green-500' :
-                            achievement >= 80 ? 'bg-blue-500' :
-                            achievement >= 60 ? 'bg-orange-500' : 'bg-red-500'
+                            achievement >= 100 ? 'bg-success' :
+                            achievement >= 80 ? 'bg-primary' :
+                            achievement >= 60 ? 'bg-warning' : 'bg-destructive'
                           }`}
                           data-width={achievement}
                         />

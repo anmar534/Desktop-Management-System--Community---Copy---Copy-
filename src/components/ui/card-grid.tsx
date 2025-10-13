@@ -8,12 +8,12 @@
  * @date 2025-10-08
  */
 
-import React from 'react';
+import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/utils/cn';
 
 export type GridVariant = 'auto' | 'dashboard' | 'financial' | 'projects' | 'custom';
 
-interface CardGridProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardGridProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * نوع Grid المطلوب
    * - auto: يتكيف تلقائياً (auto-fit, minmax)
@@ -39,7 +39,7 @@ interface CardGridProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * عناصر الأطفال (البطاقات)
    */
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function CardGrid({
@@ -59,7 +59,7 @@ export function CardGrid({
     custom: '',
   };
 
-  const gridStyle: React.CSSProperties = variant === 'auto' ? {
+  const gridStyle: CSSProperties = variant === 'auto' ? {
     display: 'grid',
     gridTemplateColumns: `repeat(auto-fit, minmax(${minCardWidth}, 1fr))`,
     gap,
@@ -83,7 +83,7 @@ export function CardGrid({
 /**
  * Card Grid Item - wrapper للبطاقة الفردية مع دعم الـ elevation والتفاعل
  */
-interface CardGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardGridItemProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * إضافة تأثير الارتفاع عند التمرير
    * @default false
@@ -99,7 +99,7 @@ interface CardGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
    * عناصر الأطفال
    */
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function CardGridItem({
@@ -127,14 +127,14 @@ export function CardGridItem({
 /**
  * KPI Cards Grid - شبكة خاصة بعرض مؤشرات الأداء الرئيسية
  */
-interface KPICardsGridProps extends React.HTMLAttributes<HTMLDivElement> {
+interface KPICardsGridProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * عدد الأعمدة في الشاشات الكبيرة
    * @default 4
    */
   columns?: 2 | 3 | 4 | 5 | 6;
 
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function KPICardsGrid({
@@ -169,7 +169,7 @@ export function KPICardsGrid({
 /**
  * Status Cards Grid - شبكة خاصة بعرض بطاقات الحالة (مثل حالة المنافسات)
  */
-interface StatusCardsGridProps extends React.HTMLAttributes<HTMLDivElement> {
+interface StatusCardsGridProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * نمط العرض
    * - compact: مدمج (4-5 بطاقات في الصف)
@@ -178,7 +178,7 @@ interface StatusCardsGridProps extends React.HTMLAttributes<HTMLDivElement> {
    */
   density?: 'compact' | 'comfortable';
 
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export function StatusCardsGrid({

@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
+import { getDesignTokenExpression } from '@/utils/designTokens'
 import {
   DollarSign,
   BarChart3,
@@ -65,10 +66,10 @@ export function MonthlyExpensesChart({ onSectionChange }: MonthlyExpensesChartPr
 
   // بيانات توزيع المصاريف للشهر الحالي
   const currentMonthBreakdown: ExpenseBreakdown[] = [
-    { name: 'المواد', value: 1.5, color: '#3b82f6', textClass: 'text-blue-500', dotClass: 'bg-blue-500' },
-    { name: 'العمالة', value: 1.1, color: '#10b981', textClass: 'text-emerald-500', dotClass: 'bg-emerald-500' },
-    { name: 'المعدات', value: 0.5, color: '#f59e0b', textClass: 'text-amber-500', dotClass: 'bg-amber-500' },
-    { name: 'أخرى', value: 0.3, color: '#8b5cf6', textClass: 'text-violet-500', dotClass: 'bg-violet-500' }
+    { name: 'المواد', value: 1.5, color: getDesignTokenExpression('chart1'), textClass: 'text-primary', dotClass: 'bg-primary/80' },
+    { name: 'العمالة', value: 1.1, color: getDesignTokenExpression('chart2'), textClass: 'text-success', dotClass: 'bg-success/80' },
+    { name: 'المعدات', value: 0.5, color: getDesignTokenExpression('chart3'), textClass: 'text-warning', dotClass: 'bg-warning/80' },
+    { name: 'أخرى', value: 0.3, color: getDesignTokenExpression('chart4'), textClass: 'text-accent', dotClass: 'bg-accent/80' }
   ]
 
   // حساب الإحصائيات
@@ -85,9 +86,9 @@ export function MonthlyExpensesChart({ onSectionChange }: MonthlyExpensesChartPr
     }
 
     return (
-      <div className="bg-white dark:bg-gray-800 p-2 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
-        <p className="text-sm text-blue-600">
+      <div className="rounded-lg border border-border bg-card p-2 shadow-lg">
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="text-sm text-primary">
           {`المصاريف: ${formatCurrency(payload[0].value)}`}
         </p>
       </div>
@@ -161,7 +162,7 @@ export function MonthlyExpensesChart({ onSectionChange }: MonthlyExpensesChartPr
         {/* الرسم البياني الشريطي للمصاريف الشهرية */}
         <div>
           <h4 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1">
-            <BarChart3 className="h-3 w-3 text-purple-500" />
+            <BarChart3 className="h-3 w-3 text-accent" />
             المصاريف الشهرية (آخر 6 أشهر)
           </h4>
           <div className="h-32">
@@ -232,10 +233,10 @@ export function MonthlyExpensesChart({ onSectionChange }: MonthlyExpensesChartPr
         </div>
 
         {/* المتوسط الشهري */}
-        <div className="p-2 bg-gradient-to-r from-purple-500/5 to-indigo-500/5 rounded-lg border border-border">
+        <div className="rounded-lg border border-border bg-accent/10 p-2">
           <div className="flex justify-between items-center">
             <span className="text-xs text-muted-foreground">المتوسط الشهري</span>
-            <span className="text-sm font-bold text-purple-500">
+            <span className="text-sm font-bold text-accent">
               {formatCurrency(averageMonthly)}
             </span>
           </div>
@@ -245,7 +246,7 @@ export function MonthlyExpensesChart({ onSectionChange }: MonthlyExpensesChartPr
         <div className="flex gap-1 pt-2 border-t border-border">
           <Button 
             size="sm" 
-            className="flex-1 h-6 text-xs bg-purple-600 text-white hover:bg-purple-700"
+            className="flex-1 text-xs"
             onClick={() => onSectionChange('financial')}
           >
             <BarChart3 className="h-3 w-3 ml-1" />

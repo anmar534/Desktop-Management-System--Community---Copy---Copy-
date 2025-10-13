@@ -7,7 +7,8 @@ import { Button } from './ui/button'
 import { Switch } from './ui/switch'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
-import { Badge } from './ui/badge'
+import { InlineAlert } from './ui/inline-alert'
+import { StatusBadge } from './ui/status-badge'
 import { Progress } from './ui/progress'
 import { PageLayout, DetailCard } from './PageLayout'
 import { ExcelDataProcessor } from './ExcelDataProcessor'
@@ -33,7 +34,6 @@ import {
   Download,
   RefreshCw,
   CheckCircle,
-  AlertTriangle,
   FileSpreadsheet,
   Eye,
   X,
@@ -590,11 +590,10 @@ export function Settings() {
 
   return (
     <PageLayout
+      tone="secondary"
       title="إعدادات النظام"
       description="إعدادات الشركة والنظام والتفضيلات المتقدمة"
       icon={SettingsIcon}
-  gradientFrom="from-primary"
-  gradientTo="to-secondary"
       quickStats={quickStats}
       quickActions={quickActions}
       headerExtra={SystemStatusCards}
@@ -704,17 +703,20 @@ export function Settings() {
                 )}
 
                 {uploadStatus === 'error' && (
-                  <div className="space-y-4">
-                    <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
-                    <p className="text-destructive">حدث خطأ في رفع الملف</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setUploadStatus('idle')}
-                    >
-                      المحاولة مرة أخرى
-                    </Button>
-                  </div>
+                  <InlineAlert
+                    variant="destructive"
+                    title="فشل رفع الملف"
+                    description="حدث خطأ أثناء رفع الملف. حاول مرة أخرى أو تأكد من تنسيق البيانات."
+                    actions={(
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setUploadStatus('idle')}
+                      >
+                        إعادة المحاولة
+                      </Button>
+                    )}
+                  />
                 )}
               </div>
 
@@ -748,19 +750,25 @@ export function Settings() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center gap-4">
                 <span className="text-muted-foreground">إصدار النظام:</span>
-                <Badge variant="outline">{settingsStats.systemVersion}</Badge>
+                <StatusBadge
+                  status="info"
+                  label={settingsStats.systemVersion}
+                  size="sm"
+                  showIcon={false}
+                  className="shadow-none"
+                />
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">آخر تحديث:</span>
                 <span className="text-sm text-foreground">{settingsStats.lastUpdate}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center gap-4">
                 <span className="text-muted-foreground">الوحدات النشطة:</span>
-                <Badge variant="success">
+                <StatusBadge status="success" size="sm" className="shadow-none">
                   {settingsStats.activeModules} وحدات
-                </Badge>
+                </StatusBadge>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">المستخدمون النشطون:</span>
@@ -874,9 +882,9 @@ export function Settings() {
                     <p className="text-sm text-muted-foreground">
                       عرض أول 5 سجلات من أصل {uploadedData.length}
                     </p>
-                    <Badge variant="info">
+                    <StatusBadge status="info" size="sm" className="shadow-none">
                       {uploadedData.length} سجل
-                    </Badge>
+                    </StatusBadge>
                   </div>
                   
                   <div className="overflow-x-auto">
@@ -1001,14 +1009,18 @@ export function Settings() {
                   <Label className="font-medium">لغة الواجهة</Label>
                   <p className="text-sm text-muted-foreground">العربية (افتراضي)</p>
                 </div>
-                <Badge variant="outline">عربي</Badge>
+                <StatusBadge status="info" size="sm" showIcon={false} className="shadow-none">
+                  عربي
+                </StatusBadge>
               </div>
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="font-medium">حجم الخط</Label>
                   <p className="text-sm text-muted-foreground">متوسط (14px)</p>
                 </div>
-                <Badge variant="outline">متوسط</Badge>
+                <StatusBadge status="info" size="sm" showIcon={false} className="shadow-none">
+                  متوسط
+                </StatusBadge>
               </div>
             </CardContent>
           </Card>

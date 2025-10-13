@@ -1,10 +1,9 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { EmptyState } from './PageLayout'
-import { 
+import {
   Trophy,
   Clock,
   Target,
@@ -22,6 +21,9 @@ import { useMemo } from 'react'
 import { useFinancialState } from '@/application/context'
 import { calculateTenderStats } from '../calculations/tender'
 import type { Tender } from '../data/centralData'
+import { InlineAlert } from './ui/inline-alert'
+import { StatusBadge } from './ui/status-badge'
+import { cn } from './ui/utils'
 
 interface TenderStatusCardsProps {
   onSectionChange: (
@@ -87,12 +89,18 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
     value: performanceData.thisMonth.totalValue - performanceData.lastMonth.totalValue
   }
 
-  // دالة للحصول على classes للمنافسات العاجلة
-  const getUrgencyClasses = (daysLeft: number) => {
-    if (daysLeft <= 1) return "text-red-600 bg-red-50 border-red-200"
-    if (daysLeft <= 3) return "text-orange-600 bg-orange-50 border-orange-200"
-    if (daysLeft <= 7) return "text-yellow-600 bg-yellow-50 border-yellow-200"
-    return "text-blue-600 bg-blue-50 border-blue-200"
+  type UrgencyStatus = 'overdue' | 'dueSoon' | 'onTrack'
+
+  const resolveUrgencyStatus = (daysLeft: number): UrgencyStatus => {
+    if (daysLeft <= 1) return 'overdue'
+    if (daysLeft <= 3) return 'dueSoon'
+    return 'onTrack'
+  }
+
+  const URGENCY_INDICATOR_STYLES: Record<UrgencyStatus, string> = {
+    overdue: 'border-error/20 bg-error/10 text-error',
+    dueSoon: 'border-warning/20 bg-warning/10 text-warning',
+    onTrack: 'border-info/20 bg-info/10 text-info'
   }
 
   // دالة حساب الأيام المتبقية
@@ -109,8 +117,8 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
-        <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+  <div className="h-64 bg-muted animate-pulse rounded-lg"></div>
+  <div className="h-64 bg-muted animate-pulse rounded-lg"></div>
       </div>
     )
   }
@@ -127,13 +135,16 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
         <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow duration-300 h-full">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
-                <Clock className="h-5 w-5 text-white" />
+              <div className="p-2 rounded-lg bg-warning/20 border border-warning/30">
+                <Clock className="h-5 w-5 text-warning" />
               </div>
               المنافسات العاجلة
-              <Badge variant="destructive" className="text-xs">
-                {tenderStats.urgent} عاجل
-              </Badge>
+              <StatusBadge
+                status={tenderStats.urgent > 0 ? 'warning' : 'success'}
+                size="sm"
+                label={tenderStats.urgent > 0 ? 'منافسات عاجلة' : 'مستقر'}
+                value={tenderStats.urgent}
+              />
             </CardTitle>
             <p className="text-sm text-muted-foreground">
               المنافسات التي تحتاج إجراء فوري خلال الأسبوع القادم
@@ -141,9 +152,16 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
           </CardHeader>
           
           <CardContent className="space-y-4">
-            
-            {/* إحصائيات سريعة */}
-                        {/* إحصائيات سريعة */}
+            <InlineAlert
+              variant={tenderStats.urgent > 0 ? 'warning' : 'success'}
+              title={tenderStats.urgent > 0 ? 'هناك منافسات تحتاج متابعة عاجلة' : 'لا توجد منافسات عاجلة حالياً'}
+              description={
+                tenderStats.urgent > 0
+                  ? `رصد النظام ${tenderStats.urgent} منافسة تنتهي خلال الأيام القادمة.`
+                  : 'جميع المنافسات ضمن الجدول الزمني المحدد.'
+              }
+            />
+
             <div className="grid grid-cols-2 gap-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
               <div className="text-center">
                 <div className="text-lg font-bold text-destructive">{tenderStats.expired}</div>
@@ -168,15 +186,16 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
                     onClick={() => onSectionChange('tenders')}
                   >
                     {/* أيقونة المنافسة مع لون موحد للعاجلة */}
-                    <div className={`p-2 rounded-lg ${
-                      (() => {
-                        const daysLeft = getDaysRemainingLocal(tender.deadline);
-                        return getUrgencyClasses(daysLeft);
-                      })()
-                    }`}>
-                      <Trophy className="h-4 w-4" />
-                    </div>
-                    
+                    {(() => {
+                      const daysLeft = getDaysRemainingLocal(tender.deadline)
+                      const urgencyStatus = resolveUrgencyStatus(daysLeft)
+                      return (
+                        <div className={cn('p-2 rounded-lg border', URGENCY_INDICATOR_STYLES[urgencyStatus])}>
+                          <Trophy className="h-4 w-4" />
+                        </div>
+                      )
+                    })()}
+
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-medium text-foreground truncate">
                         {tender.title || tender.name}
@@ -187,17 +206,17 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
                         <span className="text-xs text-primary">{formatCurrency(tender.value)}</span>
                       </div>
                     </div>
-                    
-                    <div className="text-right">
-                      <Badge variant={
-                        (() => {
-                          const daysLeft = getDaysRemainingLocal(tender.deadline);
-                          return daysLeft <= 1 ? 'destructive' : daysLeft <= 3 ? 'secondary' : 'outline'
-                        })()
-                      } className="text-xs">
-                        {getDaysRemainingLocal(tender.deadline)} أيام
-                      </Badge>
-                    </div>
+
+                    {(() => {
+                      const daysLeft = getDaysRemainingLocal(tender.deadline)
+                      const urgencyStatus = resolveUrgencyStatus(daysLeft)
+                      return (
+                        <StatusBadge status={urgencyStatus} size="sm" showIcon={false} className="whitespace-nowrap">
+                          <span className="font-semibold">{daysLeft}</span>
+                          <span className="ms-1">يوم</span>
+                        </StatusBadge>
+                      )
+                    })()}
                   </motion.div>
                 ))
               ) : (
@@ -213,20 +232,21 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
 
             {/* إجراءات سريعة */}
             <div className="flex gap-2 pt-3 border-t border-border">
-              <Button 
-                size="sm" 
-                className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 group"
+              <Button
+                size="sm"
+                className="flex-1 shadow-sm"
                 onClick={() => onSectionChange('tenders')}
               >
-                <Search className="h-4 w-4 ml-1 group-hover:scale-110 transition-transform" />
+                <Search className="h-4 w-4 ml-1" />
                 استعراض المنافسات
               </Button>
-              <Button 
-                size="sm" 
-                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white shadow-md hover:shadow-lg transition-all duration-200 group"
+              <Button
+                size="sm"
+                variant="secondary"
+                className="shadow-sm"
                 onClick={() => onSectionChange('new-tender')}
               >
-                <Plus className="h-4 w-4 ml-1 group-hover:rotate-90 transition-transform" />
+                <Plus className="h-4 w-4 ml-1" />
                 إضافة منافسة
               </Button>
             </div>
@@ -243,13 +263,15 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
         <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow duration-300 h-full">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
-                <Target className="h-5 w-5 text-white" />
+              <div className="p-2 rounded-lg bg-info/20 border border-info/30">
+                <Target className="h-5 w-5 text-info" />
               </div>
               تحليل أداء المنافسات
-              <Badge variant={improvement.winRate > 0 ? 'success' : 'destructive'} className="text-xs">
-                {improvement.winRate > 0 ? 'تحسن' : 'تراجع'}
-              </Badge>
+              <StatusBadge
+                status={improvement.winRate >= 0 ? 'success' : 'warning'}
+                size="sm"
+                label={improvement.winRate >= 0 ? 'تحسن' : 'تنبيه'}
+              />
             </CardTitle>
             <p className="text-sm text-muted-foreground">
               مقارنة أداء هذا الشهر مع الشهر الماضي
@@ -257,6 +279,19 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
           </CardHeader>
           
           <CardContent className="space-y-4">
+            <InlineAlert
+              variant={improvement.winRate >= 0 ? 'success' : 'warning'}
+              title={
+                improvement.winRate >= 0
+                  ? 'معدل الفوز يتحسن'
+                  : 'معدل الفوز يحتاج متابعة'
+              }
+              description={
+                improvement.winRate >= 0
+                  ? `تحسن معدل الفوز بمقدار ${improvement.winRate}% مقارنة بالشهر الماضي.`
+                  : `انخفض معدل الفوز بمقدار ${Math.abs(improvement.winRate)}%. يوصى بمراجعة تحليل الأداء.`
+              }
+            />
             
             {/* مقارنة معدل الفوز */}
             <div className="space-y-3">
@@ -339,7 +374,8 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
             <div className="flex gap-2 pt-3 border-t border-border">
               <Button 
                 size="sm" 
-                className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md hover:shadow-lg transition-all duration-200 group"
+                variant="secondary"
+                className="flex-1 shadow-md bg-accent text-accent-foreground hover:bg-accent/90 transition-all duration-200 group"
                 onClick={() => onSectionChange('reports')}
               >
                 <BarChart3 className="h-4 w-4 ml-1 group-hover:scale-110 transition-transform" />
@@ -347,7 +383,8 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
               </Button>
               <Button 
                 size="sm" 
-                className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white shadow-md hover:shadow-lg transition-all duration-200 group"
+                variant="secondary"
+                className="shadow-md bg-muted text-foreground hover:bg-muted/90 transition-all duration-200 group"
                 onClick={() => onSectionChange('tenders')}
               >
                 <Zap className="h-4 w-4 ml-1 group-hover:scale-110 transition-transform" />

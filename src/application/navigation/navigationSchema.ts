@@ -19,6 +19,7 @@ export const NAVIGATION_SECTIONS = [
   'tenders',
   'new-tender',
   'tender-pricing-wizard',
+  'analytics',
   'financial',
   'development',
   'invoices',
@@ -46,6 +47,8 @@ const NAVIGATION_PERMISSION_VALUES = [
   'projects:write',
   'financial:read',
   'financial:write',
+  'analytics:read',
+  'analytics:write',
   'reports:read',
   'reports:write',
   'settings:write',
@@ -242,6 +245,42 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     }
   },
   {
+    id: 'analytics',
+    label: 'التحليلات والذكاء التنافسي',
+    description: 'تحليلات الأداء، التنبؤات، والذكاء التنافسي المتقدم',
+    icon: BarChart3,
+    order: 28,
+    category: 'primary',
+    requires: ['analytics:read'],
+    breadcrumbs: [
+      { label: 'لوحة التحكم', section: 'dashboard' },
+      { label: 'التحليلات والذكاء التنافسي' }
+    ],
+    quickActions: [
+      {
+        id: 'predictive-analytics',
+        label: 'التحليلات التنبؤية',
+        icon: Activity,
+        targetSection: 'analytics',
+        requires: ['analytics:read'],
+        tooltip: 'عرض توقعات الفوز وتحسين الأسعار'
+      },
+      {
+        id: 'competitor-tracker',
+        label: 'تتبع المنافسين',
+        icon: Target,
+        targetSection: 'analytics',
+        requires: ['analytics:read'],
+        tooltip: 'مراقبة وتحليل أنشطة المنافسين'
+      }
+    ],
+    relatedSections: ['tenders', 'projects', 'financial'],
+    view: {
+      module: '@/components/analytics/AnalyticsRouter',
+      exportName: 'AnalyticsRouter'
+    }
+  },
+  {
     id: 'financial',
     label: 'المالية',
     description: 'تحليل التدفق النقدي، الموازنات، والحسابات المالية',
@@ -293,6 +332,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     icon: FileText,
     order: 50,
     category: 'primary',
+    hideFromMenu: true,
     requires: ['financial:read'],
     breadcrumbs: [
       { label: 'المالية', section: 'financial' },
@@ -309,8 +349,8 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['financial', 'projects'],
     view: {
-      module: '@/components/Invoices',
-      exportName: 'Invoices'
+      module: '@/components/Financial',
+      exportName: 'Financial'
     }
   },
   {
@@ -320,6 +360,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     icon: Banknote,
     order: 60,
     category: 'primary',
+    hideFromMenu: true,
     requires: ['financial:read'],
     breadcrumbs: [
       { label: 'المالية', section: 'financial' },
@@ -336,8 +377,8 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['financial'],
     view: {
-      module: '@/components/BankAccounts',
-      exportName: 'BankAccounts'
+      module: '@/components/Financial',
+      exportName: 'Financial'
     }
   },
   {
@@ -347,6 +388,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     icon: Calculator,
     order: 70,
     category: 'primary',
+    hideFromMenu: true,
     requires: ['financial:read'],
     breadcrumbs: [
       { label: 'المالية', section: 'financial' },
@@ -363,8 +405,8 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['projects'],
     view: {
-      module: '@/components/Budgets',
-      exportName: 'Budgets'
+      module: '@/components/Financial',
+      exportName: 'Financial'
     }
   },
   {
@@ -374,14 +416,15 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     icon: BarChart3,
     order: 80,
     category: 'reporting',
+    hideFromMenu: true,
     requires: ['reports:read'],
     breadcrumbs: [
-      { label: 'التقارير', section: 'reports' },
+      { label: 'المالية', section: 'financial' },
       { label: 'التقارير المالية' }
     ],
     view: {
-      module: '@/components/FinancialReports',
-      exportName: 'FinancialReports'
+      module: '@/components/Financial',
+      exportName: 'Financial'
     }
   },
   {

@@ -14,9 +14,9 @@ const TypographyShowcase = () => {
         <h2 className="text-2xl font-bold mb-6">أحجام الخطوط (Font Sizes)</h2>
         <div className="space-y-4">
           {Object.entries(tokens.typography.fontSize).map(([key, value]) => (
-            <div key={key} className="flex items-baseline gap-4 border-b border-gray-200 pb-2">
-              <span className="font-mono text-sm text-gray-500 w-16">{key}</span>
-              <span className="font-mono text-xs text-gray-400 w-20">{value}</span>
+            <div key={key} className="flex items-baseline gap-4 border-b border-border pb-2">
+              <span className="font-mono text-sm text-muted-foreground w-16">{key}</span>
+              <span className="font-mono text-xs text-muted-foreground w-20">{value}</span>
               <span style={{ fontSize: value }}>النص التجريبي - Sample Text</span>
             </div>
           ))}
@@ -28,9 +28,9 @@ const TypographyShowcase = () => {
         <h2 className="text-2xl font-bold mb-6">أوزان الخطوط (Font Weights)</h2>
         <div className="space-y-4">
           {Object.entries(tokens.typography.fontWeight).map(([key, value]) => (
-            <div key={key} className="flex items-baseline gap-4 border-b border-gray-200 pb-2">
-              <span className="font-mono text-sm text-gray-500 w-24">{key}</span>
-              <span className="font-mono text-xs text-gray-400 w-16">{value}</span>
+            <div key={key} className="flex items-baseline gap-4 border-b border-border pb-2">
+              <span className="font-mono text-sm text-muted-foreground w-24">{key}</span>
+              <span className="font-mono text-xs text-muted-foreground w-16">{value}</span>
               <span style={{ fontWeight: value }} className="text-lg">
                 النص التجريبي - Sample Text
               </span>
@@ -44,10 +44,10 @@ const TypographyShowcase = () => {
         <h2 className="text-2xl font-bold mb-6">ارتفاعات الأسطر (Line Heights)</h2>
         <div className="space-y-6">
           {Object.entries(tokens.typography.lineHeight).map(([key, value]) => (
-            <div key={key} className="border border-gray-200 rounded-lg p-4">
+            <div key={key} className="border border-border rounded-lg p-4">
               <div className="flex items-center gap-4 mb-2">
-                <span className="font-mono text-sm text-gray-500">{key}</span>
-                <span className="font-mono text-xs text-gray-400">{value}</span>
+                <span className="font-mono text-sm text-muted-foreground">{key}</span>
+                <span className="font-mono text-xs text-muted-foreground">{value}</span>
               </div>
               <p style={{ lineHeight: value }}>
                 هذا نص تجريبي طويل يستخدم لعرض ارتفاع السطر. 
@@ -64,32 +64,32 @@ const TypographyShowcase = () => {
       <section>
         <h2 className="text-2xl font-bold mb-6">عائلات الخطوط (Font Families)</h2>
         <div className="space-y-6">
-          <div className="border border-gray-200 rounded-lg p-4">
+          <div className="border border-border rounded-lg p-4">
             <h3 className="font-semibold mb-2">Sans (Default)</h3>
             <p style={{ fontFamily: tokens.typography.fontFamily.sans }} className="text-lg">
               النص العربي - Arabic Text | English Text | 123456789
             </p>
-            <code className="text-xs text-gray-500 mt-2 block">
+            <code className="text-xs text-muted-foreground mt-2 block">
               {tokens.typography.fontFamily.sans}
             </code>
           </div>
 
-          <div className="border border-gray-200 rounded-lg p-4">
+          <div className="border border-border rounded-lg p-4">
             <h3 className="font-semibold mb-2">Mono (Code)</h3>
             <p style={{ fontFamily: tokens.typography.fontFamily.mono }} className="text-lg">
-              const message = "Hello World"; // Code Example
+              const message = &quot;Hello World&quot;; // Code Example
             </p>
-            <code className="text-xs text-gray-500 mt-2 block">
+            <code className="text-xs text-muted-foreground mt-2 block">
               {tokens.typography.fontFamily.mono}
             </code>
           </div>
 
-          <div className="border border-gray-200 rounded-lg p-4">
+          <div className="border border-border rounded-lg p-4">
             <h3 className="font-semibold mb-2">Arabic (Specialized)</h3>
             <p style={{ fontFamily: tokens.typography.fontFamily.arabic }} className="text-lg">
               النص العربي بخط متخصص للغة العربية
             </p>
-            <code className="text-xs text-gray-500 mt-2 block">
+            <code className="text-xs text-muted-foreground mt-2 block">
               {tokens.typography.fontFamily.arabic}
             </code>
           </div>

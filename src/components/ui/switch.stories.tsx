@@ -267,7 +267,7 @@ export const FeatureToggles: Story = {
               <Label htmlFor="advanced-search" className="cursor-pointer font-medium">
                 البحث المتقدم
               </Label>
-              <span className="text-xs bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded">
+              <span className="text-xs bg-info/10 dark:bg-info/20 text-info px-2 py-0.5 rounded">
                 Beta
               </span>
             </div>
@@ -284,7 +284,7 @@ export const FeatureToggles: Story = {
               <Label htmlFor="ai-assist" className="cursor-pointer font-medium">
                 المساعد الذكي
               </Label>
-              <span className="text-xs bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
+              <span className="text-xs bg-success/10 dark:bg-success/20 text-success px-2 py-0.5 rounded">
                 جديد
               </span>
             </div>
@@ -483,7 +483,7 @@ export const UsageGuide: Story = {
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">Switch vs Checkbox</h3>
         <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded">
+          <div className="p-3 bg-info/10 dark:bg-info/20 rounded">
             <h4 className="font-semibold mb-2">استخدم Switch عندما:</h4>
             <ul className="list-disc list-inside space-y-1">
               <li>التأثير فوري (مثل تفعيل الوضع المظلم)</li>
@@ -491,7 +491,7 @@ export const UsageGuide: Story = {
               <li>تفعيل/تعطيل ميزة</li>
             </ul>
           </div>
-          <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded">
+          <div className="p-3 bg-warning/10 dark:bg-warning/20 rounded">
             <h4 className="font-semibold mb-2">استخدم Checkbox عندما:</h4>
             <ul className="list-disc list-inside space-y-1">
               <li>جزء من نموذج يتطلب حفظ</li>
@@ -556,7 +556,7 @@ export const UsageGuide: Story = {
 
       <div className="space-y-2">
         <h3 className="text-xl font-semibold">Accessibility</h3>
-        <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm space-y-2">
+  <div className="bg-info/10 dark:bg-info/20 p-4 rounded-lg text-sm space-y-2">
           <p>✅ استخدم Label مع htmlFor</p>
           <p>✅ keyboard navigation (Space to toggle)</p>
           <p>✅ ARIA attributes تلقائية من Radix UI</p>

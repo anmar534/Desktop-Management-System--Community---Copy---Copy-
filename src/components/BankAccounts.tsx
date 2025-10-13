@@ -78,32 +78,32 @@ export function BankAccounts({ onSectionChange }: BankAccountsProps) {
       value: formatCurrency(bankAccountsData.overview.totalBalance),
       trend: 'up' as const,
       trendValue: '+5.2%',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
+      color: 'text-success',
+      bgColor: 'bg-success/10'
     },
     {
       label: 'التدفق الشهري الداخل',
       value: formatCurrency(bankAccountsData.overview.monthlyInflow),
       trend: 'up' as const,
       trendValue: '+12.8%',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      color: 'text-info',
+      bgColor: 'bg-info/10'
     },
     {
       label: 'التدفق الشهري الخارج',
       value: formatCurrency(bankAccountsData.overview.monthlyOutflow),
       trend: 'down' as const,
       trendValue: '-3.1%',
-      color: 'text-red-600',
-      bgColor: 'bg-red-50'
+      color: 'text-destructive',
+      bgColor: 'bg-destructive/10'
     },
     {
       label: 'صافي التدفق النقدي',
       value: formatCurrency(bankAccountsData.overview.netCashFlow),
       trend: 'up' as const,
       trendValue: '+18.5%',
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50'
+      color: 'text-success',
+      bgColor: 'bg-success/10'
     }
   ]
 
@@ -190,43 +190,42 @@ export function BankAccounts({ onSectionChange }: BankAccountsProps) {
         value={bankAccountsData.overview.activeAccounts.toString()}
         subtitle="من إجمالي الحسابات"
         icon={Landmark}
-        color="text-blue-600"
-        bgColor="bg-blue-50"
+        color="text-info"
+        bgColor="bg-info/10"
       />
       <DetailCard
         title="متوسط الرصيد"
         value={accounts.length > 0 ? formatCurrency(bankAccountsData.overview.totalBalance / accounts.length) : formatCurrency(0)}
         subtitle="لكل حساب"
         icon={Wallet}
-        color="text-green-600"
-        bgColor="bg-green-50"
+        color="text-success"
+        bgColor="bg-success/10"
       />
       <DetailCard
         title="أكبر حساب"
         value={accounts.length > 0 ? formatCurrency(Math.max(...accounts.map(acc => acc.currentBalance))) : formatCurrency(0)}
         subtitle="أعلى رصيد"
         icon={TrendingUp}
-        color="text-emerald-600"
-        bgColor="bg-emerald-50"
+        color="text-primary"
+        bgColor="bg-primary/10"
       />
       <DetailCard
         title="آخر معاملة"
         value="اليوم"
         subtitle="أحدث نشاط"
         icon={Clock}
-        color="text-purple-600"
-        bgColor="bg-purple-50"
+        color="text-accent"
+        bgColor="bg-accent/10"
       />
     </div>
   )
 
   return (
     <PageLayout
+      tone="success"
       title="إدارة الحسابات البنكية"
       description="إدارة ومتابعة الحسابات البنكية والتدفقات النقدية"
       icon={Landmark}
-      gradientFrom="from-emerald-600"
-      gradientTo="to-emerald-700"
       quickStats={quickStats}
       quickActions={quickActions}
       searchPlaceholder="البحث في الحسابات..."
@@ -337,17 +336,17 @@ export function BankAccounts({ onSectionChange }: BankAccountsProps) {
                     {/* التدفق النقدي الشهري */}
                     <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1 text-green-600">
+                          <div className="flex items-center gap-1 text-success">
                           <ArrowDownLeft className="h-4 w-4" />
                           <span className="text-sm">داخل: {formatCurrency(account.monthlyInflow)}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-red-600">
+                          <div className="flex items-center gap-1 text-destructive">
                           <ArrowUpRight className="h-4 w-4" />
                           <span className="text-sm">خارج: {formatCurrency(account.monthlyOutflow)}</span>
                         </div>
                       </div>
                       
-                      <div className={`flex items-center gap-1 ${netFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`flex items-center gap-1 ${netFlow >= 0 ? 'text-success' : 'text-destructive'}`}>
                         {netFlow >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                         <span className="text-sm font-medium">
                           صافي: {formatCurrency(Math.abs(netFlow))}
@@ -385,7 +384,7 @@ export function BankAccounts({ onSectionChange }: BankAccountsProps) {
                         size="sm" 
                         variant="outline"
                         onClick={() => handleDeleteAccount(account)}
-                        className="text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                        className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:border-destructive/40"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
                         حذف
@@ -417,19 +416,19 @@ export function BankAccounts({ onSectionChange }: BankAccountsProps) {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">التدفق الداخل</span>
-                  <span className="text-sm font-medium text-green-600">
+                  <span className="text-sm font-medium text-success">
                     {formatCurrency(bankAccountsData.overview.monthlyInflow)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">التدفق الخارج</span>
-                  <span className="text-sm font-medium text-red-600">
+                  <span className="text-sm font-medium text-destructive">
                     {formatCurrency(bankAccountsData.overview.monthlyOutflow)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t">
                   <span className="text-sm font-medium">الصافي</span>
-                  <span className="text-sm font-bold text-emerald-600">
+                  <span className="text-sm font-bold text-success">
                     {formatCurrency(bankAccountsData.overview.netCashFlow)}
                   </span>
                 </div>

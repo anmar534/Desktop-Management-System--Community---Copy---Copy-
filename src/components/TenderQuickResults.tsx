@@ -182,9 +182,9 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
   // التحقق من إمكانية إدخال النتائج
   if (tender.status !== 'submitted') {
     return (
-      <Card className="border-yellow-200 bg-yellow-50">
+      <Card className="border-warning/20 bg-warning/10">
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 text-yellow-700">
+          <div className="flex items-center gap-2 text-warning">
             <AlertCircle className="h-4 w-4" />
             <span className="text-sm">يمكن إدخال النتائج فقط للمناقصات المقدمة</span>
           </div>
@@ -198,15 +198,15 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Zap className="h-5 w-5 text-blue-600" />
+            <Zap className="h-5 w-5 text-info" />
             إدخال النتيجة السريع
           </CardTitle>
         </CardHeader>
         
         <CardContent className="space-y-4">
           {/* معلومات المنافسة */}
-          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-            <div className="text-sm text-blue-800">
+          <div className="bg-info/10 p-3 rounded-lg border border-info/20">
+            <div className="text-sm text-info">
               <p><strong>المنافسة:</strong> {tender.name}</p>
               <p><strong>قيمة عرضنا:</strong> {formatCurrencyValue(tenderBaseValue)}</p>
               <p><strong>العميل:</strong> {tender.client}</p>
@@ -218,7 +218,7 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
             <Button
               onClick={() => handleResultSelection('won')}
               disabled={isUpdating}
-              className="h-16 bg-green-600 hover:bg-green-700 text-white flex flex-col items-center gap-2"
+              className="h-16 bg-success text-background hover:bg-success/90 flex flex-col items-center gap-2"
             >
               <Trophy className="h-6 w-6" />
               <span className="font-medium">فائزة 🎉</span>
@@ -258,12 +258,12 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
             <AlertDialogTitle className="flex items-center gap-2 text-right">
               {selectedResult === 'won' ? (
                 <>
-                  <Trophy className="h-5 w-5 text-green-600" />
+                  <Trophy className="h-5 w-5 text-success" />
                   تأكيد الفوز بالمنافسة
                 </>
               ) : (
                 <>
-                  <XCircle className="h-5 w-5 text-red-600" />
+                  <XCircle className="h-5 w-5 text-destructive" />
                   تأكيد خسارة المنافسة
                 </>
               )}
@@ -286,7 +286,7 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
             <div className="space-y-4">
               <div className="text-right">
                 <Label htmlFor="winningBid" className="text-sm font-medium">
-                  قيمة العرض الفائز (ريال سعودي) <span className="text-red-500">*</span>
+                  قيمة العرض الفائز (ريال سعودي) <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="winningBid"
@@ -299,10 +299,10 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
                 />
               </div>
               
-              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+              <div className="bg-warning/10 p-3 rounded-lg border border-warning/20">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-yellow-800">
+                  <AlertCircle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-warning">
                     <p>ملاحظة: قيمة عرضنا كانت {formatCurrencyValue(tenderBaseValue)}</p>
                   </div>
                 </div>
@@ -314,7 +314,7 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
             <AlertDialogCancel onClick={resetForm}>إلغاء</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmResult}
-              className={selectedResult === 'won' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+              className={selectedResult === 'won' ? 'bg-success text-background hover:bg-success/90' : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'}
               disabled={isUpdating}
             >
               {isUpdating ? 'جاري التحديث...' : selectedResult === 'won' ? 'تأكيد الفوز' : 'تأكيد الخسارة'}

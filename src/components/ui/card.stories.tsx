@@ -136,8 +136,8 @@ export const StatCard: Story = {
       <CardContent>
         <div className="text-2xl font-bold">52,430 ر.س</div>
         <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-          <TrendingUp className="h-3 w-3 text-green-500" />
-          <span className="text-green-500">+12.5%</span>
+          <TrendingUp className="h-3 w-3 text-success" />
+          <span className="text-success">+12.5%</span>
           من الشهر السابق
         </p>
       </CardContent>
@@ -253,7 +253,7 @@ export const AllVariants: Story = {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">52,430</div>
-              <p className="text-xs text-green-500 mt-1">
+              <p className="text-xs text-success mt-1">
                 +12.5% ↑
               </p>
             </CardContent>
@@ -352,8 +352,8 @@ export const ThemeTesting: Story = {
         </div>
       </div>
 
-      <div data-theme="dark" className="p-spacing-6 rounded-lg bg-gray-900">
-        <h3 className="text-lg font-semibold mb-spacing-4 text-white">Dark Theme</h3>
+      <div data-theme="dark" className="p-spacing-6 rounded-lg bg-muted text-muted-foreground">
+        <h3 className="text-lg font-semibold mb-spacing-4 text-foreground">Dark Theme</h3>
         <div className="grid grid-cols-2 gap-spacing-4">
           <Card>
             <CardHeader>
@@ -379,8 +379,8 @@ export const ThemeTesting: Story = {
         </div>
       </div>
 
-      <div data-theme="high-contrast" className="p-spacing-6 rounded-lg bg-black">
-        <h3 className="text-lg font-semibold mb-spacing-4 text-white">High Contrast Theme</h3>
+      <div data-theme="high-contrast" className="p-spacing-6 rounded-lg bg-background text-foreground">
+        <h3 className="text-lg font-semibold mb-spacing-4">High Contrast Theme</h3>
         <div className="grid grid-cols-2 gap-spacing-4">
           <Card>
             <CardHeader>
@@ -448,7 +448,7 @@ export const UsageExamples: Story = {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">450K</div>
-              <p className="text-xs text-green-500 mt-2">
+              <p className="text-xs text-success mt-2">
                 +15.3% ↑
               </p>
             </CardContent>
@@ -512,14 +512,14 @@ export const UsageGuide: Story = {
             </p>
           </div>
 
-          <div className="border-l-4 border-blue-500 pl-spacing-4">
+          <div className="border-l-4 border-info pl-spacing-4">
             <h4 className="font-semibold">عرض البيانات الإحصائية</h4>
             <p className="text-sm text-muted-foreground">
               مثالي لبطاقات KPI والإحصائيات في لوحة التحكم
             </p>
           </div>
 
-          <div className="border-l-4 border-green-500 pl-spacing-4">
+          <div className="border-l-4 border-success pl-spacing-4">
             <h4 className="font-semibold">إنشاء قوائم</h4>
             <p className="text-sm text-muted-foreground">
               استخدم عدة بطاقات لإنشاء قوائم من العناصر (قائمة عملاء، مشاريع)

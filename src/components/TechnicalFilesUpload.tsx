@@ -2,16 +2,14 @@ import type React from 'react';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
-import { Badge } from './ui/badge';
-import { Alert, AlertDescription } from './ui/alert';
+import { InlineAlert } from './ui/inline-alert';
+import { StatusBadge } from './ui/status-badge';
 import { DeleteConfirmation } from './ui/confirmation-dialog';
 import { EmptyState } from './PageLayout';
 import { 
   Upload, 
   Download, 
   FileText, 
-  AlertCircle, 
-  CheckCircle,
   Trash2
 } from 'lucide-react';
 import type { UploadedFile } from '../utils/fileUploadService';
@@ -284,18 +282,18 @@ export function TechnicalFilesUpload({ tenderId }: TechnicalFilesUploadProps) {
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
           isDragging 
             ? 'border-primary bg-primary/5' 
-            : 'border-gray-300 hover:border-primary hover:bg-gray-50'
+            : 'border-border hover:border-primary hover:bg-muted/30'
         }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={handleFileSelect}
       >
-        <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">
           رفع ملفات العرض الفني
         </h3>
-        <p className="text-gray-500 mb-4">
+        <p className="text-muted-foreground mb-4">
           اسحب وأفلت الملفات هنا أو انقر للاختيار
         </p>
         <Button
@@ -307,7 +305,7 @@ export function TechnicalFilesUpload({ tenderId }: TechnicalFilesUploadProps) {
         </Button>
         
         {/* معلومات الملفات المدعومة */}
-        <div className="mt-4 text-xs text-gray-500">
+        <div className="mt-4 text-xs text-muted-foreground">
           <p>الملفات المدعومة: Word (.doc, .docx), Excel (.xls, .xlsx), PowerPoint (.ppt, .pptx), PDF (.pdf)</p>
           <p>الحد الأقصى: 10 ميجابايت لكل ملف</p>
         </div>
@@ -326,12 +324,11 @@ export function TechnicalFilesUpload({ tenderId }: TechnicalFilesUploadProps) {
 
       {/* تحذير إذا لم يتم تحديد منافسة */}
       {!tenderId && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            يرجى تحديد منافسة من القائمة أولاً لتتمكن من رفع الملفات
-          </AlertDescription>
-        </Alert>
+        <InlineAlert
+          variant="warning"
+          title="يرجى اختيار منافسة"
+          description="يرجى تحديد منافسة من القائمة أولاً لتتمكن من رفع الملفات."
+        />
       )}
 
       {/* قائمة الملفات المرفوعة */}
@@ -352,8 +349,8 @@ export function TechnicalFilesUpload({ tenderId }: TechnicalFilesUploadProps) {
                         {FileUploadService.getFileIcon(file.type)}
                       </span>
                       <div>
-                        <p className="font-medium text-gray-900">{file.name}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <p className="font-medium text-foreground">{file.name}</p>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span>{FileUploadService.formatFileSize(file.size)}</span>
                           <span>{formatDateValue(file.uploadDate ?? Date.now(), { locale: 'ar-SA' })}</span>
                         </div>
@@ -361,10 +358,12 @@ export function TechnicalFilesUpload({ tenderId }: TechnicalFilesUploadProps) {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        مرفوع
-                      </Badge>
+                      <StatusBadge
+                        status="success"
+                        label="مرفوع"
+                        size="sm"
+                        className="shadow-none"
+                      />
                       <Button
                         variant="outline"
                         size="sm"
@@ -377,7 +376,7 @@ export function TechnicalFilesUpload({ tenderId }: TechnicalFilesUploadProps) {
                         variant="outline"
                         size="sm"
                         onClick={() => requestDeleteFile(file)}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                        className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

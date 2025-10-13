@@ -6,7 +6,7 @@ import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
-import { Badge } from './ui/badge'
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
 import { 
   Select,
   SelectContent,
@@ -41,9 +41,24 @@ import { useFinancialState } from '@/application/context'
 import { saveToStorage, STORAGE_KEYS } from '../utils/storage'
 import type { Project } from '../data/centralData'
 
+const CLIENT_TYPE_STATUS: Record<string, StatusBadgeProps['status']> = {
+  government: 'info',
+  private: 'success',
+  individual: 'warning',
+  corporate: 'onTrack',
+  default: 'default',
+}
+
+const CLIENT_TYPE_LABEL: Record<string, string> = {
+  government: 'حكومي',
+  private: 'خاص',
+  individual: 'فرد',
+  corporate: 'شركة',
+  default: 'غير محدد',
+}
+
 interface NewProjectFormProps {
   onBack: () => void
-  editProject?: Project | null // المشروع المراد تعديله
   mode?: 'create' | 'edit' // نوع العملية
 }
 
@@ -109,6 +124,14 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [showExitDialog, setShowExitDialog] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+
+  const resolveClientBadge = (type?: string) => {
+    const normalized = type ?? 'default'
+    return {
+      status: CLIENT_TYPE_STATUS[normalized] ?? CLIENT_TYPE_STATUS.default,
+      label: CLIENT_TYPE_LABEL[normalized] ?? CLIENT_TYPE_LABEL.default,
+    }
+  }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -261,21 +284,22 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
     return '18-24 شهر'
   }
 
-  const getProjectComplexity = () => {
+  const getProjectComplexity = (): { label: string; status: StatusBadgeProps['status'] } => {
     const contractValue = parseAmount(formData.contractValue)
-    if (contractValue < 500000) return { level: 'بسيط', badgeClass: 'bg-success/10 text-success' }
-    if (contractValue < 2000000) return { level: 'متوسط', badgeClass: 'bg-warning/10 text-warning' }
-    if (contractValue < 5000000) return { level: 'معقد', badgeClass: 'bg-destructive/10 text-destructive' }
-    return { level: 'شديد التعقيد', badgeClass: 'bg-accent/10 text-accent' }
+    if (contractValue < 500000) return { label: 'بسيط', status: 'success' }
+    if (contractValue < 2000000) return { label: 'متوسط', status: 'info' }
+    if (contractValue < 5000000) return { label: 'معقد', status: 'warning' }
+    return { label: 'شديد التعقيد', status: 'error' }
   }
+
+  const complexityInfo = getProjectComplexity()
 
   return (
     <PageLayout
+      tone="primary"
       title={mode === 'edit' ? `تعديل المشروع: ${editProject?.name ?? ''}` : 'مشروع جديد'}
       description={mode === 'edit' ? 'تحديث بيانات ومعلومات المشروع' : 'إضافة مشروع جديد إلى النظام'}
       icon={Building2}
-      gradientFrom="from-primary"
-      gradientTo="to-primary/80"
       quickStats={[]}
       quickActions={quickActions}
       onBack={handleBack}
@@ -327,18 +351,24 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
                           ) : clients.length === 0 ? (
                             <SelectItem value="no-clients" disabled>لا يوجد عملاء مسجلين</SelectItem>
                           ) : (
-                            clients.map((client) => (
-                              <SelectItem key={client.id} value={client.name}>
-                                <div className="flex items-center gap-2">
-                                  <User className="h-4 w-4" />
-                                  <span>{client.name}</span>
-                                  <Badge variant="outline" className="text-xs">
-                                    {client.type === 'government' ? 'حكومي' : 
-                                     client.type === 'private' ? 'خاص' : 'فرد'}
-                                  </Badge>
-                                </div>
-                              </SelectItem>
-                            ))
+                            clients.map((client) => {
+                              const { status, label } = resolveClientBadge(client.type)
+                              return (
+                                <SelectItem key={client.id} value={client.name}>
+                                  <div className="flex items-center gap-2">
+                                    <User className="h-4 w-4" />
+                                    <span>{client.name}</span>
+                                    <StatusBadge
+                                      status={status}
+                                      label={label}
+                                      size="sm"
+                                      showIcon={false}
+                                      className="shadow-none"
+                                    />
+                                  </div>
+                                </SelectItem>
+                              )
+                            })
                           )}
                         </SelectContent>
                       </Select>
@@ -507,9 +537,13 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
                     </div>
                     <div>
                       <span className="text-muted-foreground">مستوى التعقيد:</span>
-                      <Badge className={`border-0 ${getProjectComplexity().badgeClass}`}>
-                        {getProjectComplexity().level}
-                      </Badge>
+                      <StatusBadge
+                        status={complexityInfo.status}
+                        label={complexityInfo.label}
+                        size="sm"
+                        showIcon={false}
+                        className="shadow-none"
+                      />
                     </div>
                     <div>
                       <span className="text-muted-foreground">قيمة العقد:</span>

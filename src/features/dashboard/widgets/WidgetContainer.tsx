@@ -48,7 +48,14 @@ export const WidgetContainer = ({
   contentClassName,
   disableHeader = false,
 }: WidgetContainerProps) => {
-  const headerVisible = !disableHeader && (title || description || icon || actions || onRefresh);
+  const hasHeaderContent =
+    Boolean(title && title.trim().length > 0) ||
+    Boolean(description && description.trim().length > 0) ||
+    icon !== undefined && icon !== null ||
+    actions !== undefined && actions !== null ||
+    typeof onRefresh === 'function';
+
+  const headerVisible = !disableHeader && hasHeaderContent;
 
   return (
     <Card
@@ -61,15 +68,21 @@ export const WidgetContainer = ({
       {headerVisible && (
   <div className="widget-drag-handle flex items-start justify-between gap-3">
           <div className="flex items-start gap-2">
-            {icon && <span className="mt-1 text-muted-foreground">{icon}</span>}
+            {icon !== undefined && icon !== null && (
+              <span className="mt-1 text-muted-foreground">{icon}</span>
+            )}
             <div>
-              {title && <h3 className="text-sm font-semibold text-foreground">{title}</h3>}
-              {description && <p className="text-xs text-muted-foreground">{description}</p>}
+              {title ? (
+                <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+              ) : null}
+              {description ? (
+                <p className="text-xs text-muted-foreground">{description}</p>
+              ) : null}
             </div>
           </div>
           <div className="flex items-center gap-2">
             {actions}
-            {onRefresh && (
+            {typeof onRefresh === 'function' && (
               <Button
                 type="button"
                 variant="ghost"
@@ -98,7 +111,9 @@ export const WidgetContainer = ({
         )}
       </div>
 
-      {footer && <div className="border-t border-border/60 pt-2 text-xs text-muted-foreground">{footer}</div>}
+      {footer !== undefined && footer !== null && (
+        <div className="border-t border-border/60 pt-2 text-xs text-muted-foreground">{footer}</div>
+      )}
     </Card>
   );
 };

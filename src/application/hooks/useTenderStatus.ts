@@ -1,5 +1,25 @@
 import type { Tender } from '@/data/centralData'
+import type { StatusBadgeProps } from '@/components/ui/status-badge'
 import { getDaysRemaining, isTenderExpired } from '@/utils/tenderProgressCalculator'
+
+type StatusTone = StatusBadgeProps['status']
+
+const resolveVariantTone = (variant: string): StatusTone => {
+  switch (variant) {
+    case 'success':
+      return 'success'
+    case 'warning':
+      return 'warning'
+    case 'info':
+      return 'info'
+    case 'destructive':
+      return 'error'
+    case 'default':
+      return 'onTrack'
+    default:
+      return 'default'
+  }
+}
 
 export function useTenderStatus(tender: Tender) {
   const daysLeft = getDaysRemaining(tender.deadline)
@@ -7,24 +27,61 @@ export function useTenderStatus(tender: Tender) {
 
   const statusInfo = (() => {
     switch (tender.status) {
-      case 'new': return { text: 'جديدة', variant: 'secondary' as const }
-      case 'under_action': return { text: 'تحت الإجراء', variant: 'warning' as const }
-      case 'ready_to_submit': return { text: 'جاهزة للتقديم', variant: 'default' as const }
-      case 'submitted': return { text: 'بانتظار النتائج', variant: 'info' as const }
-      case 'won': return { text: 'فائزة', variant: 'success' as const }
-      case 'lost': return { text: 'خاسرة', variant: 'destructive' as const }
-      case 'expired': return { text: 'منتهية', variant: 'destructive' as const }
-      case 'cancelled': return { text: 'ملغاة', variant: 'secondary' as const }
-      default: return { text: 'غير معروف', variant: 'secondary' as const }
+      case 'new':
+        return { text: 'جديدة', variant: 'secondary' as const, badgeStatus: 'notStarted' as StatusTone }
+      case 'under_action':
+        return { text: 'تحت الإجراء', variant: 'warning' as const, badgeStatus: 'warning' as StatusTone }
+      case 'ready_to_submit':
+        return { text: 'جاهزة للتقديم', variant: 'default' as const, badgeStatus: 'onTrack' as StatusTone }
+      case 'submitted':
+        return { text: 'بانتظار النتائج', variant: 'info' as const, badgeStatus: 'info' as StatusTone }
+      case 'won':
+        return { text: 'فائزة', variant: 'success' as const, badgeStatus: 'success' as StatusTone }
+      case 'lost':
+        return { text: 'خاسرة', variant: 'destructive' as const, badgeStatus: 'error' as StatusTone }
+      case 'expired':
+        return { text: 'منتهية', variant: 'destructive' as const, badgeStatus: 'overdue' as StatusTone }
+      case 'cancelled':
+        return { text: 'ملغاة', variant: 'secondary' as const, badgeStatus: 'default' as StatusTone }
+      default:
+        return { text: 'غير معروف', variant: 'secondary' as const, badgeStatus: 'default' as StatusTone }
     }
   })()
 
   const urgencyInfo = (() => {
-    if (expired) return { text: 'منتهية', color: 'bg-destructive/10 text-destructive border-destructive/30' }
-    if (daysLeft <= 0) return { text: 'اليوم', color: 'bg-destructive/10 text-destructive border-destructive/30' }
-    if (daysLeft <= 3) return { text: `${daysLeft} أيام متبقية`, color: 'bg-warning/10 text-warning border-warning/30' }
-    if (daysLeft <= 7) return { text: `${daysLeft} أيام متبقية`, color: 'bg-info/10 text-info border-info/30' }
-    return { text: `${daysLeft} يوم`, color: 'bg-muted/20 text-muted-foreground border-border' }
+    if (expired) {
+      return {
+        text: 'منتهية',
+        color: 'bg-destructive/10 text-destructive border-destructive/30',
+        badgeStatus: 'overdue' as StatusTone,
+      }
+    }
+    if (daysLeft <= 0) {
+      return {
+        text: 'اليوم',
+        color: 'bg-destructive/10 text-destructive border-destructive/30',
+        badgeStatus: 'overdue' as StatusTone,
+      }
+    }
+    if (daysLeft <= 3) {
+      return {
+        text: `${daysLeft} أيام متبقية`,
+        color: 'bg-warning/10 text-warning border-warning/30',
+        badgeStatus: 'dueSoon' as StatusTone,
+      }
+    }
+    if (daysLeft <= 7) {
+      return {
+        text: `${daysLeft} أيام متبقية`,
+        color: 'bg-info/10 text-info border-info/30',
+        badgeStatus: 'onTrack' as StatusTone,
+      }
+    }
+    return {
+      text: `${daysLeft} يوم`,
+      color: 'bg-muted/20 text-muted-foreground border-border',
+      badgeStatus: 'default' as StatusTone,
+    }
   })()
 
   // الجاهزية الصارمة: التسعير مكتمل 100% + الملفات الفنية موجودة
@@ -61,5 +118,15 @@ export function useTenderStatus(tender: Tender) {
     tender.status === 'new' || tender.status === 'under_action'
   )
 
-  return { statusInfo, urgencyInfo, completionInfo, shouldShowSubmitButton, shouldShowPricingButton, shouldSuggestPromotion }
+  return {
+    statusInfo: {
+      ...statusInfo,
+      badgeStatus: statusInfo.badgeStatus ?? resolveVariantTone(statusInfo.variant),
+    },
+    urgencyInfo,
+    completionInfo,
+    shouldShowSubmitButton,
+    shouldShowPricingButton,
+    shouldSuggestPromotion,
+  }
 }

@@ -1,9 +1,9 @@
 'use client'
 
-import { useCallback, useMemo, useState, type ComponentProps } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
+import { InlineAlert } from './ui/inline-alert'
 import { Progress } from './ui/progress'
 import { Input } from './ui/input'
 import {
@@ -38,6 +38,7 @@ import {
   ArrowRight
 } from 'lucide-react'
 import { EntityActions } from './ui/ActionButtons'
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
 import { motion } from 'framer-motion'
 import { formatCurrency, type CurrencyOptions } from '../utils/formatters'
 import type { Project } from '@/data/centralData'
@@ -47,7 +48,7 @@ import { useFinancialState } from '@/application/context'
 
 type ProjectWithLegacyFields = Project & { profit?: number; profitMargin?: number }
 
-type BadgeVariant = ComponentProps<typeof Badge>['variant']
+type ProjectStatusBadgeStatus = StatusBadgeProps['status']
 
 export interface ProjectsViewProps {
   projects: ProjectWithLegacyFields[]
@@ -390,28 +391,47 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
 
     return (
       <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-        <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-          <DollarSign className="h-3 w-3 text-primary" />
-          <span>العملة الأساسية {baseCurrency}</span>
-          {currency?.isFallback && <span className="text-warning"> (أسعار احتياطية)</span>}
-        </Badge>
-        <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-          <BarChart3 className="h-3 w-3 text-primary" />
-          <span>نشطة {projectMetrics.activeCount}/{projectMetrics.totalCount}</span>
-        </Badge>
-        <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-          <DollarSign className="h-3 w-3 text-success" />
-          <span>قيمة العقود {formatCurrencyValue(projectAggregates.totalContractValue, { notation: 'compact' })}</span>
-        </Badge>
-        <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-          <AlertTriangle className="h-3 w-3 text-warning" />
-          <span>التكلفة الفعلية {formatCurrencyValue(projectAggregates.totalActualCost, { notation: 'compact' })}</span>
-        </Badge>
+        <StatusBadge
+          status="info"
+          label={`العملة الأساسية ${baseCurrency}`}
+          icon={DollarSign}
+          size="sm"
+          className="shadow-none"
+          showIcon
+        />
+        <StatusBadge
+          status="onTrack"
+          label={`نشطة ${projectMetrics.activeCount}/${projectMetrics.totalCount}`}
+          icon={BarChart3}
+          size="sm"
+          className="shadow-none"
+          showIcon
+        />
+        <StatusBadge
+          status="success"
+          label={`قيمة العقود ${formatCurrencyValue(projectAggregates.totalContractValue, { notation: 'compact' })}`}
+          icon={DollarSign}
+          size="sm"
+          className="shadow-none"
+          showIcon
+        />
+        <StatusBadge
+          status="warning"
+          label={`التكلفة الفعلية ${formatCurrencyValue(projectAggregates.totalActualCost, { notation: 'compact' })}`}
+          icon={AlertTriangle}
+          size="sm"
+          className="shadow-none"
+          showIcon
+        />
         {lastUpdatedLabel && (
-          <Badge variant="outline" className="flex items-center gap-1 px-3 py-1">
-            <Clock className="h-3 w-3 text-muted-foreground" />
-            <span>آخر تحديث {lastUpdatedLabel}</span>
-          </Badge>
+          <StatusBadge
+            status="default"
+            label={`آخر تحديث ${lastUpdatedLabel}`}
+            icon={Clock}
+            size="sm"
+            className="shadow-none"
+            showIcon
+          />
         )}
       </div>
     )
@@ -485,11 +505,11 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-        return <PlayCircle className="h-4 w-4 text-success" />
+        return <PlayCircle className="h-4 w-4 text-status-on-track" />
       case 'completed':
-        return <CheckCircle className="h-4 w-4 text-primary" />
+        return <CheckCircle className="h-4 w-4 text-status-completed" />
       case 'planning':
-        return <Clock className="h-4 w-4 text-warning" />
+        return <Clock className="h-4 w-4 text-info" />
       case 'paused':
         return <PauseCircle className="h-4 w-4 text-warning" />
       default:
@@ -497,18 +517,18 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
     }
   }
 
-  const getStatusText = (status: string): { text: string; variant: BadgeVariant } => {
+  const getProjectStatusBadge = (status: string): { status: ProjectStatusBadgeStatus; label: string } => {
     switch (status) {
       case 'active':
-        return { text: 'نشط', variant: 'success' }
+        return { status: 'onTrack', label: 'نشط' }
       case 'completed':
-        return { text: 'مكتمل', variant: 'primary' }
+        return { status: 'completed', label: 'مكتمل' }
       case 'planning':
-        return { text: 'تحت التخطيط', variant: 'warning' }
+        return { status: 'info', label: 'تحت التخطيط' }
       case 'paused':
-        return { text: 'متوقف مؤقتاً', variant: 'secondary' }
+        return { status: 'warning', label: 'متوقف مؤقتاً' }
       default:
-        return { text: 'غير محدد', variant: 'secondary' }
+        return { status: 'default', label: 'غير محدد' }
     }
   }
 
@@ -523,7 +543,8 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       hoverColor: 'hover:bg-muted/30',
       activeColor: 'bg-secondary text-secondary-foreground shadow-lg shadow-secondary/25',
       activeIconColor: 'text-secondary-foreground',
-      activeBadgeClass: 'bg-secondary/20 text-secondary-foreground border-secondary/30'
+      activeBadgeClass: 'bg-secondary/20 text-secondary-foreground border-secondary/30',
+      badgeStatus: 'default' as ProjectStatusBadgeStatus
     },
     { 
       id: 'active', 
@@ -535,7 +556,8 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       hoverColor: 'hover:bg-success/20',
       activeColor: 'bg-success text-success-foreground shadow-lg shadow-success/25',
       activeIconColor: 'text-success-foreground',
-      activeBadgeClass: 'bg-success/20 text-success-foreground border-success/30'
+      activeBadgeClass: 'bg-success/20 text-success-foreground border-success/30',
+      badgeStatus: 'success' as ProjectStatusBadgeStatus
     },
     { 
       id: 'completed', 
@@ -547,7 +569,8 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       hoverColor: 'hover:bg-primary/20',
       activeColor: 'bg-primary text-primary-foreground shadow-lg shadow-primary/25',
       activeIconColor: 'text-primary-foreground',
-      activeBadgeClass: 'bg-primary/20 text-primary-foreground border-primary/30'
+      activeBadgeClass: 'bg-primary/20 text-primary-foreground border-primary/30',
+      badgeStatus: 'completed' as ProjectStatusBadgeStatus
     },
     { 
       id: 'planning', 
@@ -559,7 +582,8 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       hoverColor: 'hover:bg-info/20',
       activeColor: 'bg-info text-foreground shadow-lg shadow-info/25',
       activeIconColor: 'text-foreground',
-      activeBadgeClass: 'bg-info/20 text-foreground border-info/30'
+      activeBadgeClass: 'bg-info/20 text-foreground border-info/30',
+      badgeStatus: 'info' as ProjectStatusBadgeStatus
     },
     { 
       id: 'paused', 
@@ -571,16 +595,27 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       hoverColor: 'hover:bg-warning/20',
       activeColor: 'bg-warning text-warning-foreground shadow-lg shadow-warning/25',
       activeIconColor: 'text-warning-foreground',
-      activeBadgeClass: 'bg-warning/20 text-warning-foreground border-warning/30'
+      activeBadgeClass: 'bg-warning/20 text-warning-foreground border-warning/30',
+      badgeStatus: 'warning' as ProjectStatusBadgeStatus
     }
   ]
 
   // تعريف ProjectCard قبل استخدامها
   const ProjectCard = ({ project, index }: { project: ProjectWithLegacyFields; index: number }) => {
-    const statusInfo = getStatusText(project.status)
+    const statusBadge = getProjectStatusBadge(project.status)
     const isCompleted = project.status === 'completed'
     const profitValue = project.actualProfit ?? project.profit ?? 0
-  const profitClass = profitValue >= 0 ? 'text-success' : 'text-destructive'
+    const profitClass = profitValue >= 0 ? 'text-success' : 'text-destructive'
+    const contractValueDisplay = project.contractValue
+      ? formatCurrencyValue(project.contractValue)
+      : project.value
+        ? formatCurrencyValue(project.value)
+        : project.budget
+          ? formatCurrencyValue(project.budget)
+          : 'غير محدد'
+    const estimatedCostDisplay = project.estimatedCost
+      ? formatCurrencyValue(project.estimatedCost)
+      : 'غير محددة'
 
     return (
       <motion.div
@@ -629,9 +664,12 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
               </div>
 
               <div className="flex items-center gap-2">
-                <Badge variant={statusInfo.variant} className="text-xs px-2 py-1">
-                  {statusInfo.text}
-                </Badge>
+                <StatusBadge
+                  status={statusBadge.status}
+                  label={statusBadge.label}
+                  size="sm"
+                  className="whitespace-nowrap"
+                />
               </div>
             </div>
 
@@ -642,8 +680,7 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
                 <div className="min-w-0">
                   <span className="text-muted-foreground text-xs">قيمة العقد:</span>
                   <div className="font-medium text-success truncate">
-                    {project.contractValue ? formatCurrencyValue(project.contractValue) : 
-                     project.value ? formatCurrencyValue(project.value) : 'غير محدد'}
+                    {contractValueDisplay}
                   </div>
                 </div>
               </div>
@@ -653,8 +690,7 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
                 <div className="min-w-0">
                   <span className="text-muted-foreground text-xs">التكلفة التقديرية:</span>
                   <div className="font-medium text-warning truncate">
-                    {project.estimatedCost ? formatCurrencyValue(project.estimatedCost) : 
-                     'غير محددة'}
+                    {estimatedCostDisplay}
                   </div>
                 </div>
               </div>
@@ -662,7 +698,7 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
 
             {/* عرض الربح المتوقع إذا توفرت البيانات */}
             {project.contractValue && project.estimatedCost && (
-              <div className="mb-2 text-[11px] text-muted-foreground">
+              <div className="mb-2 text-xs text-muted-foreground">
                 <span>الربح المتوقع: </span>
                 <span className={`font-medium ${(project.contractValue - project.estimatedCost) >= 0 ? 'text-success' : 'text-destructive'}`}>
                   {formatCurrencyValue(project.contractValue - project.estimatedCost)}
@@ -672,13 +708,13 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
 
             {/* سطر ملخص صغير جدًا للبيانات المهمة عند توفرها (لا يزيد حجم البطاقة) */}
             {isCompleted && (project.actualCost || project.spent) && (
-              <div className="mb-2 text-[11px] text-muted-foreground flex items-center gap-3">
+              <div className="mb-2 flex items-center gap-3 text-xs text-muted-foreground">
                 <span>
                   الربح الفعلي:
                   <span className={`mx-1 font-medium ${profitClass}`}>
                     {formatCurrencyValue(profitValue)}
                     {project.profitMargin && (
-                      <span className="text-[9px] opacity-75"> ({project.profitMargin.toFixed(1)}%)</span>
+                      <span className="text-xs opacity-75"> ({project.profitMargin.toFixed(1)}%)</span>
                     )}
                   </span>
                 </span>
@@ -703,15 +739,19 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
 
             {/* قسم إدخال التكاليف للمشاريع المكتملة بدون تكاليف فعلية */}
             {isCompleted && !project.actualCost && !project.spent && (
-              <div className="mt-3 rounded-lg border border-warning/20 bg-warning/10 p-2">
-                <div className="mb-1 flex items-center gap-1 text-xs text-warning">
-                  <DollarSign className="h-3 w-3" />
-                  <span>إدخال التكلفة الفعلية للمشروع</span>
-                </div>
-                <div className="mb-1 text-[10px] text-warning">
-                  قيمة العقد: {formatCurrencyValue(project.contractValue || project.value || project.budget || 0)} | 
-                  التكلفة التقديرية: {project.estimatedCost ? formatCurrencyValue(project.estimatedCost) : 'غير محددة'}
-                </div>
+              <InlineAlert
+                variant="warning"
+                title="إدخال التكلفة الفعلية للمشروع"
+                description={(
+                  <span>
+                    قيمة العقد: <span className="font-semibold text-foreground">{contractValueDisplay}</span>
+                    {' • '}
+                    التكلفة التقديرية: <span className="font-semibold text-foreground">{estimatedCostDisplay}</span>
+                  </span>
+                )}
+                icon={<DollarSign className="h-4 w-4" />}
+                className="mt-3"
+              >
                 <div className="flex gap-1">
                   <Input
                     type="number"
@@ -732,7 +772,7 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
                     {isSavingCosts[project.id] ? '...' : 'حفظ'}
                   </Button>
                 </div>
-              </div>
+              </InlineAlert>
             )}
 
             {/* الأيقونات في أسفل البطاقة */}
@@ -791,19 +831,17 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
                 >
                   <Icon className={`h-4 w-4 ${isActive ? tab.activeIconColor ?? 'text-primary-foreground' : tab.color}`} />
                   <span className="hidden sm:inline whitespace-nowrap">{tab.label}</span>
-                  <Badge 
-                    variant={isActive ? 'default' : 'secondary'}
-                    className={`
-                      text-xs px-1.5 py-0.5 h-auto min-w-[20px] text-center
-                      ${isActive ? tab.activeBadgeClass ?? 'bg-primary/15 text-primary-foreground border-primary/30' : ''}
-                    `}
-                  >
-                    {tab.count}
-                  </Badge>
+                  <StatusBadge
+                    status={isActive ? tab.badgeStatus : 'default'}
+                    label={String(tab.count)}
+                    size="sm"
+                    showIcon={false}
+                    className={`min-w-[28px] justify-center px-2 py-0.5 text-xs shadow-none ${isActive ? tab.activeBadgeClass ?? 'bg-primary/15 text-primary-foreground border-primary/30' : ''}`}
+                  />
                   
                   {isActive && (
                     <motion.div
-                      className="absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-white rounded-full"
+                      className="absolute -bottom-1.5 left-1/2 h-0.5 w-8 -translate-x-1/2 transform rounded-full bg-primary/40"
                       layoutId="activeProjectTab"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
@@ -887,11 +925,10 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
   
   return (
     <PageLayout
+      tone="primary"
       title="إدارة المشاريع"
       description="متابعة وإدارة جميع المشاريع والعقود بكفاءة عالية"
       icon={Building2}
-      gradientFrom="from-primary"
-      gradientTo="to-primary/80"
       quickStats={quickStats}
       quickActions={quickActions}
       searchPlaceholder="البحث في المشاريع..."

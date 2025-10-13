@@ -383,8 +383,8 @@ export const ThemeTesting: Story = {
         </div>
       </div>
 
-      <div data-theme="dark" className="p-spacing-6 rounded-lg border bg-gray-900">
-        <h3 className="text-lg font-semibold mb-spacing-4 text-white">Dark Theme</h3>
+      <div data-theme="dark" className="p-spacing-6 rounded-lg border bg-background">
+        <h3 className="text-lg font-semibold mb-spacing-4 text-foreground">Dark Theme</h3>
         <div className="space-y-spacing-3 max-w-md">
           <Input placeholder="حقل إدخال عادي" />
           <Input defaultValue="مع قيمة" />
@@ -393,8 +393,8 @@ export const ThemeTesting: Story = {
         </div>
       </div>
 
-      <div data-theme="high-contrast" className="p-spacing-6 rounded-lg border bg-black">
-        <h3 className="text-lg font-semibold mb-spacing-4 text-white">High Contrast Theme</h3>
+      <div data-theme="high-contrast" className="p-spacing-6 rounded-lg border bg-foreground text-background">
+        <h3 className="text-lg font-semibold mb-spacing-4">High Contrast Theme</h3>
         <div className="space-y-spacing-3 max-w-md">
           <Input placeholder="حقل إدخال عادي" />
           <Input defaultValue="مع قيمة" />
@@ -429,7 +429,7 @@ export const UsageGuide: Story = {
             </div>
           </div>
 
-          <div className="border-l-4 border-amber-500 pl-spacing-4">
+          <div className="border-l-4 border-warning pl-spacing-4">
             <h4 className="font-semibold">استخدم placeholder بحكمة</h4>
             <p className="text-sm text-muted-foreground">
               Placeholder للتوضيح فقط، ليس بديلاً عن Label
@@ -450,7 +450,7 @@ export const UsageGuide: Story = {
             </div>
           </div>
 
-          <div className="border-l-4 border-green-500 pl-spacing-4">
+          <div className="border-l-4 border-success pl-spacing-4">
             <h4 className="font-semibold">استخدم النوع الصحيح</h4>
             <p className="text-sm text-muted-foreground">
               type=&quot;email&quot; للبريد، type=&quot;tel&quot; للهاتف، وهكذا

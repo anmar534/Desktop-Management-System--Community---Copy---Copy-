@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
+import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
 import { PageLayout, DetailCard, EmptyState } from './PageLayout'
 import type { LucideIcon } from 'lucide-react'
 import { 
@@ -330,16 +330,22 @@ export default function Reports() {
   }
 
   const getStatusBadge = (status: ReportStatus | string) => {
-    switch (status) {
-      case 'ready':
-        return <Badge variant="success">جاهز</Badge>
-      case 'generating':
-        return <Badge variant="warning">قيد الإنشاء</Badge>
-      case 'outdated':
-        return <Badge variant="destructive">يحتاج تحديث</Badge>
-      default:
-        return <Badge variant="outline">غير محدد</Badge>
+    const map: Record<string, { status: StatusBadgeProps['status']; label: string }> = {
+      ready: { status: 'success', label: 'جاهز' },
+      generating: { status: 'info', label: 'قيد الإنشاء' },
+      outdated: { status: 'error', label: 'يحتاج تحديث' },
     }
+
+    const resolved = map[status] ?? { status: 'default', label: 'غير محدد' }
+
+    return (
+      <StatusBadge
+        status={resolved.status}
+        label={resolved.label}
+        size="sm"
+        className="shadow-none"
+      />
+    )
   }
 
   const getPeriodText = (period: ReportPeriod | string) => {
@@ -485,11 +491,10 @@ export default function Reports() {
 
   return (
     <PageLayout
+      tone="primary"
       title="التقارير والتحليلات"
       description="تقارير شاملة ومؤشرات أداء الشركة"
       icon={FileText}
-      gradientFrom="from-purple-600"
-      gradientTo="to-purple-700"
       quickStats={quickStats}
       quickActions={quickActions}
       searchPlaceholder="البحث في التقارير..."

@@ -15,7 +15,7 @@ import { getProjectRepository, getTenderRepository } from '@/application/service
 import { safeLocalStorage } from '@/utils/storage'
 import { STORAGE_KEYS } from '@/config/storageKeys'
 import { APP_EVENTS } from '@/events/bus'
-import { formatDateValue } from '@/utils/formatters'
+import { formatDateValue, formatPercentage as formatPercentageLocalized } from '@/utils/formatters'
 
 // Types for calculation results
 export interface TenderAnalytics {
@@ -626,7 +626,7 @@ export class UnifiedCalculationsService {
    * تنسيق النسبة المئوية
    */
   public formatPercentage(value: number, decimals = 1): string {
-    return `${value.toFixed(decimals)}%`;
+    return formatPercentageLocalized(value, decimals);
   }
 
   /**

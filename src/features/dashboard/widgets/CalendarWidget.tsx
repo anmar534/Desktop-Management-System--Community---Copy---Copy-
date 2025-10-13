@@ -1,8 +1,7 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
-import clsx from 'clsx';
 import { Calendar } from '@/components/ui/calendar';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import type { CalendarWidgetData, BaseWidgetProps, CalendarEvent } from '../types';
 import { WidgetContainer, type WidgetStatusVariant } from './WidgetContainer';
 
@@ -12,10 +11,17 @@ export interface CalendarWidgetProps extends Omit<BaseWidgetProps, 'data'> {
 
 const formatKey = (date: Date) => date.toISOString().split('T')[0];
 
-const statusBadgeStyles: Partial<Record<NonNullable<CalendarEvent['status']>, string>> = {
-  success: 'bg-success/15 text-success',
-  warning: 'bg-warning/15 text-warning',
-  critical: 'bg-destructive/15 text-destructive',
+const statusBadgeMap: Partial<Record<NonNullable<CalendarEvent['status']>, Parameters<typeof StatusBadge>[0]['status']>> = {
+  success: 'success',
+  warning: 'warning',
+  critical: 'error',
+};
+
+const statusBadgeLabel: Partial<Record<NonNullable<CalendarEvent['status']>, string>> = {
+  success: 'مكتمل',
+  warning: 'تنبيه',
+  critical: 'حرج',
+  default: 'عام',
 };
 
 export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ data, loading, error, onRefresh }) => {
@@ -58,7 +64,7 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ data, loading, e
   }), [parsedEvents]);
 
   const modifiersClassNames = useMemo(() => ({
-    event: 'bg-primary/15 text-primary hover:bg-primary/30 hover:text-primary border border-primary/40',
+    event: 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary border border-primary/30',
   }), []);
 
   return (
@@ -77,9 +83,9 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ data, loading, e
         onSelect={(day) => day && setCurrentDate(day)}
         modifiers={modifiers}
         modifiersClassNames={modifiersClassNames}
-        className="rounded-xl border border-border/60 bg-background/80"
+        className="rounded-xl border border-border bg-card"
       />
-      <div className="max-h-44 overflow-y-auto rounded-xl border border-border/60 bg-background/70 p-3">
+      <div className="max-h-44 overflow-y-auto rounded-xl border border-border bg-muted/30 p-3">
         {eventsForDay.length === 0 ? (
           <p className="text-xs text-muted-foreground">لا توجد أحداث في هذا اليوم.</p>
         ) : (
@@ -89,12 +95,12 @@ export const CalendarWidget: React.FC<CalendarWidgetProps> = ({ data, loading, e
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-foreground">{event.title}</span>
                   {event.status && (
-                    <Badge variant="secondary" className={clsx('text-[10px]', statusBadgeStyles[event.status])}>
-                      {event.status === 'critical' && 'حرج'}
-                      {event.status === 'warning' && 'تنبيه'}
-                      {event.status === 'success' && 'مكتمل'}
-                      {event.status === 'default' && 'عام'}
-                    </Badge>
+                    <StatusBadge
+                      status={statusBadgeMap[event.status] ?? 'default'}
+                      size="sm"
+                      showIcon={false}
+                      label={statusBadgeLabel[event.status] ?? statusBadgeLabel.default}
+                    />
                   )}
                 </div>
                 {event.description && <p className="text-xs text-muted-foreground">{event.description}</p>}
