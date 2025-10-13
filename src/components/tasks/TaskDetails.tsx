@@ -9,7 +9,7 @@ import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Progress } from '../ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+// import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Separator } from '../ui/separator'
 import { 
   Calendar, 
@@ -295,12 +295,9 @@ export const TaskDetails: React.FC<TaskDetailsProps> = ({
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-3">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={task.assignee.avatar} />
-                    <AvatarFallback>
-                      {task.assignee.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium">
+                    {task.assignee.name.charAt(0)}
+                  </div>
                   <div>
                     <p className="font-medium">{task.assignee.name}</p>
                     <p className="text-sm text-muted-foreground">

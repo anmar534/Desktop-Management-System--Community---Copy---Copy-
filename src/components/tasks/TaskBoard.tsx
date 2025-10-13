@@ -8,7 +8,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+// import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Progress } from '../ui/progress'
 import { 
   Plus, 
@@ -241,12 +241,9 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
             {/* المخصص له */}
             {task.assignee && (
               <div className="flex items-center gap-2">
-                <Avatar className="w-6 h-6">
-                  <AvatarImage src={task.assignee.avatar} />
-                  <AvatarFallback className="text-xs">
-                    {task.assignee.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
+                  {task.assignee.name.charAt(0)}
+                </div>
                 <span className="text-xs text-muted-foreground">
                   {task.assignee.name}
                 </span>

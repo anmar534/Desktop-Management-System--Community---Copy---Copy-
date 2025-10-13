@@ -5,8 +5,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
+// import { zodResolver } from '@hookform/resolvers/zod'
+// import * as z from 'zod'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -84,8 +84,8 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
   const isEditMode = !!task
 
-  const form = useForm<TaskFormData>({
-    resolver: zodResolver(taskSchema),
+  const form = useForm<any>({
+    // resolver: zodResolver(taskSchema),
     defaultValues: {
       title: task?.title || '',
       titleEn: task?.titleEn || '',

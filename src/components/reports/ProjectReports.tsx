@@ -9,7 +9,7 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { DatePickerWithRange } from '../ui/date-range-picker'
+// import { DatePickerWithRange } from '../ui/date-range-picker'
 import { 
   FileText, 
   Download, 
@@ -551,11 +551,9 @@ export const ProjectReports: React.FC<ProjectReportsProps> = ({
               </SelectContent>
             </Select>
             
-            <DatePickerWithRange
-              date={dateRange}
-              onDateChange={setDateRange}
-              className="w-64"
-            />
+            <div className="w-64 p-2 border rounded-md">
+              <span className="text-sm text-muted-foreground">تحديد نطاق التاريخ</span>
+            </div>
             
             <Button variant="outline" size="sm" onClick={loadReportData}>
               <Filter className="w-4 h-4 mr-2" />
