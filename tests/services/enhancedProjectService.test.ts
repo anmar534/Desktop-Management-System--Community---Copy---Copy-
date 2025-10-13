@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { EnhancedProjectService } from '../../src/services/enhancedProjectService'
-import type { CreateProjectRequest, UpdateProjectRequest, EnhancedProject } from '../../src/types/projects'
+import { EnhancedProjectService } from '../../../src/services/enhancedProjectService'
+import type { CreateProjectRequest, UpdateProjectRequest, EnhancedProject } from '../../../src/types/projects'
 
 // Mock the repository
 vi.mock('../../src/repository/providers/enhancedProject.local', () => ({

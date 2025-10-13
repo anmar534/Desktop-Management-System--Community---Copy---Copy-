@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { LocalEnhancedProjectRepository } from '../../src/repository/providers/enhancedProject.local'
-import type { CreateProjectRequest, UpdateProjectRequest } from '../../src/types/projects'
+import { LocalEnhancedProjectRepository } from '../../../src/repository/providers/enhancedProject.local'
+import type { CreateProjectRequest, UpdateProjectRequest } from '../../../src/types/projects'
 
 // Mock dependencies
 vi.mock('../../src/utils/storage', () => ({
@@ -28,7 +28,7 @@ describe('LocalEnhancedProjectRepository', () => {
 
   beforeEach(() => {
     repository = new LocalEnhancedProjectRepository()
-    mockStorage = require('../../src/utils/storage').safeLocalStorage
+    mockStorage = require('../../../src/utils/storage').safeLocalStorage
     
     // Reset mocks
     vi.clearAllMocks()

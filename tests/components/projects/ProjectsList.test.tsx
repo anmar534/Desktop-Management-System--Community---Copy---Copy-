@@ -10,11 +10,13 @@ import ProjectsList from '../../../src/components/projects/ProjectsList'
 import type { EnhancedProject } from '../../../src/types/projects'
 
 // Mock the service
+const mockEnhancedProjectService = {
+  getAllProjects: vi.fn(),
+  searchProjects: vi.fn()
+}
+
 vi.mock('../../../src/services/enhancedProjectService', () => ({
-  enhancedProjectService: {
-    getAllProjects: vi.fn(),
-    searchProjects: vi.fn()
-  }
+  enhancedProjectService: mockEnhancedProjectService
 }))
 
 // Mock UI components
@@ -189,21 +191,18 @@ describe('ProjectsList', () => {
     }
   ]
 
-  let mockService: any
-
   beforeEach(() => {
-    mockService = require('../../../src/services/enhancedProjectService').enhancedProjectService
     vi.clearAllMocks()
-    
+
     // Default mock implementations
-    mockService.getAllProjects.mockResolvedValue(mockProjects)
-    mockService.searchProjects.mockResolvedValue(mockProjects)
+    mockEnhancedProjectService.getAllProjects.mockResolvedValue(mockProjects)
+    mockEnhancedProjectService.searchProjects.mockResolvedValue(mockProjects)
   })
 
   describe('Rendering', () => {
     it('should render loading state initially', async () => {
       // Make the service call hang to test loading state
-      mockService.getAllProjects.mockImplementation(() => new Promise(() => {}))
+      mockEnhancedProjectService.getAllProjects.mockImplementation(() => new Promise(() => {}))
 
       render(<ProjectsList />)
 
@@ -230,8 +229,8 @@ describe('ProjectsList', () => {
     })
 
     it('should render empty state when no projects', async () => {
-      mockService.getAllProjects.mockResolvedValue([])
-      mockService.searchProjects.mockResolvedValue([])
+      mockEnhancedProjectService.getAllProjects.mockResolvedValue([])
+      mockEnhancedProjectService.searchProjects.mockResolvedValue([])
 
       render(<ProjectsList />)
 
@@ -313,7 +312,7 @@ describe('ProjectsList', () => {
       await user.type(searchInput, 'البناء')
 
       await waitFor(() => {
-        expect(mockService.searchProjects).toHaveBeenCalledWith(
+        expect(mockEnhancedProjectService.searchProjects).toHaveBeenCalledWith(
           expect.objectContaining({
             searchTerm: 'البناء'
           }),
@@ -334,7 +333,7 @@ describe('ProjectsList', () => {
       await user.selectOptions(statusSelect, 'active')
 
       await waitFor(() => {
-        expect(mockService.searchProjects).toHaveBeenCalledWith(
+        expect(mockEnhancedProjectService.searchProjects).toHaveBeenCalledWith(
           expect.objectContaining({
             status: ['active']
           }),
@@ -355,7 +354,7 @@ describe('ProjectsList', () => {
       await user.selectOptions(prioritySelect, 'high')
 
       await waitFor(() => {
-        expect(mockService.searchProjects).toHaveBeenCalledWith(
+        expect(mockEnhancedProjectService.searchProjects).toHaveBeenCalledWith(
           expect.objectContaining({
             priority: ['high']
           }),
@@ -376,7 +375,7 @@ describe('ProjectsList', () => {
       await user.selectOptions(sortSelect, 'budget')
 
       await waitFor(() => {
-        expect(mockService.searchProjects).toHaveBeenCalledWith(
+        expect(mockEnhancedProjectService.searchProjects).toHaveBeenCalledWith(
           expect.any(Object),
           expect.objectContaining({
             field: 'budget',
@@ -398,7 +397,7 @@ describe('ProjectsList', () => {
       await user.selectOptions(directionSelect, 'desc')
 
       await waitFor(() => {
-        expect(mockService.searchProjects).toHaveBeenCalledWith(
+        expect(mockEnhancedProjectService.searchProjects).toHaveBeenCalledWith(
           expect.any(Object),
           expect.objectContaining({
             direction: 'desc'
@@ -461,13 +460,13 @@ describe('ProjectsList', () => {
       const refreshButton = screen.getByText('تحديث')
       fireEvent.click(refreshButton)
 
-      expect(mockService.getAllProjects).toHaveBeenCalledTimes(2) // Initial load + refresh
+      expect(mockEnhancedProjectService.getAllProjects).toHaveBeenCalledTimes(2) // Initial load + refresh
     })
   })
 
   describe('Error Handling', () => {
     it('should handle service errors gracefully', async () => {
-      mockService.getAllProjects.mockRejectedValue(new Error('Service error'))
+      mockEnhancedProjectService.getAllProjects.mockRejectedValue(new Error('Service error'))
 
       render(<ProjectsList />)
 
@@ -479,7 +478,7 @@ describe('ProjectsList', () => {
 
     it('should handle search errors gracefully', async () => {
       const user = userEvent.setup()
-      mockService.searchProjects.mockRejectedValue(new Error('Search error'))
+      mockEnhancedProjectService.searchProjects.mockRejectedValue(new Error('Search error'))
 
       render(<ProjectsList />)
 
