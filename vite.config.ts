@@ -1,9 +1,7 @@
 import { defineConfig, splitVendorChunkPlugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { visualizer } from 'rollup-plugin-visualizer';
 
-const shouldAnalyze = process.env.BUNDLE_ANALYZE === 'true';
 const devServerPort = Number(process.env.DEV_SERVER_PORT ?? process.env.PORT ?? 3003) || 3003;
 
 export default defineConfig({
@@ -18,16 +16,6 @@ export default defineConfig({
       },
     }),
     splitVendorChunkPlugin(),
-    ...(shouldAnalyze
-      ? [
-          visualizer({
-            filename: 'build/bundle-analysis.html',
-            template: 'sunburst',
-            gzipSize: true,
-            brotliSize: true,
-          }),
-        ]
-      : []),
   ],
   base: './', // مهم جداً لـ Electron
   define: {

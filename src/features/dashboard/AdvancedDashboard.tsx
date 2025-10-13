@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState, type ComponentType, type FC } from 'react';
-import { Responsive, WidthProvider, type Layout, type Layouts } from 'react-grid-layout';
 import {
   RefreshCcw,
   CircleDollarSign,
@@ -70,11 +69,7 @@ import { cloneDashboardLayouts, createDefaultLayouts, type PresetLayoutRecord } 
 import { DASHBOARD_BREAKPOINTS, DASHBOARD_COLS, type DashboardLayouts } from './layoutConfig';
 import type { PresetType } from './types';
 
-import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
 import './dashboard-grid.css';
-
-const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const GRID_ROW_HEIGHT = 48;
 const GRID_MARGIN: [number, number] = [16, 16];
@@ -360,11 +355,10 @@ const widgetRenderers: Partial<Record<WidgetType, GenericWidgetRenderer>> = {
 
 export const AdvancedDashboard: FC = () => {
   const [activePreset, setActivePreset] = useState<PresetType>('executive');
-  const [layouts, setLayouts] = useState<PresetLayoutRecord>(() => createDefaultLayouts());
   const [isWidgetManagerOpen, setIsWidgetManagerOpen] = useState(false);
   const [visibleWidgets, setVisibleWidgets] = useState<Set<string>>(() => {
-    const defaultLayouts = createDefaultLayouts();
-    return new Set(defaultLayouts.custom.lg.map((item) => item.i));
+    // Default visible widgets for executive preset
+    return new Set(['financial-summary', 'tender-status', 'project-overview', 'recent-activities']);
   });
 
   const {
@@ -549,24 +543,11 @@ export const AdvancedDashboard: FC = () => {
     setActivePreset(value as PresetType);
   }, []);
 
-  const handleLayoutChange = useCallback(
-    (_current: Layout[], allLayouts: Layouts) => {
-      if (activePreset !== 'custom') {
-        return;
-      }
-      setLayouts((prev) => ({
-        ...prev,
-        custom: toDashboardLayouts(allLayouts),
-      }));
-    },
-    [activePreset],
-  );
+  // Layout change handler removed - using simple CSS Grid now
 
   const handleResetLayout = useCallback(() => {
-    setLayouts(createDefaultLayouts());
     setActivePreset('executive');
-    const defaultLayouts = createDefaultLayouts();
-    setVisibleWidgets(new Set(defaultLayouts.custom.lg.map((item) => item.i)));
+    // Reset to default widgets for executive preset
   }, []);
 
   const handleToggleWidget = useCallback((widgetId: string) => {
@@ -849,24 +830,15 @@ export const AdvancedDashboard: FC = () => {
 
   const widgetMap = useMemo(() => new Map(widgetDefinitions.map((widget) => [widget.id, widget])), [widgetDefinitions]);
 
-  const currentLayouts = layouts[activePreset] ?? layouts.executive;
-  const responsiveLayouts = useMemo(() => cloneDashboardLayouts(currentLayouts), [currentLayouts]);
-  
-  // في الوضع المخصص، نرشح البطاقات بناءً على visibleWidgets
-  const filteredLayouts = useMemo(() => {
-    if (activePreset !== 'custom') {
-      return responsiveLayouts;
+  // Simplified widget list based on preset
+  const primaryLayout = useMemo(() => {
+    const allWidgets = widgetDefinitions.map(w => ({ i: w.id }));
+    if (activePreset === 'custom') {
+      return allWidgets.filter(item => visibleWidgets.has(item.i));
     }
-    return {
-      lg: (responsiveLayouts.lg ?? []).filter((item) => visibleWidgets.has(item.i)),
-      md: (responsiveLayouts.md ?? []).filter((item) => visibleWidgets.has(item.i)),
-      sm: (responsiveLayouts.sm ?? []).filter((item) => visibleWidgets.has(item.i)),
-      xs: (responsiveLayouts.xs ?? []).filter((item) => visibleWidgets.has(item.i)),
-      xxs: (responsiveLayouts.xxs ?? []).filter((item) => visibleWidgets.has(item.i)),
-    };
-  }, [activePreset, responsiveLayouts, visibleWidgets]);
-  
-  const primaryLayout = filteredLayouts.lg ?? [];
+    // For other presets, show all widgets
+    return allWidgets;
+  }, [activePreset, visibleWidgets, widgetDefinitions]);
 
   const renderWidget = useCallback(
     (widget: DashboardWidgetDefinition) => {
@@ -994,27 +966,12 @@ export const AdvancedDashboard: FC = () => {
         </div>
       </div>
 
-      <ResponsiveGridLayout
-        className="layout w-full"
-        layouts={filteredLayouts}
-        breakpoints={DASHBOARD_BREAKPOINTS}
-        cols={DASHBOARD_COLS}
-        rowHeight={GRID_ROW_HEIGHT}
-        margin={GRID_MARGIN}
-        containerPadding={[0, 0]}
-        isDraggable={activePreset === 'custom'}
-        isResizable={activePreset === 'custom'}
-        draggableHandle=".widget-drag-handle"
-        onLayoutChange={handleLayoutChange}
-        compactType="vertical"
-        measureBeforeMount={false}
-        useCSSTransforms={true}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full">
         {primaryLayout.map((item) => {
           const widget = widgetMap.get(item.i);
           if (!widget) {
             return (
-              <div key={item.i} data-grid={item} className="flex h-full flex-col">
+              <div key={item.i} className="flex h-full flex-col">
                 <div className="flex h-full items-center justify-center rounded-2xl border border-dashed border-muted-foreground/40 bg-background/50 p-4 text-xs text-muted-foreground">
                   عنصر غير مفعّل: {item.i}
                 </div>
@@ -1023,12 +980,12 @@ export const AdvancedDashboard: FC = () => {
           }
 
           return (
-            <div key={widget.id} data-grid={item} className="flex h-full flex-col">
+            <div key={widget.id} className="flex h-full flex-col">
               {renderWidget(widget)}
             </div>
           );
         })}
-      </ResponsiveGridLayout>
+      </div>
 
       <div className="rounded-2xl border border-border bg-card/90 p-4">
         <Tabs defaultValue="projects">

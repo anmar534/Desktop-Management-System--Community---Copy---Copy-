@@ -69,3 +69,56 @@ temp/
 *.7z
 backups/
 exported-data/
+
+# Additional cleanup patterns (Phase 0 - Sprint 0.1)
+# Backup files with timestamps
+*.tsx.*.bak
+*.ts.*.bak
+*.js.*.bak
+*.json.*.bak
+
+# Development artifacts
+layout_dump.txt
+pricing-deps.dot
+*.dot
+
+# Archive working files (keep archive/ but ignore temp files)
+archive/.temp/
+archive/*.tmp
+
+# Security and sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+keystore.*
+
+# Database files (if any)
+*.db
+*.sqlite
+*.sqlite3
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+
+# Documentation build artifacts
+docs/.build/
+docs/_build/
+
+# Lighthouse CI reports
+.lighthouseci/
+
+# Bundle analyzer reports
+bundle-analyzer-report.html
+stats.json
+
+# Performance monitoring
+.clinic/
+*.clinic.*
+
+# Storybook build artifacts
+storybook-static/
