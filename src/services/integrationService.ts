@@ -111,7 +111,16 @@ class IntegrationServiceImpl implements IntegrationService {
 
   async getAllIntegrations(): Promise<IntegrationConfig[]> {
     try {
-      return await asyncStorage.getItem(this.STORAGE_KEYS.INTEGRATIONS, [])
+      const integrations = await asyncStorage.getItem(this.STORAGE_KEYS.INTEGRATIONS, [])
+
+      // Initialize with default integrations if empty
+      if (integrations.length === 0) {
+        const defaultIntegrations = await this.initializeDefaultIntegrations()
+        await asyncStorage.setItem(this.STORAGE_KEYS.INTEGRATIONS, defaultIntegrations)
+        return defaultIntegrations
+      }
+
+      return integrations
     } catch (error) {
       console.error('Error getting all integrations:', error)
       throw new Error('Failed to get integrations')
@@ -408,6 +417,98 @@ class IntegrationServiceImpl implements IntegrationService {
       console.error('Error getting system health:', error)
       throw new Error('Failed to get system health')
     }
+  }
+
+  // Initialize default integrations
+  private async initializeDefaultIntegrations(): Promise<IntegrationConfig[]> {
+    const defaultIntegrations: IntegrationConfig[] = [
+      {
+        id: 'integration_materials_db',
+        name: 'تكامل قاعدة بيانات المواد',
+        nameEn: 'Material Database Integration',
+        type: 'material_cost_db',
+        status: 'disconnected',
+        endpoint: 'https://api.materials.example.com',
+        settings: {
+          syncInterval: 60,
+          autoSync: false,
+          retryAttempts: 3,
+          timeout: 30,
+          batchSize: 100,
+          notificationSettings: {
+            onSuccess: true,
+            onError: true,
+            onWarning: true,
+            emailNotifications: true,
+            smsNotifications: false,
+            recipients: []
+          }
+        },
+        lastSync: new Date().toISOString(),
+        nextSync: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isActive: false
+      },
+      {
+        id: 'integration_economic_data',
+        name: 'تكامل البيانات الاقتصادية',
+        nameEn: 'Economic Data Integration',
+        type: 'economic_data',
+        status: 'disconnected',
+        endpoint: 'https://api.economic.example.com',
+        settings: {
+          syncInterval: 120,
+          autoSync: false,
+          retryAttempts: 2,
+          timeout: 20,
+          batchSize: 50,
+          notificationSettings: {
+            onSuccess: false,
+            onError: true,
+            onWarning: false,
+            emailNotifications: true,
+            smsNotifications: false,
+            recipients: []
+          }
+        },
+        lastSync: new Date().toISOString(),
+        nextSync: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isActive: false
+      },
+      {
+        id: 'integration_government_tenders',
+        name: 'تكامل المناقصات الحكومية',
+        nameEn: 'Government Tenders Integration',
+        type: 'government_tender',
+        status: 'disconnected',
+        endpoint: 'https://api.tenders.example.com',
+        settings: {
+          syncInterval: 240,
+          autoSync: false,
+          retryAttempts: 5,
+          timeout: 60,
+          batchSize: 200,
+          notificationSettings: {
+            onSuccess: true,
+            onError: true,
+            onWarning: true,
+            emailNotifications: true,
+            smsNotifications: false,
+            recipients: []
+          }
+        },
+        lastSync: new Date().toISOString(),
+        nextSync: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isActive: false
+      }
+    ]
+
+    return defaultIntegrations
   }
 
   // Utilities

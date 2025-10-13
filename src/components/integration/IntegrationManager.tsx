@@ -220,7 +220,7 @@ const IntegrationManager: React.FC<IntegrationManagerProps> = React.memo(({
 
   if (loading && integrations.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64" dir="rtl">
+      <div className={`flex items-center justify-center h-64 ${className}`} dir="rtl">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
           <p className="text-gray-600">جاري تحميل بيانات التكامل...</p>
