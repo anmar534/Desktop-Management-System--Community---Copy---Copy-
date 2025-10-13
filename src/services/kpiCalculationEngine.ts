@@ -567,6 +567,163 @@ export class KPICalculationEngine {
     // حساب مؤقت
     return 5.2
   }
+
+  /**
+   * حساب مؤشرات الأداء للوحة المعلومات
+   */
+  async calculateDashboardKPIs(input: {
+    projects: EnhancedProject[]
+    tasks: any[]
+    timeframe: {
+      startDate: string
+      endDate: string
+    }
+  }): Promise<KPIDashboard> {
+    try {
+      if (input.projects.length === 0) {
+        return {
+          summary: {
+            totalKPIs: 0,
+            excellentKPIs: 0,
+            goodKPIs: 0,
+            warningKPIs: 0,
+            criticalKPIs: 0
+          },
+          categories: {
+            financial: [],
+            schedule: [],
+            quality: [],
+            resources: [],
+            risk: []
+          },
+          trends: {}
+        }
+      }
+
+      const kpiInput: KPICalculationInput = {
+        projects: input.projects,
+        tasks: input.tasks,
+        timeframe: input.timeframe
+      }
+
+      return this.calculateAllKPIs(kpiInput)
+    } catch (error) {
+      console.error('خطأ في حساب مؤشرات الأداء:', error)
+      throw new Error('فشل في حساب مؤشرات الأداء')
+    }
+  }
+
+  /**
+   * حساب مؤشرات الأداء لمشروع محدد
+   */
+  async calculateProjectKPIs(input: {
+    project: EnhancedProject
+    tasks: any[]
+    timeframe: {
+      startDate: string
+      endDate: string
+    }
+  }): Promise<KPIResult[]> {
+    try {
+      const kpiInput: KPICalculationInput = {
+        projects: [input.project],
+        tasks: input.tasks,
+        timeframe: input.timeframe
+      }
+
+      const dashboard = this.calculateAllKPIs(kpiInput)
+
+      // جمع جميع مؤشرات الأداء من جميع الفئات
+      const allKPIs = [
+        ...dashboard.categories.financial,
+        ...dashboard.categories.schedule,
+        ...dashboard.categories.quality,
+        ...dashboard.categories.resources,
+        ...dashboard.categories.risk
+      ]
+
+      return allKPIs
+    } catch (error) {
+      console.error('خطأ في حساب مؤشرات أداء المشروع:', error)
+      return []
+    }
+  }
+
+  /**
+   * تحليل الاتجاهات
+   */
+  async calculateTrendAnalysis(input: {
+    projects: EnhancedProject[]
+    timeframe: {
+      startDate: string
+      endDate: string
+    }
+    period: 'weekly' | 'monthly' | 'quarterly'
+  }): Promise<{
+    periods: string[]
+    metrics: Record<string, number[]>
+    insights: string[]
+  }> {
+    try {
+      // تحليل مؤقت للاتجاهات
+      const periods = this.generatePeriods(input.timeframe, input.period)
+
+      const metrics = {
+        budget_utilization: periods.map(() => Math.random() * 100),
+        schedule_performance: periods.map(() => Math.random() * 100),
+        quality_score: periods.map(() => Math.random() * 100)
+      }
+
+      const insights = [
+        'تحسن في الأداء المالي خلال الفترة الأخيرة',
+        'انخفاض طفيف في الأداء الزمني',
+        'استقرار في مؤشرات الجودة'
+      ]
+
+      return {
+        periods,
+        metrics,
+        insights
+      }
+    } catch (error) {
+      console.error('خطأ في تحليل الاتجاهات:', error)
+      return {
+        periods: [],
+        metrics: {},
+        insights: []
+      }
+    }
+  }
+
+  private generatePeriods(timeframe: { startDate: string; endDate: string }, period: string): string[] {
+    const start = new Date(timeframe.startDate)
+    const end = new Date(timeframe.endDate)
+    const periods: string[] = []
+
+    let current = new Date(start)
+    while (current <= end) {
+      switch (period) {
+        case 'weekly':
+          periods.push(`أسبوع ${Math.ceil((current.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1}`)
+          current.setDate(current.getDate() + 7)
+          break
+        case 'monthly':
+          periods.push(current.toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' }))
+          current.setMonth(current.getMonth() + 1)
+          break
+        case 'quarterly':
+          const quarter = Math.floor(current.getMonth() / 3) + 1
+          periods.push(`الربع ${quarter} - ${current.getFullYear()}`)
+          current.setMonth(current.getMonth() + 3)
+          break
+      }
+
+      // تجنب الحلقة اللانهائية
+      if (periods.length > 50) break
+    }
+
+    return periods
+  }
 }
 
 export const kpiCalculationEngine = new KPICalculationEngine()

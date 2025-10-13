@@ -66,36 +66,50 @@ export interface ProjectStatusReport {
 }
 
 export interface ProjectDashboardData {
-  projectsOverview: {
+  summary: {
     totalProjects: number
     activeProjects: number
     completedProjects: number
     delayedProjects: number
     onBudgetProjects: number
     overBudgetProjects: number
+    totalBudget: number
+    averageProgress: number
   }
-  
+
   performanceMetrics: {
     averageCompletionRate: number
     averageBudgetUtilization: number
     averageSchedulePerformance: number
     customerSatisfactionScore: number
   }
-  
+
   financialSummary: {
     totalPortfolioValue: number
     totalSpent: number
     totalRemaining: number
     projectedOverrun: number
   }
-  
+
   resourceUtilization: {
     totalResources: number
     utilizedResources: number
     availableResources: number
     overallocatedResources: number
   }
-  
+
+  charts: {
+    statusDistribution: { name: string; value: number }[]
+    progressTrend: { month: string; progress: number }[]
+    financialTrend: { month: string; budget: number; spent: number }[]
+    budgetDistribution: { category: string; allocated: number; spent: number }[]
+  }
+
+  risks: {
+    highPriorityRisks: { title: string; level: string }[]
+    mitigationActions: { title: string; status: string }[]
+  }
+
   topPerformingProjects: {
     projectId: string
     projectName: string
@@ -103,7 +117,7 @@ export interface ProjectDashboardData {
     budgetPerformance: number
     schedulePerformance: number
   }[]
-  
+
   projectsAtRisk: {
     projectId: string
     projectName: string
@@ -296,33 +310,46 @@ export class ProjectReportingService {
   /**
    * إنشاء لوحة معلومات المشاريع
    */
-  async generateProjectsDashboard(): Promise<ProjectDashboardData> {
+  async generateProjectsDashboard(filters?: any): Promise<ProjectDashboardData> {
     try {
-      const allProjects = await enhancedProjectService.getAllProjects()
-      
-      // نظرة عامة على المشاريع
-      const projectsOverview = this.calculateProjectsOverview(allProjects)
-      
+      let allProjects = await enhancedProjectService.getAllProjects()
+
+      // تطبيق المرشحات
+      if (filters) {
+        allProjects = this.applyDashboardFilters(allProjects, filters)
+      }
+
+      // حساب الملخص
+      const summary = this.calculateProjectsSummary(allProjects)
+
       // مقاييس الأداء
       const performanceMetrics = await this.calculatePortfolioPerformanceMetrics(allProjects)
-      
+
       // الملخص المالي
       const financialSummary = this.calculateFinancialSummary(allProjects)
-      
+
       // استخدام الموارد
       const resourceUtilization = await this.calculateResourceUtilization(allProjects)
-      
+
+      // بيانات الرسوم البيانية
+      const charts = this.generateDashboardCharts(allProjects)
+
+      // تحليل المخاطر
+      const risks = await this.analyzeDashboardRisks(allProjects)
+
       // أفضل المشاريع أداءً
       const topPerformingProjects = await this.getTopPerformingProjects(allProjects)
-      
+
       // المشاريع المعرضة للخطر
       const projectsAtRisk = await this.getProjectsAtRisk(allProjects)
 
       return {
-        projectsOverview,
+        summary,
         performanceMetrics,
         financialSummary,
         resourceUtilization,
+        charts,
+        risks,
         topPerformingProjects,
         projectsAtRisk
       }
@@ -672,6 +699,124 @@ export class ProjectReportingService {
         primaryRisk: 'تأخير في الجدولة',
         mitigationPlan: 'إعادة تخصيص الموارد'
       }))
+  }
+
+  private applyDashboardFilters(projects: EnhancedProject[], filters: any): EnhancedProject[] {
+    let filtered = [...projects]
+
+    if (filters.status && filters.status !== 'all') {
+      filtered = filtered.filter(p => p.status === filters.status)
+    }
+
+    if (filters.priority && filters.priority !== 'all') {
+      filtered = filtered.filter(p => p.priority === filters.priority)
+    }
+
+    if (filters.category && filters.category !== 'all') {
+      filtered = filtered.filter(p => p.category === filters.category)
+    }
+
+    return filtered
+  }
+
+  private calculateProjectsSummary(projects: EnhancedProject[]) {
+    const totalBudget = projects.reduce((sum, p) => sum + p.budget.total, 0)
+    const averageProgress = projects.length > 0
+      ? projects.reduce((sum, p) => sum + p.progress, 0) / projects.length
+      : 0
+
+    return {
+      totalProjects: projects.length,
+      activeProjects: projects.filter(p => p.status === 'active').length,
+      completedProjects: projects.filter(p => p.status === 'completed').length,
+      delayedProjects: projects.filter(p => p.progress < 50).length,
+      onBudgetProjects: projects.filter(p => p.budget.spent <= p.budget.total).length,
+      overBudgetProjects: projects.filter(p => p.budget.spent > p.budget.total).length,
+      totalBudget,
+      averageProgress: Math.round(averageProgress)
+    }
+  }
+
+  private generateDashboardCharts(projects: EnhancedProject[]) {
+    // توزيع حالة المشاريع
+    const statusCounts = projects.reduce((acc, p) => {
+      acc[p.status] = (acc[p.status] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    const statusDistribution = Object.entries(statusCounts).map(([status, count]) => ({
+      name: this.getStatusLabel(status),
+      value: count
+    }))
+
+    // اتجاه التقدم الشهري (بيانات وهمية للعرض)
+    const progressTrend = [
+      { month: 'يناير', progress: 65 },
+      { month: 'فبراير', progress: 70 },
+      { month: 'مارس', progress: 75 },
+      { month: 'أبريل', progress: 78 },
+      { month: 'مايو', progress: 82 },
+      { month: 'يونيو', progress: 85 }
+    ]
+
+    // الاتجاه المالي الشهري
+    const financialTrend = [
+      { month: 'يناير', budget: 1000000, spent: 800000 },
+      { month: 'فبراير', budget: 1200000, spent: 950000 },
+      { month: 'مارس', budget: 1100000, spent: 900000 },
+      { month: 'أبريل', budget: 1300000, spent: 1050000 },
+      { month: 'مايو', budget: 1150000, spent: 920000 },
+      { month: 'يونيو', budget: 1250000, spent: 1000000 }
+    ]
+
+    // توزيع الميزانية حسب الفئة
+    const budgetDistribution = [
+      { category: 'إنشاءات', allocated: 5000000, spent: 4200000 },
+      { category: 'بنية تحتية', allocated: 3000000, spent: 2800000 },
+      { category: 'صيانة', allocated: 1500000, spent: 1200000 },
+      { category: 'تطوير', allocated: 2000000, spent: 1800000 }
+    ]
+
+    return {
+      statusDistribution,
+      progressTrend,
+      financialTrend,
+      budgetDistribution
+    }
+  }
+
+  private async analyzeDashboardRisks(projects: EnhancedProject[]) {
+    // مخاطر عالية الأولوية (بيانات وهمية)
+    const highPriorityRisks = [
+      { title: 'تأخير في توريد المواد', level: 'عالي' },
+      { title: 'نقص في العمالة المتخصصة', level: 'متوسط' },
+      { title: 'تغيير في المتطلبات', level: 'عالي' },
+      { title: 'مشاكل في التراخيص', level: 'متوسط' }
+    ]
+
+    // إجراءات التخفيف المطلوبة
+    const mitigationActions = [
+      { title: 'البحث عن موردين بديلين', status: 'قيد التنفيذ' },
+      { title: 'تدريب العمالة الحالية', status: 'مخطط' },
+      { title: 'مراجعة العقود', status: 'مكتمل' },
+      { title: 'متابعة الجهات الحكومية', status: 'قيد التنفيذ' }
+    ]
+
+    return {
+      highPriorityRisks,
+      mitigationActions
+    }
+  }
+
+  private getStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      'active': 'نشط',
+      'completed': 'مكتمل',
+      'on_hold': 'معلق',
+      'cancelled': 'ملغي',
+      'planning': 'تخطيط'
+    }
+    return labels[status] || status
   }
 }
 
