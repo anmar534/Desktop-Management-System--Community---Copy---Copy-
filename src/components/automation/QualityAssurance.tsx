@@ -24,7 +24,7 @@ import {
   Clock,
   Target
 } from 'lucide-react'
-import qualityAssuranceService from '../../services/qualityAssuranceService'
+import { qualityAssuranceService } from '../../services/qualityAssuranceService'
 import type { 
   QualityMetrics, 
   PricingValidationResult, 

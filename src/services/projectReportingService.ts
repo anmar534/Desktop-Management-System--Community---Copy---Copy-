@@ -304,7 +304,7 @@ export class ProjectReportingService {
       const projectsOverview = this.calculateProjectsOverview(allProjects)
       
       // مقاييس الأداء
-      const performanceMetrics = await this.calculatePerformanceMetrics(allProjects)
+      const performanceMetrics = await this.calculatePortfolioPerformanceMetrics(allProjects)
       
       // الملخص المالي
       const financialSummary = this.calculateFinancialSummary(allProjects)
@@ -621,7 +621,7 @@ export class ProjectReportingService {
     }
   }
 
-  private async calculatePerformanceMetrics(projects: EnhancedProject[]) {
+  private async calculatePortfolioPerformanceMetrics(projects: EnhancedProject[]) {
     return {
       averageCompletionRate: 75,
       averageBudgetUtilization: 68,

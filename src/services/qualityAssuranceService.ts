@@ -22,7 +22,7 @@ import type {
   QualityAssuranceServiceInterface,
   QualityStatus,
   QualityCheckType,
-  NonConformityType
+  NonConformityType,
   CorrectionType,
   FailedCorrection,
   CorrectionSummary,

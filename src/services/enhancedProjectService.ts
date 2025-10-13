@@ -174,37 +174,7 @@ export class EnhancedProjectService {
     }
   }
 
-  // Tender Integration
-  async createProjectFromTender(tenderId: string, projectData: Partial<CreateProjectRequest>): Promise<EnhancedProject> {
-    try {
-      if (!tenderId) {
-        throw new Error('معرف المناقصة مطلوب')
-      }
-
-      // TODO: Get tender details and populate project data
-      const fullProjectData: CreateProjectRequest = {
-        name: projectData.name || `مشروع من المناقصة ${tenderId}`,
-        nameEn: projectData.nameEn,
-        description: projectData.description || 'مشروع تم إنشاؤه من مناقصة',
-        clientId: projectData.clientId || '',
-        projectManagerId: projectData.projectManagerId || '',
-        startDate: projectData.startDate || new Date().toISOString(),
-        endDate: projectData.endDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-        budget: projectData.budget || 0,
-        location: projectData.location || '',
-        category: projectData.category || 'general',
-        type: projectData.type || 'construction',
-        priority: projectData.priority || 'medium',
-        tags: projectData.tags || ['من-مناقصة'],
-        fromTenderId: tenderId
-      }
-
-      return await this.createProject(fullProjectData)
-    } catch (error) {
-      console.error('Error creating project from tender:', error)
-      throw error
-    }
-  }
+  // Tender Integration - moved to comprehensive implementation below
 
   // Analytics and Reporting
   async getProjectStatistics(): Promise<{
