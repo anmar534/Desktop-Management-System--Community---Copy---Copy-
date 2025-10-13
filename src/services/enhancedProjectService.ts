@@ -336,6 +336,253 @@ export class EnhancedProjectService {
       throw error
     }
   }
+
+  /**
+   * إنشاء مشروع من مناقصة
+   */
+  async createProjectFromTender(tenderId: string, additionalData?: Partial<CreateProjectRequest>): Promise<EnhancedProject> {
+    try {
+      // جلب بيانات المناقصة
+      const tenderData = await this.getTenderData(tenderId)
+
+      if (!tenderData) {
+        throw new Error('المناقصة غير موجودة')
+      }
+
+      // إنشاء بيانات المشروع من المناقصة
+      const projectData: CreateProjectRequest = {
+        name: tenderData.title,
+        nameEn: tenderData.titleEn,
+        description: tenderData.description,
+        startDate: tenderData.startDate,
+        endDate: tenderData.endDate,
+        priority: 'high', // المشاريع من المناقصات عادة عالية الأولوية
+        category: tenderData.category || 'construction',
+        tags: ['من_مناقصة', tenderData.category || 'عام'],
+        client: tenderData.client,
+        location: tenderData.location,
+        budget: {
+          total: tenderData.value,
+          spent: 0,
+          remaining: tenderData.value,
+          contingency: tenderData.value * 0.1, // 10% طوارئ افتراضي
+          currency: tenderData.currency || 'SAR'
+        },
+        team: {
+          projectManager: 'مدير المشروع', // سيتم تحديده لاحقاً
+          members: []
+        },
+        phases: this.createPhasesFromTender(tenderData),
+        milestones: this.createMilestonesFromTender(tenderData),
+        risks: this.createDefaultRisks(),
+        metadata: {
+          tenderId,
+          importedFromTender: true,
+          tenderValue: tenderData.value,
+          boqItems: tenderData.boq?.length || 0,
+          requirements: tenderData.requirements || [],
+          deliverables: tenderData.deliverables || []
+        },
+        ...additionalData // دمج البيانات الإضافية
+      }
+
+      const project = await this.createProject(projectData)
+
+      // إنشاء المهام من جدول الكميات إذا كان متوفراً
+      if (tenderData.boq && tenderData.boq.length > 0) {
+        await this.createTasksFromBoq(project.id, tenderData.boq)
+      }
+
+      return project
+    } catch (error) {
+      console.error('خطأ في إنشاء مشروع من مناقصة:', error)
+      throw new Error('فشل في إنشاء مشروع من مناقصة')
+    }
+  }
+
+  /**
+   * جلب بيانات المناقصة
+   */
+  private async getTenderData(tenderId: string): Promise<any> {
+    // في التطبيق الحقيقي، سيتم جلب البيانات من API المناقصات
+    // مؤقتاً سنعيد بيانات تجريبية
+    return {
+      id: tenderId,
+      title: 'مشروع إنشاء مجمع سكني',
+      titleEn: 'Residential Complex Construction Project',
+      description: 'إنشاء مجمع سكني يتكون من 50 وحدة سكنية مع المرافق المساندة',
+      client: 'شركة التطوير العقاري المحدودة',
+      value: 15000000,
+      currency: 'SAR',
+      startDate: '2024-11-01',
+      endDate: '2025-10-31',
+      location: 'الرياض، المملكة العربية السعودية',
+      category: 'construction',
+      status: 'won',
+      boq: [
+        {
+          id: '1',
+          description: 'أعمال الحفر والأساسات',
+          quantity: 1000,
+          unit: 'م3',
+          unitPrice: 150,
+          totalPrice: 150000,
+          category: 'earthwork'
+        },
+        {
+          id: '2',
+          description: 'أعمال الخرسانة المسلحة',
+          quantity: 2500,
+          unit: 'م3',
+          unitPrice: 800,
+          totalPrice: 2000000,
+          category: 'concrete'
+        }
+      ],
+      requirements: [
+        'الحصول على تراخيص البناء',
+        'تطبيق معايير السلامة والأمان',
+        'استخدام مواد بناء عالية الجودة'
+      ],
+      deliverables: [
+        'المخططات التنفيذية المعتمدة',
+        'تقارير الجودة والسلامة',
+        'شهادات الإنجاز والتسليم'
+      ],
+      timeline: [
+        {
+          phase: 'التخطيط والتصميم',
+          duration: 60,
+          dependencies: []
+        },
+        {
+          phase: 'أعمال الحفر والأساسات',
+          duration: 90,
+          dependencies: ['التخطيط والتصميم']
+        },
+        {
+          phase: 'الهيكل الإنشائي',
+          duration: 180,
+          dependencies: ['أعمال الحفر والأساسات']
+        }
+      ]
+    }
+  }
+
+  /**
+   * إنشاء المراحل من بيانات المناقصة
+   */
+  private createPhasesFromTender(tenderData: any): any[] {
+    if (!tenderData.timeline) return []
+
+    const startDate = new Date(tenderData.startDate)
+    let currentDate = new Date(startDate)
+
+    return tenderData.timeline.map((phase: any, index: number) => {
+      const phaseStartDate = new Date(currentDate)
+      const phaseEndDate = new Date(currentDate.getTime() + phase.duration * 24 * 60 * 60 * 1000)
+
+      currentDate = new Date(phaseEndDate)
+
+      return {
+        id: `phase_${index + 1}`,
+        name: phase.phase,
+        description: `مرحلة ${phase.phase} - مدة ${phase.duration} يوم`,
+        startDate: phaseStartDate.toISOString(),
+        endDate: phaseEndDate.toISOString(),
+        status: 'planned',
+        progress: 0,
+        budget: tenderData.value / tenderData.timeline.length,
+        deliverables: [],
+        dependencies: phase.dependencies || []
+      }
+    })
+  }
+
+  /**
+   * إنشاء المعالم من بيانات المناقصة
+   */
+  private createMilestonesFromTender(tenderData: any): any[] {
+    const milestones = []
+    const startDate = new Date(tenderData.startDate)
+    const endDate = new Date(tenderData.endDate)
+    const duration = endDate.getTime() - startDate.getTime()
+
+    // معلم البداية
+    milestones.push({
+      id: 'milestone_start',
+      title: 'بداية المشروع',
+      description: 'نقطة انطلاق المشروع',
+      targetDate: tenderData.startDate,
+      status: 'pending',
+      progress: 0
+    })
+
+    // معلم منتصف المشروع
+    milestones.push({
+      id: 'milestone_mid',
+      title: 'منتصف المشروع',
+      description: 'مراجعة منتصف المشروع',
+      targetDate: new Date(startDate.getTime() + duration / 2).toISOString(),
+      status: 'pending',
+      progress: 0
+    })
+
+    // معلم النهاية
+    milestones.push({
+      id: 'milestone_end',
+      title: 'إنهاء المشروع',
+      description: 'تسليم المشروع النهائي',
+      targetDate: tenderData.endDate,
+      status: 'pending',
+      progress: 0
+    })
+
+    return milestones
+  }
+
+  /**
+   * إنشاء المخاطر الافتراضية
+   */
+  private createDefaultRisks(): any[] {
+    return [
+      {
+        id: 'risk_permits',
+        title: 'تأخير في التراخيص',
+        description: 'احتمالية تأخير الحصول على التراخيص المطلوبة',
+        probability: 'medium',
+        impact: 'high',
+        status: 'active',
+        mitigation: 'التقديم المبكر للتراخيص ومتابعة الجهات المختصة'
+      },
+      {
+        id: 'risk_weather',
+        title: 'تأثير الطقس',
+        description: 'تأثير الظروف الجوية على سير العمل',
+        probability: 'low',
+        impact: 'medium',
+        status: 'active',
+        mitigation: 'وضع خطة بديلة للعمل في الظروف الجوية السيئة'
+      },
+      {
+        id: 'risk_materials',
+        title: 'نقص المواد',
+        description: 'احتمالية نقص أو تأخير في توريد المواد',
+        probability: 'medium',
+        impact: 'high',
+        status: 'active',
+        mitigation: 'التعاقد مع موردين متعددين وإنشاء مخزون احتياطي'
+      }
+    ]
+  }
+
+  /**
+   * إنشاء المهام من جدول الكميات
+   */
+  private async createTasksFromBoq(projectId: string, boq: any[]): Promise<void> {
+    // سيتم تطوير هذه الوظيفة لاحقاً عند ربطها بنظام إدارة المهام
+    console.log(`إنشاء ${boq.length} مهمة من جدول الكميات للمشروع ${projectId}`)
+  }
 }
 
 // Export singleton instance
