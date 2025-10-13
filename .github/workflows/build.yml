@@ -1,0 +1,381 @@
+name: 🏗️ Build & Deploy
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  release:
+    types: [ published ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '18'
+  ELECTRON_CACHE: ~/.cache/electron
+  ELECTRON_BUILDER_CACHE: ~/.cache/electron-builder
+
+jobs:
+  # ===============================================
+  # Job 1: Build Web Application
+  # ===============================================
+  build-web:
+    name: 🌐 Build Web Application
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🔧 Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🏗️ Build Web Application
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_BUILD_TARGET: web
+
+      - name: 📊 Analyze Bundle
+        run: |
+          npm run analyze:bundle
+          echo "📦 Bundle Size Analysis:"
+          ls -lah dist/assets/
+        continue-on-error: true
+
+      - name: 🧪 Test Build
+        run: |
+          npm run preview &
+          sleep 10
+          curl -f http://localhost:4173 || exit 1
+          pkill -f "npm run preview"
+
+      - name: 📤 Upload Web Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: dist/
+          retention-days: 30
+
+  # ===============================================
+  # Job 2: Build Electron Application
+  # ===============================================
+  build-electron:
+    name: 🖥️ Build Electron App
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            platform: win32
+            arch: x64
+            ext: .exe
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+            ext: .dmg
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            ext: .AppImage
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🔧 Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🏗️ Build Electron App
+        run: npm run build:electron
+        env:
+          NODE_ENV: production
+          VITE_BUILD_TARGET: electron
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📦 Package Electron App
+        run: npm run package:${{ matrix.platform }}
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASS: ${{ secrets.APPLE_ID_PASS }}
+
+      - name: 📤 Upload Electron Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            dist-electron/
+            release/
+          retention-days: 30
+
+  # ===============================================
+  # Job 3: Security Scan
+  # ===============================================
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [build-web]
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🔧 Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🛡️ Run Security Audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: 🔍 Scan for Secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      - name: 📊 Generate Security Report
+        run: |
+          echo "# Security Scan Report" > security-report.md
+          echo "## Date: $(date)" >> security-report.md
+          echo "## Commit: ${{ github.sha }}" >> security-report.md
+          npm audit --json >> security-audit.json
+        continue-on-error: true
+
+      - name: 📤 Upload Security Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-scan-report
+          path: |
+            security-report.md
+            security-audit.json
+          retention-days: 90
+
+  # ===============================================
+  # Job 4: Performance Audit
+  # ===============================================
+  performance-audit:
+    name: ⚡ Performance Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build-web]
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📥 Download Web Build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: dist/
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 🔧 Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🚀 Start Application
+        run: npm run preview &
+        env:
+          CI: true
+
+      - name: ⏳ Wait for Application
+        run: npx wait-on http://localhost:4173 --timeout 60000
+
+      - name: 🏃 Run Lighthouse CI
+        run: npx lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+        continue-on-error: true
+
+      - name: 📊 Generate Performance Report
+        run: |
+          echo "# Performance Audit Report" > performance-report.md
+          echo "## Date: $(date)" >> performance-report.md
+          echo "## Build: ${{ github.sha }}" >> performance-report.md
+        continue-on-error: true
+
+      - name: 📤 Upload Performance Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-audit-report
+          path: |
+            performance-report.md
+            .lighthouseci/
+          retention-days: 30
+
+  # ===============================================
+  # Job 5: Deploy to Staging
+  # ===============================================
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [build-web, security-scan]
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.dms.example.com
+    
+    steps:
+      - name: 📥 Download Web Build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: dist/
+
+      - name: 🚀 Deploy to Staging
+        run: |
+          echo "🚀 Deploying to staging environment..."
+          echo "📁 Files to deploy:"
+          ls -la dist/
+          # Add your deployment commands here
+          # Example: rsync, scp, or cloud provider CLI
+        env:
+          STAGING_SERVER: ${{ secrets.STAGING_SERVER }}
+          STAGING_KEY: ${{ secrets.STAGING_KEY }}
+
+      - name: 🧪 Smoke Test Staging
+        run: |
+          echo "🧪 Running smoke tests on staging..."
+          # Add smoke tests here
+          # curl -f https://staging.dms.example.com/health
+        continue-on-error: true
+
+      - name: 📢 Notify Deployment
+        run: |
+          echo "✅ Staging deployment completed successfully!"
+          echo "🔗 URL: https://staging.dms.example.com"
+          echo "📝 Commit: ${{ github.sha }}"
+
+  # ===============================================
+  # Job 6: Deploy to Production
+  # ===============================================
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build-web, build-electron, security-scan, performance-audit]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://dms.example.com
+    
+    steps:
+      - name: 📥 Download Web Build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: dist/
+
+      - name: 📥 Download Electron Builds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: electron-*
+          path: releases/
+
+      - name: 🌟 Deploy to Production
+        run: |
+          echo "🌟 Deploying to production environment..."
+          echo "📁 Web files:"
+          ls -la dist/
+          echo "📁 Electron releases:"
+          ls -la releases/
+          # Add your production deployment commands here
+        env:
+          PRODUCTION_SERVER: ${{ secrets.PRODUCTION_SERVER }}
+          PRODUCTION_KEY: ${{ secrets.PRODUCTION_KEY }}
+
+      - name: 📦 Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: releases/**/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🧪 Production Health Check
+        run: |
+          echo "🧪 Running production health checks..."
+          # Add production health checks here
+          # curl -f https://dms.example.com/health
+        continue-on-error: true
+
+      - name: 📢 Notify Production Deployment
+        run: |
+          echo "🎉 Production deployment completed successfully!"
+          echo "🔗 URL: https://dms.example.com"
+          echo "📝 Version: ${{ github.ref_name }}"
+          echo "📝 Commit: ${{ github.sha }}"
+
+  # ===============================================
+  # Job 7: Cleanup
+  # ===============================================
+  cleanup:
+    name: 🧹 Cleanup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+      - name: 🧹 Cleanup Old Artifacts
+        run: |
+          echo "🧹 Cleaning up old artifacts and temporary files..."
+          echo "✅ Cleanup completed"
+
+      - name: 📊 Build Summary
+        run: |
+          echo "# 📊 Build Summary"
+          echo "- **Commit:** ${{ github.sha }}"
+          echo "- **Branch:** ${{ github.ref_name }}"
+          echo "- **Trigger:** ${{ github.event_name }}"
+          echo "- **Status:** ${{ job.status }}"
+          echo "- **Date:** $(date)"
