@@ -1,4 +1,4 @@
-// import { z } from 'zod';
+import { z } from 'zod';
 import type { Project, Tender, BankAccount } from '@/data/centralData';
 
 const nonEmptyString = z.string().trim().min(1);
