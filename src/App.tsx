@@ -16,6 +16,7 @@ const viewModuleLoaders = import.meta.glob('./{components,features}/**/*.{ts,tsx
 
 const SECTIONS_WITH_ON_SECTION_CHANGE: AppSection[] = [
   'dashboard',
+  'enhanced-dashboard',
   'projects',
   'tenders',
   'analytics',

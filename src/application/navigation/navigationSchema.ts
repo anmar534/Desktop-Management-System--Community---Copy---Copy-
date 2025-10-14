@@ -15,6 +15,7 @@ import {
 
 export const NAVIGATION_SECTIONS = [
   'dashboard',
+  'enhanced-dashboard',
   'projects',
   'tenders',
   'new-tender',
@@ -115,6 +116,14 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     breadcrumbs: [{ label: 'لوحة التحكم' }],
     quickActions: [
       {
+        id: 'enhanced-dashboard',
+        label: 'لوحة التحكم المحسّنة',
+        icon: BarChart3,
+        targetSection: 'enhanced-dashboard',
+        requires: ['tenders:read', 'projects:read', 'financial:read'],
+        tooltip: 'الانتقال إلى لوحة التحكم المحسّنة مع المؤشرات المتقدمة'
+      },
+      {
         id: 'create-tender',
         label: 'منافسة جديدة',
         icon: Trophy,
@@ -131,9 +140,53 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
         requires: ['projects:write']
       }
     ],
-    relatedSections: ['projects', 'tenders', 'financial'],
+    relatedSections: ['enhanced-dashboard', 'projects', 'tenders', 'financial'],
     view: {
       module: '@/features/dashboard/AdvancedDashboard'
+    }
+  },
+  {
+    id: 'enhanced-dashboard',
+    label: 'لوحة التحكم المحسّنة',
+    description: 'لوحة تحكم متطورة مع مؤشرات الأداء الحرجة والتنبيهات الذكية',
+    icon: BarChart3,
+    order: 5,
+    category: 'primary',
+    requires: ['tenders:read', 'projects:read', 'financial:read'],
+    breadcrumbs: [
+      { label: 'لوحة التحكم', section: 'dashboard' },
+      { label: 'لوحة التحكم المحسّنة' }
+    ],
+    quickActions: [
+      {
+        id: 'back-to-dashboard',
+        label: 'لوحة التحكم الأساسية',
+        icon: LayoutDashboard,
+        targetSection: 'dashboard',
+        requires: ['tenders:read', 'projects:read', 'financial:read'],
+        tooltip: 'العودة إلى لوحة التحكم الأساسية'
+      },
+      {
+        id: 'create-tender-enhanced',
+        label: 'منافسة جديدة',
+        icon: Trophy,
+        targetSection: 'new-tender',
+        requires: ['tenders:write'],
+        tooltip: 'بدء إنشاء منافسة جديدة'
+      },
+      {
+        id: 'analytics-enhanced',
+        label: 'التحليلات المتقدمة',
+        icon: Activity,
+        targetSection: 'analytics',
+        requires: ['analytics:read'],
+        tooltip: 'الانتقال إلى التحليلات والذكاء التنافسي'
+      }
+    ],
+    relatedSections: ['dashboard', 'projects', 'tenders', 'financial', 'analytics'],
+    view: {
+      module: '@/pages/EnhancedDashboard',
+      exportName: 'EnhancedDashboard'
     }
   },
   {
