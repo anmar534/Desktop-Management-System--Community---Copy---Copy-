@@ -97,45 +97,144 @@ export class CentralDataService {
   }
 
   private loadTenders(): void {
-    const tenders = safeLocalStorage.getItem<Tender[]>(STORAGE_KEYS.TENDERS, []);
-    this.tenderCache.clear();
-    tenders.forEach(tender => this.tenderCache.set(tender.id, tender));
+    try {
+      const tenders = safeLocalStorage.getItem<Tender[]>(STORAGE_KEYS.TENDERS, []);
+      this.tenderCache.clear();
+
+      // التحقق من أن القيمة المُرجعة هي array صالح
+      if (Array.isArray(tenders)) {
+        tenders.forEach(tender => {
+          if (tender && typeof tender === 'object' && tender.id) {
+            this.tenderCache.set(tender.id, tender);
+          }
+        });
+        console.log(`✅ تم تحميل ${tenders.length} عطاء من التخزين`);
+      } else {
+        console.warn('⚠️ البيانات المُحملة للعطاءات ليست array صالح، سيتم استخدام array فارغ');
+      }
+    } catch (error) {
+      console.error('❌ خطأ في تحميل العطاءات:', error);
+      this.tenderCache.clear();
+    }
   }
 
   private loadProjects(): void {
-    const projects = safeLocalStorage.getItem<Project[]>(STORAGE_KEYS.PROJECTS, []);
-    this.projectCache.clear();
-    projects.forEach(project => this.projectCache.set(project.id, project));
+    try {
+      const projects = safeLocalStorage.getItem<Project[]>(STORAGE_KEYS.PROJECTS, []);
+      this.projectCache.clear();
+
+      // التحقق من أن القيمة المُرجعة هي array صالح
+      if (Array.isArray(projects)) {
+        projects.forEach(project => {
+          if (project && typeof project === 'object' && project.id) {
+            this.projectCache.set(project.id, project);
+          }
+        });
+        console.log(`✅ تم تحميل ${projects.length} مشروع من التخزين`);
+      } else {
+        console.warn('⚠️ البيانات المُحملة للمشاريع ليست array صالح، سيتم استخدام array فارغ');
+      }
+    } catch (error) {
+      console.error('❌ خطأ في تحميل المشاريع:', error);
+      this.projectCache.clear();
+    }
   }
 
   private loadClients(): void {
-    const clients = safeLocalStorage.getItem<Client[]>(STORAGE_KEYS.CLIENTS, []);
-    this.clientCache.clear();
-    clients.forEach(client => this.clientCache.set(client.id, client));
+    try {
+      const clients = safeLocalStorage.getItem<Client[]>(STORAGE_KEYS.CLIENTS, []);
+      this.clientCache.clear();
+
+      // التحقق من أن القيمة المُرجعة هي array صالح
+      if (Array.isArray(clients)) {
+        clients.forEach(client => {
+          if (client && typeof client === 'object' && client.id) {
+            this.clientCache.set(client.id, client);
+          }
+        });
+        console.log(`✅ تم تحميل ${clients.length} عميل من التخزين`);
+      } else {
+        console.warn('⚠️ البيانات المُحملة للعملاء ليست array صالح، سيتم استخدام array فارغ');
+      }
+    } catch (error) {
+      console.error('❌ خطأ في تحميل العملاء:', error);
+      this.clientCache.clear();
+    }
   }
 
   private loadPurchaseOrders(): void {
-    const orders = safeLocalStorage.getItem<PurchaseOrder[]>(STORAGE_KEYS.PURCHASE_ORDERS, []);
-    this.purchaseOrderCache.clear();
-    orders.forEach(order => this.purchaseOrderCache.set(order.id, order));
+    try {
+      const orders = safeLocalStorage.getItem<PurchaseOrder[]>(STORAGE_KEYS.PURCHASE_ORDERS, []);
+      this.purchaseOrderCache.clear();
+
+      // التحقق من أن القيمة المُرجعة هي array صالح
+      if (Array.isArray(orders)) {
+        orders.forEach(order => {
+          if (order && typeof order === 'object' && order.id) {
+            this.purchaseOrderCache.set(order.id, order);
+          }
+        });
+        console.log(`✅ تم تحميل ${orders.length} أمر شراء من التخزين`);
+      } else {
+        console.warn('⚠️ البيانات المُحملة لأوامر الشراء ليست array صالح، سيتم استخدام array فارغ');
+      }
+    } catch (error) {
+      console.error('❌ خطأ في تحميل أوامر الشراء:', error);
+      this.purchaseOrderCache.clear();
+    }
   }
 
   private loadRelations(): void {
-    const relations = safeLocalStorage.getItem<{ tenderProject?: TenderProjectRelation[]; projectPurchase?: ProjectPurchaseRelation[] }>(
-      STORAGE_KEYS.RELATIONS,
-      {
-        tenderProject: [],
-        projectPurchase: []
+    try {
+      const relations = safeLocalStorage.getItem<{ tenderProject?: TenderProjectRelation[]; projectPurchase?: ProjectPurchaseRelation[] }>(
+        STORAGE_KEYS.RELATIONS,
+        {
+          tenderProject: [],
+          projectPurchase: []
+        }
+      );
+
+      // التحقق من صحة البيانات المُحملة
+      if (relations && typeof relations === 'object') {
+        this.tenderProjectRelations = Array.isArray(relations.tenderProject) ? relations.tenderProject : [];
+        this.projectPurchaseRelations = Array.isArray(relations.projectPurchase) ? relations.projectPurchase : [];
+        console.log(`✅ تم تحميل العلاقات: ${this.tenderProjectRelations.length} علاقة عطاء-مشروع، ${this.projectPurchaseRelations.length} علاقة مشروع-شراء`);
+      } else {
+        console.warn('⚠️ البيانات المُحملة للعلاقات ليست كائن صالح، سيتم استخدام arrays فارغة');
+        this.tenderProjectRelations = [];
+        this.projectPurchaseRelations = [];
       }
-    );
-    this.tenderProjectRelations = relations.tenderProject ?? [];
-    this.projectPurchaseRelations = relations.projectPurchase ?? [];
+    } catch (error) {
+      console.error('❌ خطأ في تحميل العلاقات:', error);
+      this.tenderProjectRelations = [];
+      this.projectPurchaseRelations = [];
+    }
   }
 
   private loadBOQData(): void {
-    const boqArray = safeLocalStorage.getItem<BOQData[]>(STORAGE_KEYS.BOQ_DATA, []);
-    this.boqData.clear();
-    boqArray.forEach(boq => this.boqData.set(boq.id, boq));
+    try {
+      const boqArray = safeLocalStorage.getItem<BOQData[]>(STORAGE_KEYS.BOQ_DATA, []);
+      this.boqData.clear();
+
+      // التحقق من أن القيمة المُرجعة هي array صالح
+      if (Array.isArray(boqArray)) {
+        boqArray.forEach(boq => {
+          if (boq && typeof boq === 'object' && boq.id) {
+            // التحقق من أن items هو array صالح
+            if (!Array.isArray(boq.items)) {
+              boq.items = [];
+            }
+            this.boqData.set(boq.id, boq);
+          }
+        });
+        console.log(`✅ تم تحميل ${boqArray.length} جدول كميات من التخزين`);
+      } else {
+        console.warn('⚠️ البيانات المُحملة لجداول الكميات ليست array صالح، سيتم استخدام array فارغ');
+      }
+    } catch (error) {
+      console.error('❌ خطأ في تحميل جداول الكميات:', error);
+      this.boqData.clear();
+    }
   }
 
   // ===========================
