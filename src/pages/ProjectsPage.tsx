@@ -5,19 +5,13 @@
  */
 
 import React from 'react'
-import { Helmet } from 'react-helmet-async'
-import { ProjectsManager } from '../components/projects'
+import { ProjectsManager } from '../components/projects/ProjectsManager'
 
 export const ProjectsPage: React.FC = () => {
   return (
-    <>
-      <Helmet>
-        <title>إدارة المشاريع - نظام إدارة المكاتب</title>
-        <meta name="description" content="إدارة شاملة للمشاريع مع تتبع التقدم والميزانيات والفرق" />
-      </Helmet>
-      
+    <div>
       <ProjectsManager />
-    </>
+    </div>
   )
 }
 

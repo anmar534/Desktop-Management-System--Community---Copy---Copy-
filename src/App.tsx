@@ -12,7 +12,7 @@ import { isNavigationSection, type AppSection, type NavigationNode } from '@/app
 
 type ViewModuleLoader = () => Promise<Record<string, unknown>>
 
-const viewModuleLoaders = import.meta.glob('./{components,features}/**/*.{ts,tsx}') as Record<string, ViewModuleLoader>
+const viewModuleLoaders = import.meta.glob('./{components,features,pages}/**/*.{ts,tsx}') as Record<string, ViewModuleLoader>
 
 const SECTIONS_WITH_ON_SECTION_CHANGE: AppSection[] = [
   'dashboard',

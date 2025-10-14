@@ -17,18 +17,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  RefreshCw, 
-  Settings, 
-  Download, 
-  Bell, 
+import {
+  RefreshCw,
+  Settings,
+  Download,
+  Bell,
   Activity,
   TrendingUp,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  BarChart3
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/components/ui/utils';
 
 /**
  * صفحة لوحة التحكم المحسّنة
