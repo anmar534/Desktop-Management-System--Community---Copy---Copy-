@@ -167,7 +167,7 @@ export class SupplierManagementService {
    */
   async getAllSuppliers(): Promise<Supplier[]> {
     try {
-      return await asyncStorage.getItem(STORAGE_KEYS.SUPPLIERS) || []
+      return await asyncStorage.getItem(STORAGE_KEYS.SUPPLIERS, [])
     } catch (error) {
       console.error('خطأ في جلب الموردين:', error)
       return []
@@ -180,7 +180,7 @@ export class SupplierManagementService {
   async getSupplierById(id: string): Promise<Supplier | null> {
     try {
       const suppliers = await this.getAllSuppliers()
-      return suppliers.find(supplier => supplier.id === id) || null
+      return suppliers.find(supplier => supplier.id === id) ?? null
     } catch (error) {
       console.error('خطأ في جلب المورد:', error)
       return null
@@ -289,7 +289,7 @@ export class SupplierManagementService {
       
       return suppliers.filter(supplier =>
         supplier.name.toLowerCase().includes(searchTerm) ||
-        supplier.nameEn?.toLowerCase().includes(searchTerm) ||
+        (supplier.nameEn?.toLowerCase().includes(searchTerm) ?? false) ||
         supplier.category.toLowerCase().includes(searchTerm) ||
         supplier.contactPerson.toLowerCase().includes(searchTerm) ||
         supplier.email.toLowerCase().includes(searchTerm)
@@ -329,7 +329,7 @@ export class SupplierManagementService {
   /**
    * الحصول على أفضل الموردين حسب التقييم
    */
-  async getTopRatedSuppliers(limit: number = 10): Promise<Supplier[]> {
+  async getTopRatedSuppliers(limit = 10): Promise<Supplier[]> {
     try {
       const suppliers = await this.getAllSuppliers()
       return suppliers
@@ -401,7 +401,7 @@ export class SupplierManagementService {
   // الحصول على جميع العقود
   async getAllContracts(): Promise<SupplierContract[]> {
     try {
-      const contracts = await asyncStorage.getItem(STORAGE_KEYS.CONTRACTS) || []
+      const contracts = await asyncStorage.getItem(STORAGE_KEYS.CONTRACTS, [])
       return contracts
     } catch (error) {
       console.error('خطأ في تحميل العقود:', error)
@@ -413,7 +413,7 @@ export class SupplierManagementService {
   async getContractById(id: string): Promise<SupplierContract | null> {
     try {
       const contracts = await this.getAllContracts()
-      return contracts.find(contract => contract.id === id) || null
+      return contracts.find(contract => contract.id === id) ?? null
     } catch (error) {
       console.error('خطأ في تحميل العقد:', error)
       return null
@@ -514,7 +514,7 @@ export class SupplierManagementService {
   }
 
   // الحصول على العقود المنتهية قريباً
-  async getExpiringContracts(daysAhead: number = 30): Promise<SupplierContract[]> {
+  async getExpiringContracts(daysAhead = 30): Promise<SupplierContract[]> {
     try {
       const contracts = await this.getAllContracts()
       const today = new Date()
@@ -543,8 +543,8 @@ export class SupplierManagementService {
         return (
           contract.title.toLowerCase().includes(lowerQuery) ||
           contract.contractNumber.toLowerCase().includes(lowerQuery) ||
-          contract.description?.toLowerCase().includes(lowerQuery) ||
-          supplier?.name.toLowerCase().includes(lowerQuery)
+          (contract.description?.toLowerCase().includes(lowerQuery) ?? false) ||
+          (supplier?.name.toLowerCase().includes(lowerQuery) ?? false)
         )
       })
     } catch (error) {
@@ -571,7 +571,7 @@ export class SupplierManagementService {
   // الحصول على جميع التقييمات
   async getAllEvaluations(): Promise<SupplierEvaluation[]> {
     try {
-      const evaluations = await asyncStorage.getItem(STORAGE_KEYS.EVALUATIONS) || []
+      const evaluations = await asyncStorage.getItem(STORAGE_KEYS.EVALUATIONS, [])
       return evaluations
     } catch (error) {
       console.error('خطأ في تحميل التقييمات:', error)
@@ -583,7 +583,7 @@ export class SupplierManagementService {
   async getEvaluationById(id: string): Promise<SupplierEvaluation | null> {
     try {
       const evaluations = await this.getAllEvaluations()
-      return evaluations.find(evaluation => evaluation.id === id) || null
+      return evaluations.find(evaluation => evaluation.id === id) ?? null
     } catch (error) {
       console.error('خطأ في تحميل التقييم:', error)
       return null

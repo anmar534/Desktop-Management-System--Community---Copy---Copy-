@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
@@ -10,15 +10,15 @@ import {
   TrendingDown, 
   BarChart3, 
   LineChart, 
-  PieChart,
   Target,
   AlertTriangle,
   CheckCircle,
   Lightbulb,
   Calendar,
-  RefreshCw
+  RefreshCw,
+  DollarSign
 } from 'lucide-react'
-import { procurementReportingService, TrendAnalysisData } from '../../services/procurementReportingService'
+import { procurementReportingService, type TrendAnalysisData } from '../../services/procurementReportingService'
 import { toast } from 'sonner'
 
 interface ProcurementTrendAnalysisProps {
@@ -182,26 +182,30 @@ export function ProcurementTrendAnalysis({ className }: ProcurementTrendAnalysis
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
+              <label htmlFor="start-date-input" className="text-sm font-medium text-gray-700 mb-2 block">
                 من تاريخ
               </label>
               <input
+                id="start-date-input"
                 type="date"
                 value={dateRange.startDate}
                 onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="من تاريخ"
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
+              <label htmlFor="end-date-input" className="text-sm font-medium text-gray-700 mb-2 block">
                 إلى تاريخ
               </label>
               <input
+                id="end-date-input"
                 type="date"
                 value={dateRange.endDate}
                 onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="إلى تاريخ"
               />
             </div>
           </div>
