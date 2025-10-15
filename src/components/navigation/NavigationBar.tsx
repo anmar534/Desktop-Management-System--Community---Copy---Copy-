@@ -3,7 +3,7 @@
  * Sprint 5.4.2: تحسين التنقل والقوائم
  */
 
-import React, { useState } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import styled from 'styled-components'
 import {
   Search,
@@ -133,15 +133,21 @@ const IconButton = styled.button<{ active?: boolean }>`
   width: 40px;
   height: 40px;
   border: none;
-  background-color: ${props => props.active ? designTokens.colors.primary[50] : 'transparent'};
-  color: ${props => props.active ? designTokens.colors.primary[500] : designTokens.colors.text.secondary};
+  background-color: ${({ active }: { active?: boolean }) =>
+    active ? designTokens.colors.primary[50] : 'transparent'};
+  color: ${({ active }: { active?: boolean }) =>
+    active ? designTokens.colors.primary[500] : designTokens.colors.text.secondary};
   border-radius: ${designTokens.borderRadius.lg};
   cursor: pointer;
   transition: ${designTokens.transitions.fast};
 
   &:hover {
-    background-color: ${props => props.active ? designTokens.colors.primary[100] : designTokens.colors.neutral[100]};
-    color: ${props => props.active ? designTokens.colors.primary[600] : designTokens.colors.text.primary};
+    background-color: ${({ active }: { active?: boolean }) =>
+      active
+        ? designTokens.colors.primary[100]
+        : designTokens.colors.neutral[100]};
+    color: ${({ active }: { active?: boolean }) =>
+      active ? designTokens.colors.primary[600] : designTokens.colors.text.primary};
   }
 
   &:focus-visible {
@@ -194,7 +200,8 @@ const UserAvatar = styled.div<{ src?: string }>`
   height: 32px;
   border-radius: ${designTokens.borderRadius.full};
   background-color: ${designTokens.colors.primary[500]};
-  background-image: ${props => props.src ? `url(${props.src})` : 'none'};
+  background-image: ${({ src }: { src?: string }) =>
+    src ? `url(${src})` : 'none'};
   background-size: cover;
   background-position: center;
   display: flex;
@@ -224,9 +231,10 @@ const Dropdown = styled.div<{ show: boolean }>`
   border: 1px solid ${designTokens.colors.border.light};
   border-radius: ${designTokens.borderRadius.lg};
   box-shadow: ${designTokens.shadows.lg};
-  opacity: ${props => props.show ? 1 : 0};
-  visibility: ${props => props.show ? 'visible' : 'hidden'};
-  transform: ${props => props.show ? 'translateY(0)' : 'translateY(-10px)'};
+  opacity: ${({ show }: { show: boolean }) => (show ? 1 : 0)};
+  visibility: ${({ show }: { show: boolean }) => (show ? 'visible' : 'hidden')};
+  transform: ${({ show }: { show: boolean }) =>
+    show ? 'translateY(0)' : 'translateY(-10px)'};
   transition: all ${designTokens.transitions.duration.fast} ${designTokens.transitions.timing.easeOut};
   z-index: ${designTokens.zIndex.dropdown};
 `
@@ -279,7 +287,7 @@ const UserMenuContainer = styled.div`
 // Component
 // ============================================================================
 
-export const NavigationBar: React.FC<NavigationBarProps> = ({
+export function NavigationBar({
   userName = 'User',
   userAvatar,
   notificationCount = 0,
@@ -293,16 +301,16 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
   darkMode = false,
   language = 'en',
   rtl = false,
-}) => {
+}: NavigationBarProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value)
   }
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
     onSearch?.(searchQuery)
   }
 
@@ -325,6 +333,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
             </SearchIcon>
             <SearchInput
               type="text"
+              aria-label={rtl ? 'البحث' : 'Search'}
               placeholder={rtl ? 'بحث...' : 'Search...'}
               value={searchQuery}
               onChange={handleSearchChange}
@@ -343,7 +352,7 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
 
         <IconButton
           onClick={onLanguageToggle}
-          aria-label="Change language"
+          aria-label={language === 'ar' ? 'تغيير اللغة' : 'Change language'}
         >
           <Globe size={20} />
         </IconButton>

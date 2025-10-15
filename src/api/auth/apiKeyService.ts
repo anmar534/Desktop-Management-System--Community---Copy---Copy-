@@ -18,6 +18,7 @@ export interface CreateApiKeyRequest {
   permissions: ApiPermission[]
   rateLimit?: number
   expiresAt?: string
+  isActive?: boolean
 }
 
 export interface UpdateApiKeyRequest {
@@ -36,10 +37,10 @@ export interface ApiKeyUsage {
   failedRequests: number
   lastUsedAt?: string
   requestsByEndpoint: Record<string, number>
-  requestsByDay: Array<{
+  requestsByDay: {
     date: string
     count: number
-  }>
+  }[]
 }
 
 // ============================================================================
@@ -68,21 +69,17 @@ export class ApiKeyService {
    * إنشاء مفتاح API جديد
    */
   async createApiKey(request: CreateApiKeyRequest): Promise<ApiResponse<ApiKey>> {
-    // Generate secure API key
-    const key = this.generateApiKey()
-    
-    const apiKey: Omit<ApiKey, 'id' | 'createdAt'> = {
-      key,
+    const apiKeyMetadata: Omit<ApiKey, 'id' | 'createdAt' | 'key'> = {
       name: request.name,
       nameEn: request.nameEn,
       description: request.description,
       permissions: request.permissions,
-      rateLimit: request.rateLimit || 100,
+      rateLimit: request.rateLimit ?? 100,
       expiresAt: request.expiresAt,
-      isActive: true,
+      isActive: request.isActive ?? true,
     }
 
-    return apiClient.post<ApiKey>('/auth/api-keys', apiKey)
+    return apiClient.post<ApiKey>('/auth/api-keys', apiKeyMetadata)
   }
 
   /**
@@ -237,7 +234,7 @@ export async function validateApiKeyFromHeaders(
       valid: false,
       error: 'Invalid API key',
     }
-  } catch (error) {
+  } catch {
     return {
       valid: false,
       error: 'Failed to validate API key',
