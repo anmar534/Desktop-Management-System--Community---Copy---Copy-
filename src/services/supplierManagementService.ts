@@ -425,36 +425,48 @@ export class SupplierManagementService {
     try {
       const contracts = await this.getAllContracts()
       
-      // Generate collision-resistant ID
-      let newId = ''
-      let isUnique = false
-      let attempts = 0
-      const maxAttempts = 10
+      let finalId: string
       
-      while (!isUnique && attempts < maxAttempts) {
-        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-          // Use crypto.randomUUID() when available
-          newId = `contract_${crypto.randomUUID()}`
-        } else {
-          // Fallback: Date.now() + secure random suffix
-          const timestamp = Date.now()
-          const randomSuffix = Math.random().toString(36).substring(2, 15) + 
-                              Math.random().toString(36).substring(2, 15)
-          newId = `contract_${timestamp}_${randomSuffix}`
+      // If caller provided an id, validate it's unique
+      if (contractData.id) {
+        if (contracts.some(c => c.id === contractData.id)) {
+          throw new Error(`Contract ID '${contractData.id}' already exists`)
+        }
+        finalId = contractData.id
+      } else {
+        // Generate collision-resistant ID
+        let newId = ''
+        let isUnique = false
+        let attempts = 0
+        const maxAttempts = 10
+        
+        while (!isUnique && attempts < maxAttempts) {
+          if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            // Use crypto.randomUUID() when available
+            newId = `contract_${crypto.randomUUID()}`
+          } else {
+            // Fallback: Date.now() + secure random suffix
+            const timestamp = Date.now()
+            const randomSuffix = Math.random().toString(36).substring(2, 15) + 
+                                Math.random().toString(36).substring(2, 15)
+            newId = `contract_${timestamp}_${randomSuffix}`
+          }
+          
+          // Verify uniqueness
+          isUnique = !contracts.some(c => c.id === newId)
+          attempts++
         }
         
-        // Verify uniqueness
-        isUnique = !contracts.some(c => c.id === newId)
-        attempts++
-      }
-      
-      if (!isUnique) {
-        throw new Error('Failed to generate unique contract ID after maximum attempts')
+        if (!isUnique) {
+          throw new Error('Failed to generate unique contract ID after maximum attempts')
+        }
+        
+        finalId = newId
       }
       
       const newContract: SupplierContract = {
         ...contractData,
-        id: contractData.id || newId,
+        id: finalId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -595,36 +607,48 @@ export class SupplierManagementService {
     try {
       const evaluations = await this.getAllEvaluations()
       
-      // Generate collision-resistant ID
-      let newId = ''
-      let isUnique = false
-      let attempts = 0
-      const maxAttempts = 10
+      let finalId: string
       
-      while (!isUnique && attempts < maxAttempts) {
-        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-          // Use crypto.randomUUID() when available
-          newId = `eval_${crypto.randomUUID()}`
-        } else {
-          // Fallback: Date.now() + secure random suffix
-          const timestamp = Date.now()
-          const randomSuffix = Math.random().toString(36).substring(2, 15) + 
-                              Math.random().toString(36).substring(2, 15)
-          newId = `eval_${timestamp}_${randomSuffix}`
+      // If caller provided an id, validate it's unique
+      if (evaluationData.id) {
+        if (evaluations.some(e => e.id === evaluationData.id)) {
+          throw new Error(`Evaluation ID '${evaluationData.id}' already exists`)
+        }
+        finalId = evaluationData.id
+      } else {
+        // Generate collision-resistant ID
+        let newId = ''
+        let isUnique = false
+        let attempts = 0
+        const maxAttempts = 10
+        
+        while (!isUnique && attempts < maxAttempts) {
+          if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            // Use crypto.randomUUID() when available
+            newId = `eval_${crypto.randomUUID()}`
+          } else {
+            // Fallback: Date.now() + secure random suffix
+            const timestamp = Date.now()
+            const randomSuffix = Math.random().toString(36).substring(2, 15) + 
+                                Math.random().toString(36).substring(2, 15)
+            newId = `eval_${timestamp}_${randomSuffix}`
+          }
+          
+          // Verify uniqueness against existing evaluations
+          isUnique = !evaluations.some(e => e.id === newId)
+          attempts++
         }
         
-        // Verify uniqueness against existing evaluations
-        isUnique = !evaluations.some(e => e.id === newId)
-        attempts++
-      }
-      
-      if (!isUnique) {
-        throw new Error('Failed to generate unique evaluation ID after maximum attempts')
+        if (!isUnique) {
+          throw new Error('Failed to generate unique evaluation ID after maximum attempts')
+        }
+        
+        finalId = newId
       }
       
       const newEvaluation: SupplierEvaluation = {
         ...evaluationData,
-        id: evaluationData.id || newId,
+        id: finalId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
@@ -667,15 +691,26 @@ export class SupplierManagementService {
   }
 
   // حذف تقييم
-  async deleteEvaluation(id: string): Promise<void> {
-    const evaluations = await this.getAllEvaluations()
-    const evaluation = evaluations.find(e => e.id === id)
-    const filteredEvaluations = evaluations.filter(evaluation => evaluation.id !== id)
-    await asyncStorage.setItem(STORAGE_KEYS.EVALUATIONS, filteredEvaluations)
+  async deleteEvaluation(id: string): Promise<boolean> {
+    try {
+      const evaluations = await this.getAllEvaluations()
+      const evaluation = evaluations.find(e => e.id === id)
+      
+      if (!evaluation) {
+        // التقييم غير موجود - عودة false كنتيجة عادية
+        return false
+      }
+      
+      const filteredEvaluations = evaluations.filter(e => e.id !== id)
+      await asyncStorage.setItem(STORAGE_KEYS.EVALUATIONS, filteredEvaluations)
 
-    // تحديث تقييم المورد إذا كان موجود
-    if (evaluation) {
+      // تحديث تقييم المورد
       await this.updateSupplierRating(evaluation.supplierId)
+      
+      return true
+    } catch (error) {
+      console.error('خطأ في حذف التقييم:', error)
+      return false
     }
   }
 
