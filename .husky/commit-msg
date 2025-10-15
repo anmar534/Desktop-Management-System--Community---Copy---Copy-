@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Commit-msg hook for Desktop Management System
+# Validates commit message format
+
+echo "📝 Validating commit message..."
+
+commit_msg=$(cat "$1")
+
+# Check if commit message is not empty
+if [ -z "$commit_msg" ]; then
+  echo "❌ Commit message cannot be empty"
+  exit 1
+fi
+
+# Check minimum length (at least 10 characters)
+if [ ${#commit_msg} -lt 10 ]; then
+  echo "❌ Commit message too short (minimum 10 characters)"
+  exit 1
+fi
+
+echo "✅ Commit message validated!"
+exit 0
