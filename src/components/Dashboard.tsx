@@ -24,7 +24,7 @@ interface DashboardProps {
   onSectionChange: (section: string) => void;
 }
 
-export function Dashboard({ onSectionChange }: DashboardProps) {
+function Dashboard({ onSectionChange }: DashboardProps) {
   const {
     currency,
     lastRefreshAt,
@@ -343,3 +343,5 @@ export function Dashboard({ onSectionChange }: DashboardProps) {
     </div>
   );
 }
+
+export default Dashboard;
