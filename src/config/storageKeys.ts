@@ -22,6 +22,44 @@ export const STORAGE_KEYS = {
   EXPENSES: 'app_expenses_data',
   BOQ_DATA: 'app_boq_data',
   PRICING_DATA: 'app_pricing_data',
+
+  // Procurement Management
+  SUPPLIERS: 'app_suppliers',
+  SUPPLIER_CONTRACTS: 'app_supplier_contracts',
+  SUPPLIER_EVALUATIONS: 'app_supplier_evaluations',
+  PROCUREMENT_REPORTS: 'app_procurement_reports',
+  PROCUREMENT_COST_LINKS: 'app_procurement_cost_links',
+  BUDGET_CATEGORIES: 'app_budget_categories',
+  BUDGET_ALERTS: 'app_budget_alerts',
+  STOCK_MOVEMENTS: 'app_stock_movements',
+  CONTRACTS: 'app_contracts',
+
+  // Integration Keys
+  PROJECT_PROCUREMENT_INTEGRATION: 'app_project_procurement_integration',
+  FINANCIAL_PROCUREMENT_INTEGRATION: 'app_financial_procurement_integration',
+  LAST_SYNC_DATE: 'app_last_sync_date',
+
+  // System Integration Keys
+  SYSTEM_MODULES: 'app_system_modules',
+  DATA_FLOWS: 'app_data_flows',
+  INTEGRATION_CONFLICTS: 'app_integration_conflicts',
+  REALTIME_UPDATES: 'app_realtime_updates',
+  LAST_FULL_SYNC: 'app_last_full_sync',
+
+  // Performance Optimization Keys
+  PERFORMANCE_METRICS: 'app_performance_metrics',
+  ERROR_LOGS: 'app_error_logs',
+  OPTIMIZATION_CONFIG: 'app_optimization_config',
+  SYSTEM_HEALTH: 'app_system_health',
+  RECOVERY_ATTEMPTS: 'app_recovery_attempts',
+
+  // Inventory Management
+  INVENTORY_ITEMS: 'app_inventory_items',
+  INVENTORY_MOVEMENTS: 'app_inventory_movements',
+  INVENTORY_ALERTS: 'app_inventory_alerts',
+  INVENTORY_LOCATIONS: 'app_inventory_locations',
+  INVENTORY_COUNTS: 'app_inventory_counts',
+  INVENTORY_REPORTS: 'app_inventory_reports',
   PRICING_SNAPSHOTS: 'app_pricing_snapshots', // تخزين اللقطات المحسوبة (Snapshot) لكل مناقصة
   // طبقات التسعير الجديدة (فصل الرسمي عن المسودة)
   PRICING_OFFICIAL: 'app_pricing_official',

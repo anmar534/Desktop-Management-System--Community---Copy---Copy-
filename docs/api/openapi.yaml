@@ -1,0 +1,736 @@
+openapi: 3.0.3
+info:
+  title: Desktop Management System API
+  description: |
+    نظام إدارة المقاولات - واجهة برمجية شاملة
+    
+    Desktop Management System - Comprehensive API for Construction Management
+    
+    ## Features
+    - **Authentication**: JWT-based authentication with API keys
+    - **Tenders Management**: Complete tender lifecycle management
+    - **Projects Management**: Project tracking with EVM support
+    - **Financial Management**: Invoices, budgets, and financial reports
+    - **Procurement**: Purchase orders, suppliers, and inventory
+    - **Analytics**: KPIs, reports, and business intelligence
+    
+    ## Authentication
+    
+    This API supports two authentication methods:
+    
+    1. **Bearer Token**: Use JWT token in Authorization header
+       ```
+       Authorization: Bearer <your-token>
+       ```
+    
+    2. **API Key**: Use API key in X-API-Key header
+       ```
+       X-API-Key: dms_<your-api-key>
+       ```
+    
+    ## Rate Limiting
+    
+    API requests are rate-limited based on your authentication method:
+    - Default: 100 requests per minute
+    - Read operations: 200 requests per minute
+    - Write operations: 50 requests per minute
+    - Reports: 10 requests per minute
+    
+    Rate limit information is included in response headers:
+    - `X-RateLimit-Limit`: Maximum requests allowed
+    - `X-RateLimit-Remaining`: Remaining requests
+    - `X-RateLimit-Reset`: Time when limit resets (Unix timestamp)
+    
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@dms.example.com
+  license:
+    name: Proprietary
+    
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://api.dms.example.com/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+    externalDocs:
+      description: Authentication Guide
+      url: https://docs.dms.example.com/auth
+  - name: Tenders
+    description: Tender management operations
+  - name: Projects
+    description: Project management operations
+  - name: Financial
+    description: Financial management operations
+  - name: Procurement
+    description: Procurement and inventory operations
+  - name: Analytics
+    description: Analytics and reporting
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and receive access token
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  format: password
+                  example: password123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimitExceeded'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Get new access token using refresh token
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthToken'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /tenders:
+    get:
+      tags:
+        - Tenders
+      summary: Get all tenders
+      description: Retrieve list of tenders with pagination and filtering
+      operationId: getTenders
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/SortOrder'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/TenderStatus'
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenderListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    
+    post:
+      tags:
+        - Tenders
+      summary: Create new tender
+      description: Create a new tender
+      operationId: createTender
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTenderRequest'
+      responses:
+        '201':
+          description: Tender created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /tenders/{id}:
+    get:
+      tags:
+        - Tenders
+      summary: Get tender by ID
+      description: Retrieve specific tender details
+      operationId: getTenderById
+      parameters:
+        - $ref: '#/components/parameters/TenderId'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    
+    put:
+      tags:
+        - Tenders
+      summary: Update tender
+      description: Update existing tender
+      operationId: updateTender
+      parameters:
+        - $ref: '#/components/parameters/TenderId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTenderRequest'
+      responses:
+        '200':
+          description: Tender updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    
+    delete:
+      tags:
+        - Tenders
+      summary: Delete tender
+      description: Delete existing tender
+      operationId: deleteTender
+      parameters:
+        - $ref: '#/components/parameters/TenderId'
+      responses:
+        '204':
+          description: Tender deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /projects:
+    get:
+      tags:
+        - Projects
+      summary: Get all projects
+      description: Retrieve list of projects with pagination and filtering
+      operationId: getProjects
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ProjectStatus'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectListResponse'
+
+  /financial/invoices:
+    get:
+      tags:
+        - Financial
+      summary: Get all invoices
+      description: Retrieve list of invoices
+      operationId: getInvoices
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Successful response
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication token
+    
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Page number
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    
+    PageSize:
+      name: pageSize
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    
+    SortBy:
+      name: sortBy
+      in: query
+      description: Field to sort by
+      schema:
+        type: string
+    
+    SortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+    
+    TenderId:
+      name: id
+      in: path
+      required: true
+      description: Tender ID
+      schema:
+        type: string
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        error:
+          $ref: '#/components/schemas/ApiError'
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+    
+    ApiError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        messageAr:
+          type: string
+        details:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+    
+    ResponseMetadata:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        requestId:
+          type: string
+        version:
+          type: string
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    
+    PaginationMetadata:
+      type: object
+      properties:
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+        totalItems:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrevious:
+          type: boolean
+
+    AuthToken:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+        tokenType:
+          type: string
+          enum: [Bearer]
+        scope:
+          type: array
+          items:
+            type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              $ref: '#/components/schemas/AuthToken'
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+        fullNameAr:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        permissions:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+        lastLogin:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    UserRole:
+      type: string
+      enum:
+        - admin
+        - manager
+        - project_manager
+        - financial_manager
+        - procurement_manager
+        - user
+        - viewer
+
+    TenderStatus:
+      type: string
+      enum:
+        - draft
+        - submitted
+        - under_review
+        - awarded
+        - lost
+        - cancelled
+
+    ProjectStatus:
+      type: string
+      enum:
+        - planning
+        - in_progress
+        - on_hold
+        - completed
+        - cancelled
+
+    CreateTenderRequest:
+      type: object
+      required:
+        - referenceNumber
+        - title
+        - client
+        - submissionDate
+      properties:
+        referenceNumber:
+          type: string
+        title:
+          type: string
+        titleEn:
+          type: string
+        description:
+          type: string
+        client:
+          type: string
+        submissionDate:
+          type: string
+          format: date
+        openingDate:
+          type: string
+          format: date
+        budget:
+          type: number
+        currency:
+          type: string
+          default: SAR
+
+    UpdateTenderRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/TenderStatus'
+        submissionDate:
+          type: string
+          format: date
+
+    TenderListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            tenders:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tender'
+            total:
+              type: integer
+        metadata:
+          $ref: '#/components/schemas/ResponseMetadata'
+
+    Tender:
+      type: object
+      properties:
+        id:
+          type: string
+        referenceNumber:
+          type: string
+        title:
+          type: string
+        titleEn:
+          type: string
+        description:
+          type: string
+        client:
+          type: string
+        status:
+          $ref: '#/components/schemas/TenderStatus'
+        submissionDate:
+          type: string
+          format: date
+        openingDate:
+          type: string
+          format: date
+        budget:
+          type: number
+        estimatedValue:
+          type: number
+        currency:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProjectListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            projects:
+              type: array
+              items:
+                $ref: '#/components/schemas/Project'
+            total:
+              type: integer
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        nameEn:
+          type: string
+        description:
+          type: string
+        client:
+          type: string
+        status:
+          $ref: '#/components/schemas/ProjectStatus'
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        budget:
+          type: number
+        actualCost:
+          type: number
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        tenderId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            error:
+              code: "2001"
+              message: "Validation error"
+              messageAr: "خطأ في التحقق من البيانات"
+              timestamp: "2025-10-15T10:00:00Z"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            error:
+              code: "1001"
+              message: "Unauthorized"
+              messageAr: "غير مصرح"
+              timestamp: "2025-10-15T10:00:00Z"
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            error:
+              code: "1005"
+              message: "Insufficient permissions"
+              messageAr: "صلاحيات غير كافية"
+              timestamp: "2025-10-15T10:00:00Z"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            error:
+              code: "3001"
+              message: "Resource not found"
+              messageAr: "المورد غير موجود"
+              timestamp: "2025-10-15T10:00:00Z"
+
+    RateLimitExceeded:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Maximum requests allowed
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+          description: Time when limit resets (Unix timestamp)
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait before retrying
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+          example:
+            success: false
+            error:
+              code: "4001"
+              message: "Rate limit exceeded"
+              messageAr: "تم تجاوز حد الطلبات"
+              timestamp: "2025-10-15T10:00:00Z"
+              retryAfter: 60
+

@@ -1,0 +1,466 @@
+{
+  "info": {
+    "name": "Desktop Management System API",
+    "description": "Complete API collection for Desktop Management System\n\nواجهة برمجية شاملة لنظام إدارة المقاولات",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.dms.example.com/v1",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data) {",
+                  "        pm.collectionVariables.set('accessToken', response.data.token.accessToken);",
+                  "        pm.collectionVariables.set('refreshToken', response.data.token.refreshToken);",
+                  "        console.log('Login successful!');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data) {",
+                  "        pm.collectionVariables.set('accessToken', response.data.accessToken);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenders",
+      "item": [
+        {
+          "name": "Get All Tenders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tenders?page=1&pageSize=20&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["tenders"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "pageSize", "value": "20"},
+                {"key": "sortBy", "value": "createdAt"},
+                {"key": "sortOrder", "value": "desc"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Tender by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tenders/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["tenders", ":id"],
+              "variable": [
+                {"key": "id", "value": "tender_123"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Tender",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"referenceNumber\": \"TND-2025-001\",\n  \"title\": \"مشروع إنشاء مبنى إداري\",\n  \"titleEn\": \"Administrative Building Construction\",\n  \"description\": \"مشروع إنشاء مبنى إداري بمساحة 5000 متر مربع\",\n  \"client\": \"وزارة الإسكان\",\n  \"submissionDate\": \"2025-11-15\",\n  \"openingDate\": \"2025-11-20\",\n  \"budget\": 5000000,\n  \"currency\": \"SAR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tenders",
+              "host": ["{{baseUrl}}"],
+              "path": ["tenders"]
+            }
+          }
+        },
+        {
+          "name": "Update Tender",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"وصف محدث\",\n  \"budget\": 6000000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tenders/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["tenders", ":id"],
+              "variable": [
+                {"key": "id", "value": "tender_123"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Tender Status",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"submitted\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tenders/:id/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["tenders", ":id", "status"],
+              "variable": [
+                {"key": "id", "value": "tender_123"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Tender Pricing",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tenders/:id/pricing",
+              "host": ["{{baseUrl}}"],
+              "path": ["tenders", ":id", "pricing"],
+              "variable": [
+                {"key": "id", "value": "tender_123"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Tender BOQ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tenders/:id/boq",
+              "host": ["{{baseUrl}}"],
+              "path": ["tenders", ":id", "boq"],
+              "variable": [
+                {"key": "id", "value": "tender_123"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Tender",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tenders/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["tenders", ":id"],
+              "variable": [
+                {"key": "id", "value": "tender_123"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Get All Projects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "pageSize", "value": "20"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Project",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"PRJ-2025-001\",\n  \"name\": \"مشروع مبنى إداري\",\n  \"nameEn\": \"Administrative Building Project\",\n  \"client\": \"وزارة الإسكان\",\n  \"startDate\": \"2025-12-01\",\n  \"endDate\": \"2026-12-01\",\n  \"budget\": 5000000,\n  \"currency\": \"SAR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects"]
+            }
+          }
+        },
+        {
+          "name": "Get Project Costs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/projects/:id/costs",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", ":id", "costs"],
+              "variable": [
+                {"key": "id", "value": "project_123"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Project Progress",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"overallProgress\": 25,\n  \"completedTasks\": 15,\n  \"totalTasks\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/projects/:id/progress",
+              "host": ["{{baseUrl}}"],
+              "path": ["projects", ":id", "progress"],
+              "variable": [
+                {"key": "id", "value": "project_123"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Financial",
+      "item": [
+        {
+          "name": "Get All Invoices",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/financial/invoices?page=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["financial", "invoices"],
+              "query": [
+                {"key": "page", "value": "1"},
+                {"key": "pageSize", "value": "20"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Invoice",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"invoiceNumber\": \"INV-2025-001\",\n  \"type\": \"sales\",\n  \"status\": \"draft\",\n  \"client\": \"شركة ABC\",\n  \"issueDate\": \"2025-10-15\",\n  \"dueDate\": \"2025-11-15\",\n  \"amount\": 100000,\n  \"vat\": 15000,\n  \"totalAmount\": 115000,\n  \"currency\": \"SAR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/financial/invoices",
+              "host": ["{{baseUrl}}"],
+              "path": ["financial", "invoices"]
+            }
+          }
+        },
+        {
+          "name": "Get Financial Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/financial/reports/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["financial", "reports", "summary"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Procurement",
+      "item": [
+        {
+          "name": "Get Purchase Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/procurement/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["procurement", "purchase-orders"]
+            }
+          }
+        },
+        {
+          "name": "Create Purchase Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderNumber\": \"PO-2025-001\",\n  \"supplierId\": \"supplier_123\",\n  \"orderDate\": \"2025-10-15\",\n  \"deliveryDate\": \"2025-10-30\",\n  \"totalAmount\": 50000,\n  \"currency\": \"SAR\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/procurement/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["procurement", "purchase-orders"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

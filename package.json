@@ -136,6 +136,19 @@
     "backup:export": "tsx scripts/export-backups.ts",
     "security:check": "tsx scripts/check-security-updates.ts",
     "storybook": "storybook dev -p 6006",
-    "storybook:build": "storybook build"
+    "storybook:build": "storybook build",
+    "type-check": "tsc --noEmit",
+    "format:check": "prettier --check .",
+    "test:unit": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "test:performance": "echo 'Performance tests not implemented yet'",
+    "build:dev": "vite build --mode development",
+    "analyze:bundle": "echo 'Bundle analysis not implemented yet'",
+    "performance:report": "echo 'Performance reporting not implemented yet'",
+    "package:win32": "electron-builder --win",
+    "package:darwin": "electron-builder --mac",
+    "package:linux": "electron-builder --linux"
   }
 }
