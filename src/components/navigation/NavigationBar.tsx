@@ -3,7 +3,7 @@
  * Sprint 5.4.2: تحسين التنقل والقوائم
  */
 
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, useRef, useEffect, type ChangeEvent, type FormEvent } from 'react'
 import styled from 'styled-components'
 import {
   Search,
@@ -95,10 +95,11 @@ const SearchContainer = styled.div`
   }
 `
 
-const SearchInput = styled.input`
+const SearchInput = styled.input<{ rtl?: boolean }>`
   width: 100%;
   height: 40px;
-  padding: 0 ${designTokens.spacing[4]} 0 ${designTokens.spacing[10]};
+  padding-inline-start: ${({ rtl }) => rtl ? designTokens.spacing[4] : designTokens.spacing[10]};
+  padding-inline-end: ${({ rtl }) => rtl ? designTokens.spacing[10] : designTokens.spacing[4]};
   border: 1px solid ${designTokens.colors.border.light};
   border-radius: ${designTokens.borderRadius.lg};
   font-size: ${designTokens.typography.fontSize.sm};
@@ -116,9 +117,10 @@ const SearchInput = styled.input`
   }
 `
 
-const SearchIcon = styled.div`
+const SearchIcon = styled.div<{ rtl?: boolean }>`
   position: absolute;
-  left: ${designTokens.spacing[3]};
+  inset-inline-start: ${({ rtl }) => rtl ? 'auto' : designTokens.spacing[3]};
+  inset-inline-end: ${({ rtl }) => rtl ? designTokens.spacing[3] : 'auto'};
   top: 50%;
   transform: translateY(-50%);
   color: ${designTokens.colors.text.hint};
@@ -304,6 +306,32 @@ export function NavigationBar({
 }: NavigationBarProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  // Close user menu on outside click or Escape key
+  useEffect(() => {
+    if (!showUserMenu) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowUserMenu(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showUserMenu])
 
   const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value)
@@ -328,10 +356,11 @@ export function NavigationBar({
       <NavSection>
         <SearchContainer>
           <form onSubmit={handleSearchSubmit}>
-            <SearchIcon>
+            <SearchIcon rtl={rtl}>
               <Search size={18} />
             </SearchIcon>
             <SearchInput
+              rtl={rtl}
               type="text"
               aria-label={rtl ? 'البحث' : 'Search'}
               placeholder={rtl ? 'بحث...' : 'Search...'}
@@ -365,7 +394,7 @@ export function NavigationBar({
           {notificationCount > 0 && <Badge>{notificationCount}</Badge>}
         </IconButton>
 
-        <UserMenuContainer>
+        <UserMenuContainer ref={userMenuRef}>
           <UserButton
             onClick={() => setShowUserMenu(!showUserMenu)}
             aria-expanded={showUserMenu}

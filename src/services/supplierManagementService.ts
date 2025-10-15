@@ -192,14 +192,42 @@ export class SupplierManagementService {
    */
   async createSupplier(data: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>): Promise<Supplier> {
     try {
+      const suppliers = await this.getAllSuppliers()
+      
+      // Generate collision-resistant ID
+      let newId = ''
+      let isUnique = false
+      let attempts = 0
+      const maxAttempts = 10
+      
+      while (!isUnique && attempts < maxAttempts) {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          // Use crypto.randomUUID() when available
+          newId = `supplier_${crypto.randomUUID()}`
+        } else {
+          // Fallback: Date.now() + secure random suffix
+          const timestamp = Date.now()
+          const randomSuffix = Math.random().toString(36).substring(2, 15) + 
+                              Math.random().toString(36).substring(2, 15)
+          newId = `supplier_${timestamp}_${randomSuffix}`
+        }
+        
+        // Verify uniqueness against existing suppliers
+        isUnique = !suppliers.some(s => s.id === newId)
+        attempts++
+      }
+      
+      if (!isUnique) {
+        throw new Error('Failed to generate unique supplier ID after maximum attempts')
+      }
+      
       const supplier: Supplier = {
         ...data,
-        id: `supplier_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: newId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
 
-      const suppliers = await this.getAllSuppliers()
       suppliers.push(supplier)
       await asyncStorage.setItem(STORAGE_KEYS.SUPPLIERS, suppliers)
 
@@ -212,27 +240,22 @@ export class SupplierManagementService {
   /**
    * تحديث مورد
    */
-  async updateSupplier(id: string, updates: Partial<Supplier>): Promise<Supplier | null> {
-    try {
-      const suppliers = await this.getAllSuppliers()
-      const index = suppliers.findIndex(supplier => supplier.id === id)
-      
-      if (index === -1) {
-        throw new Error('المورد غير موجود')
-      }
-
-      suppliers[index] = {
-        ...suppliers[index],
-        ...updates,
-        updatedAt: new Date().toISOString()
-      }
-
-      await asyncStorage.setItem(STORAGE_KEYS.SUPPLIERS, suppliers)
-      return suppliers[index]
-    } catch (error) {
-      console.error('خطأ في تحديث المورد:', error)
-      return null
+  async updateSupplier(id: string, updates: Partial<Supplier>): Promise<Supplier> {
+    const suppliers = await this.getAllSuppliers()
+    const index = suppliers.findIndex(supplier => supplier.id === id)
+    
+    if (index === -1) {
+      throw new Error('المورد غير موجود')
     }
+
+    suppliers[index] = {
+      ...suppliers[index],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    }
+
+    await asyncStorage.setItem(STORAGE_KEYS.SUPPLIERS, suppliers)
+    return suppliers[index]
   }
 
   /**
@@ -244,7 +267,8 @@ export class SupplierManagementService {
       const filteredSuppliers = suppliers.filter(supplier => supplier.id !== id)
       
       if (filteredSuppliers.length === suppliers.length) {
-        throw new Error('المورد غير موجود')
+        // المورد غير موجود - عودة false كنتيجة عادية
+        return false
       }
 
       await asyncStorage.setItem(STORAGE_KEYS.SUPPLIERS, filteredSuppliers)
@@ -377,7 +401,7 @@ export class SupplierManagementService {
   // الحصول على جميع العقود
   async getAllContracts(): Promise<SupplierContract[]> {
     try {
-      const contracts = await asyncStorage.getItem('supplier_contracts') || []
+      const contracts = await asyncStorage.getItem(STORAGE_KEYS.CONTRACTS) || []
       return contracts
     } catch (error) {
       console.error('خطأ في تحميل العقود:', error)
@@ -400,15 +424,43 @@ export class SupplierManagementService {
   async createContract(contractData: SupplierContract): Promise<SupplierContract> {
     try {
       const contracts = await this.getAllContracts()
+      
+      // Generate collision-resistant ID
+      let newId = ''
+      let isUnique = false
+      let attempts = 0
+      const maxAttempts = 10
+      
+      while (!isUnique && attempts < maxAttempts) {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          // Use crypto.randomUUID() when available
+          newId = `contract_${crypto.randomUUID()}`
+        } else {
+          // Fallback: Date.now() + secure random suffix
+          const timestamp = Date.now()
+          const randomSuffix = Math.random().toString(36).substring(2, 15) + 
+                              Math.random().toString(36).substring(2, 15)
+          newId = `contract_${timestamp}_${randomSuffix}`
+        }
+        
+        // Verify uniqueness
+        isUnique = !contracts.some(c => c.id === newId)
+        attempts++
+      }
+      
+      if (!isUnique) {
+        throw new Error('Failed to generate unique contract ID after maximum attempts')
+      }
+      
       const newContract: SupplierContract = {
         ...contractData,
-        id: contractData.id || `contract_${Date.now()}`,
+        id: contractData.id || newId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
 
       contracts.push(newContract)
-      await asyncStorage.setItem('supplier_contracts', contracts)
+      await asyncStorage.setItem(STORAGE_KEYS.CONTRACTS, contracts)
 
       return newContract
     } catch (error) {
@@ -419,28 +471,23 @@ export class SupplierManagementService {
 
   // تحديث عقد
   async updateContract(id: string, updates: Partial<SupplierContract>): Promise<SupplierContract> {
-    try {
-      const contracts = await this.getAllContracts()
-      const contractIndex = contracts.findIndex(contract => contract.id === id)
+    const contracts = await this.getAllContracts()
+    const contractIndex = contracts.findIndex(contract => contract.id === id)
 
-      if (contractIndex === -1) {
-        throw new Error('العقد غير موجود')
-      }
-
-      const updatedContract = {
-        ...contracts[contractIndex],
-        ...updates,
-        updatedAt: new Date().toISOString()
-      }
-
-      contracts[contractIndex] = updatedContract
-      await asyncStorage.setItem('supplier_contracts', contracts)
-
-      return updatedContract
-    } catch (error) {
-      console.error('خطأ في تحديث العقد:', error)
-      throw error
+    if (contractIndex === -1) {
+      throw new Error('العقد غير موجود')
     }
+
+    const updatedContract = {
+      ...contracts[contractIndex],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    }
+
+    contracts[contractIndex] = updatedContract
+    await asyncStorage.setItem(STORAGE_KEYS.CONTRACTS, contracts)
+
+    return updatedContract
   }
 
   // حذف عقد
@@ -448,7 +495,7 @@ export class SupplierManagementService {
     try {
       const contracts = await this.getAllContracts()
       const filteredContracts = contracts.filter(contract => contract.id !== id)
-      await asyncStorage.setItem('supplier_contracts', filteredContracts)
+      await asyncStorage.setItem(STORAGE_KEYS.CONTRACTS, filteredContracts)
     } catch (error) {
       console.error('خطأ في حذف العقد:', error)
       throw error
@@ -524,7 +571,7 @@ export class SupplierManagementService {
   // الحصول على جميع التقييمات
   async getAllEvaluations(): Promise<SupplierEvaluation[]> {
     try {
-      const evaluations = await asyncStorage.getItem('supplier_evaluations') || []
+      const evaluations = await asyncStorage.getItem(STORAGE_KEYS.EVALUATIONS) || []
       return evaluations
     } catch (error) {
       console.error('خطأ في تحميل التقييمات:', error)
@@ -547,15 +594,43 @@ export class SupplierManagementService {
   async createEvaluation(evaluationData: SupplierEvaluation): Promise<SupplierEvaluation> {
     try {
       const evaluations = await this.getAllEvaluations()
+      
+      // Generate collision-resistant ID
+      let newId = ''
+      let isUnique = false
+      let attempts = 0
+      const maxAttempts = 10
+      
+      while (!isUnique && attempts < maxAttempts) {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+          // Use crypto.randomUUID() when available
+          newId = `eval_${crypto.randomUUID()}`
+        } else {
+          // Fallback: Date.now() + secure random suffix
+          const timestamp = Date.now()
+          const randomSuffix = Math.random().toString(36).substring(2, 15) + 
+                              Math.random().toString(36).substring(2, 15)
+          newId = `eval_${timestamp}_${randomSuffix}`
+        }
+        
+        // Verify uniqueness against existing evaluations
+        isUnique = !evaluations.some(e => e.id === newId)
+        attempts++
+      }
+      
+      if (!isUnique) {
+        throw new Error('Failed to generate unique evaluation ID after maximum attempts')
+      }
+      
       const newEvaluation: SupplierEvaluation = {
         ...evaluationData,
-        id: evaluationData.id || `eval_${Date.now()}`,
+        id: evaluationData.id || newId,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
 
       evaluations.push(newEvaluation)
-      await asyncStorage.setItem('supplier_evaluations', evaluations)
+      await asyncStorage.setItem(STORAGE_KEYS.EVALUATIONS, evaluations)
 
       // تحديث تقييم المورد
       await this.updateSupplierRating(evaluationData.supplierId)
@@ -569,48 +644,38 @@ export class SupplierManagementService {
 
   // تحديث تقييم
   async updateEvaluation(id: string, updates: Partial<SupplierEvaluation>): Promise<SupplierEvaluation> {
-    try {
-      const evaluations = await this.getAllEvaluations()
-      const evaluationIndex = evaluations.findIndex(evaluation => evaluation.id === id)
+    const evaluations = await this.getAllEvaluations()
+    const evaluationIndex = evaluations.findIndex(evaluation => evaluation.id === id)
 
-      if (evaluationIndex === -1) {
-        throw new Error('التقييم غير موجود')
-      }
-
-      const updatedEvaluation = {
-        ...evaluations[evaluationIndex],
-        ...updates,
-        updatedAt: new Date().toISOString()
-      }
-
-      evaluations[evaluationIndex] = updatedEvaluation
-      await asyncStorage.setItem('supplier_evaluations', evaluations)
-
-      // تحديث تقييم المورد
-      await this.updateSupplierRating(updatedEvaluation.supplierId)
-
-      return updatedEvaluation
-    } catch (error) {
-      console.error('خطأ في تحديث التقييم:', error)
-      throw error
+    if (evaluationIndex === -1) {
+      throw new Error('التقييم غير موجود')
     }
+
+    const updatedEvaluation = {
+      ...evaluations[evaluationIndex],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    }
+
+    evaluations[evaluationIndex] = updatedEvaluation
+    await asyncStorage.setItem(STORAGE_KEYS.EVALUATIONS, evaluations)
+
+    // تحديث تقييم المورد
+    await this.updateSupplierRating(updatedEvaluation.supplierId)
+
+    return updatedEvaluation
   }
 
   // حذف تقييم
   async deleteEvaluation(id: string): Promise<void> {
-    try {
-      const evaluations = await this.getAllEvaluations()
-      const evaluation = evaluations.find(e => e.id === id)
-      const filteredEvaluations = evaluations.filter(evaluation => evaluation.id !== id)
-      await asyncStorage.setItem('supplier_evaluations', filteredEvaluations)
+    const evaluations = await this.getAllEvaluations()
+    const evaluation = evaluations.find(e => e.id === id)
+    const filteredEvaluations = evaluations.filter(evaluation => evaluation.id !== id)
+    await asyncStorage.setItem(STORAGE_KEYS.EVALUATIONS, filteredEvaluations)
 
-      // تحديث تقييم المورد إذا كان موجود
-      if (evaluation) {
-        await this.updateSupplierRating(evaluation.supplierId)
-      }
-    } catch (error) {
-      console.error('خطأ في حذف التقييم:', error)
-      throw error
+    // تحديث تقييم المورد إذا كان موجود
+    if (evaluation) {
+      await this.updateSupplierRating(evaluation.supplierId)
     }
   }
 
