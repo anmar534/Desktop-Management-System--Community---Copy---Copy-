@@ -5,6 +5,9 @@ import { asyncStorage, whenStorageReady } from '@/utils/storage'
 import { secureStore } from '@/utils/secureStore'
 import { STORAGE_KEYS } from '@/config/storageKeys'
 import { APP_EVENTS } from '@/events/bus'
+import { StorageManager } from '@/storage/core/StorageManager'
+import { LocalStorageAdapter } from '@/storage/adapters/LocalStorageAdapter'
+import { boqStorage } from '@/storage/modules/BOQStorage'
 
 const createSampleEntry = (overrides: Partial<BOQData>): BOQData => ({
   id: overrides.id ?? 'boq-sample',
@@ -23,6 +26,18 @@ describe('LocalBOQRepository', () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.clear()
     }
+
+    // Initialize storage system
+    StorageManager.resetInstance()
+    const manager = StorageManager.getInstance()
+    const adapter = new LocalStorageAdapter()
+    manager.setAdapter(adapter)
+    await manager.initialize()
+
+    // Initialize BOQ storage module
+    boqStorage.setManager(manager)
+    await boqStorage.initialize()
+
     await whenStorageReady()
     await asyncStorage.removeItem(STORAGE_KEYS.BOQ_DATA)
   })
@@ -70,7 +85,7 @@ describe('LocalBOQRepository', () => {
       ],
     })
 
-  const storedAfterCreate = await asyncStorage.getItem<BOQData[]>(STORAGE_KEYS.BOQ_DATA, [])
+    const storedAfterCreate = await asyncStorage.getItem<BOQData[]>(STORAGE_KEYS.BOQ_DATA, [])
     expect(storedAfterCreate).toHaveLength(1)
     expect(storedAfterCreate[0].totalValue).toBe(75)
     expect(created.totalValue).toBe(75)
@@ -89,7 +104,7 @@ describe('LocalBOQRepository', () => {
     })
 
     expect(updated.id).toBe(created.id)
-  const storedAfterUpdate = await asyncStorage.getItem<BOQData[]>(STORAGE_KEYS.BOQ_DATA, [])
+    const storedAfterUpdate = await asyncStorage.getItem<BOQData[]>(STORAGE_KEYS.BOQ_DATA, [])
     expect(storedAfterUpdate).toHaveLength(1)
     expect(storedAfterUpdate[0].totalValue).toBe(125)
 
@@ -117,6 +132,9 @@ describe('LocalBOQRepository', () => {
 
     await secureStore.set(STORAGE_KEYS.BOQ_DATA, envelope)
 
-    await expect(repository.getByTenderId('t-secure')).resolves.toMatchObject({ id: 'boq-secure', totalValue: 999 })
+    await expect(repository.getByTenderId('t-secure')).resolves.toMatchObject({
+      id: 'boq-secure',
+      totalValue: 999,
+    })
   })
 })

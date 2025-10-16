@@ -4,6 +4,9 @@ import { LocalClientRepository } from '@/repository/providers/client.local'
 import { safeLocalStorage } from '@/utils/storage'
 import { STORAGE_KEYS } from '@/config/storageKeys'
 import { APP_EVENTS } from '@/events/bus'
+import { StorageManager } from '@/storage/core/StorageManager'
+import { LocalStorageAdapter } from '@/storage/adapters/LocalStorageAdapter'
+import { clientsStorage } from '@/storage/modules/ClientsStorage'
 
 const sampleClient = (overrides: Partial<Client> = {}): Client => ({
   id: overrides.id ?? 'client-seed',
@@ -37,7 +40,7 @@ describe('LocalClientRepository', () => {
     windowEvents.push(custom.detail)
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     windowEvents.length = 0
     if (typeof window !== 'undefined') {
       window.addEventListener(APP_EVENTS.CLIENTS_UPDATED, windowHandler)
@@ -45,6 +48,18 @@ describe('LocalClientRepository', () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.clear()
     }
+
+    // Initialize storage system
+    StorageManager.resetInstance()
+    const manager = StorageManager.getInstance()
+    const adapter = new LocalStorageAdapter()
+    manager.setAdapter(adapter)
+    await manager.initialize()
+
+    // Initialize Clients storage module
+    clientsStorage.setManager(manager)
+    await clientsStorage.initialize()
+
     safeLocalStorage.removeItem(STORAGE_KEYS.CLIENTS)
   })
 

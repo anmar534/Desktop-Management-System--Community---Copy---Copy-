@@ -9,7 +9,7 @@ import { projectRepository as defaultProjectRepository } from '@/repository/prov
 
 const { mockLoadFromStorage, mockRemoveFromStorage } = vi.hoisted(() => ({
   mockLoadFromStorage: vi.fn(),
-  mockRemoveFromStorage: vi.fn()
+  mockRemoveFromStorage: vi.fn(),
 }))
 
 vi.mock('@/utils/storage', async () => {
@@ -17,7 +17,7 @@ vi.mock('@/utils/storage', async () => {
   return {
     ...actual,
     loadFromStorage: mockLoadFromStorage,
-    removeFromStorage: mockRemoveFromStorage
+    removeFromStorage: mockRemoveFromStorage,
   }
 })
 
@@ -50,12 +50,12 @@ const baseProject: Project = {
   riskLevel: 'medium',
   budget: 500000,
   value: 500000,
-  type: 'إنشائي'
+  type: 'إنشائي',
 }
 
 const createProject = (overrides: Partial<Project> = {}): Project => ({
   ...baseProject,
-  ...overrides
+  ...overrides,
 })
 
 const createStubRepository = (): IProjectRepository => {
@@ -87,7 +87,9 @@ const createStubRepository = (): IProjectRepository => {
     async update(id: string, updates: Partial<Project>) {
       const index = projects.findIndex((entry) => entry.id === id)
       if (index === -1) return null
-      projects = projects.map((entry, idx) => (idx === index ? { ...entry, ...updates } as Project : entry))
+      projects = projects.map((entry, idx) =>
+        idx === index ? ({ ...entry, ...updates } as Project) : entry,
+      )
       return { ...projects[index] }
     },
     async delete(id: string) {
@@ -111,18 +113,22 @@ const createStubRepository = (): IProjectRepository => {
     },
     async reload() {
       return clone(projects)
-    }
+    },
   }
 }
 
 describe('useProjects migration', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     registerProjectRepository(createStubRepository())
     if (typeof localStorage !== 'undefined') localStorage.clear()
     mockLoadFromStorage.mockReset()
     mockRemoveFromStorage.mockReset()
     mockRemoveFromStorage.mockResolvedValue(undefined)
-    mockLoadFromStorage.mockImplementation(async (_key: string, defaultValue: unknown) => defaultValue)
+
+    // Initialize mocked storage to return empty array by default
+    mockLoadFromStorage.mockImplementation(
+      async (_key: string, defaultValue: unknown) => defaultValue,
+    )
   })
 
   afterEach(() => {
@@ -133,6 +139,8 @@ describe('useProjects migration', () => {
   it('loads from unified storage key when available', async () => {
     const unifiedKey = STORAGE_KEYS.PROJECTS
     const project = createProject()
+
+    // Setup mock to return project data
     mockLoadFromStorage.mockImplementation(async (key: string, defaultValue: unknown) => {
       if (key === unifiedKey) {
         return [project]
@@ -142,13 +150,24 @@ describe('useProjects migration', () => {
 
     const { result } = renderHook(() => useProjects())
 
-    await waitFor(() => {
-      expect(result.current.projects).toHaveLength(1)
-      expect(result.current.projects[0]).toMatchObject({
-        id: project.id,
-        name: project.name,
-        client: project.client
-      })
-    })
+    // Wait for initialization and data load
+    await waitFor(
+      () => {
+        expect(result.current.isLoading).toBe(false)
+      },
+      { timeout: 3000 },
+    )
+
+    await waitFor(
+      () => {
+        expect(result.current.projects).toHaveLength(1)
+        expect(result.current.projects[0]).toMatchObject({
+          id: project.id,
+          name: project.name,
+          client: project.client,
+        })
+      },
+      { timeout: 3000 },
+    )
   })
 })

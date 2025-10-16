@@ -131,9 +131,13 @@ describe('LegacyStorageAdapter - Backward Compatibility', () => {
       expect(value).toEqual({ foo: 'bar' })
     })
 
-    it('should work with safeLocalStorage.removeItem', () => {
+    it('should work with safeLocalStorage.removeItem', async () => {
       safeLocalStorage.setItem('test-key', 'test-value')
       const removed = safeLocalStorage.removeItem('test-key')
+
+      // Wait a tick for async remove to complete in cache
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
       const value = safeLocalStorage.getItem('test-key', null)
 
       expect(removed).toBe(true)
@@ -180,21 +184,33 @@ describe('LegacyStorageAdapter - Backward Compatibility', () => {
 
   describe('Interoperability - Old API ↔ New API', () => {
     it('should read values set with old API using new API', async () => {
+      // Import and setup adapter
+      const { LocalStorageAdapter } = await import('../../src/storage/adapters/LocalStorageAdapter')
+
       // Set with old API
       await saveToStorage('test-key', { foo: 'bar' })
 
-      // Read with new API
+      // Setup new API
       const manager = StorageManager.getInstance()
-      await manager.waitForReady()
+      const adapter = new LocalStorageAdapter()
+      manager.setAdapter(adapter)
+      await manager.initialize()
+
+      // Read with new API
       const value = await manager.get('test-key', null)
 
       expect(value).toEqual({ foo: 'bar' })
     })
 
     it('should read values set with new API using old API', async () => {
+      // Import and setup adapter
+      const { LocalStorageAdapter } = await import('../../src/storage/adapters/LocalStorageAdapter')
+
       // Set with new API
       const manager = StorageManager.getInstance()
-      await manager.waitForReady()
+      const adapter = new LocalStorageAdapter()
+      manager.setAdapter(adapter)
+      await manager.initialize()
       await manager.set('test-key', { foo: 'bar' })
 
       // Read with old API
@@ -204,8 +220,13 @@ describe('LegacyStorageAdapter - Backward Compatibility', () => {
     })
 
     it('should maintain consistency between old and new API', async () => {
+      // Import and setup adapter
+      const { LocalStorageAdapter } = await import('../../src/storage/adapters/LocalStorageAdapter')
+
       const manager = StorageManager.getInstance()
-      await manager.waitForReady()
+      const adapter = new LocalStorageAdapter()
+      manager.setAdapter(adapter)
+      await manager.initialize()
 
       // Set with old API
       await saveToStorage('key1', 'value1')
