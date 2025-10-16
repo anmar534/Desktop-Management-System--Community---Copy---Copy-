@@ -18,7 +18,7 @@ if (isDev) {
 }
 
 // استيراد إعدادات التطوير المشتركة
-const DEV_CONFIG = require('../../dev.config.js')
+const DEV_CONFIG = require('../../dev.config.cjs')
 
 const resolveScopedAppName = () => {
   const rawName = app.getName() || 'ConstructionSystem'

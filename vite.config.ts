@@ -1,19 +1,14 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
-const devServerPort = Number(process.env.DEV_SERVER_PORT ?? process.env.PORT ?? 3003) || 3003;
+const devServerPort = Number(process.env.DEV_SERVER_PORT ?? process.env.PORT ?? 3003) || 3003
 
 export default defineConfig({
   plugins: [
     react({
+      // Simplified config for Electron desktop app
       jsxRuntime: 'automatic',
-      babel: {
-        plugins: [],
-        parserOpts: {
-          plugins: ['jsx', 'typescript'],
-        },
-      },
     }),
   ],
   base: './', // مهم جداً لـ Electron
@@ -96,44 +91,48 @@ export default defineConfig({
         manualChunks(id) {
           if (id.includes('node_modules')) {
             // Phase 1.5: Strategic vendor bundle splitting
-            
+
             // Core React (~300 KB) - Loaded immediately
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'vendor-react';
+              return 'vendor-react'
             }
-            
+
             // UI Components (~400 KB) - Loaded immediately
             if (id.includes('@radix-ui')) {
-              return 'vendor-ui';
+              return 'vendor-ui'
             }
-            
+
             // Charts (~600 KB) - Lazy loaded
             if (id.includes('echarts') || id.includes('recharts')) {
-              return 'vendor-charts';
+              return 'vendor-charts'
             }
-            
+
             // Data/Tables (~200 KB) - Lazy loaded
-            if (id.includes('@tanstack') || id.includes('xlsx') || id.includes('react-grid-layout')) {
-              return 'vendor-data';
+            if (
+              id.includes('@tanstack') ||
+              id.includes('xlsx') ||
+              id.includes('react-grid-layout')
+            ) {
+              return 'vendor-data'
             }
-            
+
             // Animations (~150 KB) - Loaded immediately
             if (id.includes('framer-motion') || id.includes('motion')) {
-              return 'vendor-animation';
+              return 'vendor-animation'
             }
-            
+
             // Forms & Validation (~100 KB) - Loaded immediately
             if (id.includes('react-hook-form') || id.includes('zod')) {
-              return 'vendor-forms';
+              return 'vendor-forms'
             }
-            
+
             // Icons (~50 KB) - Loaded immediately
             if (id.includes('lucide-react')) {
-              return 'vendor-icons';
+              return 'vendor-icons'
             }
-            
+
             // Utilities - Everything else
-            return 'vendor-utils';
+            return 'vendor-utils'
           }
         },
       },
@@ -150,19 +149,16 @@ export default defineConfig({
       port: devServerPort,
     },
     headers: {
-      // Relaxed CSP for Electron development environment
-      // Allows inline styles needed by react-grid-layout and echarts
+      // CSP for Electron Desktop Development - Allow inline scripts for Vite HMR
       'Content-Security-Policy': [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-eval'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
         "style-src 'self' 'unsafe-inline'",
-        "style-src-elem 'self' 'unsafe-inline'",
         "img-src 'self' data: blob:",
         "font-src 'self' data:",
-  // Allow exchange-rate API calls during local development
-  "connect-src 'self' ws: wss: https://open.er-api.com https://*.er-api.com",
-        "worker-src 'self' blob:"
-      ].join('; ')
-    }
+        "connect-src 'self' ws: wss: https://open.er-api.com https://*.er-api.com",
+        "worker-src 'self' blob:",
+      ].join('; '),
+    },
   },
-});
+})
