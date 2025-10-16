@@ -6,4 +6,6 @@
  */
 
 export { ProjectsStorage, projectsStorage } from './ProjectsStorage'
-export type { Project } from '..//../data/centralData'
+export { PricingStorage, pricingStorage } from './PricingStorage'
+export type { Project } from '../../data/centralData'
+export type { DefaultPercentages, TenderPricingPayload } from './PricingStorage'
