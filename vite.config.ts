@@ -76,7 +76,7 @@ export default defineConfig({
   build: {
     target: 'esnext',
     outDir: 'build',
-    sourcemap: true,
+    sourcemap: 'hidden', // Fix sourcemap warnings
     cssCodeSplit: true,
     chunkSizeWarningLimit: 300,
     rollupOptions: {

@@ -10,7 +10,7 @@
  * @date 2025-10-07
  */
 
-module.exports = {
+export default {
   darkMode: ["class"],
   content: [
     './pages/**/*.{ts,tsx}',
@@ -369,4 +369,4 @@ module.exports = {
       addComponents(components);
     },
   ],
-}
+};
