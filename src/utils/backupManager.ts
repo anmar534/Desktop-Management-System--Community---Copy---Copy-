@@ -1,309 +1,206 @@
-import { STORAGE_KEYS } from '@/config/storageKeys';
-import { saveToStorage, loadFromStorage, removeFromStorage } from './storage';
-import { recordAuditEvent } from './auditLog';
-import { SystemEvents } from './eventManager';
-import { cloneValue } from './storageSchema';
-import type { TenderBackupEntry } from '@/types/pricing';
+import { loadFromStorage, removeFromStorage } from './storage'
+import { recordAuditEvent } from './auditLog'
+import { SystemEvents } from './eventManager'
+import { cloneValue } from './storageSchema'
+import type { TenderBackupEntry } from '@/types/pricing'
+import { backupStorage } from '@/storage/modules/BackupStorage'
 
-const BACKUP_STORE_VERSION = '1.0.0';
-const MS_PER_DAY = 86_400_000;
+const BACKUP_STORE_VERSION = '1.0.0'
+const MS_PER_DAY = 86_400_000
 
-export type BackupDataset = 'tender-pricing';
-export type RetentionKey = BackupDataset;
+export type BackupDataset = 'tender-pricing'
+export type RetentionKey = BackupDataset
 
 export interface RetentionRule {
-  maxEntries: number;
-  maxAgeDays?: number;
+  maxEntries: number
+  maxAgeDays?: number
 }
 
 export const RETENTION_MATRIX: Record<RetentionKey, RetentionRule> = {
   'tender-pricing': {
     maxEntries: 10,
-    maxAgeDays: 30
-  }
-};
+    maxAgeDays: 30,
+  },
+}
 
 export interface TenderPricingBackupPayload {
-  tenderId: string;
-  tenderTitle: string;
-  pricing: [string, unknown][];
-  quantityItems: unknown[];
-  completionPercentage: number;
-  totalValue: number;
-  timestamp: string;
-  version: string;
+  tenderId: string
+  tenderTitle: string
+  pricing: [string, unknown][]
+  quantityItems: unknown[]
+  completionPercentage: number
+  totalValue: number
+  timestamp: string
+  version: string
 }
 
 interface TenderBackupRecord extends TenderBackupEntry {
-  dataset: BackupDataset;
-  payload: TenderPricingBackupPayload;
+  dataset: BackupDataset
+  payload: TenderPricingBackupPayload
 }
 
 interface BackupFailureState {
-  count: number;
-  lastFailureAt: string;
-  lastError?: string;
+  count: number
+  lastFailureAt: string
+  lastError?: string
 }
 
 interface BackupStore {
-  version: string;
-  updatedAt: string;
-  tenders: Record<string, TenderBackupRecord[]>;
-  failureCounters: Record<string, BackupFailureState>;
+  version: string
+  updatedAt: string
+  tenders: Record<string, TenderBackupRecord[]>
+  failureCounters: Record<string, BackupFailureState>
 }
 
-interface LegacyTenderBackupEntry {
-  id: number;
-  timestamp: string;
-  completionPercentage: number;
-  totalValue: number;
-}
-
-type LegacyBackupIndex = Record<string, LegacyTenderBackupEntry[]>;
+// Legacy types moved to BackupStorage module
 
 interface ApplyRetentionResult {
-  kept: TenderBackupRecord[];
-  pruned: TenderBackupRecord[];
+  kept: TenderBackupRecord[]
+  pruned: TenderBackupRecord[]
 }
 
 export interface BackupExportSnapshot {
-  version: string;
-  generatedAt: string;
-  retention: Record<RetentionKey, RetentionRule>;
+  version: string
+  generatedAt: string
+  retention: Record<RetentionKey, RetentionRule>
   totals: {
-    tenders: number;
-    entries: number;
-  };
-  tenders: Record<string, { summary: TenderBackupEntry; payload: TenderPricingBackupPayload }[]>;
-  failures: Record<string, BackupFailureState>;
+    tenders: number
+    entries: number
+  }
+  tenders: Record<string, { summary: TenderBackupEntry; payload: TenderPricingBackupPayload }[]>
+  failures: Record<string, BackupFailureState>
 }
 
 export interface CreateBackupOptions {
-  actor?: string;
-  origin?: string;
+  actor?: string
+  origin?: string
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 
-const isBackupStore = (value: unknown): value is BackupStore => {
-  if (!isRecord(value)) {
-    return false;
-  }
-  return (
-    typeof value.version === 'string' &&
-    typeof value.updatedAt === 'string' &&
-    isRecord(value.tenders) &&
-    isRecord(value.failureCounters)
-  );
-};
-
-const isLegacyIndex = (value: unknown): value is LegacyBackupIndex => {
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  return Object.values(value).every((entries) => Array.isArray(entries));
-};
+// Moved to BackupStorage module
+// const isBackupStore = ...
+// const isLegacyIndex = ...
 
 const ensureIsoTimestamp = (candidate: string | undefined): string => {
   if (typeof candidate === 'string') {
-    const parsed = Date.parse(candidate);
+    const parsed = Date.parse(candidate)
     if (!Number.isNaN(parsed)) {
-      return new Date(parsed).toISOString();
+      return new Date(parsed).toISOString()
     }
   }
-  return new Date().toISOString();
-};
+  return new Date().toISOString()
+}
 
 const generateId = (): string => {
-  const cryptoCandidate = globalThis.crypto as { randomUUID?: () => string } | undefined;
+  const cryptoCandidate = globalThis.crypto as { randomUUID?: () => string } | undefined
   if (typeof cryptoCandidate?.randomUUID === 'function') {
-    return cryptoCandidate.randomUUID();
+    return cryptoCandidate.randomUUID()
   }
-  return `backup-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-};
+  return `backup-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
 
 const computeRetentionExpiry = (timestamp: string, rule: RetentionRule): string | undefined => {
   if (typeof rule.maxAgeDays !== 'number') {
-    return undefined;
+    return undefined
   }
-  const basis = Date.parse(timestamp);
+  const basis = Date.parse(timestamp)
   if (Number.isNaN(basis)) {
-    return undefined;
+    return undefined
   }
-  return new Date(basis + rule.maxAgeDays * MS_PER_DAY).toISOString();
-};
+  return new Date(basis + rule.maxAgeDays * MS_PER_DAY).toISOString()
+}
 
 const hasCompletedFlag = (value: unknown): boolean => {
   if (!isRecord(value)) {
-    return false;
+    return false
   }
 
   if (typeof value.completed === 'boolean') {
-    return value.completed;
+    return value.completed
   }
 
-  const totals = value as Record<string, unknown>;
+  const totals = value as Record<string, unknown>
   if (typeof totals.totalValue === 'number' && totals.totalValue > 0) {
-    return true;
+    return true
   }
 
-  return false;
-};
+  return false
+}
 
 const sumPricingTotals = (pricing: [string, unknown][]): number => {
   return pricing.reduce((sum, [, item]) => {
     if (!isRecord(item)) {
-      return sum;
+      return sum
     }
 
-    const total = item.totalValue;
+    const total = item.totalValue
     if (typeof total === 'number' && Number.isFinite(total)) {
-      return sum + total;
+      return sum + total
     }
 
-    const breakdown = item.breakdown;
+    const breakdown = item.breakdown
     if (isRecord(breakdown)) {
-      const subtotal = breakdown.total ?? breakdown.subtotal;
+      const subtotal = breakdown.total ?? breakdown.subtotal
       if (typeof subtotal === 'number' && Number.isFinite(subtotal)) {
-        return sum + subtotal;
+        return sum + subtotal
       }
     }
 
-    return sum;
-  }, 0);
-};
+    return sum
+  }, 0)
+}
 
-const createEmptyStore = (): BackupStore => ({
-  version: BACKUP_STORE_VERSION,
-  updatedAt: new Date().toISOString(),
-  tenders: {},
-  failureCounters: {}
-});
+// Moved to BackupStorage module
+// const createEmptyStore = ...
 
-const normalizeStore = (store: BackupStore): BackupStore => {
-  const normalized = createEmptyStore();
-  normalized.tenders = cloneValue(store.tenders ?? {});
-  normalized.failureCounters = cloneValue(store.failureCounters ?? {});
-  normalized.updatedAt = ensureIsoTimestamp(store.updatedAt);
-  normalized.version = BACKUP_STORE_VERSION;
-  return normalized;
-};
+// Moved to BackupStorage module
+// const normalizeStore = ...
 
 const legacyBackupKey = (tenderId: string, entryId: number | string): string =>
-  `backup-tender-pricing-${tenderId}-${entryId}`;
+  `backup-tender-pricing-${tenderId}-${entryId}`
 
-const migrateLegacyIndex = async (legacy: LegacyBackupIndex): Promise<BackupStore> => {
-  const store = createEmptyStore();
-  const retention = RETENTION_MATRIX['tender-pricing'];
-
-  for (const [tenderId, entries] of Object.entries(legacy)) {
-    const records: TenderBackupRecord[] = [];
-
-    for (const entry of entries) {
-      const snapshotKey = legacyBackupKey(tenderId, entry.id);
-      const payload = await loadFromStorage<TenderPricingBackupPayload | null>(snapshotKey, null);
-      if (!payload) {
-        continue;
-      }
-
-      const timestamp = ensureIsoTimestamp(entry.timestamp ?? payload.timestamp);
-      const itemsTotal = Array.isArray(payload.quantityItems) ? payload.quantityItems.length : 0;
-      const itemsPriced = payload.pricing.reduce((count, [, value]) => count + (hasCompletedFlag(value) ? 1 : 0), 0);
-
-      const record: TenderBackupRecord = {
-        id: String(entry.id),
-        dataset: 'tender-pricing',
-        retentionKey: 'tender-pricing',
-        timestamp,
-        tenderId,
-        tenderTitle: payload.tenderTitle,
-        completionPercentage: typeof entry.completionPercentage === 'number' ? entry.completionPercentage : payload.completionPercentage,
-        totalValue: typeof entry.totalValue === 'number' ? entry.totalValue : payload.totalValue ?? sumPricingTotals(payload.pricing),
-        itemsTotal,
-        itemsPriced,
-        version: payload.version ?? 'legacy',
-        retentionExpiresAt: computeRetentionExpiry(timestamp, retention),
-        payload
-      };
-
-      records.push(record);
-    }
-
-    if (records.length === 0) {
-      continue;
-    }
-
-    const { kept } = applyRetention(records, retention);
-    store.tenders[tenderId] = kept;
-  }
-
-  return store;
-};
+// Legacy migration moved to BackupStorage module
+// const migrateLegacyIndex = ...
 
 const loadStore = async (): Promise<BackupStore> => {
-  const raw = await loadFromStorage<unknown>(STORAGE_KEYS.TENDER_BACKUPS, null);
+  return backupStorage.loadTenderBackupStore()
+}
 
-  if (isBackupStore(raw)) {
-    return normalizeStore(raw);
-  }
+const applyRetention = (
+  records: TenderBackupRecord[],
+  rule: RetentionRule,
+): ApplyRetentionResult => {
+  const sorted = records.slice().sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
 
-  if (isLegacyIndex(raw)) {
-    const migrated = await migrateLegacyIndex(raw);
-    await saveStore(migrated);
-    await recordAuditEvent({
-      category: 'backup',
-      action: 'migrate-index',
-      key: STORAGE_KEYS.TENDER_BACKUPS,
-      origin: 'backup-manager',
-      metadata: {
-        migratedTenderCount: Object.keys(migrated.tenders).length,
-        migratedEntries: Object.values(migrated.tenders).reduce((sum, list) => sum + list.length, 0)
-      }
-    }).catch(() => {
-      /* noop */
-    });
-    return migrated;
-  }
-
-  return createEmptyStore();
-};
-
-const applyRetention = (records: TenderBackupRecord[], rule: RetentionRule): ApplyRetentionResult => {
-  const sorted = records
-    .slice()
-    .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
-
-  const now = Date.now();
-  const maxAgeMs = typeof rule.maxAgeDays === 'number' ? rule.maxAgeDays * MS_PER_DAY : null;
-  const kept: TenderBackupRecord[] = [];
-  const pruned: TenderBackupRecord[] = [];
+  const now = Date.now()
+  const maxAgeMs = typeof rule.maxAgeDays === 'number' ? rule.maxAgeDays * MS_PER_DAY : null
+  const kept: TenderBackupRecord[] = []
+  const pruned: TenderBackupRecord[] = []
 
   for (const record of sorted) {
-    const age = now - Date.parse(record.timestamp);
-    const expired = maxAgeMs !== null && age > maxAgeMs;
+    const age = now - Date.parse(record.timestamp)
+    const expired = maxAgeMs !== null && age > maxAgeMs
     if (kept.length >= rule.maxEntries || expired) {
-      pruned.push(record);
-      continue;
+      pruned.push(record)
+      continue
     }
     kept.push({
       ...record,
-      retentionExpiresAt: computeRetentionExpiry(record.timestamp, rule)
-    });
+      retentionExpiresAt: computeRetentionExpiry(record.timestamp, rule),
+    })
   }
 
   return {
     kept,
-    pruned
-  };
-};
+    pruned,
+  }
+}
 
 const saveStore = async (store: BackupStore): Promise<void> => {
-  const payload = normalizeStore(store);
-  payload.updatedAt = new Date().toISOString();
-  await saveToStorage(STORAGE_KEYS.TENDER_BACKUPS, payload);
-};
+  await backupStorage.saveTenderBackupStore(store)
+}
 
 const toSummary = (record: TenderBackupRecord): TenderBackupEntry => ({
   id: record.id,
@@ -317,61 +214,65 @@ const toSummary = (record: TenderBackupRecord): TenderBackupEntry => ({
   dataset: record.dataset,
   retentionKey: record.retentionKey,
   retentionExpiresAt: record.retentionExpiresAt,
-  version: record.version
-});
+  version: record.version,
+})
 
 const resetFailureCounter = (store: BackupStore, tenderId: string): void => {
   if (store.failureCounters[tenderId]) {
-    delete store.failureCounters[tenderId];
+    delete store.failureCounters[tenderId]
+    void backupStorage.resetFailureCounter(tenderId)
   }
-};
+}
 
 const registerFailure = async (tenderId: string, error: string): Promise<BackupFailureState> => {
   try {
-    const store = await loadStore();
+    const store = await loadStore()
     const state = store.failureCounters[tenderId] ?? {
       count: 0,
-      lastFailureAt: new Date().toISOString()
-    };
+      lastFailureAt: new Date().toISOString(),
+    }
 
-    state.count += 1;
-    state.lastFailureAt = new Date().toISOString();
-    state.lastError = error;
+    state.count += 1
+    state.lastFailureAt = new Date().toISOString()
+    state.lastError = error
 
-    store.failureCounters[tenderId] = state;
-    await saveStore(store);
-    return state;
+    store.failureCounters[tenderId] = state
+    await saveStore(store)
+    return state
   } catch {
     return {
       count: 1,
       lastFailureAt: new Date().toISOString(),
-      lastError: error
-    };
+      lastError: error,
+    }
   }
-};
+}
 
 const cleanupLegacySnapshot = async (tenderId: string, entryId: string): Promise<void> => {
-  const numericId = Number(entryId);
+  const numericId = Number(entryId)
   if (!Number.isFinite(numericId)) {
-    return;
+    return
   }
-  const key = legacyBackupKey(tenderId, numericId);
+  const key = legacyBackupKey(tenderId, numericId)
   await removeFromStorage(key).catch(() => {
     /* noop */
-  });
-};
+  })
+}
 
 export const createTenderPricingBackup = async (
   payload: TenderPricingBackupPayload,
-  options?: CreateBackupOptions
+  options?: CreateBackupOptions,
 ): Promise<TenderBackupEntry> => {
-  const store = await loadStore();
-  const retention = RETENTION_MATRIX['tender-pricing'];
+  const store = await loadStore()
+  const retention = RETENTION_MATRIX['tender-pricing']
 
-  const itemsTotal = Array.isArray(payload.quantityItems) ? payload.quantityItems.length : 0;
-  const itemsPriced = payload.pricing.reduce((count, [, item]) => count + (hasCompletedFlag(item) ? 1 : 0), 0);
+  const itemsTotal = Array.isArray(payload.quantityItems) ? payload.quantityItems.length : 0
+  const itemsPriced = payload.pricing.reduce(
+    (count, [, item]) => count + (hasCompletedFlag(item) ? 1 : 0),
+    0,
+  )
 
-  const timestamp = ensureIsoTimestamp(payload.timestamp);
+  const timestamp = ensureIsoTimestamp(payload.timestamp)
   const record: TenderBackupRecord = {
     id: generateId(),
     dataset: 'tender-pricing',
@@ -395,16 +296,16 @@ export const createTenderPricingBackup = async (
     retentionExpiresAt: computeRetentionExpiry(timestamp, retention),
     payload: {
       ...cloneValue(payload),
-      timestamp
-    }
-  };
+      timestamp,
+    },
+  }
 
-  const existing = store.tenders[payload.tenderId] ?? [];
-  const { kept, pruned } = applyRetention([...existing, record], retention);
-  store.tenders[payload.tenderId] = kept;
-  resetFailureCounter(store, payload.tenderId);
+  const existing = store.tenders[payload.tenderId] ?? []
+  const { kept, pruned } = applyRetention([...existing, record], retention)
+  store.tenders[payload.tenderId] = kept
+  resetFailureCounter(store, payload.tenderId)
 
-  await saveStore(store);
+  await saveStore(store)
 
   if (pruned.length > 0) {
     await recordAuditEvent({
@@ -416,21 +317,21 @@ export const createTenderPricingBackup = async (
       metadata: {
         dataset: 'tender-pricing',
         pruned: pruned.length,
-        retained: kept.length
-      }
+        retained: kept.length,
+      },
     }).catch(() => {
       /* noop */
-    });
+    })
 
     SystemEvents.emitBackupRetentionApplied({
       dataset: 'tender-pricing',
       tenderId: payload.tenderId,
       pruned: pruned.length,
-      retained: kept.length
-    });
+      retained: kept.length,
+    })
 
     for (const entry of pruned) {
-      await cleanupLegacySnapshot(payload.tenderId, entry.id);
+      await cleanupLegacySnapshot(payload.tenderId, entry.id)
     }
   }
 
@@ -444,39 +345,39 @@ export const createTenderPricingBackup = async (
       dataset: 'tender-pricing',
       backupId: record.id,
       retained: kept.length,
-      pruned: pruned.length
-    }
+      pruned: pruned.length,
+    },
   }).catch(() => {
     /* noop */
-  });
+  })
 
   SystemEvents.emitBackupCompleted({
     dataset: 'tender-pricing',
     tenderId: payload.tenderId,
     backupId: record.id,
     retained: kept.length,
-    pruned: pruned.length
-  });
+    pruned: pruned.length,
+  })
 
-  return toSummary(record);
-};
+  return toSummary(record)
+}
 
 export const listTenderBackupEntries = async (tenderId: string): Promise<TenderBackupEntry[]> => {
-  const store = await loadStore();
-  const records = store.tenders[tenderId] ?? [];
+  const store = await loadStore()
+  const records = store.tenders[tenderId] ?? []
   return records
     .slice()
     .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
-    .map((record) => toSummary(record));
-};
+    .map((record) => toSummary(record))
+}
 
 export const restoreTenderBackup = async (
   tenderId: string,
   backupId: string,
-  options?: CreateBackupOptions
+  options?: CreateBackupOptions,
 ): Promise<TenderPricingBackupPayload | null> => {
-  const store = await loadStore();
-  const record = (store.tenders[tenderId] ?? []).find((entry) => entry.id === backupId);
+  const store = await loadStore()
+  const record = (store.tenders[tenderId] ?? []).find((entry) => entry.id === backupId)
 
   if (record) {
     await recordAuditEvent({
@@ -487,29 +388,32 @@ export const restoreTenderBackup = async (
       actor: options?.actor ?? 'system',
       metadata: {
         dataset: 'tender-pricing',
-        backupId
-      }
+        backupId,
+      },
     }).catch(() => {
       /* noop */
-    });
+    })
 
     SystemEvents.emitBackupCompleted({
       dataset: 'tender-pricing',
       tenderId,
       backupId,
       retained: (store.tenders[tenderId] ?? []).length,
-      pruned: 0
-    });
+      pruned: 0,
+    })
 
-    return cloneValue(record.payload);
+    return cloneValue(record.payload)
   }
 
   // Legacy fallback
-  const legacyId = Number(backupId);
+  const legacyId = Number(backupId)
   if (Number.isFinite(legacyId)) {
-    const legacyPayload = await loadFromStorage<TenderPricingBackupPayload | null>(legacyBackupKey(tenderId, legacyId), null);
+    const legacyPayload = await loadFromStorage<TenderPricingBackupPayload | null>(
+      legacyBackupKey(tenderId, legacyId),
+      null,
+    )
     if (legacyPayload) {
-      return cloneValue(legacyPayload);
+      return cloneValue(legacyPayload)
     }
   }
 
@@ -524,31 +428,31 @@ export const restoreTenderBackup = async (
     metadata: {
       dataset: 'tender-pricing',
       backupId,
-      reason: 'not-found'
-    }
+      reason: 'not-found',
+    },
   }).catch(() => {
     /* noop */
-  });
+  })
 
   SystemEvents.emitBackupFailed({
     dataset: 'tender-pricing',
     tenderId,
     backupId,
     consecutiveFailures: 1,
-    error: 'backup-not-found'
-  });
+    error: 'backup-not-found',
+  })
 
-  return null;
-};
+  return null
+}
 
 export const getBackupHealth = async (): Promise<Record<string, BackupFailureState>> => {
-  const store = await loadStore();
-  return cloneValue(store.failureCounters);
-};
+  const store = await loadStore()
+  return cloneValue(store.failureCounters)
+}
 
 export const getBackupExportSnapshot = async (): Promise<BackupExportSnapshot> => {
-  const store = await loadStore();
-  const tenders: BackupExportSnapshot['tenders'] = {};
+  const store = await loadStore()
+  const tenders: BackupExportSnapshot['tenders'] = {}
 
   for (const [tenderId, records] of Object.entries(store.tenders)) {
     tenders[tenderId] = records
@@ -556,11 +460,11 @@ export const getBackupExportSnapshot = async (): Promise<BackupExportSnapshot> =
       .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
       .map((record) => ({
         summary: toSummary(record),
-        payload: cloneValue(record.payload)
-      }));
+        payload: cloneValue(record.payload),
+      }))
   }
 
-  const totalEntries = Object.values(tenders).reduce((sum, list) => sum + list.length, 0);
+  const totalEntries = Object.values(tenders).reduce((sum, list) => sum + list.length, 0)
 
   return {
     version: BACKUP_STORE_VERSION,
@@ -568,21 +472,22 @@ export const getBackupExportSnapshot = async (): Promise<BackupExportSnapshot> =
     retention: cloneValue(RETENTION_MATRIX),
     totals: {
       tenders: Object.keys(tenders).length,
-      entries: totalEntries
+      entries: totalEntries,
     },
     tenders,
-    failures: cloneValue(store.failureCounters)
-  };
-};
+    failures: cloneValue(store.failureCounters),
+  }
+}
 
-export const getRetentionPolicies = (): Record<RetentionKey, RetentionRule> => cloneValue(RETENTION_MATRIX);
+export const getRetentionPolicies = (): Record<RetentionKey, RetentionRule> =>
+  cloneValue(RETENTION_MATRIX)
 
 export const noteBackupFailure = async (
   tenderId: string,
   error: string,
-  options?: CreateBackupOptions
+  options?: CreateBackupOptions,
 ): Promise<void> => {
-  const state = await registerFailure(tenderId, error);
+  const state = await registerFailure(tenderId, error)
 
   await recordAuditEvent({
     category: 'backup',
@@ -595,26 +500,26 @@ export const noteBackupFailure = async (
     metadata: {
       dataset: 'tender-pricing',
       consecutiveFailures: state.count,
-      reason: error
-    }
+      reason: error,
+    },
   }).catch(() => {
     /* noop */
-  });
+  })
 
   SystemEvents.emitBackupFailed({
     dataset: 'tender-pricing',
     tenderId,
     consecutiveFailures: state.count,
     error,
-    backupId: undefined
-  });
+    backupId: undefined,
+  })
 
   if (state.count >= 2) {
     SystemEvents.emitBackupFailureAlert({
       dataset: 'tender-pricing',
       tenderId,
       consecutiveFailures: state.count,
-      error
-    });
+      error,
+    })
   }
-};
+}

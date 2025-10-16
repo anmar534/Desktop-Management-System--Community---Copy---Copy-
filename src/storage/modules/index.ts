@@ -8,6 +8,7 @@
 export { ProjectsStorage, projectsStorage } from './ProjectsStorage'
 export { PricingStorage, pricingStorage } from './PricingStorage'
 export { SnapshotStorage, snapshotStorage } from './SnapshotStorage'
+export { BackupStorage, backupStorage } from './BackupStorage'
 export type { Project } from '../../data/centralData'
 export type { DefaultPercentages, TenderPricingPayload } from './PricingStorage'
 export type {
@@ -16,3 +17,14 @@ export type {
   PricingSnapshotTotals,
   PricingSnapshotMeta,
 } from './SnapshotStorage'
+export type {
+  TenderPricingBackupPayload,
+  TenderBackupRecord,
+  BackupStore,
+  BackupFailureState,
+  BackupExportSnapshot,
+  BackupMetadata,
+  BackupData,
+  RetentionRule,
+  BackupDataset,
+} from './BackupStorage'
