@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { BOQData } from '@/types/boq'
 import { LocalBOQRepository } from '@/repository/providers/boq.local'
 import { asyncStorage, whenStorageReady } from '@/utils/storage'
-import { secureStore } from '@/utils/secureStore'
 import { STORAGE_KEYS } from '@/config/storageKeys'
 import { APP_EVENTS } from '@/events/bus'
 import { StorageManager } from '@/storage/core/StorageManager'
@@ -55,7 +54,12 @@ describe('LocalBOQRepository', () => {
       createSampleEntry({ id: 'boq-2', tenderId: 't-2', projectId: 'p-2' }),
     ]
 
-    await asyncStorage.setItem(STORAGE_KEYS.BOQ_DATA, stored)
+    // Use StorageManager directly to ensure data sync
+    const manager = StorageManager.getInstance()
+    await manager.set(STORAGE_KEYS.BOQ_DATA, stored)
+
+    // Reload module to pick up the data
+    await boqStorage.initialize()
 
     await expect(repository.getByTenderId('t-1')).resolves.toMatchObject({ id: 'boq-1' })
     await expect(repository.getByProjectId('p-2')).resolves.toMatchObject({ id: 'boq-2' })
@@ -85,7 +89,9 @@ describe('LocalBOQRepository', () => {
       ],
     })
 
-    const storedAfterCreate = await asyncStorage.getItem<BOQData[]>(STORAGE_KEYS.BOQ_DATA, [])
+    // Read from StorageManager directly
+    const manager = StorageManager.getInstance()
+    const storedAfterCreate = await manager.get<BOQData[]>(STORAGE_KEYS.BOQ_DATA, [])
     expect(storedAfterCreate).toHaveLength(1)
     expect(storedAfterCreate[0].totalValue).toBe(75)
     expect(created.totalValue).toBe(75)
@@ -104,7 +110,7 @@ describe('LocalBOQRepository', () => {
     })
 
     expect(updated.id).toBe(created.id)
-    const storedAfterUpdate = await asyncStorage.getItem<BOQData[]>(STORAGE_KEYS.BOQ_DATA, [])
+    const storedAfterUpdate = await manager.get<BOQData[]>(STORAGE_KEYS.BOQ_DATA, [])
     expect(storedAfterUpdate).toHaveLength(1)
     expect(storedAfterUpdate[0].totalValue).toBe(125)
 
@@ -118,19 +124,21 @@ describe('LocalBOQRepository', () => {
   })
 
   it('reads BOQ data seeded directly into secure storage', async () => {
-    const envelope = {
-      __meta: { schemaVersion: 1, storedAt: new Date().toISOString() },
-      data: [
-        createSampleEntry({
-          id: 'boq-secure',
-          tenderId: 't-secure',
-          projectId: 'p-secure',
-          totalValue: 999,
-        }),
-      ],
-    }
+    const testData: BOQData[] = [
+      createSampleEntry({
+        id: 'boq-secure',
+        tenderId: 't-secure',
+        projectId: 'p-secure',
+        totalValue: 999,
+      }),
+    ]
 
-    await secureStore.set(STORAGE_KEYS.BOQ_DATA, envelope)
+    // Use StorageManager directly
+    const manager = StorageManager.getInstance()
+    await manager.set(STORAGE_KEYS.BOQ_DATA, testData)
+
+    // Reload module
+    await boqStorage.initialize()
 
     await expect(repository.getByTenderId('t-secure')).resolves.toMatchObject({
       id: 'boq-secure',

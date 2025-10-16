@@ -114,12 +114,21 @@ const createStubRepository = (): IProjectRepository => {
     async reload() {
       return clone(projects)
     },
-  }
+    // Add method to seed data for tests
+    __seedData__(data: Project[]) {
+      projects = clone(data)
+    },
+  } as IProjectRepository & { __seedData__(data: Project[]): void }
 }
 
 describe('useProjects migration', () => {
+  let stubRepository: IProjectRepository & { __seedData__(data: Project[]): void }
+
   beforeEach(async () => {
-    registerProjectRepository(createStubRepository())
+    stubRepository = createStubRepository() as IProjectRepository & {
+      __seedData__(data: Project[]): void
+    }
+    registerProjectRepository(stubRepository)
     if (typeof localStorage !== 'undefined') localStorage.clear()
     mockLoadFromStorage.mockReset()
     mockRemoveFromStorage.mockReset()
@@ -140,7 +149,10 @@ describe('useProjects migration', () => {
     const unifiedKey = STORAGE_KEYS.PROJECTS
     const project = createProject()
 
-    // Setup mock to return project data
+    // Seed data directly into repository
+    stubRepository.__seedData__([project])
+
+    // Mock storage to return the project
     mockLoadFromStorage.mockImplementation(async (key: string, defaultValue: unknown) => {
       if (key === unifiedKey) {
         return [project]
@@ -150,7 +162,7 @@ describe('useProjects migration', () => {
 
     const { result } = renderHook(() => useProjects())
 
-    // Wait for initialization and data load
+    // Wait for initialization
     await waitFor(
       () => {
         expect(result.current.isLoading).toBe(false)
@@ -158,16 +170,12 @@ describe('useProjects migration', () => {
       { timeout: 3000 },
     )
 
-    await waitFor(
-      () => {
-        expect(result.current.projects).toHaveLength(1)
-        expect(result.current.projects[0]).toMatchObject({
-          id: project.id,
-          name: project.name,
-          client: project.client,
-        })
-      },
-      { timeout: 3000 },
-    )
+    // Data should be loaded
+    expect(result.current.projects).toHaveLength(1)
+    expect(result.current.projects[0]).toMatchObject({
+      id: project.id,
+      name: project.name,
+      client: project.client,
+    })
   })
 })
