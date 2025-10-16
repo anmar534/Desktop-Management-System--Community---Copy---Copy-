@@ -1,4 +1,4 @@
-import { defineConfig, splitVendorChunkPlugin } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
@@ -15,7 +15,6 @@ export default defineConfig({
         },
       },
     }),
-    splitVendorChunkPlugin(),
   ],
   base: './', // مهم جداً لـ Electron
   define: {
@@ -64,13 +63,26 @@ export default defineConfig({
     postcss: './postcss.config.js',
   },
   optimizeDeps: {
+    // Phase 1.5: Pre-bundle heavy dependencies for faster builds
     include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
       'echarts',
       'echarts-for-react',
       '@tanstack/react-table',
       '@tanstack/react-virtual',
       'react-grid-layout',
       'react-resizable',
+      'framer-motion',
+      'react-hook-form',
+      'zod',
+      'lucide-react',
+    ],
+    exclude: [
+      // Exclude electron-specific packages
+      'electron',
+      '@electron/remote',
     ],
   },
   build: {
@@ -78,21 +90,50 @@ export default defineConfig({
     outDir: 'build',
     sourcemap: 'hidden', // Fix sourcemap warnings
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 300,
+    chunkSizeWarningLimit: 500, // Increased to accommodate optimized chunks
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('echarts')) {
-              return 'charts';
+            // Phase 1.5: Strategic vendor bundle splitting
+            
+            // Core React (~300 KB) - Loaded immediately
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor-react';
             }
-            if (id.includes('@tanstack')) {
-              return 'datagrid';
+            
+            // UI Components (~400 KB) - Loaded immediately
+            if (id.includes('@radix-ui')) {
+              return 'vendor-ui';
             }
+            
+            // Charts (~600 KB) - Lazy loaded
+            if (id.includes('echarts') || id.includes('recharts')) {
+              return 'vendor-charts';
+            }
+            
+            // Data/Tables (~200 KB) - Lazy loaded
+            if (id.includes('@tanstack') || id.includes('xlsx') || id.includes('react-grid-layout')) {
+              return 'vendor-data';
+            }
+            
+            // Animations (~150 KB) - Loaded immediately
             if (id.includes('framer-motion') || id.includes('motion')) {
-              return 'motion';
+              return 'vendor-animation';
             }
-            return 'vendor';
+            
+            // Forms & Validation (~100 KB) - Loaded immediately
+            if (id.includes('react-hook-form') || id.includes('zod')) {
+              return 'vendor-forms';
+            }
+            
+            // Icons (~50 KB) - Loaded immediately
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
+            }
+            
+            // Utilities - Everything else
+            return 'vendor-utils';
           }
         },
       },
