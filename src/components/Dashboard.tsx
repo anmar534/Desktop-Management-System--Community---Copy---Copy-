@@ -1,141 +1,126 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import {
-  RefreshCcw,
-  Settings,
-  Calendar,
-  CalendarDays,
-  Clock,
-} from "lucide-react";
-import { DashboardKPICards } from "./DashboardKPICards";
-import { TenderStatusCards } from "./TenderStatusCards";
-import { RemindersCard } from "./RemindersCard";
-import { FinancialSummaryCard } from "./FinancialSummaryCard";
-import { MonthlyExpensesChart } from "./MonthlyExpensesChart";
-import { AnnualKPICards } from "./AnnualKPICards";
-import { useFinancialState } from "@/application/context";
-import { useDashboardMetrics } from "@/application/hooks/useDashboardMetrics";
-import { formatTime } from "@/utils/formatters";
+import { useState, useEffect } from 'react'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
+import { RefreshCcw, Settings, Calendar, CalendarDays, Clock } from 'lucide-react'
+import { DashboardKPICards } from './DashboardKPICards'
+import { TenderStatusCards } from './TenderStatusCards'
+import { RemindersCard } from './RemindersCard'
+import { FinancialSummaryCard } from './FinancialSummaryCard'
+import { LazyMonthlyExpensesChart } from './charts/LazyCharts'
+import { AnnualKPICards } from './AnnualKPICards'
+import { useFinancialState } from '@/application/context'
+import { useDashboardMetrics } from '@/application/hooks/useDashboardMetrics'
+import { formatTime } from '@/utils/formatters'
 
 interface DashboardProps {
-  onSectionChange: (section: string) => void;
+  onSectionChange: (section: string) => void
 }
 
 function Dashboard({ onSectionChange }: DashboardProps) {
-  const {
-    currency,
-    lastRefreshAt,
-  } = useFinancialState();
+  const { currency, lastRefreshAt } = useFinancialState()
 
   const {
     data: dashboardMetrics,
     isLoading: dashboardMetricsLoading,
     lastUpdated: dashboardLastUpdated,
     refresh: refreshDashboardMetrics,
-  } = useDashboardMetrics();
+  } = useDashboardMetrics()
 
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(new Date())
 
-  const baseCurrency = currency?.baseCurrency ?? dashboardMetrics.currency.base ?? 'SAR';
+  const baseCurrency = currency?.baseCurrency ?? dashboardMetrics.currency.base ?? 'SAR'
 
   // تحديث الوقت كل ثانية
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+      setCurrentTime(new Date())
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   // تنسيق التاريخ الميلادي
   const getGregorianDate = (date: Date) => {
-    const days = [
-      "الأحد",
-      "الاثنين",
-      "الثلاثاء",
-      "الأربعاء",
-      "الخميس",
-      "الجمعة",
-      "السبت",
-    ];
+    const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
     const months = [
-      "يناير",
-      "فبراير",
-      "مارس",
-      "أبريل",
-      "مايو",
-      "يونيو",
-      "يوليو",
-      "أغسطس",
-      "سبتمبر",
-      "أكتوبر",
-      "نوفمبر",
-      "ديسمبر",
-    ];
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر',
+    ]
 
-    const dayName = days[date.getDay()];
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
+    const dayName = days[date.getDay()]
+    const day = date.getDate()
+    const month = months[date.getMonth()]
+    const year = date.getFullYear()
 
-    return { dayName, day, month, year };
-  };
+    return { dayName, day, month, year }
+  }
 
   // تنسيق التاريخ الهجري (تقريبي)
   const getHijriDate = (date: Date) => {
     const hijriMonths = [
-      "محرم",
-      "صفر",
-      "ربيع الأول",
-      "ربيع الثاني",
-      "جمادى الأولى",
-      "جمادى الثانية",
-      "رجب",
-      "شعبان",
-      "رمضان",
-      "شوال",
-      "ذو القعدة",
-      "ذو الحجة",
-    ];
+      'محرم',
+      'صفر',
+      'ربيع الأول',
+      'ربيع الثاني',
+      'جمادى الأولى',
+      'جمادى الثانية',
+      'رجب',
+      'شعبان',
+      'رمضان',
+      'شوال',
+      'ذو القعدة',
+      'ذو الحجة',
+    ]
 
-    const gregorianYear = date.getFullYear();
-    const gregorianMonth = date.getMonth() + 1;
-    const gregorianDay = date.getDate();
+    const gregorianYear = date.getFullYear()
+    const gregorianMonth = date.getMonth() + 1
+    const gregorianDay = date.getDate()
 
-    const hijriYear = Math.floor(((gregorianYear - 622) * 33) / 32) + 1;
-    const approximateHijriMonth = (gregorianMonth + 8) % 12;
-    const hijriDay = gregorianDay;
+    const hijriYear = Math.floor(((gregorianYear - 622) * 33) / 32) + 1
+    const approximateHijriMonth = (gregorianMonth + 8) % 12
+    const hijriDay = gregorianDay
 
     return {
       day: hijriDay,
       month: hijriMonths[approximateHijriMonth],
       year: hijriYear,
-    };
-  };
+    }
+  }
 
   // تنسيق الوقت
   const getFormattedTime = (date: Date) => {
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-    const seconds = date.getSeconds().toString().padStart(2, "0");
-    return `${hours}:${minutes}:${seconds}`;
-  };
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    const seconds = date.getSeconds().toString().padStart(2, '0')
+    return `${hours}:${minutes}:${seconds}`
+  }
 
-  const gregorianDate = getGregorianDate(currentTime);
-  const hijriDate = getHijriDate(currentTime);
-  const formattedTime = getFormattedTime(currentTime);
+  const gregorianDate = getGregorianDate(currentTime)
+  const hijriDate = getHijriDate(currentTime)
+  const formattedTime = getFormattedTime(currentTime)
 
   const handleRefreshDashboard = () => {
-    void refreshDashboardMetrics();
-  };
+    void refreshDashboardMetrics()
+  }
 
-  const dataLastUpdatedLabel = formatTime(dashboardLastUpdated ?? lastRefreshAt, { locale: 'ar-EG' });
+  const dataLastUpdatedLabel = formatTime(dashboardLastUpdated ?? lastRefreshAt, {
+    locale: 'ar-EG',
+  })
   const currencyLastUpdatedLabel = formatTime(
     dashboardMetrics.currency.lastUpdated ?? currency?.lastUpdated ?? null,
-    { locale: 'ar-EG' }
-  );
+    { locale: 'ar-EG' },
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted">
@@ -145,9 +130,7 @@ function Dashboard({ onSectionChange }: DashboardProps) {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* Title & Description */}
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                لوحة التحكم التنفيذية
-              </h1>
+              <h1 className="text-3xl font-bold text-foreground mb-2">لوحة التحكم التنفيذية</h1>
               <p className="text-sm text-muted-foreground mb-3">
                 نظرة شاملة على مؤشرات الأداء الرئيسية والعمليات التشغيلية
               </p>
@@ -204,9 +187,7 @@ function Dashboard({ onSectionChange }: DashboardProps) {
                     <Clock className="h-3 w-3" />
                     <span>الوقت</span>
                   </div>
-                  <div className="text-lg font-bold text-primary font-mono">
-                    {formattedTime}
-                  </div>
+                  <div className="text-lg font-bold text-primary font-mono">{formattedTime}</div>
                   <div className="text-xs text-muted-foreground">الرياض</div>
                 </div>
               </div>
@@ -221,16 +202,14 @@ function Dashboard({ onSectionChange }: DashboardProps) {
                   className="hover:bg-primary/10"
                 >
                   <RefreshCcw
-                    className={`h-4 w-4 ml-2 ${
-                      dashboardMetricsLoading ? "animate-spin" : ""
-                    }`}
+                    className={`h-4 w-4 ml-2 ${dashboardMetricsLoading ? 'animate-spin' : ''}`}
                   />
                   تحديث
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onSectionChange("settings")}
+                  onClick={() => onSectionChange('settings')}
                   className="hover:bg-muted/40"
                 >
                   <Settings className="h-4 w-4 ml-2" />
@@ -245,9 +224,7 @@ function Dashboard({ onSectionChange }: DashboardProps) {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold text-foreground">
-                مؤشرات الأداء الرئيسية
-              </h2>
+              <h2 className="text-xl font-bold text-foreground">مؤشرات الأداء الرئيسية</h2>
               <p className="text-sm text-muted-foreground">
                 مقارنة الإنجازات الفعلية مع الأهداف المحددة
               </p>
@@ -255,7 +232,7 @@ function Dashboard({ onSectionChange }: DashboardProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onSectionChange("development")}
+              onClick={() => onSectionChange('development')}
               className="text-primary hover:text-primary/80"
             >
               إدارة الأهداف ←
@@ -268,12 +245,8 @@ function Dashboard({ onSectionChange }: DashboardProps) {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-xl font-bold text-foreground">
-                مؤشرات الأداء السنوية
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                تفاصيل الأداء السنوي حسب الأقسام
-              </p>
+              <h2 className="text-xl font-bold text-foreground">مؤشرات الأداء السنوية</h2>
+              <p className="text-sm text-muted-foreground">تفاصيل الأداء السنوي حسب الأقسام</p>
             </div>
             <Badge variant="secondary" className="text-sm">
               {new Date().getFullYear()}
@@ -287,12 +260,8 @@ function Dashboard({ onSectionChange }: DashboardProps) {
           {/* المنافسات - عرض مزدوج */}
           <div className="lg:col-span-2">
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-foreground">
-                حالة المنافسات
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                تحليل شامل لحالة المنافسات الجارية
-              </p>
+              <h2 className="text-xl font-bold text-foreground">حالة المنافسات</h2>
+              <p className="text-sm text-muted-foreground">تحليل شامل لحالة المنافسات الجارية</p>
             </div>
             <TenderStatusCards onSectionChange={onSectionChange} />
           </div>
@@ -302,12 +271,8 @@ function Dashboard({ onSectionChange }: DashboardProps) {
             {/* التذكيرات */}
             <div>
               <div className="mb-4">
-                <h2 className="text-xl font-bold text-foreground">
-                  التذكيرات
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  المواعيد والمهام المهمة
-                </p>
+                <h2 className="text-xl font-bold text-foreground">التذكيرات</h2>
+                <p className="text-sm text-muted-foreground">المواعيد والمهام المهمة</p>
               </div>
               <RemindersCard onSectionChange={onSectionChange} />
             </div>
@@ -315,12 +280,8 @@ function Dashboard({ onSectionChange }: DashboardProps) {
             {/* الملخص المالي */}
             <div>
               <div className="mb-4">
-                <h2 className="text-xl font-bold text-foreground">
-                  الملخص المالي
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  نظرة سريعة على الوضع المالي
-                </p>
+                <h2 className="text-xl font-bold text-foreground">الملخص المالي</h2>
+                <p className="text-sm text-muted-foreground">نظرة سريعة على الوضع المالي</p>
               </div>
               <FinancialSummaryCard onSectionChange={onSectionChange} />
             </div>
@@ -330,18 +291,14 @@ function Dashboard({ onSectionChange }: DashboardProps) {
         {/* الصف الرابع: المصاريف الشهرية */}
         <div>
           <div className="mb-4">
-            <h2 className="text-xl font-bold text-foreground">
-              المصاريف الشهرية
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              تحليل المصاريف الشهرية مقارنة بالموازنة
-            </p>
+            <h2 className="text-xl font-bold text-foreground">المصاريف الشهرية</h2>
+            <p className="text-sm text-muted-foreground">تحليل المصاريف الشهرية مقارنة بالموازنة</p>
           </div>
-          <MonthlyExpensesChart onSectionChange={onSectionChange} />
+          <LazyMonthlyExpensesChart onSectionChange={onSectionChange} />
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default Dashboard;
+export default Dashboard
