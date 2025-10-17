@@ -1,18 +1,39 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, type ComponentType, type LazyExoticComponent } from 'react'
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useEffect,
+  useMemo,
+  type ComponentType,
+  type LazyExoticComponent,
+} from 'react'
 import { Header } from './components/Header'
 import { Sidebar } from './components/Sidebar'
 import { Toaster } from 'sonner'
 import { syncStorage } from './utils/storage'
-import { FinancialStateProvider, NavigationProvider, useNavigation, useFinancialState } from '@/application/context'
+import {
+  FinancialStateProvider,
+  NavigationProvider,
+  useNavigation,
+  useFinancialState,
+} from '@/application/context'
 import type { FinancialTabValue } from '@/components/Financial'
 import { RepositoryProvider } from '@/application/services/RepositoryProvider'
 import { ThemeProvider } from '@/application/providers/ThemeProvider'
+import { CompanySettingsProvider } from '@/application/providers/CompanySettingsProvider'
 import type { Tender } from '@/data/centralData'
-import { isNavigationSection, type AppSection, type NavigationNode } from '@/application/navigation/navigationSchema'
+import {
+  isNavigationSection,
+  type AppSection,
+  type NavigationNode,
+} from '@/application/navigation/navigationSchema'
 
 type ViewModuleLoader = () => Promise<Record<string, unknown>>
 
-const viewModuleLoaders = import.meta.glob('./{components,features,pages}/**/*.{ts,tsx}') as Record<string, ViewModuleLoader>
+const viewModuleLoaders = import.meta.glob('./{components,features,pages}/**/*.{ts,tsx}') as Record<
+  string,
+  ViewModuleLoader
+>
 
 const SECTIONS_WITH_ON_SECTION_CHANGE: AppSection[] = [
   'dashboard',
@@ -29,7 +50,7 @@ const SECTIONS_WITH_ON_SECTION_CHANGE: AppSection[] = [
   'new-bank-account',
   'new-budget',
   'new-report',
-  'reports'
+  'reports',
 ]
 
 const FINANCIAL_SECTION_TABS: Partial<Record<AppSection, FinancialTabValue>> = {
@@ -37,7 +58,7 @@ const FINANCIAL_SECTION_TABS: Partial<Record<AppSection, FinancialTabValue>> = {
   invoices: 'invoices',
   budgets: 'budgets',
   'bank-accounts': 'bank-accounts',
-  'financial-reports': 'reports'
+  'financial-reports': 'reports',
 }
 
 function resolveModuleLoader(modulePath: string): ViewModuleLoader | undefined {
@@ -52,18 +73,23 @@ function resolveModuleLoader(modulePath: string): ViewModuleLoader | undefined {
   return undefined
 }
 
-function createLazyView(node: NavigationNode): LazyExoticComponent<ComponentType<Record<string, unknown>>> | null {
+function createLazyView(
+  node: NavigationNode,
+): LazyExoticComponent<ComponentType<Record<string, unknown>>> | null {
   const loader = resolveModuleLoader(node.view.module)
   if (!loader) {
-    console.warn(`[navigation] تعذر العثور على المكون المرتبط بالمقطع "${node.id}" (${node.view.module})`)
+    console.warn(
+      `[navigation] تعذر العثور على المكون المرتبط بالمقطع "${node.id}" (${node.view.module})`,
+    )
     return null
   }
   const exportName = node.view.exportName ?? 'default'
   return lazy(async () => {
     const mod = await loader()
-    const resolvedExport = exportName === 'default'
-      ? (mod as { default?: unknown }).default
-      : (mod as Record<string, unknown>)[exportName]
+    const resolvedExport =
+      exportName === 'default'
+        ? (mod as { default?: unknown }).default
+        : (mod as Record<string, unknown>)[exportName]
     if (typeof resolvedExport !== 'function' && typeof resolvedExport !== 'object') {
       throw new Error(`Navigation view "${node.id}" لا يملك التصدير "${exportName}"`)
     }
@@ -72,11 +98,7 @@ function createLazyView(node: NavigationNode): LazyExoticComponent<ComponentType
 }
 
 function MissingView({ section }: { section: AppSection }) {
-  return (
-    <div className="p-6 text-destructive">
-      تعذر تحميل الواجهة الخاصة بالمقطع: {section}
-    </div>
-  )
+  return <div className="p-6 text-destructive">تعذر تحميل الواجهة الخاصة بالمقطع: {section}</div>
 }
 
 const AppShell = () => {
@@ -84,31 +106,37 @@ const AppShell = () => {
   const { tenders: tendersState } = useFinancialState()
   const { addTender, updateTender } = tendersState
 
-  const handleSectionChange = useCallback((section: string, tender?: Tender) => {
-    if (!isNavigationSection(section)) {
-      console.warn('[navigation] محاولة الانتقال إلى مقطع غير معرف:', section)
-      return
-    }
-    navigate(section, tender ? { tender } : undefined)
-  }, [navigate])
+  const handleSectionChange = useCallback(
+    (section: string, tender?: Tender) => {
+      if (!isNavigationSection(section)) {
+        console.warn('[navigation] محاولة الانتقال إلى مقطع غير معرف:', section)
+        return
+      }
+      navigate(section, tender ? { tender } : undefined)
+    },
+    [navigate],
+  )
 
   const handleTenderBack = useCallback(() => {
     navigate('tenders')
   }, [navigate])
 
-  const handleTenderSave = useCallback((formData: Record<string, unknown>) => {
-    if (tenderToEdit) {
-      const updatedTender = { ...formData, id: tenderToEdit.id } as Tender
-      void updateTender(updatedTender)
-      console.log('✅ تم تحديث المنافسة الموجودة')
-    } else {
-      const { id: _generatedId, ...createPayload } = formData
-      const newTenderPayload = createPayload as unknown as Tender
-      void addTender(newTenderPayload)
-      console.log('✅ تم إنشاء منافسة جديدة')
-    }
-    navigate('tenders')
-  }, [addTender, navigate, tenderToEdit, updateTender])
+  const handleTenderSave = useCallback(
+    (formData: Record<string, unknown>) => {
+      if (tenderToEdit) {
+        const updatedTender = { ...formData, id: tenderToEdit.id } as Tender
+        void updateTender(updatedTender)
+        console.log('✅ تم تحديث المنافسة الموجودة')
+      } else {
+        const { id: _generatedId, ...createPayload } = formData
+        const newTenderPayload = createPayload as unknown as Tender
+        void addTender(newTenderPayload)
+        console.log('✅ تم إنشاء منافسة جديدة')
+      }
+      navigate('tenders')
+    },
+    [addTender, navigate, tenderToEdit, updateTender],
+  )
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -125,7 +153,7 @@ const AppShell = () => {
 
   const viewComponents = useMemo(() => {
     const map = new Map<AppSection, LazyExoticComponent<ComponentType<Record<string, unknown>>>>()
-    availableSections.forEach(node => {
+    availableSections.forEach((node) => {
       const component = createLazyView(node)
       if (component) {
         map.set(node.id, component)
@@ -134,47 +162,45 @@ const AppShell = () => {
     return map
   }, [availableSections])
 
-  const getSectionProps = useCallback((section: AppSection): Record<string, unknown> => {
-    if (section === 'new-tender') {
-      return {
-        existingTender: tenderToEdit,
-        onBack: handleTenderBack,
-        onSave: handleTenderSave
+  const getSectionProps = useCallback(
+    (section: AppSection): Record<string, unknown> => {
+      if (section === 'new-tender') {
+        return {
+          existingTender: tenderToEdit,
+          onBack: handleTenderBack,
+          onSave: handleTenderSave,
+        }
       }
-    }
-    if (section === 'settings') {
+      if (section === 'settings') {
+        return {}
+      }
+      if (section in FINANCIAL_SECTION_TABS) {
+        return {
+          onSectionChange: handleSectionChange,
+          initialTab: FINANCIAL_SECTION_TABS[section] ?? 'overview',
+        }
+      }
+      if (SECTIONS_WITH_ON_SECTION_CHANGE.includes(section)) {
+        return {
+          onSectionChange: handleSectionChange,
+        }
+      }
       return {}
-    }
-    if (section in FINANCIAL_SECTION_TABS) {
-      return {
-        onSectionChange: handleSectionChange,
-        initialTab: FINANCIAL_SECTION_TABS[section] ?? 'overview'
-      }
-    }
-    if (SECTIONS_WITH_ON_SECTION_CHANGE.includes(section)) {
-      return {
-        onSectionChange: handleSectionChange
-      }
-    }
-    return {}
-  }, [handleSectionChange, handleTenderBack, handleTenderSave, tenderToEdit])
+    },
+    [handleSectionChange, handleTenderBack, handleTenderSave, tenderToEdit],
+  )
 
   const sectionProps = useMemo(
     () => getSectionProps(activeSection),
-    [activeSection, getSectionProps]
+    [activeSection, getSectionProps],
   )
 
   const ActiveComponent = viewComponents.get(activeSection)
 
   return (
-    <div
-      className="h-screen bg-background text-foreground overflow-hidden"
-      dir="rtl"
-      lang="ar"
-    >
+    <div className="h-screen bg-background text-foreground overflow-hidden" dir="rtl" lang="ar">
       <div className="flex flex-col h-full">
-        <Header
-        />
+        <Header />
 
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-shrink-0">
@@ -198,8 +224,8 @@ const AppShell = () => {
           style: {
             background: 'hsl(var(--background))',
             border: '1px solid hsl(var(--border))',
-            color: 'hsl(var(--foreground))'
-          }
+            color: 'hsl(var(--foreground))',
+          },
         }}
       />
     </div>
@@ -209,13 +235,15 @@ const AppShell = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <RepositoryProvider>
-        <NavigationProvider>
-          <FinancialStateProvider>
-            <AppShell />
-          </FinancialStateProvider>
-        </NavigationProvider>
-      </RepositoryProvider>
+      <CompanySettingsProvider>
+        <RepositoryProvider>
+          <NavigationProvider>
+            <FinancialStateProvider>
+              <AppShell />
+            </FinancialStateProvider>
+          </NavigationProvider>
+        </RepositoryProvider>
+      </CompanySettingsProvider>
     </ThemeProvider>
   )
 }

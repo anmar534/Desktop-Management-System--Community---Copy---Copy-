@@ -17,7 +17,7 @@ import { BankStatementAnalyzer } from './BankStatementAnalyzer'
 import type { BankTransaction } from './BankStatementProcessor'
 import { BankStatementProcessor } from './BankStatementProcessor'
 import { authorizeExport } from '@/utils/desktopSecurity'
-import { 
+import {
   Settings as SettingsIcon,
   Building2,
   Bell,
@@ -38,11 +38,12 @@ import {
   Eye,
   X,
   Check,
-  DollarSign
+  DollarSign,
 } from 'lucide-react'
 import { formatCurrency } from '../data/centralData'
 import { useFinancialState } from '@/application/context'
 import { ThemeSelector, useTheme } from '@/application/providers/ThemeProvider'
+import { useCompanySettings } from '@/application/providers/CompanySettingsProvider'
 
 type PreviewValue = string | number | boolean | null | undefined
 type PreviewRow = Record<string, PreviewValue>
@@ -65,31 +66,37 @@ const NOTIFICATION_OPTIONS: NotificationOption[] = [
   {
     key: 'projects',
     label: 'إشعارات المشاريع الجديدة',
-    desc: 'تنبيه عند إضافة مشروع جديد'
+    desc: 'تنبيه عند إضافة مشروع جديد',
   },
   {
     key: 'deadlines',
     label: 'تذكير المواعيد النهائية',
-    desc: 'تنبيه قبل انتهاء مواعيد المشاريع'
+    desc: 'تنبيه قبل انتهاء مواعيد المشاريع',
   },
   {
     key: 'payments',
     label: 'إشعارات الدفعات المالية',
-    desc: 'تذكير بمواعيد الدفعات المستحقة'
+    desc: 'تذكير بمواعيد الدفعات المستحقة',
   },
   {
     key: 'urgentTenders',
     label: 'إشعارات المنافسات العاجلة',
-    desc: 'تنبيه للمنافسات التي تحتاج إجراء عاجل'
+    desc: 'تنبيه للمنافسات التي تحتاج إجراء عاجل',
   },
   {
     key: 'weeklyReports',
     label: 'تقارير الأداء الأسبوعية',
-    desc: 'إرسال تقرير أداء كل أسبوع'
-  }
+    desc: 'إرسال تقرير أداء كل أسبوع',
+  },
 ]
 
-const UPLOAD_TYPE_OPTIONS: ExcelDataType[] = ['projects', 'clients', 'tenders', 'inventory', 'bank-statement']
+const UPLOAD_TYPE_OPTIONS: ExcelDataType[] = [
+  'projects',
+  'clients',
+  'tenders',
+  'inventory',
+  'bank-statement',
+]
 
 const isUploadType = (value: string): value is ExcelDataType =>
   (UPLOAD_TYPE_OPTIONS as readonly string[]).includes(value)
@@ -130,9 +137,7 @@ const normalizeUploadedData = (data: unknown): PreviewRow[] => {
     return []
   }
 
-  return data
-    .map(toPreviewRow)
-    .filter((row): row is PreviewRow => row !== null)
+  return data.map(toPreviewRow).filter((row): row is PreviewRow => row !== null)
 }
 
 const isBankTransactionRecord = (value: unknown): value is BankTransaction => {
@@ -184,7 +189,9 @@ const formatPreviewValue = (value: PreviewValue): string => {
 }
 
 export function Settings() {
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'processing' | 'success' | 'error'>('idle')
+  const [uploadStatus, setUploadStatus] = useState<
+    'idle' | 'uploading' | 'processing' | 'success' | 'error'
+  >('idle')
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadedData, setUploadedData] = useState<PreviewRow[]>([])
   const [previewData, setPreviewData] = useState<PreviewRow[]>([])
@@ -197,33 +204,47 @@ export function Settings() {
     deadlines: true,
     payments: true,
     urgentTenders: true,
-    weeklyReports: false
+    weeklyReports: false,
   })
 
   const { projects: projectsState, tenders: tendersState } = useFinancialState()
   const { projects } = projectsState
   const { tenders } = tendersState
   const { setTheme, isDark, isHighContrast } = useTheme()
+  const {
+    settings: companySettings,
+    updateSettings: updateCompanySettings,
+    updateLogo,
+    updateCompanyName,
+  } = useCompanySettings()
 
-  const handleDarkModeToggle = useCallback((checked: boolean) => {
-    setTheme(checked ? 'dark' : 'light')
-  }, [setTheme])
+  const handleDarkModeToggle = useCallback(
+    (checked: boolean) => {
+      setTheme(checked ? 'dark' : 'light')
+    },
+    [setTheme],
+  )
 
-  const handleHighContrastToggle = useCallback((checked: boolean) => {
-    setTheme(checked ? 'high-contrast' : 'light')
-  }, [setTheme])
+  const handleHighContrastToggle = useCallback(
+    (checked: boolean) => {
+      setTheme(checked ? 'high-contrast' : 'light')
+    },
+    [setTheme],
+  )
 
   const projectCapacity = 20
   const tenderCapacity = 15
 
   const activeProjects = useMemo(
-    () => projects.filter(project => project.status === 'active').length,
-    [projects]
+    () => projects.filter((project) => project.status === 'active').length,
+    [projects],
   )
 
   const activeTenders = useMemo(
-    () => tenders.filter(tender => ['new', 'under_action', 'ready_to_submit'].includes(tender.status)).length,
-    [tenders]
+    () =>
+      tenders.filter((tender) => ['new', 'under_action', 'ready_to_submit'].includes(tender.status))
+        .length,
+    [tenders],
   )
 
   // إحصائيات النظام للإدارة
@@ -235,7 +256,7 @@ export function Settings() {
     storageUsed: 3.2,
     storageTotal: 10,
     dataBackups: 15,
-    lastBackup: '2024-02-14'
+    lastBackup: '2024-02-14',
   }
 
   // الإحصائيات السريعة للمدير
@@ -244,7 +265,7 @@ export function Settings() {
       label: 'الوحدات النشطة',
       value: settingsStats.activeModules,
       color: 'text-primary',
-      bgColor: 'bg-primary/10'
+      bgColor: 'bg-primary/10',
     },
     {
       label: 'المستخدمون النشطون',
@@ -252,7 +273,7 @@ export function Settings() {
       trend: 'up' as const,
       trendValue: '+2',
       color: 'text-success',
-      bgColor: 'bg-success/10'
+      bgColor: 'bg-success/10',
     },
     {
       label: 'مساحة التخزين',
@@ -260,7 +281,7 @@ export function Settings() {
       trend: 'up' as const,
       trendValue: '+0.3GB',
       color: 'text-secondary-foreground',
-      bgColor: 'bg-secondary/20'
+      bgColor: 'bg-secondary/20',
     },
     {
       label: 'النسخ الاحتياطية',
@@ -268,13 +289,13 @@ export function Settings() {
       trend: 'up' as const,
       trendValue: '+1',
       color: 'text-warning',
-      bgColor: 'bg-warning/10'
+      bgColor: 'bg-warning/10',
     },
     {
       label: 'إصدار النظام',
       value: settingsStats.systemVersion,
       color: 'text-info',
-      bgColor: 'bg-info/10'
+      bgColor: 'bg-info/10',
     },
     {
       label: 'معدل الأداء',
@@ -282,8 +303,8 @@ export function Settings() {
       trend: 'up' as const,
       trendValue: '+0.8%',
       color: 'text-success',
-      bgColor: 'bg-success/10'
-    }
+      bgColor: 'bg-success/10',
+    },
   ]
 
   // الإجراءات السريعة
@@ -292,20 +313,20 @@ export function Settings() {
       label: 'نسخة احتياطية',
       icon: Database,
       onClick: () => handleBackup(),
-      variant: 'outline' as const
+      variant: 'outline' as const,
     },
     {
       label: 'تصدير البيانات',
       icon: Download,
       onClick: () => void handleExport(),
-      variant: 'outline' as const
+      variant: 'outline' as const,
     },
     {
       label: 'حفظ الإعدادات',
       icon: Save,
       onClick: () => handleSaveSettings(),
-      primary: true
-    }
+      primary: true,
+    },
   ]
 
   // بطاقات حالة النظام
@@ -327,7 +348,10 @@ export function Settings() {
         icon={Database}
         color="text-primary"
         bgColor="bg-primary/10"
-        trend={{ value: `${settingsStats.storageUsed}/${settingsStats.storageTotal}GB`, direction: 'stable' }}
+        trend={{
+          value: `${settingsStats.storageUsed}/${settingsStats.storageTotal}GB`,
+          direction: 'stable',
+        }}
       />
       <DetailCard
         title="المعاملات اليومية"
@@ -351,103 +375,296 @@ export function Settings() {
   )
 
   // معالجة الملف المرفوع
-  const processUploadedFile = useCallback(async (_file: File) => {
-    try {
-      // محاكاة قراءة ملف Excel وتحويله لبيانات
-      const mockRawData = generateMockRawDataFromType(uploadType)
-      
-      // معالجة البيانات باستخدام ExcelDataProcessor
-      const processedData = ExcelDataProcessor.processData(uploadType, mockRawData)
-      
-      // التحقق من صحة البيانات
-      const validation = ExcelDataProcessor.validateData(uploadType, processedData)
-      
-      if (!validation.isValid) {
-        console.warn('تحذيرات في البيانات:', validation.errors)
-        if (validation.warnings) {
-          console.warn('تحذيرات إضافية:', validation.warnings)
+  const processUploadedFile = useCallback(
+    async (_file: File) => {
+      try {
+        // محاكاة قراءة ملف Excel وتحويله لبيانات
+        const mockRawData = generateMockRawDataFromType(uploadType)
+
+        // معالجة البيانات باستخدام ExcelDataProcessor
+        const processedData = ExcelDataProcessor.processData(uploadType, mockRawData)
+
+        // التحقق من صحة البيانات
+        const validation = ExcelDataProcessor.validateData(uploadType, processedData)
+
+        if (!validation.isValid) {
+          console.warn('تحذيرات في البيانات:', validation.errors)
+          if (validation.warnings) {
+            console.warn('تحذيرات إضافية:', validation.warnings)
+          }
         }
-      }
 
-      const normalizedData = normalizeUploadedData(processedData)
-      setUploadedData(normalizedData)
-      setPreviewData(normalizedData.slice(0, 5)) // عرض أول 5 سجلات فقط
-      setUploadStatus('success')
-      setShowPreview(true)
+        const normalizedData = normalizeUploadedData(processedData)
+        setUploadedData(normalizedData)
+        setPreviewData(normalizedData.slice(0, 5)) // عرض أول 5 سجلات فقط
+        setUploadStatus('success')
+        setShowPreview(true)
 
-      // معالجة خاصة للكشف البنكي
-      if (uploadType === 'bank-statement') {
-        const transactions = normalizeBankTransactions(processedData)
-        setBankTransactions(transactions)
-      } else {
-        setBankTransactions([])
+        // معالجة خاصة للكشف البنكي
+        if (uploadType === 'bank-statement') {
+          const transactions = normalizeBankTransactions(processedData)
+          setBankTransactions(transactions)
+        } else {
+          setBankTransactions([])
+        }
+      } catch (error) {
+        console.error('خطأ في معالجة الملف:', error)
+        setUploadStatus('error')
       }
-    } catch (error) {
-      console.error('خطأ في معالجة الملف:', error)
-      setUploadStatus('error')
-    }
-  }, [uploadType])
+    },
+    [uploadType],
+  )
 
   // محاكاة رفع الملف
-  const simulateFileUpload = useCallback((file: File) => {
-    setUploadStatus('uploading')
-    setUploadProgress(0)
+  const simulateFileUpload = useCallback(
+    (file: File) => {
+      setUploadStatus('uploading')
+      setUploadProgress(0)
 
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setUploadStatus('processing')
-          setTimeout(() => processUploadedFile(file), 1000)
-          return 100
-        }
-        return prev + 10
-      })
-    }, 100)
-  }, [processUploadedFile])
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval)
+            setUploadStatus('processing')
+            setTimeout(() => processUploadedFile(file), 1000)
+            return 100
+          }
+          return prev + 10
+        })
+      }, 100)
+    },
+    [processUploadedFile],
+  )
 
   // توليد بيانات خام تجريبية حسب النوع (تحاكي بيانات Excel)
   const generateMockRawDataFromType = (type: ExcelDataType) => {
     switch (type) {
       case 'projects':
         return [
-          { 'اسم المشروع': 'مشروع المول الجديد', 'العميل': 'شركة التطوير', 'الميزانية': '15000000', 'الحالة': 'نشط', 'التقدم': '75', 'الأولوية': 'عالية' },
-          { 'اسم المشروع': 'مجمع سكني الواحة', 'العميل': 'وزارة الإسكان', 'الميزانية': '45000000', 'الحالة': 'تخطيط', 'التقدم': '25', 'الأولوية': 'متوسطة' },
-          { 'اسم المشروع': 'مدرسة المستقبل', 'العميل': 'وزارة التعليم', 'الميزانية': '8500000', 'الحالة': 'نشط', 'التقدم': '60', 'الأولوية': 'عالية' },
-          { 'اسم المشروع': 'مستشفى الرحمة', 'العميل': 'وزارة الصحة', 'الميزانية': '35000000', 'الحالة': 'نشط', 'التقدم': '40', 'الأولوية': 'حرجة' },
-          { 'اسم المشروع': 'جسر الملك فهد', 'العميل': 'وزارة النقل', 'الميزانية': '28000000', 'الحالة': 'متأخر', 'التقدم': '85', 'الأولوية': 'عالية' }
+          {
+            'اسم المشروع': 'مشروع المول الجديد',
+            العميل: 'شركة التطوير',
+            الميزانية: '15000000',
+            الحالة: 'نشط',
+            التقدم: '75',
+            الأولوية: 'عالية',
+          },
+          {
+            'اسم المشروع': 'مجمع سكني الواحة',
+            العميل: 'وزارة الإسكان',
+            الميزانية: '45000000',
+            الحالة: 'تخطيط',
+            التقدم: '25',
+            الأولوية: 'متوسطة',
+          },
+          {
+            'اسم المشروع': 'مدرسة المستقبل',
+            العميل: 'وزارة التعليم',
+            الميزانية: '8500000',
+            الحالة: 'نشط',
+            التقدم: '60',
+            الأولوية: 'عالية',
+          },
+          {
+            'اسم المشروع': 'مستشفى الرحمة',
+            العميل: 'وزارة الصحة',
+            الميزانية: '35000000',
+            الحالة: 'نشط',
+            التقدم: '40',
+            الأولوية: 'حرجة',
+          },
+          {
+            'اسم المشروع': 'جسر الملك فهد',
+            العميل: 'وزارة النقل',
+            الميزانية: '28000000',
+            الحالة: 'متأخر',
+            التقدم: '85',
+            الأولوية: 'عالية',
+          },
         ]
       case 'clients':
         return [
-          { 'اسم العميل': 'شركة البناء الحديث', 'النوع': 'خاص', 'القيمة الإجمالية': '25000000', 'عدد المشاريع': '5', 'العلاقة': 'استراتيجي' },
-          { 'اسم العميل': 'وزارة الشؤون البلدية', 'النوع': 'حكومي', 'القيمة الإجمالية': '85000000', 'عدد المشاريع': '12', 'العلاقة': 'حكومي' },
-          { 'اسم العميل': 'شركة الاستثمار العقاري', 'النوع': 'خاص', 'القيمة الإجمالية': '15000000', 'عدد المشاريع': '3', 'العلاقة': 'عادي' },
-          { 'اسم العميل': 'مؤسسة الحرمين', 'النوع': 'خاص', 'القيمة الإجمالية': '42000000', 'عدد المشاريع': '8', 'العلاقة': 'استراتيجي' }
+          {
+            'اسم العميل': 'شركة البناء الحديث',
+            النوع: 'خاص',
+            'القيمة الإجمالية': '25000000',
+            'عدد المشاريع': '5',
+            العلاقة: 'استراتيجي',
+          },
+          {
+            'اسم العميل': 'وزارة الشؤون البلدية',
+            النوع: 'حكومي',
+            'القيمة الإجمالية': '85000000',
+            'عدد المشاريع': '12',
+            العلاقة: 'حكومي',
+          },
+          {
+            'اسم العميل': 'شركة الاستثمار العقاري',
+            النوع: 'خاص',
+            'القيمة الإجمالية': '15000000',
+            'عدد المشاريع': '3',
+            العلاقة: 'عادي',
+          },
+          {
+            'اسم العميل': 'مؤسسة الحرمين',
+            النوع: 'خاص',
+            'القيمة الإجمالية': '42000000',
+            'عدد المشاريع': '8',
+            العلاقة: 'استراتيجي',
+          },
         ]
       case 'tenders':
         return [
-          { 'اسم المنافسة': 'مناقصة مستشفى الشرق', 'العميل': 'وزارة الصحة', 'القيمة': '125000000', 'الموعد النهائي': '2024-03-15', 'الحالة': 'نشط', 'فرصة الفوز': '75' },
-          { 'اسم المنافسة': 'تطوير الكورنيش', 'العميل': 'أمانة جدة', 'القيمة': '85000000', 'الموعد النهائي': '2024-02-25', 'الحالة': 'إعداد', 'فرصة الفوز': '60' },
-          { 'اسم المنافسة': 'مجمع رياضي', 'العميل': 'وزارة الرياضة', 'القيمة': '65000000', 'الموعد النهائي': '2024-04-10', 'الحالة': 'مراجعة', 'فرصة الفوز': '80' },
-          { 'اسم المنافسة': 'شبكة طرق الجنوب', 'العميل': 'وزارة النقل', 'القيمة': '95000000', 'الموعد النهائي': '2024-05-20', 'الحالة': 'إعداد', 'فرصة الفوز': '45' }
+          {
+            'اسم المنافسة': 'مناقصة مستشفى الشرق',
+            العميل: 'وزارة الصحة',
+            القيمة: '125000000',
+            'الموعد النهائي': '2024-03-15',
+            الحالة: 'نشط',
+            'فرصة الفوز': '75',
+          },
+          {
+            'اسم المنافسة': 'تطوير الكورنيش',
+            العميل: 'أمانة جدة',
+            القيمة: '85000000',
+            'الموعد النهائي': '2024-02-25',
+            الحالة: 'إعداد',
+            'فرصة الفوز': '60',
+          },
+          {
+            'اسم المنافسة': 'مجمع رياضي',
+            العميل: 'وزارة الرياضة',
+            القيمة: '65000000',
+            'الموعد النهائي': '2024-04-10',
+            الحالة: 'مراجعة',
+            'فرصة الفوز': '80',
+          },
+          {
+            'اسم المنافسة': 'شبكة طرق الجنوب',
+            العميل: 'وزارة النقل',
+            القيمة: '95000000',
+            'الموعد النهائي': '2024-05-20',
+            الحالة: 'إعداد',
+            'فرصة الفوز': '45',
+          },
         ]
       case 'inventory':
         return [
-          { 'اسم المادة': 'إسمنت بورتلاندي', 'التصنيف': 'مواد أساسية', 'المخزون الحالي': '500', 'الوحدة': 'كيس', 'السعر': '18.50', 'المورد': 'شركة الإسمنت السعودية' },
-          { 'اسم المادة': 'حديد تسليح 16مم', 'التصنيف': 'حديد', 'المخزون الحالي': '25', 'الوحدة': 'طن', 'السعر': '3200', 'المورد': 'مصنع الحديد الوطني' },
-          { 'اسم المادة': 'بلوك إسمنتي', 'التصنيف': 'مواد بناء', 'المخزون الحالي': '2000', 'الوحدة': 'قطعة', 'السعر': '2.85', 'المورد': 'مصنع البلوك الحديث' },
-          { 'اسم المادة': 'رمل مغسول', 'التصنيف': 'خامات', 'المخزون الحالي': '150', 'الوحدة': 'متر مكعب', 'السعر': '95', 'المورد': 'مقالع الشرق' }
+          {
+            'اسم المادة': 'إسمنت بورتلاندي',
+            التصنيف: 'مواد أساسية',
+            'المخزون الحالي': '500',
+            الوحدة: 'كيس',
+            السعر: '18.50',
+            المورد: 'شركة الإسمنت السعودية',
+          },
+          {
+            'اسم المادة': 'حديد تسليح 16مم',
+            التصنيف: 'حديد',
+            'المخزون الحالي': '25',
+            الوحدة: 'طن',
+            السعر: '3200',
+            المورد: 'مصنع الحديد الوطني',
+          },
+          {
+            'اسم المادة': 'بلوك إسمنتي',
+            التصنيف: 'مواد بناء',
+            'المخزون الحالي': '2000',
+            الوحدة: 'قطعة',
+            السعر: '2.85',
+            المورد: 'مصنع البلوك الحديث',
+          },
+          {
+            'اسم المادة': 'رمل مغسول',
+            التصنيف: 'خامات',
+            'المخزون الحالي': '150',
+            الوحدة: 'متر مكعب',
+            السعر: '95',
+            المورد: 'مقالع الشرق',
+          },
         ]
       case 'bank-statement':
         return [
-          { 'التاريخ': '2024-02-01', 'الرصيد': '2500000', 'مدين': '0', 'دائن': '500000', 'تفاصيل العملية': 'دفعة من شركة التطوير العقاري', 'التصنيف': 'إيرادات المشاريع', 'التصنيف الفرعي': 'دفعات العملاء', 'المشروع': 'مجمع الرياض التجاري' },
-          { 'التاريخ': '2024-02-02', 'الرصيد': '2350000', 'مدين': '150000', 'دائن': '0', 'تفاصيل العملية': 'شراء إسمنت وحديد تسليح', 'التصنيف': 'مواد البناء', 'التصنيف الفرعي': 'مواد أساسية', 'المشروع': 'مجمع الرياض التجاري' },
-          { 'التاريخ': '2024-02-03', 'الرصيد': '2300000', 'مدين': '50000', 'دائن': '0', 'تفاصيل العملية': 'رواتب الموظفين', 'التصنيف': 'الرواتب والأجور', 'التصنيف الفرعي': 'رواتب الموظفين', 'المشروع': 'غير محدد' },
-          { 'التاريخ': '2024-02-04', 'الرصيد': '2280000', 'مدين': '20000', 'دائن': '0', 'تفاصيل العملية': 'وقود المعدات', 'التصنيف': 'الوقود', 'التصنيف الفرعي': 'وقود المعدات', 'المشروع': 'توسعة طريق الملك فهد' },
-          { 'التاريخ': '2024-02-05', 'الرصيد': '2560000', 'مدين': '0', 'دائن': '280000', 'تفاصيل العملية': 'دفعة من وزارة التعليم', 'التصنيف': 'إيرادات المشاريع', 'التصنيف الفرعي': 'دفعات العملاء', 'المشروع': 'مدرسة الأمل الابتدائية' },
-          { 'التاريخ': '2024-02-06', 'الرصيد': '2510000', 'مدين': '50000', 'دائن': '0', 'تفاصيل العملية': 'إيجار المعدات الثقيلة', 'التصنيف': 'المعدات', 'التصنيف الفرعي': 'إيجار معدات', 'المشروع': 'مستشفى الملك فهد - التوسعة' },
-          { 'التاريخ': '2024-02-07', 'الرصيد': '2485000', 'مدين': '25000', 'دائن': '0', 'تفاصيل العملية': 'مصاريف نقل ومواصلات', 'التصنيف': 'النقل', 'التصنيف الفرعي': 'نقل المواد', 'المشروع': 'مجمع الخدمات الطبية' },
-          { 'التاريخ': '2024-02-08', 'الرصيد': '2470000', 'مدين': '15000', 'دائن': '0', 'تفاصيل العملية': 'فواتير كهرباء وماء', 'التصنيف': 'المرافق', 'التصنيف الفرعي': 'خدمات أساسية', 'المشروع': 'غير محدد' }
+          {
+            التاريخ: '2024-02-01',
+            الرصيد: '2500000',
+            مدين: '0',
+            دائن: '500000',
+            'تفاصيل العملية': 'دفعة من شركة التطوير العقاري',
+            التصنيف: 'إيرادات المشاريع',
+            'التصنيف الفرعي': 'دفعات العملاء',
+            المشروع: 'مجمع الرياض التجاري',
+          },
+          {
+            التاريخ: '2024-02-02',
+            الرصيد: '2350000',
+            مدين: '150000',
+            دائن: '0',
+            'تفاصيل العملية': 'شراء إسمنت وحديد تسليح',
+            التصنيف: 'مواد البناء',
+            'التصنيف الفرعي': 'مواد أساسية',
+            المشروع: 'مجمع الرياض التجاري',
+          },
+          {
+            التاريخ: '2024-02-03',
+            الرصيد: '2300000',
+            مدين: '50000',
+            دائن: '0',
+            'تفاصيل العملية': 'رواتب الموظفين',
+            التصنيف: 'الرواتب والأجور',
+            'التصنيف الفرعي': 'رواتب الموظفين',
+            المشروع: 'غير محدد',
+          },
+          {
+            التاريخ: '2024-02-04',
+            الرصيد: '2280000',
+            مدين: '20000',
+            دائن: '0',
+            'تفاصيل العملية': 'وقود المعدات',
+            التصنيف: 'الوقود',
+            'التصنيف الفرعي': 'وقود المعدات',
+            المشروع: 'توسعة طريق الملك فهد',
+          },
+          {
+            التاريخ: '2024-02-05',
+            الرصيد: '2560000',
+            مدين: '0',
+            دائن: '280000',
+            'تفاصيل العملية': 'دفعة من وزارة التعليم',
+            التصنيف: 'إيرادات المشاريع',
+            'التصنيف الفرعي': 'دفعات العملاء',
+            المشروع: 'مدرسة الأمل الابتدائية',
+          },
+          {
+            التاريخ: '2024-02-06',
+            الرصيد: '2510000',
+            مدين: '50000',
+            دائن: '0',
+            'تفاصيل العملية': 'إيجار المعدات الثقيلة',
+            التصنيف: 'المعدات',
+            'التصنيف الفرعي': 'إيجار معدات',
+            المشروع: 'مستشفى الملك فهد - التوسعة',
+          },
+          {
+            التاريخ: '2024-02-07',
+            الرصيد: '2485000',
+            مدين: '25000',
+            دائن: '0',
+            'تفاصيل العملية': 'مصاريف نقل ومواصلات',
+            التصنيف: 'النقل',
+            'التصنيف الفرعي': 'نقل المواد',
+            المشروع: 'مجمع الخدمات الطبية',
+          },
+          {
+            التاريخ: '2024-02-08',
+            الرصيد: '2470000',
+            مدين: '15000',
+            دائن: '0',
+            'تفاصيل العملية': 'فواتير كهرباء وماء',
+            التصنيف: 'المرافق',
+            'التصنيف الفرعي': 'خدمات أساسية',
+            المشروع: 'غير محدد',
+          },
         ]
       default:
         return []
@@ -467,10 +684,13 @@ export function Settings() {
 
   const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file && (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-                 file.type === 'application/vnd.ms-excel' ||
-                 file.name.endsWith('.xlsx') || 
-                 file.name.endsWith('.xls'))) {
+    if (
+      file &&
+      (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+        file.type === 'application/vnd.ms-excel' ||
+        file.name.endsWith('.xlsx') ||
+        file.name.endsWith('.xls'))
+    ) {
       simulateFileUpload(file)
     } else {
       alert('يرجى اختيار ملف Excel صحيح (.xlsx أو .xls)')
@@ -483,7 +703,7 @@ export function Settings() {
     if (uploadType === 'bank-statement') {
       setShowBankAnalysis(true)
     }
-    
+
     setUploadStatus('idle')
     setShowPreview(false)
     setUploadedData([])
@@ -503,12 +723,18 @@ export function Settings() {
   // الحصول على تسمية النوع
   const getTypeLabel = (type: ExcelDataType) => {
     switch (type) {
-      case 'projects': return 'المشاريع'
-      case 'clients': return 'العملاء'
-      case 'tenders': return 'المنافسات'
-      case 'inventory': return 'المخزون'
-      case 'bank-statement': return 'كشف الحساب البنكي'
-      default: return 'البيانات'
+      case 'projects':
+        return 'المشاريع'
+      case 'clients':
+        return 'العملاء'
+      case 'tenders':
+        return 'المنافسات'
+      case 'inventory':
+        return 'المخزون'
+      case 'bank-statement':
+        return 'كشف الحساب البنكي'
+      default:
+        return 'البيانات'
     }
   }
 
@@ -520,6 +746,66 @@ export function Settings() {
   const handleBackup = () => {
     alert('جاري إنشاء نسخة احتياطية...')
   }
+
+  // معالجة رفع شعار الشركة
+  const handleLogoUpload = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      // التحقق من نوع الملف
+      if (!file.type.startsWith('image/')) {
+        alert('يرجى اختيار ملف صورة صحيح')
+        return
+      }
+
+      // التحقق من حجم الملف (أقل من 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('حجم الصورة يجب أن يكون أقل من 2 ميجابايت')
+        return
+      }
+
+      // قراءة الملف وتحويله إلى Base64
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string
+        updateLogo(base64)
+        alert('تم رفع الشعار بنجاح')
+      }
+      reader.onerror = () => {
+        alert('حدث خطأ أثناء رفع الشعار')
+      }
+      reader.readAsDataURL(file)
+    },
+    [updateLogo],
+  )
+
+  // حذف شعار الشركة
+  const handleLogoRemove = useCallback(() => {
+    updateLogo(null)
+    alert('تم حذف الشعار')
+  }, [updateLogo])
+
+  // حفظ معلومات الشركة
+  const handleSaveCompanyInfo = useCallback(() => {
+    const companyNameInput = document.getElementById('company-name') as HTMLInputElement
+    const commercialRegisterInput = document.getElementById(
+      'commercial-register',
+    ) as HTMLInputElement
+    const taxNumberInput = document.getElementById('tax-number') as HTMLInputElement
+    const classificationInput = document.getElementById('classification') as HTMLInputElement
+    const addressInput = document.getElementById('address') as HTMLInputElement
+
+    updateCompanySettings({
+      companyName: companyNameInput?.value || companySettings.companyName,
+      commercialRegister: commercialRegisterInput?.value || companySettings.commercialRegister,
+      taxNumber: taxNumberInput?.value || companySettings.taxNumber,
+      classification: classificationInput?.value || companySettings.classification,
+      address: addressInput?.value || companySettings.address,
+    })
+
+    alert('تم حفظ معلومات الشركة بنجاح')
+  }, [companySettings, updateCompanySettings])
 
   const handleExport = useCallback(async () => {
     if (uploadType === 'bank-statement' && bankTransactions.length > 0) {
@@ -538,8 +824,8 @@ export function Settings() {
           metadata: {
             transactions: analysis.totalTransactions,
             projects: Object.keys(analysis.projectBreakdown).length,
-            categories: Object.keys(analysis.categoryBreakdown).length
-          }
+            categories: Object.keys(analysis.categoryBreakdown).length,
+          },
         })
 
         if (!authorization.allowed) {
@@ -548,7 +834,9 @@ export function Settings() {
         }
 
         const sanitizedFilename = authorization.payload?.filename ?? exportLabel
-        const finalFilename = sanitizedFilename.endsWith('.csv') ? sanitizedFilename : `${sanitizedFilename}.csv`
+        const finalFilename = sanitizedFilename.endsWith('.csv')
+          ? sanitizedFilename
+          : `${sanitizedFilename}.csv`
 
         const blob = new Blob(['\ufeff' + csvData], { type: 'text/csv;charset=utf-8;' })
         const link = document.createElement('a')
@@ -571,7 +859,7 @@ export function Settings() {
   }, [uploadType, bankTransactions])
 
   const handleNotificationChange = (key: keyof NotificationSettings, value: boolean) => {
-    setNotifications(prev => ({ ...prev, [key]: value }))
+    setNotifications((prev) => ({ ...prev, [key]: value }))
   }
 
   // إذا كان يتم عرض تحليل الكشف البنكي
@@ -583,7 +871,7 @@ export function Settings() {
           setShowBankAnalysis(false)
           setBankTransactions([])
         }}
-  onExport={() => void handleExport()}
+        onExport={() => void handleExport()}
       />
     )
   }
@@ -599,9 +887,7 @@ export function Settings() {
       headerExtra={SystemStatusCards}
       showSearch={false}
     >
-      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         {/* العمود الأيسر - أدوات وإحصائيات */}
         <div className="space-y-6">
           {/* استيراد البيانات */}
@@ -636,9 +922,7 @@ export function Settings() {
                     <DollarSign className="h-4 w-4 text-info" />
                     <h4 className="font-medium text-info">كشف الحساب البنكي</h4>
                   </div>
-                  <p className="text-sm text-info/80 mb-2">
-                    ترتيب الأعمدة المطلوب:
-                  </p>
+                  <p className="text-sm text-info/80 mb-2">ترتيب الأعمدة المطلوب:</p>
                   <div className="text-xs text-info/90 space-y-1">
                     <div>1. التاريخ</div>
                     <div>2. الرصيد</div>
@@ -707,32 +991,22 @@ export function Settings() {
                     variant="destructive"
                     title="فشل رفع الملف"
                     description="حدث خطأ أثناء رفع الملف. حاول مرة أخرى أو تأكد من تنسيق البيانات."
-                    actions={(
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setUploadStatus('idle')}
-                      >
+                    actions={
+                      <Button variant="outline" size="sm" onClick={() => setUploadStatus('idle')}>
                         إعادة المحاولة
                       </Button>
-                    )}
+                    }
                   />
                 )}
               </div>
 
               {uploadStatus === 'success' && (
                 <div className="flex gap-2">
-                  <Button 
-                    onClick={confirmImport}
-                    className="flex-1"
-                  >
+                  <Button onClick={confirmImport} className="flex-1">
                     <Check className="h-4 w-4 ml-2" />
                     {uploadType === 'bank-statement' ? 'تحليل البيانات' : 'تأكيد الاستيراد'}
                   </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setShowPreview(!showPreview)}
-                  >
+                  <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
                     <Eye className="h-4 w-4 ml-2" />
                     معاينة
                   </Button>
@@ -793,7 +1067,10 @@ export function Settings() {
                     {settingsStats.storageUsed} GB / {settingsStats.storageTotal} GB
                   </span>
                 </div>
-                <Progress value={(settingsStats.storageUsed / settingsStats.storageTotal) * 100} className="h-2" />
+                <Progress
+                  value={(settingsStats.storageUsed / settingsStats.storageTotal) * 100}
+                  className="h-2"
+                />
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-2">
@@ -805,16 +1082,26 @@ export function Settings() {
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-muted-foreground">المشاريع النشطة</span>
-                  <span className="text-foreground">{activeProjects} / {projectCapacity}</span>
+                  <span className="text-foreground">
+                    {activeProjects} / {projectCapacity}
+                  </span>
                 </div>
-                <Progress value={(activeProjects / Math.max(projectCapacity, 1)) * 100} className="h-2" />
+                <Progress
+                  value={(activeProjects / Math.max(projectCapacity, 1)) * 100}
+                  className="h-2"
+                />
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-muted-foreground">المنافسات النشطة</span>
-                  <span className="text-foreground">{activeTenders} / {tenderCapacity}</span>
+                  <span className="text-foreground">
+                    {activeTenders} / {tenderCapacity}
+                  </span>
                 </div>
-                <Progress value={(activeTenders / Math.max(tenderCapacity, 1)) * 100} className="h-2" />
+                <Progress
+                  value={(activeTenders / Math.max(tenderCapacity, 1)) * 100}
+                  className="h-2"
+                />
               </div>
             </CardContent>
           </Card>
@@ -828,18 +1115,18 @@ export function Settings() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="w-full justify-start"
                 onClick={handleBackup}
               >
                 <Database className="h-4 w-4 ml-2" />
                 نسخ احتياطي
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="w-full justify-start"
                 onClick={() => void handleExport()}
               >
@@ -859,7 +1146,6 @@ export function Settings() {
 
         {/* العمود الأيمن - الإعدادات الرئيسية */}
         <div className="lg:col-span-2 space-y-6">
-          
           {/* معاينة البيانات المستوردة */}
           {showPreview && previewData.length > 0 && (
             <Card>
@@ -868,11 +1154,7 @@ export function Settings() {
                   <Eye className="h-5 w-5 text-primary" />
                   معاينة البيانات - {getTypeLabel(uploadType)}
                 </CardTitle>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setShowPreview(false)}
-                >
+                <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>
                   <X className="h-4 w-4" />
                 </Button>
               </CardHeader>
@@ -886,26 +1168,34 @@ export function Settings() {
                       {uploadedData.length} سجل
                     </StatusBadge>
                   </div>
-                  
+
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b">
-                          {previewData[0] && Object.keys(previewData[0]).slice(0, 6).map(key => (
-                            <th key={key} className="text-right p-2 font-medium text-foreground">
-                              {key}
-                            </th>
-                          ))}
+                          {previewData[0] &&
+                            Object.keys(previewData[0])
+                              .slice(0, 6)
+                              .map((key) => (
+                                <th
+                                  key={key}
+                                  className="text-right p-2 font-medium text-foreground"
+                                >
+                                  {key}
+                                </th>
+                              ))}
                         </tr>
                       </thead>
                       <tbody>
                         {previewData.map((row, index) => (
                           <tr key={index} className="border-b">
-                            {Object.values(row).slice(0, 6).map((value, i) => (
-                              <td key={i} className="p-2 text-foreground">
-                                {formatPreviewValue(value)}
-                              </td>
-                            ))}
+                            {Object.values(row)
+                              .slice(0, 6)
+                              .map((value, i) => (
+                                <td key={i} className="p-2 text-foreground">
+                                  {formatPreviewValue(value)}
+                                </td>
+                              ))}
                           </tr>
                         ))}
                       </tbody>
@@ -915,10 +1205,9 @@ export function Settings() {
                   <div className="flex gap-2 pt-4 border-t">
                     <Button onClick={confirmImport} className="flex-1">
                       <Check className="h-4 w-4 ml-2" />
-                      {uploadType === 'bank-statement' ? 
-                        `تحليل البيانات (${uploadedData.length} معاملة)` : 
-                        `تأكيد الاستيراد (${uploadedData.length} سجل)`
-                      }
+                      {uploadType === 'bank-statement'
+                        ? `تحليل البيانات (${uploadedData.length} معاملة)`
+                        : `تأكيد الاستيراد (${uploadedData.length} سجل)`}
                     </Button>
                     <Button variant="outline" onClick={cancelImport}>
                       <X className="h-4 w-4 ml-2" />
@@ -939,29 +1228,110 @@ export function Settings() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <div>
-                  <Label htmlFor="company-name" className="text-sm font-medium">اسم الشركة</Label>
-                  <Input id="company-name" defaultValue="شركة المقاولات المتطورة" className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="commercial-register" className="text-sm font-medium">رقم السجل التجاري</Label>
-                  <Input id="commercial-register" defaultValue="1234567890" className="ltr-numbers mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="tax-number" className="text-sm font-medium">الرقم الضريبي</Label>
-                  <Input id="tax-number" defaultValue="300012345600003" className="ltr-numbers mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="classification" className="text-sm font-medium">تصنيف المقاولين</Label>
-                  <Input id="classification" defaultValue="الدرجة الأولى" className="mt-1" />
-                </div>
-                <div className="md:col-span-2">
-                  <Label htmlFor="address" className="text-sm font-medium">العنوان</Label>
-                  <Input id="address" defaultValue="شارع الملك فهد، الرياض، المملكة العربية السعودية" className="mt-1" />
+              {/* شعار الشركة */}
+              <div className="mb-6 pb-6 border-b border-border">
+                <Label className="text-sm font-medium mb-3 block">شعار الشركة</Label>
+                <div className="flex items-start gap-4">
+                  {/* معاينة الشعار */}
+                  <div className="flex-shrink-0">
+                    {companySettings.companyLogo ? (
+                      <div className="relative group">
+                        <img
+                          src={companySettings.companyLogo}
+                          alt="شعار الشركة"
+                          className="w-24 h-24 object-contain rounded-lg border-2 border-border bg-muted p-2"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleLogoRemove}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="حذف الشعار"
+                          aria-label="حذف الشعار"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-lg border-2 border-dashed border-border bg-muted flex items-center justify-center">
+                        <Building2 className="h-10 w-10 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* زر رفع الشعار */}
+                  <div className="flex-1">
+                    <div className="relative">
+                      <input
+                        type="file"
+                        id="logo-upload"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        aria-label="رفع شعار الشركة"
+                        title="رفع شعار الشركة"
+                      />
+                      <Button variant="outline" className="w-full sm:w-auto">
+                        <Upload className="h-4 w-4 ml-2" />
+                        {companySettings.companyLogo ? 'تغيير الشعار' : 'رفع الشعار'}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      يدعم النظام ملفات الصور (PNG, JPG, SVG) بحجم أقصى 2 ميجابايت
+                    </p>
+                  </div>
                 </div>
               </div>
-              <Button onClick={handleSaveSettings}>
+
+              {/* معلومات الشركة */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                <div>
+                  <Label htmlFor="company-name" className="text-sm font-medium">
+                    اسم الشركة
+                  </Label>
+                  <Input
+                    id="company-name"
+                    defaultValue={companySettings.companyName}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="commercial-register" className="text-sm font-medium">
+                    رقم السجل التجاري
+                  </Label>
+                  <Input
+                    id="commercial-register"
+                    defaultValue={companySettings.commercialRegister}
+                    className="ltr-numbers mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tax-number" className="text-sm font-medium">
+                    الرقم الضريبي
+                  </Label>
+                  <Input
+                    id="tax-number"
+                    defaultValue={companySettings.taxNumber}
+                    className="ltr-numbers mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="classification" className="text-sm font-medium">
+                    تصنيف المقاولين
+                  </Label>
+                  <Input
+                    id="classification"
+                    defaultValue={companySettings.classification}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="address" className="text-sm font-medium">
+                    العنوان
+                  </Label>
+                  <Input id="address" defaultValue={companySettings.address} className="mt-1" />
+                </div>
+              </div>
+              <Button onClick={handleSaveCompanyInfo}>
                 <Save className="h-4 w-4 ml-2" />
                 حفظ التغييرات
               </Button>
@@ -980,13 +1350,15 @@ export function Settings() {
               <ThemeSelector />
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="dark-mode" className="font-medium">الوضع الداكن</Label>
+                  <Label htmlFor="dark-mode" className="font-medium">
+                    الوضع الداكن
+                  </Label>
                   <p className="text-sm text-muted-foreground">
                     تفعيل المظهر الداكن لعناصر الواجهة
                     {isHighContrast && ' (غير متاح مع وضع التباين العالي)'}
                   </p>
                 </div>
-                <Switch 
+                <Switch
                   id="dark-mode"
                   checked={isDark}
                   disabled={isHighContrast}
@@ -995,8 +1367,12 @@ export function Settings() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="high-contrast-mode" className="font-medium">وضع التباين العالي</Label>
-                  <p className="text-sm text-muted-foreground">تعزيز التباين للأوضاع ذات الحاجة البصرية</p>
+                  <Label htmlFor="high-contrast-mode" className="font-medium">
+                    وضع التباين العالي
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    تعزيز التباين للأوضاع ذات الحاجة البصرية
+                  </p>
                 </div>
                 <Switch
                   id="high-contrast-mode"
@@ -1040,7 +1416,7 @@ export function Settings() {
                     <Label className="font-medium">{notification.label}</Label>
                     <p className="text-sm text-muted-foreground">{notification.desc}</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={notifications[notification.key]}
                     onCheckedChange={(value) => handleNotificationChange(notification.key, value)}
                   />

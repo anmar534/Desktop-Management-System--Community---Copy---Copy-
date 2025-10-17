@@ -14,7 +14,7 @@ import {
   LogOut,
   UserCircle,
   Activity,
-  Contrast
+  Contrast,
 } from 'lucide-react'
 
 import { Button } from '../button'
@@ -34,28 +34,36 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbPage,
-  BreadcrumbSeparator
+  BreadcrumbSeparator,
 } from '../breadcrumb'
 import { useNavigation } from '@/application/context'
 import type { AppSection } from '@/application/navigation/navigationSchema'
 import { useTheme } from '@/application/providers/ThemeProvider'
+import { useCompanySettings } from '@/application/providers/CompanySettingsProvider'
+import { DateTimeDisplay } from './DateTimeDisplay'
 import { cn } from '../utils'
 
 export function Header() {
-  const { breadcrumbs, navigate, quickActions, activeNode } = useNavigation()
+  const { breadcrumbs, navigate, activeNode } = useNavigation()
   const { theme, toggleTheme, isDark, isHighContrast } = useTheme()
+  const { settings: companySettings } = useCompanySettings()
 
-  const handleBreadcrumbNavigate = useCallback((section: AppSection, params?: Record<string, string>) => {
-    navigate(section, params ? { params } : undefined)
-  }, [navigate])
+  const handleBreadcrumbNavigate = useCallback(
+    (section: AppSection, params?: Record<string, string>) => {
+      navigate(section, params ? { params } : undefined)
+    },
+    [navigate],
+  )
 
-  const secondaryRowVisible = breadcrumbs.length > 0 || !!activeNode?.description || quickActions.length > 0
+  // Only show secondary row if there are breadcrumbs
+  const secondaryRowVisible = breadcrumbs.length > 0
 
-  const themeToggleLabel = theme === 'light'
-    ? 'التبديل للوضع الليلي'
-    : theme === 'dark'
-      ? 'التبديل لوضع التباين العالي'
-      : 'التبديل للوضع النهاري'
+  const themeToggleLabel =
+    theme === 'light'
+      ? 'التبديل للوضع الليلي'
+      : theme === 'dark'
+        ? 'التبديل لوضع التباين العالي'
+        : 'التبديل للوضع النهاري'
 
   const renderThemeIcon = () => {
     if (isHighContrast) {
@@ -70,18 +78,36 @@ export function Header() {
   return (
     <header className="bg-card border-b border-border px-6 py-4 shadow-sm flex flex-col gap-4">
       <div className="flex items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-accent text-accent-foreground shadow-md">
-                <Building2 className="h-6 w-6" />
+        {/* Company Branding - Left Side */}
+        <div className="flex items-center gap-3">
+          {/* Company Logo */}
+          {companySettings.companyLogo ? (
+            <div className="w-10 h-10 rounded-lg overflow-hidden bg-accent/50 flex items-center justify-center shadow-md">
+              <img
+                src={companySettings.companyLogo}
+                alt={companySettings.companyName}
+                className="w-full h-full object-contain"
+              />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-foreground">شركة المقاولات المتطورة</h1>
-              <p className="text-xs text-muted-foreground">نظام الإدارة المتكامل</p>
+          ) : (
+            <div className="p-2 rounded-lg bg-accent text-accent-foreground shadow-md">
+              <Building2 className="h-6 w-6" />
             </div>
+          )}
+
+          {/* Company Name */}
+          <div>
+            <h1 className="text-lg font-bold text-foreground">{companySettings.companyName}</h1>
+            <p className="text-xs text-muted-foreground">نظام الإدارة المتكامل</p>
           </div>
         </div>
 
+        {/* Date/Time Display - Center */}
+        <div className="hidden lg:flex">
+          <DateTimeDisplay compact />
+        </div>
+
+        {/* Search Bar - Center/Right */}
         <div className="flex-1 max-w-md">
           <div className="relative">
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -93,7 +119,9 @@ export function Header() {
           </div>
         </div>
 
+        {/* Actions - Right Side */}
         <div className="flex items-center gap-3">
+          {/* Notifications */}
           <Button
             variant="ghost"
             size="sm"
@@ -106,6 +134,7 @@ export function Header() {
             </Badge>
           </Button>
 
+          {/* Theme Toggle */}
           <Button
             variant="ghost"
             size="sm"
@@ -117,17 +146,17 @@ export function Header() {
             {renderThemeIcon()}
           </Button>
 
+          {/* User Profile - Icon Only */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2 h-10 px-3 hover:bg-muted/60 rounded-lg">
+              <Button
+                variant="ghost"
+                className="h-10 w-10 rounded-full hover:bg-muted/60 p-0"
+                aria-label="قائمة المستخدم"
+              >
                 <div className="w-8 h-8 rounded-full flex items-center justify-center bg-accent text-accent-foreground">
                   <User className="h-4 w-4" />
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-foreground">أحمد المدير</p>
-                  <p className="text-xs text-muted-foreground">مدير النظام</p>
-                </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -159,61 +188,35 @@ export function Header() {
         </div>
       </div>
 
+      {/* Breadcrumbs - Secondary Row */}
       {secondaryRowVisible && (
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            {breadcrumbs.length > 0 && (
-              <Breadcrumb>
-                <BreadcrumbList>
-                  {breadcrumbs.map((breadcrumb, index) => (
-                    <Fragment key={`${breadcrumb.label}-${index}`}>
-                      <BreadcrumbItem>
-                        {breadcrumb.section ? (
-                          <BreadcrumbLink asChild>
-                            <button
-                              type="button"
-                              className="text-right"
-                              onClick={() => handleBreadcrumbNavigate(breadcrumb.section!, breadcrumb.params)}
-                            >
-                              {breadcrumb.label}
-                            </button>
-                          </BreadcrumbLink>
-                        ) : (
-                          <BreadcrumbPage>{breadcrumb.label}</BreadcrumbPage>
-                        )}
-                      </BreadcrumbItem>
-                      {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
-                    </Fragment>
-                  ))}
-                </BreadcrumbList>
-              </Breadcrumb>
-            )}
-            {activeNode?.description && (
-              <p className="text-xs text-muted-foreground max-w-2xl">{activeNode.description}</p>
-            )}
-          </div>
-
-          {quickActions.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              {quickActions.map((action, index) => {
-                const ActionIcon = action.icon
-                const isPrimaryAction = index === 0
-                return (
-                  <Button
-                    key={action.id}
-                    variant={isPrimaryAction ? 'default' : 'outline'}
-                    size="sm"
-                    className={cn('flex items-center gap-2', !isPrimaryAction && 'border-muted')}
-                    onClick={() => navigate(action.targetSection, action.params ? { params: action.params } : undefined)}
-                    title={action.tooltip}
-                  >
-                    <ActionIcon className="h-4 w-4" />
-                    <span>{action.label}</span>
-                  </Button>
-                )
-              })}
-            </div>
-          )}
+        <div className="flex items-center">
+          <Breadcrumb>
+            <BreadcrumbList>
+              {breadcrumbs.map((breadcrumb, index) => (
+                <Fragment key={`${breadcrumb.label}-${index}`}>
+                  <BreadcrumbItem>
+                    {breadcrumb.section ? (
+                      <BreadcrumbLink asChild>
+                        <button
+                          type="button"
+                          className="text-right"
+                          onClick={() =>
+                            handleBreadcrumbNavigate(breadcrumb.section!, breadcrumb.params)
+                          }
+                        >
+                          {breadcrumb.label}
+                        </button>
+                      </BreadcrumbLink>
+                    ) : (
+                      <BreadcrumbPage>{breadcrumb.label}</BreadcrumbPage>
+                    )}
+                  </BreadcrumbItem>
+                  {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
+                </Fragment>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
       )}
     </header>

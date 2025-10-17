@@ -12,6 +12,7 @@ export const STORAGE_KEYS = {
   // مالية/إعدادات (موجودة في utils/storage سابقًا)
   FINANCIAL: 'app_financial_data',
   SETTINGS: 'app_settings_data',
+  COMPANY_SETTINGS: 'app_company_settings',
   BANK_ACCOUNTS: 'financial_bank_accounts',
   FINANCIAL_INVOICES: 'financial_invoices',
   FINANCIAL_BUDGETS: 'financial_budgets',
@@ -100,7 +101,7 @@ export const STORAGE_KEYS = {
   COST_VARIANCE_CONFIG: 'app_cost_variance_config',
   COST_VARIANCE_CACHE: 'app_cost_variance_cache',
   // Security & Monitoring
-  SECURITY_AUDIT_LOG: 'app_security_audit_log'
-} as const;
+  SECURITY_AUDIT_LOG: 'app_security_audit_log',
+} as const
 
-export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
+export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
