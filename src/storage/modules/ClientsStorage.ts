@@ -9,7 +9,7 @@
 
 import { STORAGE_KEYS } from '@/config/storageKeys'
 import type { IStorageModule } from '../core/types'
-import type { StorageManager } from '../core/StorageManager'
+import { StorageManager } from '../core/StorageManager'
 import type { Client } from '@/data/centralData'
 
 // ============================================================================
@@ -20,7 +20,11 @@ export class ClientsStorage implements IStorageModule {
   readonly name = 'ClientsStorage'
   readonly keys = [STORAGE_KEYS.CLIENTS] as const
 
-  private manager!: StorageManager
+  private manager: StorageManager
+
+  constructor(manager: StorageManager = StorageManager.getInstance()) {
+    this.manager = manager
+  }
 
   setManager(manager: StorageManager): void {
     this.manager = manager

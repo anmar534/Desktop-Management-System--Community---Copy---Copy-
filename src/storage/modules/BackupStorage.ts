@@ -9,7 +9,7 @@
 
 import { STORAGE_KEYS } from '@/config/storageKeys'
 import type { IStorageModule } from '../core/types'
-import type { StorageManager } from '../core/StorageManager'
+import { StorageManager } from '../core/StorageManager'
 import type { TenderBackupEntry } from '@/types/pricing'
 
 // ============================================================================
@@ -102,7 +102,11 @@ export class BackupStorage implements IStorageModule {
   readonly name = 'BackupStorage'
   readonly keys = [STORAGE_KEYS.TENDER_BACKUPS] as const
 
-  private manager!: StorageManager
+  private manager: StorageManager
+
+  constructor(manager: StorageManager = StorageManager.getInstance()) {
+    this.manager = manager
+  }
 
   setManager(manager: StorageManager): void {
     this.manager = manager

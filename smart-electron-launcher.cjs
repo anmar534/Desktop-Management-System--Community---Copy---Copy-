@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-require-imports */
+
 /**
  * نص برمجي ذكي لتشغيل Electron مع اكتشاف المنفذ التلقائي
  * Smart Electron launcher with automatic port detection
@@ -12,14 +15,17 @@ const path = require('path');
 let DEV_CONFIG;
 const candidatePaths = [
   path.join(__dirname, 'dev.config.js'),
+  path.join(__dirname, 'dev.config.cjs'),
   path.join(__dirname, 'config', 'dev.config.js'),
-  path.join(__dirname, 'src', 'dev.config.js')
+  path.join(__dirname, 'config', 'dev.config.cjs'),
+  path.join(__dirname, 'src', 'dev.config.js'),
+  path.join(__dirname, 'src', 'dev.config.cjs')
 ];
 for (const p of candidatePaths) {
   try {
     DEV_CONFIG = require(p);
     break;
-  } catch (e) { /* continue */ }
+  } catch { /* continue */ }
 }
 if (!DEV_CONFIG) {
   console.error('❌ لم يتم العثور على dev.config.js في أي من المسارات المتوقعة');

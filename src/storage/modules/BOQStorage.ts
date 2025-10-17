@@ -9,7 +9,7 @@
 
 import { STORAGE_KEYS } from '@/config/storageKeys'
 import type { IStorageModule } from '../core/types'
-import type { StorageManager } from '../core/StorageManager'
+import { StorageManager } from '../core/StorageManager'
 import type { BOQData } from '@/types/boq'
 
 // ============================================================================
@@ -20,7 +20,11 @@ export class BOQStorage implements IStorageModule {
   readonly name = 'BOQStorage'
   readonly keys = [STORAGE_KEYS.BOQ_DATA] as const
 
-  private manager!: StorageManager
+  private manager: StorageManager
+
+  constructor(manager: StorageManager = StorageManager.getInstance()) {
+    this.manager = manager
+  }
 
   setManager(manager: StorageManager): void {
     this.manager = manager

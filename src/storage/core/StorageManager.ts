@@ -13,6 +13,8 @@ import type {
   StorageEventListener,
 } from './types'
 import { StorageCache } from './StorageCache'
+import { ElectronAdapter } from '../adapters/ElectronAdapter'
+import { LocalStorageAdapter } from '../adapters/LocalStorageAdapter'
 
 /**
  * Central storage manager
@@ -53,6 +55,34 @@ export class StorageManager {
       ttl: this.config.cacheTTL,
       maxSize: 1000,
     })
+  }
+
+  /**
+   * Ensure a storage adapter is available by probing known implementations.
+   */
+  private ensureAdapter(): void {
+    if (this.adapter) {
+      return
+    }
+
+    try {
+      const electronAdapter = new ElectronAdapter()
+      if (electronAdapter.isAvailable()) {
+        this.adapter = electronAdapter
+        return
+      }
+    } catch (error) {
+      console.warn('StorageManager: Electron adapter detection failed:', error)
+    }
+
+    try {
+      const localStorageAdapter = new LocalStorageAdapter()
+      if (localStorageAdapter.isAvailable()) {
+        this.adapter = localStorageAdapter
+      }
+    } catch (error) {
+      console.warn('StorageManager: LocalStorage adapter detection failed:', error)
+    }
   }
 
   /**
@@ -103,6 +133,8 @@ export class StorageManager {
    * Internal initialization
    */
   private async _initialize(): Promise<void> {
+    this.ensureAdapter()
+
     if (!this.adapter) {
       throw new Error('No storage adapter set. Call setAdapter() before initialize()')
     }
