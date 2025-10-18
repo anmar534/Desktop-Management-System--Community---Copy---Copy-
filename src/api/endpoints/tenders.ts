@@ -27,13 +27,7 @@ export interface Tender {
   updatedAt: string
 }
 
-export type TenderStatus = 
-  | 'draft'
-  | 'submitted'
-  | 'under_review'
-  | 'awarded'
-  | 'lost'
-  | 'cancelled'
+export type TenderStatus = 'draft' | 'submitted' | 'under_review' | 'awarded' | 'lost' | 'cancelled'
 
 export interface TenderPricing {
   tenderId: string
@@ -107,9 +101,11 @@ export interface TenderListResponse {
  * الحصول على جميع المنافسات
  */
 export async function getTenders(
-  params?: PaginatedRequest & FilteredRequest
+  params?: PaginatedRequest & FilteredRequest,
 ): Promise<ApiResponse<TenderListResponse>> {
-  return apiClient.get<TenderListResponse>('/tenders', { query: params as Record<string, string | number | boolean> })
+  return apiClient.get<TenderListResponse>('/tenders', {
+    query: params as Record<string, string | number | boolean>,
+  })
 }
 
 /**
@@ -124,9 +120,7 @@ export async function getTenderById(id: string): Promise<ApiResponse<Tender>> {
  * Create new tender
  * إنشاء منافسة جديدة
  */
-export async function createTender(
-  data: CreateTenderRequest
-): Promise<ApiResponse<Tender>> {
+export async function createTender(data: CreateTenderRequest): Promise<ApiResponse<Tender>> {
   return apiClient.post<Tender>('/tenders', data)
 }
 
@@ -136,7 +130,7 @@ export async function createTender(
  */
 export async function updateTender(
   id: string,
-  data: UpdateTenderRequest
+  data: UpdateTenderRequest,
 ): Promise<ApiResponse<Tender>> {
   return apiClient.put<Tender>(`/tenders/${id}`, data)
 }
@@ -153,9 +147,7 @@ export async function deleteTender(id: string): Promise<ApiResponse<void>> {
  * Get tender pricing
  * الحصول على تسعير المنافسة
  */
-export async function getTenderPricing(
-  id: string
-): Promise<ApiResponse<TenderPricing>> {
+export async function getTenderPricing(id: string): Promise<ApiResponse<TenderPricing>> {
   return apiClient.get<TenderPricing>(`/tenders/${id}/pricing`)
 }
 
@@ -173,7 +165,7 @@ export async function getTenderBOQ(id: string): Promise<ApiResponse<TenderBOQ>> 
  */
 export async function updateTenderStatus(
   id: string,
-  status: TenderStatus
+  status: TenderStatus,
 ): Promise<ApiResponse<Tender>> {
   return apiClient.patch<Tender>(`/tenders/${id}`, { status })
 }
@@ -184,10 +176,13 @@ export async function updateTenderStatus(
  */
 export async function getTendersByStatus(
   status: TenderStatus,
-  params?: PaginatedRequest
+  params?: PaginatedRequest,
 ): Promise<ApiResponse<TenderListResponse>> {
   return apiClient.get<TenderListResponse>('/tenders', {
-    query: { ...params, filters: { status } } as Record<string, string | number | boolean>,
+    query: { ...params, filters: { status } } as unknown as Record<
+      string,
+      string | number | boolean
+    >,
   })
 }
 
@@ -197,10 +192,13 @@ export async function getTendersByStatus(
  */
 export async function getTendersByClient(
   client: string,
-  params?: PaginatedRequest
+  params?: PaginatedRequest,
 ): Promise<ApiResponse<TenderListResponse>> {
   return apiClient.get<TenderListResponse>('/tenders', {
-    query: { ...params, filters: { client } } as Record<string, string | number | boolean>,
+    query: { ...params, filters: { client } } as unknown as Record<
+      string,
+      string | number | boolean
+    >,
   })
 }
 
@@ -210,7 +208,7 @@ export async function getTendersByClient(
  */
 export async function searchTenders(
   searchTerm: string,
-  params?: PaginatedRequest
+  params?: PaginatedRequest,
 ): Promise<ApiResponse<TenderListResponse>> {
   return apiClient.get<TenderListResponse>('/tenders', {
     query: { ...params, search: searchTerm } as Record<string, string | number | boolean>,
@@ -240,7 +238,7 @@ export interface TenderStatistics {
  */
 export async function exportTenders(
   format: 'csv' | 'xlsx' | 'pdf',
-  params?: FilteredRequest
+  params?: FilteredRequest,
 ): Promise<ApiResponse<{ url: string; filename: string }>> {
   return apiClient.post<{ url: string; filename: string }>('/tenders/export', {
     format,
@@ -254,7 +252,7 @@ export async function exportTenders(
  */
 export async function duplicateTender(
   id: string,
-  newReferenceNumber: string
+  newReferenceNumber: string,
 ): Promise<ApiResponse<Tender>> {
   return apiClient.post<Tender>(`/tenders/${id}/duplicate`, {
     referenceNumber: newReferenceNumber,
@@ -276,4 +274,3 @@ export async function archiveTender(id: string): Promise<ApiResponse<Tender>> {
 export async function restoreTender(id: string): Promise<ApiResponse<Tender>> {
   return apiClient.post<Tender>(`/tenders/${id}/restore`)
 }
-

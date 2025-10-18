@@ -95,7 +95,7 @@ export interface FinancialReport {
   generatedAt: string
 }
 
-export type ReportType = 
+export type ReportType =
   | 'income_statement'
   | 'balance_sheet'
   | 'cash_flow'
@@ -134,9 +134,11 @@ export interface StatementData {
 // ============================================================================
 
 export async function getInvoices(
-  params?: PaginatedRequest & FilteredRequest
+  params?: PaginatedRequest & FilteredRequest,
 ): Promise<ApiResponse<{ invoices: Invoice[]; total: number }>> {
-  return apiClient.get('/financial/invoices', { query: params as Record<string, string | number | boolean> })
+  return apiClient.get('/financial/invoices', {
+    query: params as Record<string, string | number | boolean>,
+  })
 }
 
 export async function getInvoiceById(id: string): Promise<ApiResponse<Invoice>> {
@@ -144,14 +146,14 @@ export async function getInvoiceById(id: string): Promise<ApiResponse<Invoice>> 
 }
 
 export async function createInvoice(
-  data: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt'>
+  data: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt'>,
 ): Promise<ApiResponse<Invoice>> {
   return apiClient.post('/financial/invoices', data)
 }
 
 export async function updateInvoice(
   id: string,
-  data: Partial<Invoice>
+  data: Partial<Invoice>,
 ): Promise<ApiResponse<Invoice>> {
   return apiClient.put(`/financial/invoices/${id}`, data)
 }
@@ -163,7 +165,7 @@ export async function deleteInvoice(id: string): Promise<ApiResponse<void>> {
 export async function markInvoiceAsPaid(
   id: string,
   paidAmount: number,
-  paymentDate: string
+  paymentDate: string,
 ): Promise<ApiResponse<Invoice>> {
   return apiClient.post(`/financial/invoices/${id}/pay`, { paidAmount, paymentDate })
 }
@@ -173,9 +175,11 @@ export async function markInvoiceAsPaid(
 // ============================================================================
 
 export async function getBankAccounts(
-  params?: PaginatedRequest
+  params?: PaginatedRequest,
 ): Promise<ApiResponse<{ accounts: BankAccount[]; total: number }>> {
-  return apiClient.get('/financial/bank-accounts', { query: params as Record<string, string | number | boolean> })
+  return apiClient.get('/financial/bank-accounts', {
+    query: params as Record<string, string | number | boolean>,
+  })
 }
 
 export async function getBankAccountById(id: string): Promise<ApiResponse<BankAccount>> {
@@ -183,14 +187,14 @@ export async function getBankAccountById(id: string): Promise<ApiResponse<BankAc
 }
 
 export async function createBankAccount(
-  data: Omit<BankAccount, 'id' | 'balance' | 'createdAt' | 'updatedAt'>
+  data: Omit<BankAccount, 'id' | 'balance' | 'createdAt' | 'updatedAt'>,
 ): Promise<ApiResponse<BankAccount>> {
   return apiClient.post('/financial/bank-accounts', data)
 }
 
 export async function updateBankAccount(
   id: string,
-  data: Partial<BankAccount>
+  data: Partial<BankAccount>,
 ): Promise<ApiResponse<BankAccount>> {
   return apiClient.put(`/financial/bank-accounts/${id}`, data)
 }
@@ -204,9 +208,11 @@ export async function deleteBankAccount(id: string): Promise<ApiResponse<void>> 
 // ============================================================================
 
 export async function getBudgets(
-  params?: PaginatedRequest
+  params?: PaginatedRequest,
 ): Promise<ApiResponse<{ budgets: Budget[]; total: number }>> {
-  return apiClient.get('/financial/budgets', { query: params as Record<string, string | number | boolean> })
+  return apiClient.get('/financial/budgets', {
+    query: params as Record<string, string | number | boolean>,
+  })
 }
 
 export async function getBudgetById(id: string): Promise<ApiResponse<Budget>> {
@@ -214,14 +220,14 @@ export async function getBudgetById(id: string): Promise<ApiResponse<Budget>> {
 }
 
 export async function createBudget(
-  data: Omit<Budget, 'id' | 'spentBudget' | 'remainingBudget' | 'createdAt' | 'updatedAt'>
+  data: Omit<Budget, 'id' | 'spentBudget' | 'remainingBudget' | 'createdAt' | 'updatedAt'>,
 ): Promise<ApiResponse<Budget>> {
   return apiClient.post('/financial/budgets', data)
 }
 
 export async function updateBudget(
   id: string,
-  data: Partial<Budget>
+  data: Partial<Budget>,
 ): Promise<ApiResponse<Budget>> {
   return apiClient.put(`/financial/budgets/${id}`, data)
 }
@@ -235,9 +241,11 @@ export async function deleteBudget(id: string): Promise<ApiResponse<void>> {
 // ============================================================================
 
 export async function getFinancialReports(
-  params?: PaginatedRequest & FilteredRequest
+  params?: PaginatedRequest & FilteredRequest,
 ): Promise<ApiResponse<{ reports: FinancialReport[]; total: number }>> {
-  return apiClient.get('/financial/reports', { query: params as Record<string, string | number | boolean> })
+  return apiClient.get('/financial/reports', {
+    query: params as Record<string, string | number | boolean>,
+  })
 }
 
 export async function getFinancialReportById(id: string): Promise<ApiResponse<FinancialReport>> {
@@ -246,17 +254,20 @@ export async function getFinancialReportById(id: string): Promise<ApiResponse<Fi
 
 export async function generateFinancialReport(
   type: ReportType,
-  period: ReportPeriod
+  period: ReportPeriod,
 ): Promise<ApiResponse<FinancialReport>> {
   return apiClient.post('/financial/reports/generate', { type, period })
 }
 
 export async function getFinancialStatements(
-  type: 'income' | 'balance' | 'cashflow',
-  period: ReportPeriod
+  statementType: 'income' | 'balance' | 'cashflow',
+  period: ReportPeriod,
 ): Promise<ApiResponse<FinancialStatement>> {
   return apiClient.get('/financial/statements', {
-    query: { type, ...period } as Record<string, string | number | boolean>,
+    query: { type: statementType, ...period } as unknown as Record<
+      string,
+      string | number | boolean
+    >,
   })
 }
 
@@ -282,7 +293,7 @@ export interface FinancialSummary {
 
 export async function getCashFlowAnalysis(
   startDate: string,
-  endDate: string
+  endDate: string,
 ): Promise<ApiResponse<CashFlowAnalysis>> {
   return apiClient.get('/financial/cash-flow-analysis', {
     query: { startDate, endDate },
@@ -304,10 +315,10 @@ export interface CashFlowAnalysis {
 }
 
 export async function getProfitabilityAnalysis(
-  period: ReportPeriod
+  period: ReportPeriod,
 ): Promise<ApiResponse<ProfitabilityAnalysis>> {
   return apiClient.get('/financial/profitability-analysis', {
-    query: period as Record<string, string | number | boolean>,
+    query: period as unknown as Record<string, string | number | boolean>,
   })
 }
 
@@ -322,4 +333,3 @@ export interface ProfitabilityAnalysis {
   returnOnAssets: number
   returnOnEquity: number
 }
-

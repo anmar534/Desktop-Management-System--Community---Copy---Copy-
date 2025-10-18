@@ -3,7 +3,7 @@
  * Sprint 5.3.4: تكامل مع أنظمة المحاسبة
  */
 
-import type { ExternalIntegration, IntegrationConfig, WebhookPayload } from '../types'
+import type { ExternalIntegration, IntegrationConfig } from '../types'
 import { apiClient } from '../client'
 
 // ============================================================================
@@ -19,13 +19,7 @@ export interface AccountingSystem {
   isActive: boolean
 }
 
-export type AccountingSystemType = 
-  | 'quickbooks'
-  | 'xero'
-  | 'sage'
-  | 'zoho'
-  | 'wave'
-  | 'custom'
+export type AccountingSystemType = 'quickbooks' | 'xero' | 'sage' | 'zoho' | 'wave' | 'custom'
 
 export interface JournalEntry {
   id: string
@@ -68,12 +62,7 @@ export interface AccountingAccount {
   balance: number
 }
 
-export type AccountType = 
-  | 'asset'
-  | 'liability'
-  | 'equity'
-  | 'revenue'
-  | 'expense'
+export type AccountType = 'asset' | 'liability' | 'equity' | 'revenue' | 'expense'
 
 export interface SyncResult {
   success: boolean
@@ -105,7 +94,7 @@ export class AccountingConnector {
     try {
       const response = await apiClient.post<ExternalIntegration>(
         '/integrations/accounting/connect',
-        config
+        config,
       )
 
       if (response.success && response.data) {
@@ -140,7 +129,7 @@ export class AccountingConnector {
 
     try {
       const response = await apiClient.get<{ connected: boolean }>(
-        `/integrations/accounting/${this.integration.id}/test`
+        `/integrations/accounting/${this.integration.id}/test`,
       )
 
       return response.success && response.data?.connected === true
@@ -164,7 +153,7 @@ export class AccountingConnector {
 
     const response = await apiClient.post<SyncResult>(
       `/integrations/accounting/${this.integration.id}/journal-entries`,
-      entry
+      entry,
     )
 
     if (response.success && response.data) {
@@ -175,12 +164,14 @@ export class AccountingConnector {
       success: false,
       recordsSynced: 0,
       recordsFailed: 1,
-      errors: [{
-        recordId: entry.id,
-        recordType: 'journal_entry',
-        error: response.error?.message || 'Sync failed',
-        errorAr: response.error?.messageAr || 'فشلت المزامنة',
-      }],
+      errors: [
+        {
+          recordId: entry.id,
+          recordType: 'journal_entry',
+          error: response.error?.message || 'Sync failed',
+          errorAr: response.error?.messageAr || 'فشلت المزامنة',
+        },
+      ],
       syncedAt: new Date().toISOString(),
     }
   }
@@ -189,17 +180,14 @@ export class AccountingConnector {
    * Get journal entries from accounting system
    * الحصول على القيود اليومية من نظام المحاسبة
    */
-  async getJournalEntries(
-    startDate: string,
-    endDate: string
-  ): Promise<JournalEntry[]> {
+  async getJournalEntries(startDate: string, endDate: string): Promise<JournalEntry[]> {
     if (!this.integration) {
       throw new Error('Not connected to accounting system')
     }
 
     const response = await apiClient.get<JournalEntry[]>(
       `/integrations/accounting/${this.integration.id}/journal-entries`,
-      { query: { startDate, endDate } }
+      { query: { startDate, endDate } },
     )
 
     return response.success && response.data ? response.data : []
@@ -219,7 +207,7 @@ export class AccountingConnector {
     }
 
     const response = await apiClient.post<ChartOfAccounts>(
-      `/integrations/accounting/${this.integration.id}/chart-of-accounts/sync`
+      `/integrations/accounting/${this.integration.id}/chart-of-accounts/sync`,
     )
 
     if (response.success && response.data) {
@@ -242,7 +230,7 @@ export class AccountingConnector {
     }
 
     const response = await apiClient.get<ChartOfAccounts>(
-      `/integrations/accounting/${this.integration.id}/chart-of-accounts`
+      `/integrations/accounting/${this.integration.id}/chart-of-accounts`,
     )
 
     if (response.success && response.data) {
@@ -269,7 +257,7 @@ export class AccountingConnector {
     }
 
     const response = await apiClient.post<SyncResult>(
-      `/integrations/accounting/${this.integration.id}/invoices/${invoiceId}/sync`
+      `/integrations/accounting/${this.integration.id}/invoices/${invoiceId}/sync`,
     )
 
     if (response.success && response.data) {
@@ -280,12 +268,14 @@ export class AccountingConnector {
       success: false,
       recordsSynced: 0,
       recordsFailed: 1,
-      errors: [{
-        recordId: invoiceId,
-        recordType: 'invoice',
-        error: response.error?.message || 'Sync failed',
-        errorAr: response.error?.messageAr || 'فشلت المزامنة',
-      }],
+      errors: [
+        {
+          recordId: invoiceId,
+          recordType: 'invoice',
+          error: response.error?.message || 'Sync failed',
+          errorAr: response.error?.messageAr || 'فشلت المزامنة',
+        },
+      ],
       syncedAt: new Date().toISOString(),
     }
   }
@@ -301,7 +291,7 @@ export class AccountingConnector {
 
     const response = await apiClient.post<SyncResult>(
       `/integrations/accounting/${this.integration.id}/invoices/sync-all`,
-      { startDate, endDate }
+      { startDate, endDate },
     )
 
     if (response.success && response.data) {
@@ -331,7 +321,7 @@ export class AccountingConnector {
     }
 
     const response = await apiClient.post<SyncResult>(
-      `/integrations/accounting/${this.integration.id}/payments/${paymentId}/sync`
+      `/integrations/accounting/${this.integration.id}/payments/${paymentId}/sync`,
     )
 
     if (response.success && response.data) {
@@ -342,12 +332,14 @@ export class AccountingConnector {
       success: false,
       recordsSynced: 0,
       recordsFailed: 1,
-      errors: [{
-        recordId: paymentId,
-        recordType: 'payment',
-        error: response.error?.message || 'Sync failed',
-        errorAr: response.error?.messageAr || 'فشلت المزامنة',
-      }],
+      errors: [
+        {
+          recordId: paymentId,
+          recordType: 'payment',
+          error: response.error?.message || 'Sync failed',
+          errorAr: response.error?.messageAr || 'فشلت المزامنة',
+        },
+      ],
       syncedAt: new Date().toISOString(),
     }
   }
@@ -367,7 +359,7 @@ export class AccountingConnector {
 
     const response = await apiClient.get<TrialBalance>(
       `/integrations/accounting/${this.integration.id}/reports/trial-balance`,
-      { query: { date } }
+      { query: { date } },
     )
 
     if (response.success && response.data) {
@@ -393,7 +385,7 @@ export class AccountingConnector {
 
     const response = await apiClient.get<BalanceSheet>(
       `/integrations/accounting/${this.integration.id}/reports/balance-sheet`,
-      { query: { date } }
+      { query: { date } },
     )
 
     if (response.success && response.data) {
@@ -459,4 +451,3 @@ export interface BalanceSheet {
 // ============================================================================
 
 export const accountingConnector = new AccountingConnector()
-

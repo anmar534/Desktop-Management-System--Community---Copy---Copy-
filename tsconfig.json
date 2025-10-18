@@ -27,5 +27,6 @@
     }
   },
   "include": ["src", "tests", "test", "scripts", ".storybook"],
+  "exclude": ["node_modules", "dist", "build", "src/archive/**/*"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
