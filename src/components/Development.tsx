@@ -1,13 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Badge } from './ui/badge'
-import { PageLayout } from './PageLayout'
-import { DeleteConfirmation } from './ui/confirmation-dialog'
-import { DevelopmentGoalDialog } from './DevelopmentGoalDialog'
+import { useMemo, useState } from 'react'
+import type { LucideIcon } from 'lucide-react'
 import {
   Target,
   TrendingUp,
@@ -20,38 +14,424 @@ import {
   Edit,
   Trash2,
   RefreshCw,
-  Plus
+  Plus,
+  CheckCircle,
+  AlertTriangle,
+  ListChecks,
+  Flag,
+  ClipboardList,
 } from 'lucide-react'
-import { formatCurrency } from '../data/centralData'
-import type { DevelopmentGoal } from '@/application/hooks/useDevelopment';
-import { useDevelopment } from '@/application/hooks/useDevelopment'
 import { toast } from 'sonner'
+
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Badge } from './ui/badge'
+import { Progress } from './ui/progress'
+import { Separator } from './ui/separator'
+import { PageLayout, DetailCard } from './PageLayout'
+import { DeleteConfirmation } from './ui/confirmation-dialog'
+import { DevelopmentGoalDialog } from './DevelopmentGoalDialog'
+import { StatusBadge } from './ui/status-badge'
+import { formatCurrency } from '../data/centralData'
+import type { DevelopmentGoal } from '@/application/hooks/useDevelopment'
+import { useDevelopment } from '@/application/hooks/useDevelopment'
 import { safeLocalStorage } from '@/utils/storage'
 
+type SupportedYear = '2025' | '2026' | '2027'
+type YearTargetField = `targetValue${SupportedYear}`
+type RoadmapStatus = 'completed' | 'in-progress' | 'planned'
+
+const YEAR_OPTIONS: SupportedYear[] = ['2025', '2026', '2027']
+
+const CATEGORY_LABELS: Record<string, string> = {
+  tenders: 'المنافسات',
+  projects: 'المشاريع',
+  revenue: 'الإيرادات',
+  profit: 'الربحية',
+}
+
+const ROADMAP_PHASES: {
+  id: string
+  title: string
+  description: string
+  quarter: string
+  status: RoadmapStatus
+}[] = [
+  {
+    id: 'talent-readiness',
+    title: 'رفع جاهزية الفرق التخصصية',
+    description:
+      'تهيئة الفرق الفنية وبناء قدراتها لإدارة المشاريع المعقدة ومنح الأولوية للتدريب على إدارة المخاطر.',
+    quarter: 'الربع الأول 2025',
+    status: 'completed',
+  },
+  {
+    id: 'process-automation',
+    title: 'أتمتة عمليات المتابعة',
+    description:
+      'تفعيل لوحة متابعة موحدة تربط خطط التطوير بمؤشرات الأداء الرئيسية وتحديث التقدم بشكل أوتوماتيكي.',
+    quarter: 'الربع الثاني 2025',
+    status: 'in-progress',
+  },
+  {
+    id: 'strategic-initiatives',
+    title: 'إطلاق مبادرات النمو المؤسسي',
+    description:
+      'مواءمة مبادرات النمو مع الأهداف السنوية وتخصيص ميزانيات مرنة للمجالات ذات الأولوية العالية.',
+    quarter: 'الربع الرابع 2025',
+    status: 'planned',
+  },
+]
+
+const ROADMAP_STATUS_META: Record<
+  RoadmapStatus,
+  { label: string; variant: 'success' | 'info' | 'muted' }
+> = {
+  completed: { label: 'منجز', variant: 'success' },
+  'in-progress': { label: 'قيد التنفيذ', variant: 'info' },
+  planned: { label: 'مخطط', variant: 'muted' },
+}
+
+function getTargetValueForYear(goal: DevelopmentGoal, year: SupportedYear): number {
+  const field = `targetValue${year}` as YearTargetField
+  return goal[field] ?? 0
+}
+
+function formatValue(value: number, unit: string): string {
+  switch (unit) {
+    case 'currency':
+      return formatCurrency(value)
+    case 'percentage':
+      return `${value}%`
+    case 'number':
+      return value.toString()
+    default:
+      return value.toString()
+  }
+}
+
+function resolveProgressColor(value: number): string {
+  if (value >= 100) return 'bg-success'
+  if (value >= 80) return 'bg-primary'
+  if (value >= 60) return 'bg-warning'
+  return 'bg-destructive'
+}
+
+function getCategoryIcon(category: string): LucideIcon {
+  switch (category) {
+    case 'tenders':
+      return Award
+    case 'projects':
+      return Building2
+    case 'revenue':
+      return DollarSign
+    case 'profit':
+      return TrendingUp
+    default:
+      return Target
+  }
+}
+
 export function Development() {
-  const [selectedYear, setSelectedYear] = useState<'2025' | '2026' | '2027'>('2025')
+  const [selectedYear, setSelectedYear] = useState<SupportedYear>('2025')
   const [isEditing, setIsEditing] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<Record<string, number>>({})
   const [deleteTarget, setDeleteTarget] = useState<DevelopmentGoal | null>(null)
   const [isGoalDialogOpen, setIsGoalDialogOpen] = useState(false)
   const [editingGoal, setEditingGoal] = useState<DevelopmentGoal | null>(null)
 
-  // استخدام hook إدارة التطوير
-  const { goals, addGoal, updateGoal, deleteGoal: removeGoal, updateCurrentValues } = useDevelopment()
+  const {
+    goals,
+    addGoal,
+    updateGoal,
+    deleteGoal: removeGoal,
+    updateCurrentValues,
+  } = useDevelopment()
 
-  // تحديث هدف
+  const yearProgressMap = useMemo(() => {
+    const base: Record<SupportedYear, number> = { '2025': 0, '2026': 0, '2027': 0 }
+    if (goals.length === 0) {
+      return base
+    }
+    return YEAR_OPTIONS.reduce(
+      (acc, year) => {
+        const total = goals.reduce((sum, goal) => {
+          const target = getTargetValueForYear(goal, year)
+          if (target <= 0) {
+            return sum + (goal.currentValue > 0 ? 1 : 0)
+          }
+          const ratio = Math.min(Math.max(goal.currentValue / target, 0), 1)
+          return sum + ratio
+        }, 0)
+        acc[year] = Math.round((total / goals.length) * 100)
+        return acc
+      },
+      { ...base },
+    )
+  }, [goals])
+
+  const summary = useMemo(() => {
+    const totalGoals = goals.length
+    let achievedGoals = 0
+    let monthlyGoals = 0
+    let progressSum = 0
+
+    const categoryMap: Record<string, { count: number; achieved: number; progress: number }> = {}
+    const pending: { goal: DevelopmentGoal; gap: number; target: number }[] = []
+
+    goals.forEach((goal) => {
+      const target = getTargetValueForYear(goal, selectedYear)
+      const normalizedTarget = target > 0 ? target : 0
+      const progress =
+        normalizedTarget > 0 ? goal.currentValue / normalizedTarget : goal.currentValue > 0 ? 1 : 0
+      const clampedProgress = Number.isFinite(progress) ? Math.max(0, Math.min(progress, 1)) : 0
+
+      progressSum += clampedProgress
+
+      if (
+        (normalizedTarget > 0 && goal.currentValue >= normalizedTarget) ||
+        (normalizedTarget === 0 && goal.currentValue > 0)
+      ) {
+        achievedGoals += 1
+      } else {
+        pending.push({
+          goal,
+          gap: Math.max(normalizedTarget - goal.currentValue, 0),
+          target: normalizedTarget,
+        })
+      }
+
+      if (goal.type === 'monthly') {
+        monthlyGoals += 1
+      }
+
+      const categoryKey = goal.category ?? 'other'
+      if (!categoryMap[categoryKey]) {
+        categoryMap[categoryKey] = { count: 0, achieved: 0, progress: 0 }
+      }
+
+      categoryMap[categoryKey].count += 1
+      categoryMap[categoryKey].progress += clampedProgress
+      if (
+        (normalizedTarget > 0 && goal.currentValue >= normalizedTarget) ||
+        (normalizedTarget === 0 && goal.currentValue > 0)
+      ) {
+        categoryMap[categoryKey].achieved += 1
+      }
+    })
+
+    const categoryStats = Object.entries(categoryMap)
+      .map(([category, data]) => ({
+        category,
+        count: data.count,
+        achieved: data.achieved,
+        avgProgress: data.count ? data.progress / data.count : 0,
+      }))
+      .sort((a, b) => b.count - a.count)
+
+    const topGaps = pending
+      .filter((item) => item.target > 0)
+      .sort((a, b) => b.gap - a.gap)
+      .slice(0, 3)
+
+    const averageProgress = totalGoals ? progressSum / totalGoals : 0
+    const completionRate = totalGoals ? achievedGoals / totalGoals : 0
+
+    return {
+      totalGoals,
+      achievedGoals,
+      pendingGoals: Math.max(totalGoals - achievedGoals, 0),
+      monthlyGoals,
+      yearlyGoals: totalGoals - monthlyGoals,
+      averageProgress,
+      completionRate,
+      categoryStats,
+      topGaps,
+    }
+  }, [goals, selectedYear])
+
+  const completionPercent = Math.round(summary.completionRate * 100)
+  const averageProgressPercent = Math.round(summary.averageProgress * 100)
+  const overallProgressPct = Math.max(0, Math.min(100, averageProgressPercent))
+
+  const completionTrend: 'up' | 'down' | 'stable' =
+    summary.completionRate > 0.75 ? 'up' : summary.completionRate > 0.45 ? 'stable' : 'down'
+  const progressTrend: 'up' | 'down' | 'stable' =
+    averageProgressPercent >= completionPercent
+      ? 'up'
+      : averageProgressPercent >= 40
+        ? 'stable'
+        : 'down'
+
+  const currentYearReadiness = yearProgressMap[selectedYear] ?? 0
+  const bestYearReadiness = YEAR_OPTIONS.reduce(
+    (max, year) => Math.max(max, yearProgressMap[year] ?? 0),
+    0,
+  )
+
+  const headerMetadata = (
+    <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
+      <StatusBadge
+        status="default"
+        label={`الأهداف ${summary.totalGoals}`}
+        icon={ListChecks}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status={summary.achievedGoals > 0 ? 'success' : 'default'}
+        label={`مكتملة ${summary.achievedGoals}`}
+        icon={CheckCircle}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status={summary.pendingGoals > 0 ? 'warning' : 'info'}
+        label={`قيد التنفيذ ${summary.pendingGoals}`}
+        icon={AlertTriangle}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="info"
+        label={`شهرية ${summary.monthlyGoals}`}
+        icon={Calendar}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="onTrack"
+        label={`سنوية ${summary.yearlyGoals}`}
+        icon={Award}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="info"
+        label={`متوسط ${overallProgressPct}%`}
+        icon={TrendingUp}
+        size="sm"
+        className="shadow-none"
+      />
+    </div>
+  )
+
+  const developmentAnalysisCards = (
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <DetailCard
+        title="معدل الإنجاز"
+        value={`${completionPercent}%`}
+        subtitle="نسبة الأهداف المحققة"
+        icon={CheckCircle}
+        color="text-success"
+        bgColor="bg-success/10"
+        trend={{
+          value: summary.totalGoals
+            ? `${summary.achievedGoals} من ${summary.totalGoals}`
+            : 'لا توجد أهداف',
+          direction: completionTrend,
+        }}
+      />
+      <DetailCard
+        title="متوسط التقدم"
+        value={`${overallProgressPct}%`}
+        subtitle="التقدم التراكمي لجميع المسارات"
+        icon={TrendingUp}
+        color="text-info"
+        bgColor="bg-info/10"
+        trend={{ value: `${currentYearReadiness}% جاهزية السنة`, direction: progressTrend }}
+      />
+      <DetailCard
+        title="أهداف بحاجة اهتمام"
+        value={summary.pendingGoals}
+        subtitle="أولوية للمتابعة خلال الخطة الحالية"
+        icon={AlertTriangle}
+        color="text-warning"
+        bgColor="bg-warning/10"
+        trend={{
+          value: summary.topGaps.length
+            ? `${summary.topGaps.length} أهداف حرجة`
+            : 'لا توجد فجوات حرجة',
+          direction: summary.topGaps.length ? 'down' : 'stable',
+        }}
+      />
+      <DetailCard
+        title="أفضل جاهزية"
+        value={`${bestYearReadiness}%`}
+        subtitle="أعلى نسبة جاهزية بين السنوات"
+        icon={Target}
+        color="text-primary"
+        bgColor="bg-primary/10"
+        trend={{
+          value: `${currentYearReadiness}% السنة الحالية`,
+          direction: bestYearReadiness >= currentYearReadiness ? 'up' : 'stable',
+        }}
+      />
+    </div>
+  )
+
+  const headerExtraContent = (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-primary/20 bg-gradient-to-l from-primary/10 via-card/40 to-background p-5 shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-xs text-muted-foreground">خطة التطوير المختارة</div>
+            <h2 className="text-lg font-semibold text-foreground">خطة {selectedYear}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              معدل الإنجاز الحالي {overallProgressPct}% • جاهزية السنة {currentYearReadiness}%
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 rounded-2xl border border-border/40 bg-background/70 p-2">
+            {YEAR_OPTIONS.map((year) => {
+              const isActive = selectedYear === year
+              const yearProgress = yearProgressMap[year] ?? 0
+
+              return (
+                <button
+                  key={year}
+                  type="button"
+                  onClick={() => setSelectedYear(year)}
+                  className={`flex min-w-[96px] flex-col items-center gap-1 rounded-xl px-3 py-2 text-xs transition-all duration-200 ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                      : 'text-muted-foreground hover:bg-primary/10 hover:text-foreground'
+                  }`}
+                >
+                  <span className="font-semibold">خطة {year}</span>
+                  <span
+                    className={`ltr-numbers text-xs ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`}
+                  >
+                    {yearProgress}% جاهزية
+                  </span>
+                  <Progress
+                    value={yearProgress}
+                    className="h-1 w-full bg-primary/20"
+                    indicatorClassName={isActive ? 'bg-primary-foreground' : 'bg-primary'}
+                  />
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <div className="mt-4">{headerMetadata}</div>
+      </div>
+      <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
+        {developmentAnalysisCards}
+      </div>
+    </div>
+  )
+
   const handleUpdateGoal = async (goalId: string, field: keyof DevelopmentGoal, value: number) => {
     await updateGoal(goalId, { [field]: value })
     toast.success('تم تحديث الهدف بنجاح')
   }
 
-  // بدء التعديل
   const startEdit = (goalId: string, currentValue: number) => {
     setIsEditing(goalId)
     setEditValues({ [goalId]: currentValue })
   }
 
-  // حفظ التعديل
   const saveEdit = async (goalId: string) => {
     const newValue = editValues[goalId]
     if (newValue !== undefined) {
@@ -62,13 +442,11 @@ export function Development() {
     setEditValues({})
   }
 
-  // إلغاء التعديل
   const cancelEdit = () => {
     setIsEditing(null)
     setEditValues({})
   }
 
-  // حذف هدف
   const requestDeleteGoal = (goal: DevelopmentGoal) => {
     setDeleteTarget(goal)
   }
@@ -89,79 +467,6 @@ export function Development() {
     }
   }
 
-  // دالة للحصول على القيمة المستهدفة حسب السنة
-  const getTargetValue = (goal: DevelopmentGoal, year: string): number => {
-    switch (year) {
-      case '2025': return goal.targetValue2025
-      case '2026': return goal.targetValue2026
-      case '2027': return goal.targetValue2027
-      default: return goal.currentValue
-    }
-  }
-
-  // دالة لتنسيق القيمة حسب الوحدة
-  const formatValue = (value: number, unit: string): string => {
-    switch (unit) {
-      case 'currency':
-        return formatCurrency(value)
-      case 'percentage':
-        return `${value}%`
-      case 'number':
-        return value.toString()
-      default:
-        return value.toString()
-    }
-  }
-
-  // دالة للحصول على لون المؤشر
-  const getIndicatorColor = (current: number, target: number): string => {
-    const percentage = (current / target) * 100
-    if (percentage >= 100) return 'text-success'
-    if (percentage >= 80) return 'text-primary'
-    if (percentage >= 60) return 'text-warning'
-    return 'text-destructive'
-  }
-
-  // دالة للحصول على أيقونة الفئة
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'tenders': return Award
-      case 'projects': return Building2
-      case 'revenue': return DollarSign
-      case 'profit': return TrendingUp
-      default: return Target
-    }
-  }
-
-  // إحصائيات سريعة
-  const quickStats = [
-    {
-      label: 'إجمالي الأهداف',
-      value: goals.length,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10'
-    },
-    {
-      label: `أهداف ${selectedYear}`,
-      value: goals.length,
-      color: 'text-info',
-      bgColor: 'bg-info/10'
-    },
-    {
-      label: 'الأهداف الشهرية',
-      value: goals.filter((g: DevelopmentGoal) => g.type === 'monthly').length,
-      color: 'text-success',
-      bgColor: 'bg-success/10'
-    },
-    {
-      label: 'الأهداف السنوية',
-      value: goals.filter((g: DevelopmentGoal) => g.type === 'yearly').length,
-      color: 'text-accent',
-      bgColor: 'bg-accent/10'
-    }
-  ]
-
-  // حفظ هدف جديد أو تحديثه
   const handleSaveGoal = async (goalData: Partial<DevelopmentGoal>) => {
     if (editingGoal) {
       await updateGoal(editingGoal.id, goalData)
@@ -171,276 +476,427 @@ export function Development() {
     setEditingGoal(null)
   }
 
-  // فتح Dialog لإضافة هدف جديد
   const openAddGoalDialog = () => {
     setEditingGoal(null)
     setIsGoalDialogOpen(true)
   }
 
-  // الإجراءات السريعة
   const quickActions = [
     {
-      label: 'إضافة هدف جديد',
+      label: 'هدف جديد',
       icon: Plus,
       onClick: openAddGoalDialog,
-      primary: true
+      primary: true,
     },
     {
-      label: 'تحديث القيم الحالية',
+      label: 'تحديث القيم الفعلية',
       icon: RefreshCw,
       onClick: async () => {
         await updateCurrentValues({})
         toast.success('تم تحديث القيم الحالية من البيانات الفعلية')
       },
-      variant: 'outline' as const
+      variant: 'outline' as const,
+      primary: false,
     },
     {
-      label: 'حفظ جميع التغييرات',
+      label: 'حفظ الخطة محلياً',
       icon: Save,
       onClick: () => {
         try {
           safeLocalStorage.setItem('development_goals', goals)
-          toast.success('تم حفظ جميع الأهداف')
+          toast.success('تم حفظ الأهداف في التخزين المحلي')
         } catch (error) {
           console.error('❌ فشل حفظ الأهداف في التخزين المحلي', error)
           toast.error('تعذر حفظ الأهداف محلياً')
         }
       },
-      variant: 'outline' as const
+      variant: 'outline' as const,
+      primary: false,
     },
     {
-      label: 'تقرير الأهداف',
+      label: 'تقرير الأداء',
       icon: BarChart3,
       onClick: () => toast.info('سيتم إضافة تقرير الأهداف قريباً'),
-      variant: 'outline' as const
-    }
+      variant: 'outline' as const,
+      primary: false,
+    },
   ]
 
   return (
-    <PageLayout
-      tone="info"
-      title="إدارة التطوير"
-      description="إدارة الأهداف الاستراتيجية وخطط التطوير للسنوات القادمة"
-      icon={Target}
-      quickStats={quickStats}
-      quickActions={quickActions}
-    >
-      <div className="space-y-6">
-        
-        {/* تبويبات السنوات - نفس تصميم الصفحات الأخرى */}
-        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-foreground">خطة التطوير الاستراتيجية</h2>
-              <div className="text-sm text-muted-foreground">
-                {goals.length} هدف استراتيجي
+    <>
+      <PageLayout
+        tone="info"
+        title="إدارة التطوير"
+        description="متابعة الأهداف الاستراتيجية ومحاور النمو المؤسسي"
+        icon={Target}
+        quickStats={[]}
+        quickActions={quickActions}
+        headerExtra={headerExtraContent}
+        showSearch={false}
+        showFilters={false}
+        statsGridCols="grid-cols-2 md:grid-cols-4"
+        showHeaderRefreshButton={false}
+        showLastUpdate={false}
+      >
+        <div className="space-y-6">
+          <section className="grid gap-6 lg:grid-cols-3">
+            <Card className="border border-border/30 bg-gradient-to-br from-primary/10 via-background to-background shadow-lg">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-base font-semibold">ملخص خطة {selectedYear}</CardTitle>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {summary.achievedGoals} هدف مكتمل • {summary.pendingGoals} قيد التنفيذ
+                  </p>
+                </div>
+                <Badge variant="info" className="ltr-numbers">
+                  معدل التقدم {overallProgressPct}%
+                </Badge>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>التقدم الكلي</span>
+                    <span className="ltr-numbers">{overallProgressPct}%</span>
+                  </div>
+                  <Progress
+                    value={overallProgressPct}
+                    indicatorClassName={resolveProgressColor(overallProgressPct)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="rounded-xl border border-border/40 bg-background/60 p-3">
+                    <p className="text-muted-foreground">الأهداف المكتملة</p>
+                    <p className="mt-1 text-lg font-semibold text-success ltr-numbers">
+                      {summary.achievedGoals}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border/40 bg-background/60 p-3">
+                    <p className="text-muted-foreground">الأهداف المتبقية</p>
+                    <p className="mt-1 text-lg font-semibold text-warning ltr-numbers">
+                      {summary.pendingGoals}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border/30 bg-background/90">
+              <CardHeader>
+                <CardTitle className="text-base font-semibold">تركيز الفئات</CardTitle>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  أكثر مسارات التطوير تأثيراً خلال {selectedYear}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {summary.categoryStats.length === 0 ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-dashed border-border/50 bg-muted/30 p-4 text-sm text-muted-foreground">
+                    <ClipboardList className="h-4 w-4" />
+                    لا توجد بيانات مصنفة بعد
+                  </div>
+                ) : (
+                  summary.categoryStats.slice(0, 3).map((category, index) => {
+                    const Icon = getCategoryIcon(category.category)
+                    const label = CATEGORY_LABELS[category.category] ?? category.category
+                    const progress = Math.round(category.avgProgress * 100)
+
+                    return (
+                      <div
+                        key={category.category}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-background/60 p-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{label}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {category.achieved} / {category.count} أهداف منجزة
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <Icon className="h-4 w-4 text-primary" />
+                          <Badge variant="info" className="ltr-numbers">
+                            {progress}%
+                          </Badge>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border border-border/30 bg-background/90">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Flag className="h-4 w-4 text-warning" />
+                  أولويات هذا الربع
+                </CardTitle>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  أهداف تحتاج إلى تدخل سريع قبل نهاية {selectedYear}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {summary.topGaps.length === 0 ? (
+                  <div className="flex items-center gap-2 rounded-xl border border-dashed border-border/50 bg-muted/30 p-4 text-sm text-muted-foreground">
+                    <TrendingUp className="h-4 w-4" />
+                    جميع الأهداف ضمن النطاق المخطط
+                  </div>
+                ) : (
+                  summary.topGaps.map(({ goal, gap }) => {
+                    const target = getTargetValueForYear(goal, selectedYear)
+                    const progressValue =
+                      target > 0
+                        ? Math.min(Math.max((goal.currentValue / target) * 100, 0), 100)
+                        : goal.currentValue > 0
+                          ? 100
+                          : 0
+
+                    return (
+                      <div
+                        key={goal.id}
+                        className="space-y-2 rounded-xl border border-border/40 bg-background/60 p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{goal.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              الفجوة الحالية: {formatValue(Math.max(gap, 0), goal.unit)}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 rounded-full border-warning/40 text-warning"
+                            onClick={() => startEdit(goal.id, target)}
+                          >
+                            تحديث الهدف
+                          </Button>
+                        </div>
+                        <Progress
+                          value={progressValue}
+                          indicatorClassName={resolveProgressColor(progressValue)}
+                        />
+                      </div>
+                    )
+                  })
+                )}
+              </CardContent>
+            </Card>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">أهداف {selectedYear}</h2>
+                <p className="text-sm text-muted-foreground">
+                  عرض تفصيلي لكل هدف وقيمته الحالية مقابل المستهدف السنوي
+                </p>
               </div>
+              <Badge
+                variant="outline"
+                className="rounded-full border-border/40 bg-background/80 px-4 text-xs text-muted-foreground"
+              >
+                {summary.monthlyGoals} شهرية • {summary.yearlyGoals} سنوية
+              </Badge>
             </div>
-            
-            <div className="relative">
-              <div className="flex bg-muted rounded-lg p-1.5 gap-1">
-                {['2025', '2026', '2027'].map((year) => {
-                  const isActive = selectedYear === year
-                  
+
+            {goals.length === 0 ? (
+              <Card className="border border-dashed border-border/50 bg-muted/20">
+                <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+                  <AlertTriangle className="h-8 w-8 text-warning" />
+                  <p className="text-sm text-muted-foreground">
+                    لم يتم إنشاء أي أهداف بعد. ابدأ بإضافة هدف لتفعيل خطة التطوير.
+                  </p>
+                  <Button onClick={openAddGoalDialog} className="rounded-full px-4">
+                    <Plus className="h-4 w-4" />
+                    إضافة أول هدف
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {goals.map((goal) => {
+                  const Icon = getCategoryIcon(goal.category)
+                  const targetValue = getTargetValueForYear(goal, selectedYear)
+                  const currentValue = goal.currentValue
+                  const progress =
+                    targetValue > 0
+                      ? Math.min(Math.max((currentValue / targetValue) * 100, 0), 100)
+                      : currentValue > 0
+                        ? 100
+                        : 0
+                  const progressTone = resolveProgressColor(progress)
+                  const isEditingThis = isEditing === goal.id
+                  const gap = Math.max(targetValue - currentValue, 0)
+                  const categoryLabel = CATEGORY_LABELS[goal.category] ?? goal.category
+
                   return (
-                    <button
-                      key={year}
-                      onClick={() => setSelectedYear(year as '2025' | '2026' | '2027')}
-                      className={`
-                        relative flex items-center gap-2 px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200 flex-1 justify-center
-                        ${isActive 
-                          ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 transform scale-[0.98]' 
-                          : 'text-muted-foreground hover:bg-primary/10 hover:text-foreground'
-                        }
-                      `}
+                    <Card
+                      key={goal.id}
+                      className="border border-border/40 bg-background/80 shadow-sm transition-shadow hover:shadow-md"
                     >
-                      <Calendar className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-primary'}`} />
-                      <span className="whitespace-nowrap">خطة {year}</span>
-                      
-                      {isActive && (
-                        <div className="absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-primary-foreground rounded-full" />
-                      )}
-                    </button>
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <div className="rounded-xl bg-primary/12 p-2">
+                              <Icon className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <CardTitle className="text-base font-semibold text-foreground">
+                                {goal.title}
+                              </CardTitle>
+                              <p className="text-xs text-muted-foreground">{categoryLabel}</p>
+                            </div>
+                          </div>
+                          <Badge
+                            variant={goal.type === 'monthly' ? 'notice' : 'secondary'}
+                            className="rounded-full px-3 text-xs"
+                          >
+                            {goal.type === 'monthly' ? 'شهري' : 'سنوي'}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs text-muted-foreground">القيمة الحالية</p>
+                            <p className="text-lg font-semibold ltr-numbers">
+                              {formatValue(currentValue, goal.unit)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">المستهدف {selectedYear}</p>
+                            {isEditingThis ? (
+                              <div className="mt-1 flex items-center gap-2">
+                                <Input
+                                  type="number"
+                                  value={editValues[goal.id] ?? targetValue}
+                                  onChange={(event) => {
+                                    const parsed = Number.parseFloat(event.target.value)
+                                    setEditValues((prev) => ({
+                                      ...prev,
+                                      [goal.id]: Number.isNaN(parsed) ? 0 : parsed,
+                                    }))
+                                  }}
+                                  className="h-8 w-24 rounded-lg text-sm"
+                                />
+                                <Button
+                                  size="sm"
+                                  className="h-8 rounded-full px-3"
+                                  onClick={() => saveEdit(goal.id)}
+                                >
+                                  حفظ
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8 rounded-full px-3"
+                                  onClick={cancelEdit}
+                                >
+                                  إلغاء
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="mt-1 flex items-center gap-2">
+                                <Badge variant="info" className="ltr-numbers">
+                                  {formatValue(targetValue, goal.unit)}
+                                </Badge>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 rounded-full p-0"
+                                  onClick={() => startEdit(goal.id, targetValue)}
+                                  title="تحديث المستهدف"
+                                >
+                                  <Edit className="h-4 w-4 text-info" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>التقدم الحالي</span>
+                            <span className="ltr-numbers font-semibold" dir="ltr">
+                              {Math.round(progress)}%
+                            </span>
+                          </div>
+                          <Progress value={progress} indicatorClassName={progressTone} />
+                        </div>
+
+                        <div className="flex items-center justify-between rounded-xl bg-muted/30 px-3 py-2 text-xs">
+                          {gap <= 0 ? (
+                            <span className="text-success">✅ الهدف مكتمل</span>
+                          ) : (
+                            <span className="text-warning">
+                              الفجوة الحالية {formatValue(gap, goal.unit)}
+                            </span>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 rounded-full p-0 hover:bg-destructive/10"
+                            onClick={() => requestDeleteGoal(goal)}
+                            title="حذف الهدف"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )
                 })}
               </div>
-            </div>
-          </div>
+            )}
+          </section>
+
+          <section>
+            <Card className="border border-border/40 bg-background/85">
+              <CardHeader>
+                <CardTitle className="text-base font-semibold">خريطة الطريق التنفيذية</CardTitle>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  مراحل التنفيذ المعتمدة لمواءمة خطة التطوير مع الأهداف المؤسسية
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {ROADMAP_PHASES.map((phase, index) => {
+                  const meta = ROADMAP_STATUS_META[phase.status]
+                  return (
+                    <div key={phase.id} className="space-y-3">
+                      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-xl bg-primary/10 p-2">
+                            <Flag className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{phase.title}</p>
+                            <p className="text-xs text-muted-foreground">{phase.description}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className="rounded-full border-border/40 text-xs"
+                          >
+                            {phase.quarter}
+                          </Badge>
+                          <Badge variant={meta.variant}>{meta.label}</Badge>
+                        </div>
+                      </div>
+                      {index < ROADMAP_PHASES.length - 1 && <Separator className="bg-border/60" />}
+                    </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          </section>
         </div>
+      </PageLayout>
 
-        {/* بطاقات الأهداف */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {goals.map((goal: DevelopmentGoal) => {
-            const Icon = getCategoryIcon(goal.category)
-            const targetValue = getTargetValue(goal, selectedYear)
-            const currentValue = goal.currentValue
-            const isEditingThis = isEditing === goal.id
-            
-            return (
-              <Card key={goal.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold text-sm">{goal.title}</h3>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Badge variant={goal.type === 'monthly' ? 'secondary' : 'default'} className="text-xs">
-                        {goal.type === 'monthly' ? 'شهري' : 'سنوي'}
-                      </Badge>
-                    </div>
-                  </div>
-                  {/* description may not exist in type; keep UI compact */}
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  {/* القيمة الحالية */}
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">القيمة الحالية:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{formatValue(currentValue, goal.unit)}</span>
-                      <div className="text-xs text-success bg-success/10 px-2 py-1 rounded-full" title="محدث تلقائياً من النظام">
-                        ⚡ محدث
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* القيمة المستهدفة */}
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">المستهدف {selectedYear}:</span>
-                    {isEditingThis ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="number"
-                          value={editValues[goal.id] ?? targetValue}
-                          onChange={(e) => {
-                            const parsedValue = Number.parseFloat(e.target.value)
-                            setEditValues((prev) => ({
-                              ...prev,
-                              [goal.id]: Number.isNaN(parsedValue) ? 0 : parsedValue
-                            }))
-                          }}
-                          className="w-20 h-7 text-xs"
-                        />
-                        <Button size="sm" onClick={() => saveEdit(goal.id)} className="h-7 px-2">
-                          <Save className="h-3 w-3" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={cancelEdit} className="h-7 px-2">
-                          ×
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className={`font-medium ${getIndicatorColor(currentValue, targetValue)}`}>
-                          {formatValue(targetValue, goal.unit)}
-                        </span>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          onClick={() => startEdit(goal.id, targetValue)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* شريط التقدم */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span>التقدم:</span>
-                      <span className={getIndicatorColor(currentValue, targetValue)}>
-                        {Math.min(100, Math.round((currentValue / targetValue) * 100))}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className={`bg-primary rounded-full h-2 transition-all duration-300`}
-                        data-width={Math.min(100, (currentValue / targetValue) * 100)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* الفجوة */}
-                  <div className="text-xs text-center">
-                    {currentValue >= targetValue ? (
-                      <span className="text-success">✅ تم تحقيق الهدف</span>
-                    ) : (
-                      <span className="text-warning">
-                        الفجوة: {formatValue(targetValue - currentValue, goal.unit)}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* أيقونات التحرير والحذف */}
-                  <div className="flex items-center justify-end gap-1 pt-3 mt-3 border-t border-border">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 w-8 p-0 hover:bg-info/10" 
-                      onClick={() => startEdit(goal.id, getTargetValue(goal, selectedYear))}
-                      title="تعديل الهدف"
-                    >
-                      <Edit className="h-4 w-4 text-info" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 w-8 p-0 hover:bg-destructive/10"
-                      onClick={() => requestDeleteGoal(goal)}
-                      title="حذف الهدف"
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-
-        {/* ملخص الخطة الاستراتيجية */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              ملخص الخطة الاستراتيجية {selectedYear}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {goals.map((goal: DevelopmentGoal) => {
-                const targetValue = getTargetValue(goal, selectedYear)
-                const currentValue = goal.currentValue
-                const achievement = Math.min(100, (currentValue / targetValue) * 100)
-                
-                return (
-                  <div key={goal.id} className="p-3 bg-muted/50 rounded-lg">
-                    <div className="text-sm font-medium mb-1">{goal.title}</div>
-                    <div className="text-xs text-muted-foreground mb-2">
-                      {formatValue(currentValue, goal.unit)} / {formatValue(targetValue, goal.unit)}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-background rounded-full h-1.5">
-                        <div 
-                          className={`h-1.5 rounded-full transition-all duration-300 ${
-                            achievement >= 100 ? 'bg-success' :
-                            achievement >= 80 ? 'bg-primary' :
-                            achievement >= 60 ? 'bg-warning' : 'bg-destructive'
-                          }`}
-                          data-width={achievement}
-                        />
-                      </div>
-                      <span className="text-xs font-medium">{Math.round(achievement)}%</span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
       <DeleteConfirmation
         itemName={deleteTarget?.title ?? 'هذا الهدف'}
         onConfirm={confirmDeleteGoal}
@@ -458,6 +914,6 @@ export function Development() {
         goal={editingGoal}
         onSave={handleSaveGoal}
       />
-    </PageLayout>
+    </>
   )
 }

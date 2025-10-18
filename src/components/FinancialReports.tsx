@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
-import { PageLayout, EmptyState } from './PageLayout'
+import { PageLayout, EmptyState, DetailCard } from './PageLayout'
 import { DeleteConfirmation } from './ui/confirmation-dialog'
 import { InlineAlert } from './ui/inline-alert'
 import {
@@ -13,7 +13,6 @@ import {
   Download,
   Eye,
   Calendar,
-  TrendingUp,
   BarChart3,
   AlertCircle,
   CheckCircle,
@@ -22,7 +21,11 @@ import {
   Edit,
   FileText,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  ListChecks,
+  AlertTriangle,
+  RefreshCw,
+  PieChart,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useFinancialReports } from '@/application/hooks/useFinancialReports'
@@ -204,62 +207,17 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
     )
 
     if (durations.length > 0) {
-      overview.averageGenerationTime = durations.reduce((sum, val) => sum + val, 0) / durations.length
+      overview.averageGenerationTime =
+        durations.reduce((sum, val) => sum + val, 0) / durations.length
     }
 
     return { overview }
   }, [reports])
 
-  const quickStats = useMemo(
-    () => [
-      {
-        label: 'إجمالي التقارير',
-        value: reportsData.overview.totalReports.toString(),
-        trend: 'up' as const,
-        trendValue: '+4',
-        color: 'text-info',
-        bgColor: 'bg-info/10',
-      },
-      {
-        label: 'هذا الشهر',
-        value: reportsData.overview.generatedThisMonth.toString(),
-        trend: 'up' as const,
-        trendValue: '+25%',
-        color: 'text-success',
-        bgColor: 'bg-success/10',
-      },
-      {
-        label: 'تقارير تلقائية',
-        value: reportsData.overview.automaticReports.toString(),
-        color: 'text-accent',
-        bgColor: 'bg-accent/10',
-      },
-      {
-        label: 'تقارير مخصصة',
-        value: reportsData.overview.customReports.toString(),
-        color: 'text-warning',
-        bgColor: 'bg-warning/10',
-      },
-      {
-        label: 'متوسط وقت الإنتاج',
-        value: formatMinutes(reportsData.overview.averageGenerationTime),
-        color: 'text-success',
-        bgColor: 'bg-success/10',
-      },
-      {
-        label: 'جاهز للتحميل',
-        value: reportsData.overview.completedReports.toString(),
-        color: 'text-warning',
-        bgColor: 'bg-warning/10',
-      },
-    ],
-    [reportsData.overview],
-  )
-
   const filteredReports = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
 
-    return reports.filter(report => {
+    return reports.filter((report) => {
       const name = report.name?.toLowerCase() ?? ''
       const description = report.description?.toLowerCase() ?? ''
 
@@ -269,8 +227,7 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
         description.includes(normalizedSearch)
 
       const matchesType = typeFilter === 'all' || report.type === typeFilter
-      const matchesPeriod =
-        periodFilter === 'all' || normalizeFrequency(report) === periodFilter
+      const matchesPeriod = periodFilter === 'all' || normalizeFrequency(report) === periodFilter
 
       return matchesSearch && matchesType && matchesPeriod
     })
@@ -298,6 +255,135 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
 
     return null
   }, [reports])
+
+  const completionRate =
+    reportsData.overview.totalReports > 0
+      ? Math.round(
+          (reportsData.overview.completedReports / reportsData.overview.totalReports) * 100,
+        )
+      : 0
+  const pendingRate =
+    reportsData.overview.totalReports > 0
+      ? Math.round((reportsData.overview.pendingReports / reportsData.overview.totalReports) * 100)
+      : 0
+  const failedCount = reportsData.overview.failedReports
+  const averageGenerationTimeLabel = formatMinutes(reportsData.overview.averageGenerationTime)
+
+  const headerMetadata = (
+    <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
+      <StatusBadge
+        status="default"
+        label="إجمالي التقارير"
+        value={reportsData.overview.totalReports}
+        icon={ListChecks}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="success"
+        label="التقارير المكتملة"
+        value={reportsData.overview.completedReports}
+        icon={CheckCircle2}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status={reportsData.overview.pendingReports > 0 ? 'info' : 'default'}
+        label="قيد التوليد"
+        value={reportsData.overview.pendingReports}
+        icon={Clock}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status={failedCount > 0 ? 'error' : 'success'}
+        label="حالات فشل"
+        value={failedCount}
+        icon={AlertTriangle}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="info"
+        label="تقارير هذا الشهر"
+        value={reportsData.overview.generatedThisMonth}
+        icon={Calendar}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="success"
+        label="تلقائي"
+        value={reportsData.overview.automaticReports}
+        icon={RefreshCw}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="warning"
+        label="مخصص"
+        value={reportsData.overview.customReports}
+        icon={PieChart}
+        size="sm"
+        className="shadow-none"
+      />
+    </div>
+  )
+
+  const overviewCards = (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <DetailCard
+        title="إجمالي التقارير"
+        value={reportsData.overview.totalReports}
+        subtitle="كل التقارير المسجلة"
+        icon={FileText}
+        color="text-primary"
+        bgColor="bg-primary/10"
+        trend={{ value: `+${reportsData.overview.generatedThisMonth} هذا الشهر`, direction: 'up' }}
+      />
+      <DetailCard
+        title="جاهزة للتحميل"
+        value={reportsData.overview.completedReports}
+        subtitle="تقارير مكتملة"
+        icon={CheckCircle2}
+        color="text-success"
+        bgColor="bg-success/10"
+        trend={{ value: `${completionRate}% نسبة الاكتمال`, direction: 'up' }}
+      />
+      <DetailCard
+        title="قيد التنفيذ"
+        value={reportsData.overview.pendingReports}
+        subtitle="تحت المعالجة أو التوليد"
+        icon={Clock}
+        color="text-info"
+        bgColor="bg-info/10"
+        trend={{ value: `${pendingRate}% من الإجمالي`, direction: 'stable' }}
+      />
+      <DetailCard
+        title="متوسط زمن التوليد"
+        value={averageGenerationTimeLabel}
+        subtitle="لكل تقرير مكتمل"
+        icon={BarChart3}
+        color="text-warning"
+        bgColor="bg-warning/10"
+        trend={{
+          value: `${reportsData.overview.failedReports} حالات فشل`,
+          direction: failedCount > 0 ? 'down' : 'up',
+        }}
+      />
+    </div>
+  )
+
+  const headerExtraContent = (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-accent/20 bg-gradient-to-l from-accent/10 via-card/40 to-background p-5 shadow-sm">
+        {headerMetadata}
+      </div>
+      <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-accent/10 backdrop-blur-sm">
+        {overviewCards}
+      </div>
+    </div>
+  )
 
   const handleViewReport = (reportId: string) => {
     onSectionChange(`report-details?id=${reportId}`)
@@ -361,83 +447,28 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
       description="إدارة ومراقبة التقارير المالية"
       icon={FileBarChart}
       quickActions={quickActions}
-      quickStats={quickStats}
+      quickStats={[]}
+      headerExtra={headerExtraContent}
+      showSearch={false}
+      showLastUpdate={false}
     >
       {reportsAlert && (
         <div className="mb-6">
-          <InlineAlert variant={reportsAlert.variant} title={reportsAlert.title} description={reportsAlert.description} />
+          <InlineAlert
+            variant={reportsAlert.variant}
+            title={reportsAlert.title}
+            description={reportsAlert.description}
+          />
         </div>
       )}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-        {quickStats.map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.08 }}
-            className={`p-4 rounded-lg border ${stat.bgColor}`}
-          >
-            <div className="text-center">
-              <div className={`text-lg font-bold ${stat.color}`}>{stat.value}</div>
-              <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
-              {stat.trend && (
-                <div className={`text-xs mt-1 ${stat.color}`}>
-                  <TrendingUp className="h-3 w-3 inline mr-1" />
-                  {stat.trendValue}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-card p-4 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">إجمالي التقارير</p>
-              <p className="text-2xl font-bold text-foreground">{reportsData.overview.totalReports}</p>
-            </div>
-            <FileText className="h-8 w-8 text-info" />
-          </div>
-        </div>
-
-        <div className="bg-card p-4 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">التقارير المكتملة</p>
-              <p className="text-2xl font-bold text-success">{reportsData.overview.completedReports}</p>
-            </div>
-            <CheckCircle2 className="h-8 w-8 text-success" />
-          </div>
-        </div>
-
-        <div className="bg-card p-4 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">تحت المعالجة</p>
-              <p className="text-2xl font-bold text-warning">{reportsData.overview.pendingReports}</p>
-            </div>
-            <Clock className="h-8 w-8 text-warning" />
-          </div>
-        </div>
-
-        <div className="bg-card p-4 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">هذا الشهر</p>
-              <p className="text-2xl font-bold text-accent">{reportsData.overview.generatedThisMonth}</p>
-            </div>
-            <Calendar className="h-8 w-8 text-accent" />
-          </div>
-        </div>
-      </div>
 
       <Card className="mb-6">
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">بحث في التقارير</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
+                بحث في التقارير
+              </label>
               <input
                 type="text"
                 placeholder="ابحث عن تقرير..."
@@ -447,7 +478,9 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">نوع التقرير</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
+                نوع التقرير
+              </label>
               <select
                 value={typeFilter}
                 onChange={(event) => setTypeFilter(event.target.value)}
@@ -463,7 +496,9 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">الفترة الزمنية</label>
+              <label className="block text-sm font-medium text-muted-foreground mb-1">
+                الفترة الزمنية
+              </label>
               <select
                 value={periodFilter}
                 onChange={(event) => setPeriodFilter(event.target.value)}
@@ -482,7 +517,9 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
       </Card>
 
       {isLoading ? (
-        <div className="py-12 text-center text-muted-foreground">جاري تحميل التقارير المالية...</div>
+        <div className="py-12 text-center text-muted-foreground">
+          جاري تحميل التقارير المالية...
+        </div>
       ) : (
         <div className="space-y-4">
           {filteredReports.map((report, index) => {
@@ -515,24 +552,42 @@ export function FinancialReports({ onSectionChange }: FinancialReportsProps) {
                         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground/80">
                           <span>النوع: {getTypeLabel(report.type)}</span>
                           <span>الفترة: {getTypeLabel(normalizeFrequency(report))}</span>
-                          <span>التاريخ: {formatDateValue(report.createdAt, { locale: 'ar-SA' })}</span>
+                          <span>
+                            التاريخ: {formatDateValue(report.createdAt, { locale: 'ar-SA' })}
+                          </span>
                           {formattedSize && <span>الحجم: {formattedSize}</span>}
                           {report.format && <span>التنسيق: {report.format.toUpperCase()}</span>}
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleViewReport(report.id)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewReport(report.id)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleEditReport(report.id)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditReport(report.id)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         {report.url && (
-                          <Button variant="outline" size="sm" onClick={() => handleDownloadReport(report.id)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadReport(report.id)}
+                          >
                             <Download className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button variant="outline" size="sm" onClick={() => handleDeleteRequest(report)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteRequest(report)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>

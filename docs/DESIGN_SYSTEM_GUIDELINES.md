@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** October 8, 2025  
-**Status:** Active  
+**Status:** Active
 
 ---
 
@@ -53,13 +53,13 @@ colors: {
     100: '#f3f4f6',
     // ... إلى 900
   },
-  
+
   // Blues
   blue: {
     50: '#eff6ff',
     // ... إلى 900
   },
-  
+
   // وهكذا لجميع الألوان الـ 11
 }
 ```
@@ -69,6 +69,7 @@ colors: {
 استخدم الألوان الدلالية دائماً بدلاً من الألوان المباشرة:
 
 #### ✅ صحيح
+
 ```tsx
 <div className="bg-primary text-primary-foreground" />
 <div className="bg-destructive text-destructive-foreground" />
@@ -76,6 +77,7 @@ colors: {
 ```
 
 #### ❌ خطأ
+
 ```tsx
 <div className="bg-blue-500 text-white" />
 <div className="bg-red-500 text-white" />
@@ -84,16 +86,16 @@ colors: {
 
 ### جدول الألوان الدلالية
 
-| الاسم | الاستخدام | مثال |
-|------|---------|------|
-| `primary` | الإجراءات الأساسية | أزرار الحفظ، الروابط |
-| `secondary` | الإجراءات الثانوية | أزرار مساعدة |
-| `destructive` | إجراءات خطيرة | حذف، إلغاء |
-| `muted` | محتوى ثانوي | نصوص توضيحية |
-| `accent` | تمييز | hover states |
-| `card` | خلفية البطاقات | Card component |
-| `border` | الحدود | borders عامة |
-| `input` | حقول الإدخال | Input fields |
+| الاسم         | الاستخدام          | مثال                 |
+| ------------- | ------------------ | -------------------- |
+| `primary`     | الإجراءات الأساسية | أزرار الحفظ، الروابط |
+| `secondary`   | الإجراءات الثانوية | أزرار مساعدة         |
+| `destructive` | إجراءات خطيرة      | حذف، إلغاء           |
+| `muted`       | محتوى ثانوي        | نصوص توضيحية         |
+| `accent`      | تمييز              | hover states         |
+| `card`        | خلفية البطاقات     | Card component       |
+| `border`      | الحدود             | borders عامة         |
+| `input`       | حقول الإدخال       | Input fields         |
 
 ### استخدام الألوان في الحالات
 
@@ -137,15 +139,15 @@ spacing: {
 
 ### متى تستخدم كل حجم؟
 
-| الحجم | الاستخدام | مثال |
-|------|---------|------|
-| `spacing-1` (4px) | مسافات صغيرة جداً | بين الأيقونة والنص |
-| `spacing-2` (8px) | مسافات صغيرة | داخل الأزرار |
-| `spacing-3` (12px) | مسافات متوسطة صغيرة | بين العناصر المرتبطة |
-| `spacing-4` (16px) | مسافات افتراضية | padding عام |
-| `spacing-6` (24px) | مسافات متوسطة | بين الأقسام |
-| `spacing-8` (32px) | مسافات كبيرة | بين المكونات الكبيرة |
-| `spacing-12` (48px) | مسافات كبيرة جداً | هوامش الصفحات |
+| الحجم               | الاستخدام           | مثال                 |
+| ------------------- | ------------------- | -------------------- |
+| `spacing-1` (4px)   | مسافات صغيرة جداً   | بين الأيقونة والنص   |
+| `spacing-2` (8px)   | مسافات صغيرة        | داخل الأزرار         |
+| `spacing-3` (12px)  | مسافات متوسطة صغيرة | بين العناصر المرتبطة |
+| `spacing-4` (16px)  | مسافات افتراضية     | padding عام          |
+| `spacing-6` (24px)  | مسافات متوسطة       | بين الأقسام          |
+| `spacing-8` (32px)  | مسافات كبيرة        | بين المكونات الكبيرة |
+| `spacing-12` (48px) | مسافات كبيرة جداً   | هوامش الصفحات        |
 
 ### أمثلة الاستخدام
 
@@ -201,16 +203,16 @@ fontWeight: {
 
 ### هرمية الطباعة
 
-| المستوى | الحجم | الوزن | الاستخدام |
-|---------|------|-------|----------|
-| H1 | 4xl-5xl | bold | عناوين الصفحات الرئيسية |
-| H2 | 3xl-4xl | bold | عناوين الأقسام |
-| H3 | 2xl-3xl | semibold | عناوين فرعية |
-| H4 | xl-2xl | semibold | عناوين البطاقات |
-| Body Large | lg | normal | نصوص مهمة |
-| Body | base | normal | نصوص عادية |
-| Body Small | sm | normal | نصوص ثانوية |
-| Caption | xs | normal | ملاحظات |
+| المستوى    | الحجم   | الوزن    | الاستخدام               |
+| ---------- | ------- | -------- | ----------------------- |
+| H1         | 4xl-5xl | bold     | عناوين الصفحات الرئيسية |
+| H2         | 3xl-4xl | bold     | عناوين الأقسام          |
+| H3         | 2xl-3xl | semibold | عناوين فرعية            |
+| H4         | xl-2xl  | semibold | عناوين البطاقات         |
+| Body Large | lg      | normal   | نصوص مهمة               |
+| Body       | base    | normal   | نصوص عادية              |
+| Body Small | sm      | normal   | نصوص ثانوية             |
+| Caption    | xs      | normal   | ملاحظات                 |
 
 ### أمثلة
 
@@ -238,6 +240,7 @@ fontWeight: {
 ### Button (الزر)
 
 **متى تستخدم:**
+
 - للإجراءات الأساسية (حفظ، إرسال، حذف)
 - للتنقل بين الصفحات
 - لفتح نوافذ أو dialogs
@@ -259,6 +262,7 @@ fontWeight: {
 ```
 
 **الإرشادات:**
+
 - ✅ استخدم زر primary واحد فقط في كل قسم
 - ✅ أضف أيقونات للوضوح
 - ✅ استخدم نصوص واضحة ومختصرة
@@ -268,6 +272,7 @@ fontWeight: {
 ### Input (حقل الإدخال)
 
 **متى تستخدم:**
+
 - لإدخال نصوص قصيرة (اسم، بريد إلكتروني، رقم)
 - للبحث
 - للنماذج
@@ -289,6 +294,7 @@ fontWeight: {
 ```
 
 **الإرشادات:**
+
 - ✅ استخدم labels دائماً
 - ✅ أضف placeholder توضيحي
 - ✅ استخدم النوع الصحيح (email, tel, number)
@@ -299,6 +305,7 @@ fontWeight: {
 ### Card (البطاقة)
 
 **متى تستخدم:**
+
 - لتجميع محتوى مرتبط
 - لعرض معلومات منفصلة (عميل، مشروع، إحصائية)
 - لإنشاء قوائم من العناصر
@@ -311,19 +318,18 @@ fontWeight: {
     <CardTitle>عنوان البطاقة</CardTitle>
     <CardDescription>وصف قصير</CardDescription>
     <CardAction>
-      <Button variant="ghost" size="icon">⋮</Button>
+      <Button variant="ghost" size="icon">
+        ⋮
+      </Button>
     </CardAction>
   </CardHeader>
-  <CardContent>
-    {/* المحتوى الرئيسي */}
-  </CardContent>
-  <CardFooter>
-    {/* أزرار أو روابط */}
-  </CardFooter>
+  <CardContent>{/* المحتوى الرئيسي */}</CardContent>
+  <CardFooter>{/* أزرار أو روابط */}</CardFooter>
 </Card>
 ```
 
 **الإرشادات:**
+
 - ✅ استخدم CardTitle و CardDescription دائماً
 - ✅ أضف border-b و border-t للفصل البصري
 - ✅ اجعل البطاقات متساوية في Grid
@@ -333,6 +339,7 @@ fontWeight: {
 ### Badge (الشارة)
 
 **متى تستخدم:**
+
 - لعرض الحالات (نشط، معلق، مكتمل)
 - للتصنيفات والعلامات
 - للعدادات والأرقام
@@ -357,6 +364,7 @@ fontWeight: {
 ```
 
 **الإرشادات:**
+
 - ✅ استخدم نصوص مختصرة (1-2 كلمة)
 - ✅ اختر اللون المناسب للحالة
 - ✅ أضف أيقونات عند الحاجة
@@ -370,11 +378,13 @@ fontWeight: {
 ### الثيمات المتاحة
 
 1. **Light Theme (فاتح)**
+
    - الثيمة الافتراضية
    - خلفية بيضاء/رمادية فاتحة
    - نصوص داكنة
 
 2. **Dark Theme (داكن)**
+
    - خلفية داكنة
    - نصوص فاتحة
    - ألوان أقل سطوعاً
@@ -390,7 +400,7 @@ fontWeight: {
 // تبديل الثيمة
 import { ThemeSwitcher } from '@/application/context/ThemeSwitcher'
 
-<ThemeSwitcher variant="dropdown" />
+;<ThemeSwitcher variant="dropdown" />
 ```
 
 ### اختبار المكونات في الثيمات
@@ -418,10 +428,12 @@ import { ThemeSwitcher } from '@/application/context/ThemeSwitcher'
 ### المبادئ الأساسية
 
 1. **التباين اللوني:**
+
    - WCAG AAA: نسبة 7:1 للنصوص العادية
    - WCAG AA: نسبة 4.5:1 كحد أدنى
 
 2. **التنقل بلوحة المفاتيح:**
+
    - جميع المكونات يجب أن تكون قابلة للوصول بـ Tab
    - استخدم focus-visible للتركيز البصري
 
@@ -442,7 +454,7 @@ import { ThemeSwitcher } from '@/application/context/ThemeSwitcher'
 </Button>
 
 // حالة الخطأ
-<Input 
+<Input
   aria-invalid={true}
   aria-describedby="error-message"
 />
@@ -465,17 +477,19 @@ import { ThemeSwitcher } from '@/application/context/ThemeSwitcher'
     </label>
     <Input id="name" placeholder="أحمد محمد" />
   </div>
-  
+
   <div>
     <label htmlFor="email" className="text-sm font-medium block mb-spacing-1">
       البريد الإلكتروني
     </label>
     <Input id="email" type="email" placeholder="ahmad@example.com" />
   </div>
-  
+
   <div className="flex gap-spacing-2">
     <Button type="submit">حفظ</Button>
-    <Button type="button" variant="outline">إلغاء</Button>
+    <Button type="button" variant="outline">
+      إلغاء
+    </Button>
   </div>
 </form>
 ```
@@ -484,15 +498,13 @@ import { ThemeSwitcher } from '@/application/context/ThemeSwitcher'
 
 ```tsx
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-spacing-4">
-  {items.map(item => (
+  {items.map((item) => (
     <Card key={item.id}>
       <CardHeader>
         <CardTitle>{item.title}</CardTitle>
         <CardDescription>{item.description}</CardDescription>
       </CardHeader>
-      <CardContent>
-        {/* محتوى */}
-      </CardContent>
+      <CardContent>{/* محتوى */}</CardContent>
     </Card>
   ))}
 </div>
@@ -505,21 +517,91 @@ import { ThemeSwitcher } from '@/application/context/ThemeSwitcher'
   <div className="flex justify-between items-center">
     <div>
       <h1 className="text-4xl font-bold">لوحة التحكم</h1>
-      <p className="text-muted-foreground mt-spacing-2">
-        مرحباً بك في النظام
-      </p>
+      <p className="text-muted-foreground mt-spacing-2">مرحباً بك في النظام</p>
     </div>
     <Button>
       <Plus className="h-4 w-4" />
       إضافة جديد
     </Button>
   </div>
-  
-  <div className="grid grid-cols-3 gap-spacing-4">
-    {/* بطاقات الإحصائيات */}
-  </div>
+
+  <div className="grid grid-cols-3 gap-spacing-4">{/* بطاقات الإحصائيات */}</div>
 </div>
 ```
+
+### ترويسة لوحة تقارير/مشاريع (Page Hero Header)
+
+استخدم هذا النمط عندما تحتاج لعرض مؤشرات أساسية وإجراءات سريعة في أعلى الصفحة (كما في صفحات المشاريع، المنافسات، التقارير، الإعدادات):
+
+```tsx
+<PageLayout
+  tone="primary"
+  title="التقارير والتحليلات"
+  description="نظرة شاملة على الأداء"
+  icon={FileText}
+  quickActions={quickActions}
+  quickStats={[]}
+  showSearch={false}
+  headerExtra={
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-primary/20 bg-gradient-to-l from-primary/10 via-card/40 to-background p-5 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
+          <StatusBadge
+            status="default"
+            label="إجمالي 42"
+            icon={ListChecks}
+            size="sm"
+            className="shadow-none"
+          />
+          <StatusBadge
+            status="success"
+            label="جاهزة 28"
+            icon={CheckCircle2}
+            size="sm"
+            className="shadow-none"
+          />
+          <StatusBadge
+            status="info"
+            label="قيد الإنشاء 6"
+            icon={RefreshCw}
+            size="sm"
+            className="shadow-none"
+          />
+          <StatusBadge
+            status="error"
+            label="تحتاج تحديث 3"
+            icon={AlertTriangle}
+            size="sm"
+            className="shadow-none"
+          />
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <DetailCard
+            title="المشاريع النشطة"
+            value="12"
+            subtitle="من إجمالي 32"
+            icon={Building2}
+            color="text-primary"
+            bgColor="bg-primary/10"
+            trend={{ value: '+5%', direction: 'up' }}
+          />
+          {/* بطاقات إضافية */}
+        </div>
+      </div>
+    </div>
+  }
+/>
+```
+
+**ملاحظات أساسية:**
+
+- اجعل `quickStats` مصفوفة فارغة لإخفاء البطاقات الصغيرة تحت العنوان.
+- غلّف شارات الحالة داخل لوحة زجاجية مع تدرّج يعتمد على `tone` المستخدم.
+- استخدم لون الظل والحدود الملائم لنبرة الصفحة (`primary`, `secondary`, ...).
+- كرّر نفس البنية في الصفحات التي تتطلب مقارنة بصرية سريعة بين المؤشرات.
 
 ---
 

@@ -40,7 +40,7 @@ class MemoryCache {
    */
   set<T>(key: string, value: T): void {
     const size = this.estimateSize(value)
-    
+
     // Check if we need to evict entries
     if (this.cache.size >= MEMORY_MANAGEMENT.maxCacheItems) {
       this.evictLRU()
@@ -169,7 +169,7 @@ class MemoryCache {
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  delay: number = RENDERING_OPTIMIZATION.debounceDelay
+  delay: number = RENDERING_OPTIMIZATION.debounceDelay,
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout | null = null
 
@@ -194,7 +194,7 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
-  delay: number = RENDERING_OPTIMIZATION.throttleDelay
+  delay: number = RENDERING_OPTIMIZATION.throttleDelay,
 ): (...args: Parameters<T>) => void {
   let lastCall = 0
 
@@ -234,7 +234,7 @@ class BatchProcessor<T = any> {
   private batchSize: number
   private processor: (items: T[]) => Promise<void>
 
-  constructor(processor: (items: T[]) => Promise<void>, batchSize: number = 100) {
+  constructor(processor: (items: T[]) => Promise<void>, batchSize = 100) {
     this.processor = processor
     this.batchSize = batchSize
   }
@@ -302,20 +302,23 @@ export function createLazyLoader(options?: IntersectionObserverInit): Intersecti
     threshold: 0.01,
   }
 
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const target = entry.target as HTMLImageElement
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const target = entry.target as HTMLImageElement
 
-        if (target.dataset.src) {
-          target.src = target.dataset.src
-          delete target.dataset.src
+          if (target.dataset.src) {
+            target.src = target.dataset.src
+            delete target.dataset.src
+          }
+
+          observer.unobserve(target)
         }
-
-        observer.unobserve(target)
-      }
-    })
-  }, { ...defaultOptions, ...options })
+      })
+    },
+    { ...defaultOptions, ...options },
+  )
 
   return observer
 }
@@ -331,7 +334,7 @@ class MemoryMonitor {
    * Start monitoring memory
    * بدء مراقبة الذاكرة
    */
-  start(callback: (info: any) => void, intervalMs: number = 60000): void {
+  start(callback: (info: any) => void, intervalMs = 60000): void {
     if (this.interval) {
       this.stop()
     }
@@ -374,12 +377,15 @@ export { BatchProcessor }
 // Auto Cleanup
 // ============================================================================
 
+// Store interval reference for cleanup
+let gcIntervalId: ReturnType<typeof setInterval> | null = null
+
 if (typeof window !== 'undefined') {
   // Clear cache on low memory
   if (MEMORY_MANAGEMENT.clearCacheOnLowMemory) {
     memoryMonitor.start((info) => {
       const usedMB = info.usedJSHeapSize / (1024 * 1024)
-      
+
       if (usedMB > MEMORY_MANAGEMENT.lowMemoryThreshold) {
         console.warn('Low memory detected, clearing cache')
         memoryCache.clear()
@@ -389,9 +395,9 @@ if (typeof window !== 'undefined') {
 
   // Periodic garbage collection
   if (MEMORY_MANAGEMENT.enableAutoGC) {
-    setInterval(() => {
+    gcIntervalId = setInterval(() => {
       const stats = memoryCache.getStats()
-      
+
       // Remove entries with low hit rate
       const entries = memoryCache.getEntries()
       for (const entry of entries) {
@@ -403,3 +409,15 @@ if (typeof window !== 'undefined') {
   }
 }
 
+/**
+ * Cleanup function to stop all intervals and clear resources
+ * Should be called when shutting down the application
+ */
+export const cleanupOptimizationService = (): void => {
+  if (gcIntervalId) {
+    clearInterval(gcIntervalId)
+    gcIntervalId = null
+  }
+  memoryMonitor.stop()
+  memoryCache.clear()
+}

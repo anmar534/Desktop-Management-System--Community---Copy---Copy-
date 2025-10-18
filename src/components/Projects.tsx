@@ -14,13 +14,13 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from './ui/alert-dialog'
 import { PageLayout, EmptyState, DetailCard } from './PageLayout'
 import { NewProjectForm } from './NewProjectForm'
 import { EnhancedProjectDetails } from './EnhancedProjectDetails'
 import { Clients } from './Clients'
-import { 
+import {
   Building2,
   Users,
   Clock,
@@ -34,8 +34,8 @@ import {
   PlayCircle,
   PauseCircle,
   AlertCircle,
-  AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  ListChecks,
 } from 'lucide-react'
 import { EntityActions } from './ui/ActionButtons'
 import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
@@ -57,16 +57,23 @@ export interface ProjectsViewProps {
   onUpdateProject: (project: ProjectWithLegacyFields) => Promise<Project>
 }
 
-export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpdateProject }: ProjectsViewProps) {
-  const [searchTerm, setSearchTerm] = useState('')
+export function ProjectsView({
+  projects,
+  onSectionChange,
+  onDeleteProject,
+  onUpdateProject,
+}: ProjectsViewProps) {
+  const [searchTerm] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null)
   const [projectToEdit, setProjectToEdit] = useState<ProjectWithLegacyFields | null>(null)
   const [projectToView, setProjectToView] = useState<string | null>(null)
-  const [currentView, setCurrentView] = useState<'list' | 'new' | 'edit' | 'details' | 'clients'>('list')
+  const [currentView, setCurrentView] = useState<'list' | 'new' | 'edit' | 'details' | 'clients'>(
+    'list',
+  )
   const [costInputs, setCostInputs] = useState<Record<string, string>>({})
   const [isSavingCosts, setIsSavingCosts] = useState<Record<string, boolean>>({})
-  const { metrics, currency, lastRefreshAt } = useFinancialState()
+  const { metrics, currency } = useFinancialState()
   const projectMetrics = metrics.projects
   const baseCurrency = currency?.baseCurrency ?? 'SAR'
 
@@ -78,22 +85,8 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
         ...options,
       })
     },
-    [baseCurrency]
+    [baseCurrency],
   )
-  const timestampFormatter = useMemo(() => new Intl.DateTimeFormat('ar-SA', {
-    hour: '2-digit',
-    minute: '2-digit'
-  }), [])
-  const formatTimestamp = useCallback((value: string | number | Date | null | undefined) => {
-    if (value === null || value === undefined) {
-      return null
-    }
-    const date = value instanceof Date ? value : new Date(value)
-    if (Number.isNaN(date.getTime())) {
-      return null
-    }
-    return timestampFormatter.format(date)
-  }, [timestampFormatter])
 
   const projectAggregates = useMemo(() => {
     const costSummary = projectMetrics.costSummary
@@ -102,8 +95,12 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
     const totalEstimatedCost = costSummary?.totals.estimated ?? 0
     const netProfit = totalContractValue - totalActualCost
     const totalRemaining = Math.max(totalContractValue - totalActualCost, 0)
-    const averageProjectValue = projectMetrics.totalCount > 0 ? totalContractValue / projectMetrics.totalCount : 0
-    const profitMargin = totalContractValue > 0 ? ((totalContractValue - totalActualCost) / totalContractValue) * 100 : 0
+    const averageProjectValue =
+      projectMetrics.totalCount > 0 ? totalContractValue / projectMetrics.totalCount : 0
+    const profitMargin =
+      totalContractValue > 0
+        ? ((totalContractValue - totalActualCost) / totalContractValue) * 100
+        : 0
     const variancePct = costSummary?.totals.variance.pct ?? 0
     const grossMarginPct = costSummary?.totals.grossMarginPct ?? 0
 
@@ -159,9 +156,9 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
 
   // دوال إدارة التكاليف
   const handleCostInputChange = (projectId: string, value: string) => {
-    setCostInputs(prev => ({
+    setCostInputs((prev) => ({
       ...prev,
-      [projectId]: value
+      [projectId]: value,
     }))
   }
 
@@ -173,7 +170,7 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
     }
 
     try {
-      setIsSavingCosts(prev => ({ ...prev, [project.id]: true }))
+      setIsSavingCosts((prev) => ({ ...prev, [project.id]: true }))
 
       const contractValue = project.contractValue || project.value || project.budget || 0
       const estimatedCost = project.estimatedCost || 0
@@ -187,15 +184,15 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
         remaining: contractValue - actualCostValue,
         actualProfit: actualProfit, // الربح الفعلي
         profitMargin: profitMargin,
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       }
 
       await onUpdateProject(updatedProject)
-      
+
       // إزالة القيمة من حقل الإدخال
-      setCostInputs(prev => ({
+      setCostInputs((prev) => ({
         ...prev,
-        [project.id]: ''
+        [project.id]: '',
       }))
 
       const estimatedProfit = contractValue - estimatedCost
@@ -210,46 +207,52 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
   • الربح الفعلي: ${formatCurrencyValue(actualProfit)} (${profitMargin.toFixed(1)}%)
       
   ${profitDifference >= 0 ? '🟢' : '🔴'} الفرق عن المتوقع: ${formatCurrencyValue(Math.abs(profitDifference))} ${profitDifference >= 0 ? 'توفير' : 'تجاوز'}`)
-
     } catch (error) {
       console.error('فشل في حفظ التكاليف', error)
       toast.error('فشل في حفظ التكاليف')
     } finally {
-      setIsSavingCosts(prev => ({ ...prev, [project.id]: false }))
+      setIsSavingCosts((prev) => ({ ...prev, [project.id]: false }))
     }
   }
 
   // تصفية المشاريع حسب التبويب
-  const getFilteredProjects = useCallback((status: string) => {
-    let filtered = projects || []
-    const normalizedSearch = searchTerm.toLowerCase()
+  const getFilteredProjects = useCallback(
+    (status: string) => {
+      let filtered = projects || []
+      const normalizedSearch = searchTerm.toLowerCase()
 
-    if (status === 'all') {
-      // إرجاع جميع المشاريع بدون فلترة
-      filtered = projects || []
-    } else if (status === 'active') {
-      filtered = filtered.filter(project => project.status === 'active')
-    } else if (status === 'completed') {
-      filtered = filtered.filter(project => project.status === 'completed')
-    } else if (status === 'planning') {
-      filtered = filtered.filter(project => project.status === 'planning')
-    } else if (status === 'paused') {
-      filtered = filtered.filter(project => project.status === 'paused')
-    }
+      if (status === 'all') {
+        // إرجاع جميع المشاريع بدون فلترة
+        filtered = projects || []
+      } else if (status === 'active') {
+        filtered = filtered.filter((project) => project.status === 'active')
+      } else if (status === 'completed') {
+        filtered = filtered.filter((project) => project.status === 'completed')
+      } else if (status === 'planning') {
+        filtered = filtered.filter((project) => project.status === 'planning')
+      } else if (status === 'paused') {
+        filtered = filtered.filter((project) => project.status === 'paused')
+      }
 
-    return filtered.filter(project => {
-      const nameMatches = project.name?.toLowerCase().includes(normalizedSearch) ?? false
-      const clientMatches = project.client?.toLowerCase().includes(normalizedSearch) ?? false
-      return nameMatches || clientMatches
-    })
-  }, [projects, searchTerm])
+      return filtered.filter((project) => {
+        const nameMatches = project.name?.toLowerCase().includes(normalizedSearch) ?? false
+        const clientMatches = project.client?.toLowerCase().includes(normalizedSearch) ?? false
+        return nameMatches || clientMatches
+      })
+    },
+    [projects, searchTerm],
+  )
 
   // إحصائيات المشاريع
   const stats = useMemo(() => {
     const totalProjects = projects ? projects.length : 0
-    const averageProgress = projects && projects.length > 0
-      ? Math.round(projects.reduce((sum: number, project: Project) => sum + (project.progress || 0), 0) / projects.length)
-      : 0
+    const averageProgress =
+      projects && projects.length > 0
+        ? Math.round(
+            projects.reduce((sum: number, project: Project) => sum + (project.progress || 0), 0) /
+              projects.length,
+          )
+        : 0
 
     return {
       total: totalProjects,
@@ -262,9 +265,14 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
   }, [projects, getFilteredProjects])
 
   const projectsManagementData = useMemo(() => {
-    const onTimeDelivery = stats.total > 0 ? Math.round((stats.completed / stats.total) * 1000) / 10 : 0
-    const profitMargin = Number.isFinite(projectAggregates.profitMargin) ? projectAggregates.profitMargin : 0
-    const budgetVariance = Number.isFinite(projectAggregates.variancePct) ? projectAggregates.variancePct : 0
+    const onTimeDelivery =
+      stats.total > 0 ? Math.round((stats.completed / stats.total) * 1000) / 10 : 0
+    const profitMargin = Number.isFinite(projectAggregates.profitMargin)
+      ? projectAggregates.profitMargin
+      : 0
+    const budgetVariance = Number.isFinite(projectAggregates.variancePct)
+      ? projectAggregates.variancePct
+      : 0
 
     return {
       overview: {
@@ -273,89 +281,25 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
         averageProjectValue: projectAggregates.averageProjectValue,
         teamUtilization: 87.5,
         onTimeDelivery,
-        profitMargin: Number.isFinite(profitMargin) ? Math.round(profitMargin * 10) / 10 : 0
+        profitMargin: Number.isFinite(profitMargin) ? Math.round(profitMargin * 10) / 10 : 0,
       },
       performance: {
         budgetVariance,
         scheduleVariance: 3.2,
         qualityScore: 94.5,
         clientSatisfaction: 96.2,
-        grossMargin: Number.isFinite(projectAggregates.grossMarginPct) ? projectAggregates.grossMarginPct : 0
+        grossMargin: Number.isFinite(projectAggregates.grossMarginPct)
+          ? projectAggregates.grossMarginPct
+          : 0,
       },
       resources: {
         availableTeams: 4,
         busyTeams: 3,
         equipmentUtilization: 78.5,
-        materialStock: 85.2
-      }
+        materialStock: 85.2,
+      },
     }
   }, [projectAggregates, stats])
-
-  // الإحصائيات السريعة للمدير
-  const quickStats = [
-    {
-      label: 'إجمالي المشاريع',
-      value: stats.total,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10'
-    },
-    {
-      label: 'المشاريع النشطة',
-      value: stats.active,
-      trend: 'up' as const,
-      trendValue: '+2',
-      color: 'text-success',
-      bgColor: 'bg-success/10'
-    },
-    {
-      label: 'مكتملة',
-      value: stats.completed,
-      trend: stats.completed > 0 ? 'up' as const : 'stable' as const,
-      trendValue: stats.completed > 0 ? `+${stats.completed}` : '0',
-      color: 'text-accent',
-      bgColor: 'bg-accent/10'
-    },
-    {
-      label: 'معدل الإنجاز',
-      value: `${stats.averageProgress}%`,
-      trend: stats.averageProgress > 50 ? 'up' as const : 'down' as const,
-      trendValue: `${stats.averageProgress}%`,
-      color: 'text-info',
-      bgColor: 'bg-info/10'
-    },
-    {
-      label: 'القيمة الإجمالية',
-      value: formatCurrencyValue(projectAggregates.totalContractValue),
-      trend: 'up' as const,
-      trendValue: projectAggregates.totalContractValue > 0 ? '+12%' : '0%',
-      color: 'text-primary',
-      bgColor: 'bg-primary/10'
-    },
-    {
-      label: 'التكلفة الفعلية',
-      value: formatCurrencyValue(projectAggregates.totalActualCost),
-  trend: projectAggregates.totalActualCost > 0 ? 'up' as const : 'stable' as const,
-      trendValue: projectAggregates.totalActualCost > 0 ? '+4%' : '0%',
-      color: 'text-warning',
-      bgColor: 'bg-warning/10'
-    },
-    {
-      label: 'صافي الربح التراكمي',
-      value: formatCurrencyValue(projectAggregates.totalNetProfit),
-  trend: projectAggregates.totalNetProfit >= 0 ? 'up' as const : 'down' as const,
-      trendValue: projectAggregates.totalNetProfit >= 0 ? '+6%' : '-6%',
-      color: projectAggregates.totalNetProfit >= 0 ? 'text-success' : 'text-destructive',
-      bgColor: projectAggregates.totalNetProfit >= 0 ? 'bg-success/10' : 'bg-destructive/10'
-    },
-    {
-      label: 'نسبة الربحية',
-      value: `${projectsManagementData.overview.profitMargin.toFixed(1)}%`,
-      trend: projectsManagementData.overview.profitMargin > 0 ? 'up' as const : 'down' as const,
-      trendValue: `${projectsManagementData.overview.profitMargin.toFixed(1)}%`,
-      color: 'text-accent',
-      bgColor: 'bg-accent/10'
-    }
-  ]
 
   // الإجراءات السريعة
   const quickActions = [
@@ -363,144 +307,158 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       label: 'إدارة العملاء',
       icon: Users,
       onClick: handleViewClients,
-      variant: 'outline' as const
+      variant: 'outline' as const,
     },
     {
       label: 'تقارير المشاريع',
       icon: FileText,
       onClick: () => onSectionChange('reports'),
-      variant: 'outline' as const
+      variant: 'outline' as const,
     },
     {
       label: 'إحصائيات الأداء',
       icon: BarChart3,
       onClick: () => onSectionChange('reports'),
-      variant: 'outline' as const
+      variant: 'outline' as const,
     },
     {
       label: 'مشروع جديد',
       icon: Plus,
       onClick: handleNewProject,
-      primary: true
-    }
+      primary: true,
+    },
   ]
 
-  const headerMetadata = useMemo(() => {
-    const lastUpdatedSource = currency?.lastUpdated ?? lastRefreshAt
-    const lastUpdatedLabel = formatTimestamp(lastUpdatedSource)
-
-    return (
-      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+  const headerMetadata = useMemo(
+    () => (
+      <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
         <StatusBadge
-          status="info"
-          label={`العملة الأساسية ${baseCurrency}`}
-          icon={DollarSign}
+          status="default"
+          label={`الكل ${stats.total}`}
+          icon={ListChecks}
           size="sm"
           className="shadow-none"
-          showIcon
         />
         <StatusBadge
-          status="onTrack"
-          label={`نشطة ${projectMetrics.activeCount}/${projectMetrics.totalCount}`}
+          status={stats.active > 0 ? 'info' : 'default'}
+          label={`نشطة ${stats.active}`}
+          icon={PlayCircle}
+          size="sm"
+          className="shadow-none"
+        />
+        <StatusBadge
+          status={stats.completed > 0 ? 'success' : 'default'}
+          label={`مكتملة ${stats.completed}`}
+          icon={CheckCircle}
+          size="sm"
+          className="shadow-none"
+        />
+        <StatusBadge
+          status={stats.paused > 0 ? 'warning' : 'default'}
+          label={`متوقفة ${stats.paused}`}
+          icon={PauseCircle}
+          size="sm"
+          className="shadow-none"
+        />
+        <StatusBadge
+          status="info"
+          label={`معدل الإنجاز ${stats.averageProgress}%`}
           icon={BarChart3}
           size="sm"
           className="shadow-none"
-          showIcon
         />
         <StatusBadge
-          status="success"
-          label={`قيمة العقود ${formatCurrencyValue(projectAggregates.totalContractValue, { notation: 'compact' })}`}
+          status={projectAggregates.totalNetProfit >= 0 ? 'success' : 'warning'}
+          label={`صافي الربح ${formatCurrencyValue(projectAggregates.totalNetProfit, { notation: 'compact' })}`}
           icon={DollarSign}
           size="sm"
           className="shadow-none"
-          showIcon
         />
-        <StatusBadge
-          status="warning"
-          label={`التكلفة الفعلية ${formatCurrencyValue(projectAggregates.totalActualCost, { notation: 'compact' })}`}
-          icon={AlertTriangle}
-          size="sm"
-          className="shadow-none"
-          showIcon
-        />
-        {lastUpdatedLabel && (
-          <StatusBadge
-            status="default"
-            label={`آخر تحديث ${lastUpdatedLabel}`}
-            icon={Clock}
-            size="sm"
-            className="shadow-none"
-            showIcon
-          />
-        )}
       </div>
-    )
-  }, [
-    baseCurrency,
-    currency,
-    formatCurrencyValue,
-    formatTimestamp,
-    lastRefreshAt,
-    projectAggregates.totalActualCost,
-    projectAggregates.totalContractValue,
-    projectMetrics.activeCount,
-    projectMetrics.totalCount,
-  ])
+    ),
+    [
+      formatCurrencyValue,
+      projectAggregates.totalNetProfit,
+      stats.averageProgress,
+      stats.active,
+      stats.completed,
+      stats.paused,
+      stats.total,
+    ],
+  )
 
   // بطاقات تحليل المشاريع
-  const projectsAnalysisCards = useMemo(() => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <DetailCard
-        title="أداء الميزانية"
-        value={`${Math.abs(projectsManagementData.performance.budgetVariance).toFixed(1)}%`}
-        subtitle={projectsManagementData.performance.budgetVariance < 0 ? "توفير في التكلفة" : "تجاوز الميزانية"}
-        icon={DollarSign}
-        color="text-success"
-        bgColor="bg-success/10"
-        trend={{
-          value: `${projectsManagementData.performance.budgetVariance.toFixed(1)}%`,
-          direction: projectsManagementData.performance.budgetVariance < 0 ? 'up' : 'down'
-        }}
-      />
-      <DetailCard
-        title="أداء الجدولة"
-        value={`${Math.abs(projectsManagementData.performance.scheduleVariance)}%`}
-        subtitle={projectsManagementData.performance.scheduleVariance > 0 ? "متقدم على الجدول" : "متأخر عن الجدول"}
-        icon={Calendar}
-        color="text-primary"
-        bgColor="bg-primary/10"
-        trend={{
-          value: `${projectsManagementData.performance.scheduleVariance}%`,
-          direction: projectsManagementData.performance.scheduleVariance > 0 ? 'up' : 'down'
-        }}
-      />
-      <DetailCard
-        title="درجة الجودة"
-        value={`${projectsManagementData.performance.qualityScore}%`}
-        subtitle="معايير الجودة العامة"
-        icon={Award}
-        color="text-accent"
-        bgColor="bg-accent/10"
-        trend={{ value: '+2.1%', direction: 'up' }}
-      />
-      <DetailCard
-        title="رضا العملاء"
-        value={`${projectsManagementData.performance.clientSatisfaction}%`}
-        subtitle="تقييم العملاء"
-        icon={Users}
-        color="text-warning"
-        bgColor="bg-warning/10"
-        trend={{ value: '+0.8%', direction: 'up' }}
-      />
-    </div>
-  ), [projectsManagementData])
+  const projectsAnalysisCards = useMemo(
+    () => (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <DetailCard
+          title="أداء الميزانية"
+          value={`${Math.abs(projectsManagementData.performance.budgetVariance).toFixed(1)}%`}
+          subtitle={
+            projectsManagementData.performance.budgetVariance < 0
+              ? 'توفير في التكلفة'
+              : 'تجاوز الميزانية'
+          }
+          icon={DollarSign}
+          color="text-success"
+          bgColor="bg-success/10"
+          trend={{
+            value: `${projectsManagementData.performance.budgetVariance.toFixed(1)}%`,
+            direction: projectsManagementData.performance.budgetVariance < 0 ? 'up' : 'down',
+          }}
+        />
+        <DetailCard
+          title="أداء الجدولة"
+          value={`${Math.abs(projectsManagementData.performance.scheduleVariance)}%`}
+          subtitle={
+            projectsManagementData.performance.scheduleVariance > 0
+              ? 'متقدم على الجدول'
+              : 'متأخر عن الجدول'
+          }
+          icon={Calendar}
+          color="text-primary"
+          bgColor="bg-primary/10"
+          trend={{
+            value: `${projectsManagementData.performance.scheduleVariance}%`,
+            direction: projectsManagementData.performance.scheduleVariance > 0 ? 'up' : 'down',
+          }}
+        />
+        <DetailCard
+          title="درجة الجودة"
+          value={`${projectsManagementData.performance.qualityScore}%`}
+          subtitle="معايير الجودة العامة"
+          icon={Award}
+          color="text-accent"
+          bgColor="bg-accent/10"
+          trend={{ value: '+2.1%', direction: 'up' }}
+        />
+        <DetailCard
+          title="رضا العملاء"
+          value={`${projectsManagementData.performance.clientSatisfaction}%`}
+          subtitle="تقييم العملاء"
+          icon={Users}
+          color="text-warning"
+          bgColor="bg-warning/10"
+          trend={{ value: '+0.8%', direction: 'up' }}
+        />
+      </div>
+    ),
+    [projectsManagementData],
+  )
 
-  const headerExtraContent = useMemo(() => (
-    <div className="space-y-4">
-      {headerMetadata}
-      {projectsAnalysisCards}
-    </div>
-  ), [headerMetadata, projectsAnalysisCards])
+  const headerExtraContent = useMemo(
+    () => (
+      <div className="space-y-4">
+        <div className="rounded-3xl border border-primary/20 bg-gradient-to-l from-primary/10 via-card/40 to-background p-5 shadow-sm">
+          {headerMetadata}
+        </div>
+        <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
+          {projectsAnalysisCards}
+        </div>
+      </div>
+    ),
+    [headerMetadata, projectsAnalysisCards],
+  )
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -517,7 +475,9 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
     }
   }
 
-  const getProjectStatusBadge = (status: string): { status: ProjectStatusBadgeStatus; label: string } => {
+  const getProjectStatusBadge = (
+    status: string,
+  ): { status: ProjectStatusBadgeStatus; label: string } => {
     switch (status) {
       case 'active':
         return { status: 'onTrack', label: 'نشط' }
@@ -533,10 +493,10 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
   }
 
   const tabs = [
-    { 
-      id: 'all', 
-      label: 'جميع المشاريع', 
-      count: stats.total, 
+    {
+      id: 'all',
+      label: 'جميع المشاريع',
+      count: stats.total,
       icon: Building2,
       color: 'text-muted-foreground',
       bgColor: 'bg-muted/20',
@@ -544,12 +504,12 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       activeColor: 'bg-secondary text-secondary-foreground shadow-lg shadow-secondary/25',
       activeIconColor: 'text-secondary-foreground',
       activeBadgeClass: 'bg-secondary/20 text-secondary-foreground border-secondary/30',
-      badgeStatus: 'default' as ProjectStatusBadgeStatus
+      badgeStatus: 'default' as ProjectStatusBadgeStatus,
     },
-    { 
-      id: 'active', 
-      label: 'المشاريع النشطة', 
-      count: stats.active, 
+    {
+      id: 'active',
+      label: 'المشاريع النشطة',
+      count: stats.active,
       icon: PlayCircle,
       color: 'text-success',
       bgColor: 'bg-success/10',
@@ -557,12 +517,12 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       activeColor: 'bg-success text-success-foreground shadow-lg shadow-success/25',
       activeIconColor: 'text-success-foreground',
       activeBadgeClass: 'bg-success/20 text-success-foreground border-success/30',
-      badgeStatus: 'success' as ProjectStatusBadgeStatus
+      badgeStatus: 'success' as ProjectStatusBadgeStatus,
     },
-    { 
-      id: 'completed', 
-      label: 'المشاريع المنفذة', 
-      count: stats.completed, 
+    {
+      id: 'completed',
+      label: 'المشاريع المنفذة',
+      count: stats.completed,
       icon: CheckCircle,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
@@ -570,12 +530,12 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       activeColor: 'bg-primary text-primary-foreground shadow-lg shadow-primary/25',
       activeIconColor: 'text-primary-foreground',
       activeBadgeClass: 'bg-primary/20 text-primary-foreground border-primary/30',
-      badgeStatus: 'completed' as ProjectStatusBadgeStatus
+      badgeStatus: 'completed' as ProjectStatusBadgeStatus,
     },
-    { 
-      id: 'planning', 
-      label: 'تحت التخطيط', 
-      count: stats.planning, 
+    {
+      id: 'planning',
+      label: 'تحت التخطيط',
+      count: stats.planning,
       icon: Clock,
       color: 'text-info',
       bgColor: 'bg-info/10',
@@ -583,12 +543,12 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       activeColor: 'bg-info text-foreground shadow-lg shadow-info/25',
       activeIconColor: 'text-foreground',
       activeBadgeClass: 'bg-info/20 text-foreground border-info/30',
-      badgeStatus: 'info' as ProjectStatusBadgeStatus
+      badgeStatus: 'info' as ProjectStatusBadgeStatus,
     },
-    { 
-      id: 'paused', 
-      label: 'متوقفة مؤقتاً', 
-      count: stats.paused, 
+    {
+      id: 'paused',
+      label: 'متوقفة مؤقتاً',
+      count: stats.paused,
       icon: PauseCircle,
       color: 'text-warning',
       bgColor: 'bg-warning/10',
@@ -596,8 +556,8 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       activeColor: 'bg-warning text-warning-foreground shadow-lg shadow-warning/25',
       activeIconColor: 'text-warning-foreground',
       activeBadgeClass: 'bg-warning/20 text-warning-foreground border-warning/30',
-      badgeStatus: 'warning' as ProjectStatusBadgeStatus
-    }
+      badgeStatus: 'warning' as ProjectStatusBadgeStatus,
+    },
   ]
 
   // تعريف ProjectCard قبل استخدامها
@@ -625,9 +585,11 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
       >
         <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300 group">
           <CardContent className="p-4">
-            
             {/* العنوان والحالة */}
-            <div className="flex items-start justify-between mb-3" onClick={() => handleViewProject(project.id)}>
+            <div
+              className="flex items-start justify-between mb-3"
+              onClick={() => handleViewProject(project.id)}
+            >
               <div className="flex items-center gap-2 flex-1">
                 {getStatusIcon(project.status)}
                 <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors cursor-pointer">
@@ -679,9 +641,7 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
                 <DollarSign className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <div className="min-w-0">
                   <span className="text-muted-foreground text-xs">قيمة العقد:</span>
-                  <div className="font-medium text-success truncate">
-                    {contractValueDisplay}
-                  </div>
+                  <div className="font-medium text-success truncate">{contractValueDisplay}</div>
                 </div>
               </div>
 
@@ -689,9 +649,7 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
                 <BarChart3 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <div className="min-w-0">
                   <span className="text-muted-foreground text-xs">التكلفة التقديرية:</span>
-                  <div className="font-medium text-warning truncate">
-                    {estimatedCostDisplay}
-                  </div>
+                  <div className="font-medium text-warning truncate">{estimatedCostDisplay}</div>
                 </div>
               </div>
             </div>
@@ -700,7 +658,9 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
             {project.contractValue && project.estimatedCost && (
               <div className="mb-2 text-xs text-muted-foreground">
                 <span>الربح المتوقع: </span>
-                <span className={`font-medium ${(project.contractValue - project.estimatedCost) >= 0 ? 'text-success' : 'text-destructive'}`}>
+                <span
+                  className={`font-medium ${project.contractValue - project.estimatedCost >= 0 ? 'text-success' : 'text-destructive'}`}
+                >
                   {formatCurrencyValue(project.contractValue - project.estimatedCost)}
                 </span>
               </div>
@@ -714,7 +674,10 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
                   <span className={`mx-1 font-medium ${profitClass}`}>
                     {formatCurrencyValue(profitValue)}
                     {project.profitMargin && (
-                      <span className="text-xs opacity-75"> ({project.profitMargin.toFixed(1)}%)</span>
+                      <span className="text-xs opacity-75">
+                        {' '}
+                        ({project.profitMargin.toFixed(1)}%)
+                      </span>
                     )}
                   </span>
                 </span>
@@ -732,7 +695,9 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-muted-foreground text-xs">نسبة الإنجاز</span>
-                <span className="font-medium text-foreground text-xs">{isCompleted ? '100' : project.progress || 0}%</span>
+                <span className="font-medium text-foreground text-xs">
+                  {isCompleted ? '100' : project.progress || 0}%
+                </span>
               </div>
               <Progress value={isCompleted ? 100 : project.progress || 0} className="h-1.5" />
             </div>
@@ -742,13 +707,15 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
               <InlineAlert
                 variant="warning"
                 title="إدخال التكلفة الفعلية للمشروع"
-                description={(
+                description={
                   <span>
-                    قيمة العقد: <span className="font-semibold text-foreground">{contractValueDisplay}</span>
+                    قيمة العقد:{' '}
+                    <span className="font-semibold text-foreground">{contractValueDisplay}</span>
                     {' • '}
-                    التكلفة التقديرية: <span className="font-semibold text-foreground">{estimatedCostDisplay}</span>
+                    التكلفة التقديرية:{' '}
+                    <span className="font-semibold text-foreground">{estimatedCostDisplay}</span>
                   </span>
-                )}
+                }
                 icon={<DollarSign className="h-4 w-4" />}
                 className="mt-3"
               >
@@ -777,15 +744,15 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
 
             {/* الأيقونات في أسفل البطاقة */}
             <div className="flex items-center justify-end gap-1 pt-3 mt-3 border-t border-border">
-              <EntityActions 
+              <EntityActions
                 onView={() => {
-                  handleViewProject(project.id);
+                  handleViewProject(project.id)
                 }}
                 onEdit={() => {
-                  handleEditProject(project);
+                  handleEditProject(project)
                 }}
                 onDelete={() => {
-                  void handleDeleteProject(project.id);
+                  void handleDeleteProject(project.id)
                 }}
               />
             </div>
@@ -805,22 +772,23 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
             {getFilteredProjects(activeTab).length} من {stats.total} مشروع
           </div>
         </div>
-        
+
         <div className="relative">
           <div className="flex bg-muted rounded-lg p-1.5 gap-1">
             {tabs.map((tab, index) => {
               const isActive = activeTab === tab.id
               const Icon = tab.icon
-              
+
               return (
                 <motion.button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`
                     relative flex items-center gap-2 px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200 flex-1 justify-center
-                    ${isActive 
-                      ? `${tab.activeColor} transform scale-[0.98]` 
-                      : `text-muted-foreground ${tab.hoverColor} hover:text-foreground`
+                    ${
+                      isActive
+                        ? `${tab.activeColor} transform scale-[0.98]`
+                        : `text-muted-foreground ${tab.hoverColor} hover:text-foreground`
                     }
                   `}
                   whileHover={{ scale: isActive ? 0.98 : 1.02 }}
@@ -829,21 +797,23 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Icon className={`h-4 w-4 ${isActive ? tab.activeIconColor ?? 'text-primary-foreground' : tab.color}`} />
+                  <Icon
+                    className={`h-4 w-4 ${isActive ? (tab.activeIconColor ?? 'text-primary-foreground') : tab.color}`}
+                  />
                   <span className="hidden sm:inline whitespace-nowrap">{tab.label}</span>
                   <StatusBadge
                     status={isActive ? tab.badgeStatus : 'default'}
                     label={String(tab.count)}
                     size="sm"
                     showIcon={false}
-                    className={`min-w-[28px] justify-center px-2 py-0.5 text-xs shadow-none ${isActive ? tab.activeBadgeClass ?? 'bg-primary/15 text-primary-foreground border-primary/30' : ''}`}
+                    className={`min-w-[28px] justify-center px-2 py-0.5 text-xs shadow-none ${isActive ? (tab.activeBadgeClass ?? 'bg-primary/15 text-primary-foreground border-primary/30') : ''}`}
                   />
-                  
+
                   {isActive && (
                     <motion.div
                       className="absolute -bottom-1.5 left-1/2 h-0.5 w-8 -translate-x-1/2 transform rounded-full bg-primary/40"
                       layoutId="activeProjectTab"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                     />
                   )}
                 </motion.button>
@@ -865,20 +835,30 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
               <ProjectCard key={project.id || index} project={project} index={index} />
             ))}
           </div>
-          
+
           {getFilteredProjects(activeTab).length === 0 && (
             <EmptyState
               icon={Building2}
               title="لا توجد مشاريع"
               description={
-                activeTab === 'all' ? 'لا توجد مشاريع في النظام' :
-                activeTab === 'active' ? 'لا توجد مشاريع نشطة حالياً' :
-                activeTab === 'completed' ? 'لا توجد مشاريع مكتملة' :
-                activeTab === 'planning' ? 'لا توجد مشاريع تحت التخطيط' :
-                'لا توجد مشاريع متوقفة مؤقتاً'
+                activeTab === 'all'
+                  ? 'لا توجد مشاريع في النظام'
+                  : activeTab === 'active'
+                    ? 'لا توجد مشاريع نشطة حالياً'
+                    : activeTab === 'completed'
+                      ? 'لا توجد مشاريع مكتملة'
+                      : activeTab === 'planning'
+                        ? 'لا توجد مشاريع تحت التخطيط'
+                        : 'لا توجد مشاريع متوقفة مؤقتاً'
               }
-              actionLabel={activeTab === 'active' || activeTab === 'all' ? 'إضافة مشروع جديد' : undefined}
-              onAction={activeTab === 'active' || activeTab === 'all' ? () => onSectionChange('new-project') : undefined}
+              actionLabel={
+                activeTab === 'active' || activeTab === 'all' ? 'إضافة مشروع جديد' : undefined
+              }
+              onAction={
+                activeTab === 'active' || activeTab === 'all'
+                  ? () => onSectionChange('new-project')
+                  : undefined
+              }
             />
           )}
         </motion.div>
@@ -893,15 +873,15 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
         onBack={handleBackToList}
         onSectionChange={onSectionChange}
       />
-    );
+    )
   }
 
   if (currentView === 'new') {
-    return <NewProjectForm mode="create" onBack={handleBackToList} />;
+    return <NewProjectForm mode="create" onBack={handleBackToList} />
   }
-  
+
   if (currentView === 'edit' && projectToEdit) {
-    return <NewProjectForm mode="edit" editProject={projectToEdit} onBack={handleBackToList} />;
+    return <NewProjectForm mode="edit" editProject={projectToEdit} onBack={handleBackToList} />
   }
 
   if (currentView === 'clients') {
@@ -920,24 +900,23 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
         </div>
         <Clients onSectionChange={onSectionChange} />
       </div>
-    );
+    )
   }
-  
+
   return (
     <PageLayout
       tone="primary"
       title="إدارة المشاريع"
       description="متابعة وإدارة جميع المشاريع والعقود بكفاءة عالية"
       icon={Building2}
-      quickStats={quickStats}
+      quickStats={[]}
       quickActions={quickActions}
-      searchPlaceholder="البحث في المشاريع..."
-      searchValue={searchTerm}
-      onSearchChange={setSearchTerm}
       headerExtra={headerExtraContent}
+      showSearch={false}
+      showLastUpdate={false}
     >
       {currentView === 'list' && TabsComponent}
-      
+
       {/* Dialog تأكيد الحذف */}
       <AlertDialog open={!!projectToDelete} onOpenChange={() => setProjectToDelete(null)}>
         <AlertDialogContent>
@@ -947,7 +926,7 @@ export function ProjectsView({ projects, onSectionChange, onDeleteProject, onUpd
               تأكيد حذف المشروع
             </AlertDialogTitle>
             <AlertDialogDescription>
-              هل أنت متأكد من أنك تريد حذف هذا المشروع؟ 
+              هل أنت متأكد من أنك تريد حذف هذا المشروع؟
               <br />
               هذا الإجراء لا يمكن التراجع عنه وسيتم حذف جميع البيانات المرتبطة بالمشروع.
             </AlertDialogDescription>

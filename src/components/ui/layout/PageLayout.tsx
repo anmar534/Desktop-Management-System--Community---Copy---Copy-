@@ -2,13 +2,7 @@
 
 import type { ComponentType, ReactNode } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import {
-  Search,
-  Filter,
-  Plus,
-  TrendingUp,
-  ArrowRight
-} from 'lucide-react'
+import { Search, Filter, Plus, TrendingUp, ArrowRight } from 'lucide-react'
 
 import { Card, CardContent } from '../card'
 import { Button } from '../button'
@@ -20,44 +14,52 @@ const PAGE_LAYOUT_TONE_STYLES = {
   primary: {
     background: 'bg-gradient-to-r from-primary/95 via-primary to-primary/85',
     icon: 'text-primary-foreground',
-    primaryAction: 'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary'
+    primaryAction:
+      'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary',
   },
   secondary: {
     background: 'bg-gradient-to-r from-secondary/95 via-secondary to-secondary/80',
     icon: 'text-secondary-foreground',
-    primaryAction: 'bg-secondary text-secondary-foreground hover:bg-secondary/90 focus-visible:ring-secondary'
+    primaryAction:
+      'bg-secondary text-secondary-foreground hover:bg-secondary/90 focus-visible:ring-secondary',
   },
   accent: {
     background: 'bg-gradient-to-r from-accent/95 via-accent to-accent/80',
     icon: 'text-accent-foreground',
-    primaryAction: 'bg-accent text-accent-foreground hover:bg-accent/90 focus-visible:ring-accent'
+    primaryAction: 'bg-accent text-accent-foreground hover:bg-accent/90 focus-visible:ring-accent',
   },
   success: {
     background: 'bg-gradient-to-r from-success/95 via-success to-success/80',
     icon: 'text-success-foreground',
-    primaryAction: 'bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success'
+    primaryAction:
+      'bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success',
   },
   info: {
     background: 'bg-gradient-to-r from-info/95 via-info to-info/80',
     icon: 'text-info-foreground',
-    primaryAction: 'bg-info text-info-foreground hover:bg-info/90 focus-visible:ring-info'
+    primaryAction: 'bg-info text-info-foreground hover:bg-info/90 focus-visible:ring-info',
   },
   warning: {
     background: 'bg-gradient-to-r from-warning/95 via-warning to-warning/80',
     icon: 'text-warning-foreground',
-    primaryAction: 'bg-warning text-warning-foreground hover:bg-warning/90 focus-visible:ring-warning'
+    primaryAction:
+      'bg-warning text-warning-foreground hover:bg-warning/90 focus-visible:ring-warning',
   },
   destructive: {
     background: 'bg-gradient-to-r from-destructive/95 via-destructive to-destructive/80',
     icon: 'text-destructive-foreground',
-    primaryAction: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive'
+    primaryAction:
+      'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive',
   },
   neutral: {
     background: 'bg-muted',
     icon: 'text-muted-foreground',
-    primaryAction: 'bg-muted text-foreground hover:bg-muted/90 focus-visible:ring-muted'
-  }
+    primaryAction: 'bg-muted text-foreground hover:bg-muted/90 focus-visible:ring-muted',
+  },
 } as const
+
+const GLASS_PANEL = 'rounded-3xl border border-border/40 bg-card/70 shadow-lg backdrop-blur'
+const GLASS_SECTION = 'rounded-2xl border border-border/30 bg-card/60 shadow-md backdrop-blur'
 
 type PageLayoutTone = keyof typeof PAGE_LAYOUT_TONE_STYLES
 
@@ -101,9 +103,12 @@ interface PageLayoutProps {
   showStats?: boolean
   hideHeader?: boolean
   showLastUpdate?: boolean
+  showHeaderRefreshButton?: boolean
+  lastUpdateCompact?: boolean
   showBackButton?: boolean
   onBack?: () => void
   backLabel?: string
+  statsGridCols?: string // خاصية جديدة للتحكم في عدد الأعمدة
 }
 
 export function PageLayout({
@@ -126,12 +131,16 @@ export function PageLayout({
   showStats = true,
   hideHeader = false,
   showLastUpdate = true,
+  showHeaderRefreshButton = true,
+  lastUpdateCompact = false,
   showBackButton,
   onBack,
-  backLabel = 'العودة'
+  backLabel = 'العودة',
+  statsGridCols = 'grid-cols-2 md:grid-cols-4 lg:grid-cols-7', // القيمة الافتراضية
 }: PageLayoutProps) {
   const toneStyles = PAGE_LAYOUT_TONE_STYLES[tone] ?? PAGE_LAYOUT_TONE_STYLES.primary
   const prefersReducedMotion = useReducedMotion()
+  const isRTL = typeof window !== 'undefined' ? document.documentElement.dir === 'rtl' : false
   const shouldShowBackButton = typeof onBack === 'function' && (showBackButton ?? true)
 
   return (
@@ -141,11 +150,11 @@ export function PageLayout({
           <motion.div
             initial={prefersReducedMotion ? undefined : { opacity: 0, y: -20 }}
             animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-            className="bg-card rounded-xl border border-border shadow-sm overflow-hidden"
+            className={cn(GLASS_PANEL, 'overflow-hidden')}
           >
-            <div className="p-6 border-b border-border">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
+            <div className="border-b border-border/40 p-6">
+              <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+                <div className={cn('flex items-center gap-4', isRTL ? 'text-right' : 'text-left')}>
                   {shouldShowBackButton && (
                     <Button
                       variant="ghost"
@@ -158,21 +167,24 @@ export function PageLayout({
                     </Button>
                   )}
 
-                  <div className={cn('p-3 rounded-xl shadow-lg', toneStyles.background)}>
+                  <div className={cn('rounded-2xl p-3 shadow-md', toneStyles.background)}>
                     <Icon className={cn('h-6 w-6', toneStyles.icon)} />
                   </div>
 
-                  <div>
+                  <div className={cn(isRTL ? 'text-right' : 'text-left')}>
                     <h1 className="text-2xl font-bold text-foreground">{title}</h1>
                     <p className="text-muted-foreground mt-1">{description}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div
+                  className={cn('flex flex-wrap gap-3', isRTL ? 'justify-start' : 'justify-end')}
+                >
                   {quickActions.map((action, index) => {
                     const ActionIcon = action.icon
                     const isPrimaryAction = action.primary ?? index === 0
-                    const resolvedVariant = action.variant ?? (isPrimaryAction ? 'default' : 'outline')
+                    const resolvedVariant =
+                      action.variant ?? (isPrimaryAction ? 'default' : 'outline')
                     return (
                       <motion.div
                         key={index}
@@ -186,7 +198,7 @@ export function PageLayout({
                           className={cn(
                             'flex items-center gap-2',
                             isPrimaryAction ? toneStyles.primaryAction : undefined,
-                            action.className
+                            action.className,
                           )}
                         >
                           <ActionIcon className="h-4 w-4 ml-2" />
@@ -201,25 +213,39 @@ export function PageLayout({
               {headerExtra && <div className="mt-4">{headerExtra}</div>}
 
               {showLastUpdate && (
-                <div className="mt-4 pt-4 border-t border-border">
-                  <LastUpdateIndicator compact={false} showRefreshButton />
+                <div
+                  className={cn(
+                    'border-t border-border/40',
+                    lastUpdateCompact ? 'mt-2 pt-2' : 'mt-4 pt-4',
+                  )}
+                >
+                  <LastUpdateIndicator
+                    compact={lastUpdateCompact}
+                    showRefreshButton={showHeaderRefreshButton}
+                    hideFallbackLabel={lastUpdateCompact}
+                  />
                 </div>
               )}
             </div>
 
             {showStats && quickStats.length > 0 && (
               <div className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+                <div className={cn('grid gap-4', statsGridCols)}>
                   {quickStats.map((stat, index) => (
                     <motion.div
                       key={index}
                       initial={prefersReducedMotion ? undefined : { opacity: 0, y: 20 }}
                       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
                       transition={prefersReducedMotion ? undefined : { delay: index * 0.05 }}
-                      className={`p-4 ${stat.bgColor} rounded-lg border border-border/20 hover:border-border/40 transition-all cursor-pointer group`}
+                      className={cn(
+                        'cursor-pointer rounded-2xl border border-border/30 bg-background/50 p-4 transition-all backdrop-blur-sm hover:border-border/50',
+                        stat.bgColor,
+                      )}
                     >
                       <div className="text-center">
-                        <div className={`text-2xl font-bold ${stat.color} group-hover:scale-105 transition-transform`}>
+                        <div
+                          className={`text-2xl font-bold ${stat.color} group-hover:scale-105 transition-transform`}
+                        >
                           {stat.value}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
@@ -229,8 +255,8 @@ export function PageLayout({
                               stat.trend === 'up'
                                 ? 'text-success'
                                 : stat.trend === 'down'
-                                ? 'text-destructive'
-                                : 'text-muted-foreground'
+                                  ? 'text-destructive'
+                                  : 'text-muted-foreground'
                             }`}
                           >
                             <TrendingUp
@@ -238,8 +264,8 @@ export function PageLayout({
                                 stat.trend === 'down'
                                   ? 'rotate-180'
                                   : stat.trend === 'stable'
-                                  ? 'rotate-90'
-                                  : ''
+                                    ? 'rotate-90'
+                                    : ''
                               }`}
                             />
                             <span>{stat.trendValue}</span>
@@ -259,11 +285,11 @@ export function PageLayout({
             initial={prefersReducedMotion ? undefined : { opacity: 0, x: -20 }}
             animate={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
             transition={prefersReducedMotion ? undefined : { delay: 0.2 }}
-            className="bg-card rounded-xl border border-border p-4 shadow-sm"
+            className={cn(GLASS_SECTION, 'p-5')}
           >
             <div className="flex items-center gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <div className="relative flex-1">
+                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
                 <Input
                   placeholder={searchPlaceholder}
                   value={searchValue}
@@ -272,8 +298,12 @@ export function PageLayout({
                 />
               </div>
               {showFilters && (
-                <Button variant="outline" onClick={onFilterClick}>
-                  <Filter className="h-4 w-4 ml-2" />
+                <Button
+                  variant="outline"
+                  onClick={onFilterClick}
+                  className="rounded-full border-border/40 bg-background/40 text-muted-foreground hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+                >
+                  <Filter className="ml-2 h-4 w-4" />
                   <span className="hidden sm:inline">فلترة</span>
                 </Button>
               )}
@@ -313,7 +343,13 @@ interface EmptyStateProps {
   onAction?: () => void
 }
 
-export function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  actionLabel,
+  onAction,
+}: EmptyStateProps) {
   const prefersReducedMotion = useReducedMotion()
   return (
     <motion.div
@@ -373,8 +409,8 @@ export function DetailStats({ stats }: DetailStatsProps) {
                         stat.trend === 'up'
                           ? 'text-success'
                           : stat.trend === 'down'
-                          ? 'text-destructive'
-                          : 'text-muted-foreground'
+                            ? 'text-destructive'
+                            : 'text-muted-foreground'
                       }`}
                     >
                       <TrendingUp
@@ -382,8 +418,8 @@ export function DetailStats({ stats }: DetailStatsProps) {
                           stat.trend === 'down'
                             ? 'rotate-180'
                             : stat.trend === 'stable'
-                            ? 'rotate-90'
-                            : ''
+                              ? 'rotate-90'
+                              : ''
                         }`}
                       />
                       <span>{stat.trendValue}</span>
@@ -420,7 +456,16 @@ interface DetailCardProps {
   onClick?: () => void
 }
 
-export function DetailCard({ title, value, subtitle, icon: Icon, color, bgColor, trend, onClick }: DetailCardProps) {
+export function DetailCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  color,
+  bgColor,
+  trend,
+  onClick,
+}: DetailCardProps) {
   return (
     <Card
       className={`border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group ${
@@ -439,8 +484,8 @@ export function DetailCard({ title, value, subtitle, icon: Icon, color, bgColor,
                 trend.direction === 'up'
                   ? 'text-success'
                   : trend.direction === 'down'
-                  ? 'text-destructive'
-                  : 'text-muted-foreground'
+                    ? 'text-destructive'
+                    : 'text-muted-foreground'
               }`}
             >
               <TrendingUp
@@ -448,8 +493,8 @@ export function DetailCard({ title, value, subtitle, icon: Icon, color, bgColor,
                   trend.direction === 'down'
                     ? 'rotate-180'
                     : trend.direction === 'stable'
-                    ? 'rotate-90'
-                    : ''
+                      ? 'rotate-90'
+                      : ''
                 }`}
               />
               <span>{trend.value}</span>
@@ -457,7 +502,9 @@ export function DetailCard({ title, value, subtitle, icon: Icon, color, bgColor,
           )}
         </div>
         <div>
-          <div className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">{value}</div>
+          <div className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+            {value}
+          </div>
           <div className="text-sm text-muted-foreground">{title}</div>
           {subtitle && <div className="text-xs text-muted-foreground/80 mt-1">{subtitle}</div>}
         </div>

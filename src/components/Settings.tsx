@@ -259,53 +259,10 @@ export function Settings() {
     lastBackup: '2024-02-14',
   }
 
-  // الإحصائيات السريعة للمدير
-  const quickStats = [
-    {
-      label: 'الوحدات النشطة',
-      value: settingsStats.activeModules,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
-    },
-    {
-      label: 'المستخدمون النشطون',
-      value: `${settingsStats.activeUsers}/25`,
-      trend: 'up' as const,
-      trendValue: '+2',
-      color: 'text-success',
-      bgColor: 'bg-success/10',
-    },
-    {
-      label: 'مساحة التخزين',
-      value: `${settingsStats.storageUsed}GB`,
-      trend: 'up' as const,
-      trendValue: '+0.3GB',
-      color: 'text-secondary-foreground',
-      bgColor: 'bg-secondary/20',
-    },
-    {
-      label: 'النسخ الاحتياطية',
-      value: settingsStats.dataBackups,
-      trend: 'up' as const,
-      trendValue: '+1',
-      color: 'text-warning',
-      bgColor: 'bg-warning/10',
-    },
-    {
-      label: 'إصدار النظام',
-      value: settingsStats.systemVersion,
-      color: 'text-info',
-      bgColor: 'bg-info/10',
-    },
-    {
-      label: 'معدل الأداء',
-      value: '98.5%',
-      trend: 'up' as const,
-      trendValue: '+0.8%',
-      color: 'text-success',
-      bgColor: 'bg-success/10',
-    },
-  ]
+  const storageUsagePercent = Math.round(
+    (settingsStats.storageUsed / settingsStats.storageTotal) * 100,
+  )
+  const storageBadgeStatus = storageUsagePercent >= 80 ? 'warning' : 'info'
 
   // الإجراءات السريعة
   const quickActions = [
@@ -314,12 +271,14 @@ export function Settings() {
       icon: Database,
       onClick: () => handleBackup(),
       variant: 'outline' as const,
+      primary: false,
     },
     {
       label: 'تصدير البيانات',
       icon: Download,
       onClick: () => void handleExport(),
       variant: 'outline' as const,
+      primary: false,
     },
     {
       label: 'حفظ الإعدادات',
@@ -343,7 +302,7 @@ export function Settings() {
       />
       <DetailCard
         title="استخدام التخزين"
-        value={`${Math.round((settingsStats.storageUsed / settingsStats.storageTotal) * 100)}%`}
+        value={`${storageUsagePercent}%`}
         subtitle="من المساحة الكلية"
         icon={Database}
         color="text-primary"
@@ -371,6 +330,70 @@ export function Settings() {
         bgColor="bg-warning/10"
         trend={{ value: 'آمنة', direction: 'up' }}
       />
+    </div>
+  )
+
+  const headerMetadata = (
+    <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
+      <StatusBadge
+        status="success"
+        label="الوحدات النشطة"
+        value={settingsStats.activeModules}
+        icon={Building2}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="info"
+        label="المستخدمون النشطون"
+        value={`${settingsStats.activeUsers}/25`}
+        icon={Activity}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status={storageBadgeStatus}
+        label="استخدام التخزين"
+        value={`${storageUsagePercent}%`}
+        icon={Database}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="success"
+        label="النسخ الاحتياطية"
+        value={settingsStats.dataBackups}
+        icon={RefreshCw}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="default"
+        label="إصدار النظام"
+        value={settingsStats.systemVersion}
+        icon={CheckCircle}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="info"
+        label="آخر نسخة"
+        value={settingsStats.lastBackup}
+        icon={Shield}
+        size="sm"
+        className="shadow-none"
+      />
+    </div>
+  )
+
+  const headerExtraContent = (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-secondary/20 bg-gradient-to-l from-secondary/10 via-card/40 to-background p-5 shadow-sm">
+        {headerMetadata}
+      </div>
+      <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-secondary/10 backdrop-blur-sm">
+        {SystemStatusCards}
+      </div>
     </div>
   )
 
@@ -882,10 +905,11 @@ export function Settings() {
       title="إعدادات النظام"
       description="إعدادات الشركة والنظام والتفضيلات المتقدمة"
       icon={SettingsIcon}
-      quickStats={quickStats}
+      quickStats={[]}
       quickActions={quickActions}
-      headerExtra={SystemStatusCards}
+      headerExtra={headerExtraContent}
       showSearch={false}
+      showLastUpdate={false}
     >
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* العمود الأيسر - أدوات وإحصائيات */}

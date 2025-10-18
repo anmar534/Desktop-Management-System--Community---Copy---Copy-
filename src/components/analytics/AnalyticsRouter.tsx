@@ -8,7 +8,7 @@
  * @since Phase 2 - Unified Analytics Navigation
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BarChart3,
@@ -17,20 +17,14 @@ import {
   TrendingUp,
   Target,
   Users,
-  ChevronRight,
-  Home,
   Download,
   Printer,
   RefreshCw,
-  Settings,
   ArrowLeft,
-  FileText
+  FileText,
 } from 'lucide-react'
-
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -47,10 +41,10 @@ import {
 } from '../ui/dropdown-menu'
 
 // Import analytics components
-import { AnalyticsDashboard } from './AnalyticsDashboard'
 import { PredictiveAnalytics } from './PredictiveAnalytics'
 import { HistoricalComparison } from './HistoricalComparison'
 import { AnalyticsOverview } from './AnalyticsOverview'
+import { CompetitiveAnalyticsBoard } from './CompetitiveAnalyticsBoard'
 
 // Import competitive intelligence components
 import { CompetitorTracker } from '../competitive/CompetitorTracker'
@@ -63,7 +57,7 @@ import { AnalyticsProvider, useAnalytics } from './AnalyticsContext'
 import { exportAnalyticsData, type ExportFormat } from '../../utils/analyticsExport'
 
 // Analytics section definitions
-export type AnalyticsSection = 
+export type AnalyticsSection =
   | 'overview'
   | 'dashboard'
   | 'predictive'
@@ -73,13 +67,15 @@ export type AnalyticsSection =
   | 'swot'
   | 'benchmark'
 
+type SectionComponent = React.ComponentType<Record<string, unknown>>
+
 interface AnalyticsSectionConfig {
   id: AnalyticsSection
   title: string
   description: string
   icon: React.ComponentType<{ className?: string }>
   category: 'analytics' | 'competitive' | 'intelligence'
-  component: React.ComponentType<any>
+  component: SectionComponent
   requiresData?: boolean
   exportable?: boolean
 }
@@ -91,8 +87,8 @@ const ANALYTICS_SECTIONS: AnalyticsSectionConfig[] = [
     description: 'ملخص شامل لجميع التحليلات والمؤشرات',
     icon: BarChart3,
     category: 'analytics',
-    component: AnalyticsOverview,
-    exportable: true
+    component: AnalyticsOverview as unknown as SectionComponent,
+    exportable: true,
   },
   {
     id: 'dashboard',
@@ -100,9 +96,9 @@ const ANALYTICS_SECTIONS: AnalyticsSectionConfig[] = [
     description: 'تحليلات الأداء والمؤشرات الرئيسية',
     icon: BarChart3,
     category: 'analytics',
-    component: AnalyticsDashboard,
+    component: CompetitiveAnalyticsBoard as unknown as SectionComponent,
     requiresData: true,
-    exportable: true
+    exportable: true,
   },
   {
     id: 'predictive',
@@ -110,9 +106,9 @@ const ANALYTICS_SECTIONS: AnalyticsSectionConfig[] = [
     description: 'توقعات الفوز وتحسين الأسعار بالذكاء الاصطناعي',
     icon: Brain,
     category: 'intelligence',
-    component: PredictiveAnalytics,
+    component: PredictiveAnalytics as unknown as SectionComponent,
     requiresData: true,
-    exportable: true
+    exportable: true,
   },
   {
     id: 'historical',
@@ -120,9 +116,9 @@ const ANALYTICS_SECTIONS: AnalyticsSectionConfig[] = [
     description: 'تحليل الاتجاهات والمقارنات الزمنية',
     icon: TrendingUp,
     category: 'analytics',
-    component: HistoricalComparison,
+    component: HistoricalComparison as unknown as SectionComponent,
     requiresData: true,
-    exportable: true
+    exportable: true,
   },
   {
     id: 'competitors',
@@ -130,8 +126,8 @@ const ANALYTICS_SECTIONS: AnalyticsSectionConfig[] = [
     description: 'مراقبة وتحليل أنشطة المنافسين',
     icon: Users,
     category: 'competitive',
-    component: CompetitorTracker,
-    exportable: true
+    component: CompetitorTracker as unknown as SectionComponent,
+    exportable: true,
   },
   {
     id: 'market',
@@ -139,8 +135,8 @@ const ANALYTICS_SECTIONS: AnalyticsSectionConfig[] = [
     description: 'تحليل الفرص والاتجاهات السوقية',
     icon: Target,
     category: 'competitive',
-    component: MarketMonitor,
-    exportable: true
+    component: MarketMonitor as unknown as SectionComponent,
+    exportable: true,
   },
   {
     id: 'swot',
@@ -148,8 +144,8 @@ const ANALYTICS_SECTIONS: AnalyticsSectionConfig[] = [
     description: 'تحليل نقاط القوة والضعف والفرص والتهديدات',
     icon: Shield,
     category: 'intelligence',
-    component: SWOTAnalysis,
-    exportable: true
+    component: SWOTAnalysis as unknown as SectionComponent,
+    exportable: true,
   },
   {
     id: 'benchmark',
@@ -157,10 +153,10 @@ const ANALYTICS_SECTIONS: AnalyticsSectionConfig[] = [
     description: 'مقارنة الأداء مع المنافسين الرئيسيين',
     icon: TrendingUp,
     category: 'competitive',
-    component: CompetitiveBenchmark,
+    component: CompetitiveBenchmark as unknown as SectionComponent,
     requiresData: true,
-    exportable: true
-  }
+    exportable: true,
+  },
 ]
 
 interface AnalyticsRouterProps {
@@ -173,9 +169,9 @@ interface AnalyticsRouterProps {
 // Analytics Router with Context Integration
 function AnalyticsRouterContent({
   initialSection = 'overview',
-  onSectionChange,
+  onSectionChange: _onSectionChange,
   onBack,
-  className = ''
+  className = '',
 }: AnalyticsRouterProps) {
   const [activeSection, setActiveSection] = useState<AnalyticsSection>(initialSection)
   const [isLoading, setIsLoading] = useState(false)
@@ -184,56 +180,59 @@ function AnalyticsRouterContent({
   const { state, refreshData } = useAnalytics()
 
   // Get current section configuration
-  const currentSectionConfig = useMemo(() =>
-    ANALYTICS_SECTIONS.find(section => section.id === activeSection) || ANALYTICS_SECTIONS[0],
-    [activeSection]
+  const currentSectionConfig = useMemo(
+    () =>
+      ANALYTICS_SECTIONS.find((section) => section.id === activeSection) ?? ANALYTICS_SECTIONS[0],
+    [activeSection],
   )
 
   // Handle section navigation
   const handleSectionChange = useCallback((section: AnalyticsSection) => {
     setActiveSection(section)
-    onSectionChange?.(section)
-  }, [onSectionChange])
+  }, [])
 
   // Handle export functionality
-  const handleExport = useCallback(async (format: ExportFormat) => {
-    setIsLoading(true)
-    try {
-      // Determine data type based on active section
-      let dataType: 'bidPerformances' | 'competitors' | 'marketOpportunities' | 'marketTrends'
-      let data: any[]
+  const handleExport = useCallback(
+    async (format: ExportFormat) => {
+      setIsLoading(true)
+      try {
+        // Determine data type based on active section
+        let dataType: 'bidPerformances' | 'competitors' | 'marketOpportunities' | 'marketTrends'
+        let data: unknown[]
 
-      switch (activeSection) {
-        case 'dashboard':
-        case 'predictive':
-        case 'historical':
-          dataType = 'bidPerformances'
-          data = state.bidPerformances
-          break
-        case 'competitors':
-          dataType = 'competitors'
-          data = state.competitors
-          break
-        case 'market':
-          dataType = 'marketOpportunities'
-          data = state.marketOpportunities
-          break
-        default:
-          dataType = 'bidPerformances'
-          data = state.bidPerformances
+        switch (activeSection) {
+          case 'dashboard':
+          case 'predictive':
+          case 'historical':
+            dataType = 'bidPerformances'
+            data = state.bidPerformances
+            break
+          case 'competitors':
+            dataType = 'competitors'
+            data = state.competitors
+            break
+          case 'market':
+            dataType = 'marketOpportunities'
+            data = state.marketOpportunities
+            break
+          default:
+            dataType = 'bidPerformances'
+            data = state.bidPerformances
+        }
+
+        await exportAnalyticsData(dataType, data, {
+          format,
+          includeMetadata: true,
+          filters: state.globalFilter,
+        })
+      } catch (error) {
+        console.error('Export failed:', error)
+      } finally {
+        setIsLoading(false)
       }
-
-      await exportAnalyticsData(dataType, data, {
-        format,
-        includeMetadata: true,
-        filters: state.globalFilter
-      })
-    } catch (error) {
-      console.error('Export failed:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [activeSection, state])
+    },
+    [activeSection, state],
+  )
 
   // Handle print functionality
   const handlePrint = useCallback(() => {
@@ -253,19 +252,22 @@ function AnalyticsRouterContent({
   }, [refreshData])
 
   // Generate breadcrumbs
-  const breadcrumbs = useMemo(() => [
-    { label: 'لوحة التحكم', href: '#', onClick: onBack },
-    { label: 'التحليلات والذكاء التنافسي', href: '#' },
-    { label: currentSectionConfig.title }
-  ], [currentSectionConfig, onBack])
+  const breadcrumbs = useMemo(
+    () => [
+      { label: 'لوحة التحكم', href: '#', onClick: onBack },
+      { label: 'التحليلات والذكاء التنافسي', href: '#' },
+      { label: currentSectionConfig.title },
+    ],
+    [currentSectionConfig, onBack],
+  )
 
   // Get current component
   const CurrentComponent = currentSectionConfig.component
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${className}`}>
+    <div className={`min-h-screen bg-muted ${className}`}>
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <div className="bg-card border-b border-border sticky top-0 z-10">
         <div className="px-6 py-4">
           {/* Breadcrumbs */}
           <Breadcrumb className="mb-4">
@@ -276,7 +278,7 @@ function AnalyticsRouterContent({
                     {index === breadcrumbs.length - 1 ? (
                       <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                     ) : (
-                      <BreadcrumbLink 
+                      <BreadcrumbLink
                         href={crumb.href}
                         onClick={crumb.onClick}
                         className="hover:text-primary"
@@ -300,25 +302,20 @@ function AnalyticsRouterContent({
                   العودة
                 </Button>
               )}
-              
+
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                   <currentSectionConfig.icon className="h-6 w-6 text-primary" />
                   {currentSectionConfig.title}
                 </h1>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {currentSectionConfig.description}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading}
-              >
+              <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
 
@@ -358,9 +355,12 @@ function AnalyticsRouterContent({
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-card border-b border-border">
         <div className="px-6">
-          <Tabs value={activeSection} onValueChange={(value) => handleSectionChange(value as AnalyticsSection)}>
+          <Tabs
+            value={activeSection}
+            onValueChange={(value) => handleSectionChange(value as AnalyticsSection)}
+          >
             <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-1">
               {ANALYTICS_SECTIONS.map((section) => {
                 const Icon = section.icon

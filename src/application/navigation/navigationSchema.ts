@@ -9,8 +9,9 @@ import {
   FileText,
   LayoutDashboard,
   Settings,
+  Sparkles,
   Target,
-  Trophy
+  Trophy,
 } from 'lucide-react'
 
 export const NAVIGATION_SECTIONS = [
@@ -19,6 +20,7 @@ export const NAVIGATION_SECTIONS = [
   'tenders',
   'new-tender',
   'tender-pricing-wizard',
+  'tender-pricing-v2-prototype',
   'analytics',
   'financial',
   'development',
@@ -32,10 +34,10 @@ export const NAVIGATION_SECTIONS = [
   'new-report',
   'administrative-expenses',
   'reports',
-  'settings'
+  'settings',
 ] as const
 
-export type NavigationSectionId = typeof NAVIGATION_SECTIONS[number]
+export type NavigationSectionId = (typeof NAVIGATION_SECTIONS)[number]
 export type AppSection = NavigationSectionId
 
 export const DEFAULT_NAVIGATION_SECTION: NavigationSectionId = 'dashboard'
@@ -54,14 +56,15 @@ const NAVIGATION_PERMISSION_VALUES = [
   'settings:write',
   'settings:read',
   'audit:read',
-  'audit:write'
+  'audit:write',
 ] as const
 
 const NAVIGATION_PERMISSION_SET = new Set<string>(NAVIGATION_PERMISSION_VALUES)
 
-export type NavigationPermission = typeof NAVIGATION_PERMISSION_VALUES[number]
+export type NavigationPermission = (typeof NAVIGATION_PERMISSION_VALUES)[number]
 
-export const ALL_NAVIGATION_PERMISSIONS: readonly NavigationPermission[] = NAVIGATION_PERMISSION_VALUES
+export const ALL_NAVIGATION_PERMISSIONS: readonly NavigationPermission[] =
+  NAVIGATION_PERMISSION_VALUES
 
 export interface NavigationBreadcrumb {
   label: string
@@ -120,7 +123,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
         icon: Trophy,
         targetSection: 'new-tender',
         requires: ['tenders:write'],
-        tooltip: 'بدء إنشاء منافسة جديدة'
+        tooltip: 'بدء إنشاء منافسة جديدة',
       },
       {
         id: 'create-project',
@@ -128,7 +131,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
         icon: Building2,
         targetSection: 'projects',
         tooltip: 'الانتقال إلى صفحة المشاريع لإضافة مشروع',
-        requires: ['projects:write']
+        requires: ['projects:write'],
       },
       {
         id: 'analytics-view',
@@ -136,13 +139,13 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
         icon: Activity,
         targetSection: 'analytics',
         requires: ['analytics:read'],
-        tooltip: 'الانتقال إلى التحليلات والذكاء التنافسي'
-      }
+        tooltip: 'الانتقال إلى التحليلات والذكاء التنافسي',
+      },
     ],
     relatedSections: ['projects', 'tenders', 'financial', 'analytics'],
     view: {
-      module: '@/components/Dashboard'
-    }
+      module: '@/components/Dashboard',
+    },
   },
 
   {
@@ -153,10 +156,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     order: 10,
     category: 'primary',
     requires: ['projects:read'],
-    breadcrumbs: [
-      { label: 'لوحة التحكم', section: 'dashboard' },
-      { label: 'المشاريع' }
-    ],
+    breadcrumbs: [{ label: 'لوحة التحكم', section: 'dashboard' }, { label: 'المشاريع' }],
     quickActions: [
       {
         id: 'new-budget',
@@ -164,13 +164,13 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
         icon: DollarSign,
         targetSection: 'new-budget',
         requires: ['financial:write'],
-        tooltip: 'إنشاء ميزانية مشروع جديدة'
-      }
+        tooltip: 'إنشاء ميزانية مشروع جديدة',
+      },
     ],
     relatedSections: ['budgets', 'financial-reports'],
     view: {
-      module: '@/features/projects/ProjectsContainer'
-    }
+      module: '@/features/projects/ProjectsContainer',
+    },
   },
   {
     id: 'tenders',
@@ -180,17 +180,14 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     order: 20,
     category: 'primary',
     requires: ['tenders:read'],
-    breadcrumbs: [
-      { label: 'لوحة التحكم', section: 'dashboard' },
-      { label: 'المنافسات' }
-    ],
+    breadcrumbs: [{ label: 'لوحة التحكم', section: 'dashboard' }, { label: 'المنافسات' }],
     quickActions: [
       {
         id: 'start-tender',
         label: 'بدء منافسة',
         icon: Target,
         targetSection: 'new-tender',
-        requires: ['tenders:write']
+        requires: ['tenders:write'],
       },
       {
         id: 'open-pricing-wizard',
@@ -198,14 +195,14 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
         icon: Calculator,
         targetSection: 'tender-pricing-wizard',
         requires: ['tenders:write'],
-        tooltip: 'اتباع المعالج المتدرج لتجهيز المنافسة للإرسال'
-      }
+        tooltip: 'اتباع المعالج المتدرج لتجهيز المنافسة للإرسال',
+      },
     ],
     relatedSections: ['financial', 'reports'],
     view: {
       module: '@/components/Tenders',
-      exportName: 'Tenders'
-    }
+      exportName: 'Tenders',
+    },
   },
   {
     id: 'new-tender',
@@ -216,14 +213,11 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     category: 'workflow',
     hideFromMenu: true,
     requires: ['tenders:write'],
-    breadcrumbs: [
-      { label: 'المنافسات', section: 'tenders' },
-      { label: 'منافسة جديدة' }
-    ],
+    breadcrumbs: [{ label: 'المنافسات', section: 'tenders' }, { label: 'منافسة جديدة' }],
     view: {
       module: '@/components/NewTenderForm',
-      exportName: 'NewTenderForm'
-    }
+      exportName: 'NewTenderForm',
+    },
   },
   {
     id: 'tender-pricing-wizard',
@@ -234,36 +228,70 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     category: 'workflow',
     hideFromMenu: true,
     requires: ['tenders:write'],
-    breadcrumbs: [
-      { label: 'المنافسات', section: 'tenders' },
-      { label: 'معالج التسعير' }
-    ],
+    breadcrumbs: [{ label: 'المنافسات', section: 'tenders' }, { label: 'معالج التسعير' }],
     quickActions: [
       {
         id: 'wizard-back-to-tenders',
         label: 'قائمة المنافسات',
         icon: Trophy,
         targetSection: 'tenders',
-        requires: ['tenders:read']
-      }
+        requires: ['tenders:read'],
+      },
     ],
     relatedSections: ['tenders', 'new-tender'],
     view: {
       module: '@/features/tenders/pricing/TenderPricingWizard',
-      exportName: 'TenderPricingWizard'
-    }
+      exportName: 'TenderPricingWizard',
+    },
+  },
+  {
+    id: 'tender-pricing-v2-prototype',
+    label: 'نموذج التسعير المحسّن',
+    description: 'نموذج أولي تجريبي لنظام التسعير المحسّن مع جميع التحسينات المقترحة',
+    icon: Sparkles,
+    order: 28,
+    category: 'workflow',
+    hideFromMenu: false,
+    requires: ['tenders:write'],
+    breadcrumbs: [
+      { label: 'المنافسات', section: 'tenders' },
+      { label: 'النموذج التجريبي المحسّن v2.0' },
+    ],
+    quickActions: [
+      {
+        id: 'back-to-tenders',
+        label: 'العودة للمنافسات',
+        icon: Trophy,
+        targetSection: 'tenders',
+        requires: ['tenders:read'],
+        tooltip: 'العودة إلى قائمة المنافسات',
+      },
+      {
+        id: 'view-current-pricing',
+        label: 'النظام الحالي',
+        icon: Calculator,
+        targetSection: 'tender-pricing-wizard',
+        requires: ['tenders:write'],
+        tooltip: 'عرض نظام التسعير الحالي للمقارنة',
+      },
+    ],
+    relatedSections: ['tenders', 'tender-pricing-wizard'],
+    view: {
+      module: '@/prototypes/tender-pricing-v2/TenderPricingV2Prototype',
+      exportName: 'TenderPricingV2Prototype',
+    },
   },
   {
     id: 'analytics',
     label: 'التحليلات والذكاء التنافسي',
     description: 'تحليلات الأداء، التنبؤات، والذكاء التنافسي المتقدم',
     icon: BarChart3,
-    order: 28,
+    order: 29,
     category: 'primary',
     requires: ['analytics:read'],
     breadcrumbs: [
       { label: 'لوحة التحكم', section: 'dashboard' },
-      { label: 'التحليلات والذكاء التنافسي' }
+      { label: 'التحليلات والذكاء التنافسي' },
     ],
     quickActions: [
       {
@@ -272,7 +300,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
         icon: Activity,
         targetSection: 'analytics',
         requires: ['analytics:read'],
-        tooltip: 'عرض توقعات الفوز وتحسين الأسعار'
+        tooltip: 'عرض توقعات الفوز وتحسين الأسعار',
       },
       {
         id: 'competitor-tracker',
@@ -280,14 +308,14 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
         icon: Target,
         targetSection: 'analytics',
         requires: ['analytics:read'],
-        tooltip: 'مراقبة وتحليل أنشطة المنافسين'
-      }
+        tooltip: 'مراقبة وتحليل أنشطة المنافسين',
+      },
     ],
     relatedSections: ['tenders', 'projects', 'financial'],
     view: {
       module: '@/components/analytics/AnalyticsRouter',
-      exportName: 'AnalyticsRouter'
-    }
+      exportName: 'AnalyticsRouter',
+    },
   },
   {
     id: 'financial',
@@ -297,24 +325,21 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     order: 30,
     category: 'primary',
     requires: ['financial:read'],
-    breadcrumbs: [
-      { label: 'لوحة التحكم', section: 'dashboard' },
-      { label: 'المالية' }
-    ],
+    breadcrumbs: [{ label: 'لوحة التحكم', section: 'dashboard' }, { label: 'المالية' }],
     quickActions: [
       {
         id: 'new-invoice',
         label: 'فاتورة جديدة',
         icon: FileText,
         targetSection: 'new-invoice',
-        requires: ['financial:write']
-      }
+        requires: ['financial:write'],
+      },
     ],
     relatedSections: ['invoices', 'bank-accounts'],
     view: {
       module: '@/components/Financial',
-      exportName: 'Financial'
-    }
+      exportName: 'Financial',
+    },
   },
   {
     id: 'development',
@@ -324,15 +349,12 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     order: 40,
     category: 'primary',
     requires: ['projects:read'],
-    breadcrumbs: [
-      { label: 'لوحة التحكم', section: 'dashboard' },
-      { label: 'التطوير' }
-    ],
+    breadcrumbs: [{ label: 'لوحة التحكم', section: 'dashboard' }, { label: 'التطوير' }],
     relatedSections: ['projects', 'reports'],
     view: {
       module: '@/components/Development',
-      exportName: 'Development'
-    }
+      exportName: 'Development',
+    },
   },
   {
     id: 'invoices',
@@ -343,24 +365,21 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     category: 'primary',
     hideFromMenu: true,
     requires: ['financial:read'],
-    breadcrumbs: [
-      { label: 'المالية', section: 'financial' },
-      { label: 'الفواتير' }
-    ],
+    breadcrumbs: [{ label: 'المالية', section: 'financial' }, { label: 'الفواتير' }],
     quickActions: [
       {
         id: 'create-invoice',
         label: 'فاتورة جديدة',
         icon: FileText,
         targetSection: 'new-invoice',
-        requires: ['financial:write']
-      }
+        requires: ['financial:write'],
+      },
     ],
     relatedSections: ['financial', 'projects'],
     view: {
       module: '@/components/Financial',
-      exportName: 'Financial'
-    }
+      exportName: 'Financial',
+    },
   },
   {
     id: 'bank-accounts',
@@ -371,24 +390,21 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     category: 'primary',
     hideFromMenu: true,
     requires: ['financial:read'],
-    breadcrumbs: [
-      { label: 'المالية', section: 'financial' },
-      { label: 'الحسابات البنكية' }
-    ],
+    breadcrumbs: [{ label: 'المالية', section: 'financial' }, { label: 'الحسابات البنكية' }],
     quickActions: [
       {
         id: 'add-bank-account',
         label: 'حساب جديد',
         icon: Banknote,
         targetSection: 'new-bank-account',
-        requires: ['financial:write']
-      }
+        requires: ['financial:write'],
+      },
     ],
     relatedSections: ['financial'],
     view: {
       module: '@/components/Financial',
-      exportName: 'Financial'
-    }
+      exportName: 'Financial',
+    },
   },
   {
     id: 'budgets',
@@ -399,24 +415,21 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     category: 'primary',
     hideFromMenu: true,
     requires: ['financial:read'],
-    breadcrumbs: [
-      { label: 'المالية', section: 'financial' },
-      { label: 'الموازنات' }
-    ],
+    breadcrumbs: [{ label: 'المالية', section: 'financial' }, { label: 'الموازنات' }],
     quickActions: [
       {
         id: 'create-budget',
         label: 'ميزانية جديدة',
         icon: Calculator,
         targetSection: 'new-budget',
-        requires: ['financial:write']
-      }
+        requires: ['financial:write'],
+      },
     ],
     relatedSections: ['projects'],
     view: {
       module: '@/components/Financial',
-      exportName: 'Financial'
-    }
+      exportName: 'Financial',
+    },
   },
   {
     id: 'financial-reports',
@@ -427,14 +440,11 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     category: 'reporting',
     hideFromMenu: true,
     requires: ['reports:read'],
-    breadcrumbs: [
-      { label: 'المالية', section: 'financial' },
-      { label: 'التقارير المالية' }
-    ],
+    breadcrumbs: [{ label: 'المالية', section: 'financial' }, { label: 'التقارير المالية' }],
     view: {
       module: '@/components/Financial',
-      exportName: 'Financial'
-    }
+      exportName: 'Financial',
+    },
   },
   {
     id: 'new-invoice',
@@ -445,14 +455,11 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     category: 'workflow',
     hideFromMenu: true,
     requires: ['financial:write'],
-    breadcrumbs: [
-      { label: 'الفواتير', section: 'invoices' },
-      { label: 'فاتورة جديدة' }
-    ],
+    breadcrumbs: [{ label: 'الفواتير', section: 'invoices' }, { label: 'فاتورة جديدة' }],
     view: {
       module: '@/components/NewInvoice',
-      exportName: 'NewInvoice'
-    }
+      exportName: 'NewInvoice',
+    },
   },
   {
     id: 'new-bank-account',
@@ -463,14 +470,11 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     category: 'workflow',
     hideFromMenu: true,
     requires: ['financial:write'],
-    breadcrumbs: [
-      { label: 'الحسابات البنكية', section: 'bank-accounts' },
-      { label: 'حساب جديد' }
-    ],
+    breadcrumbs: [{ label: 'الحسابات البنكية', section: 'bank-accounts' }, { label: 'حساب جديد' }],
     view: {
       module: '@/components/NewBankAccount',
-      exportName: 'NewBankAccount'
-    }
+      exportName: 'NewBankAccount',
+    },
   },
   {
     id: 'new-budget',
@@ -481,14 +485,11 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     category: 'workflow',
     hideFromMenu: true,
     requires: ['financial:write'],
-    breadcrumbs: [
-      { label: 'الموازنات', section: 'budgets' },
-      { label: 'ميزانية جديدة' }
-    ],
+    breadcrumbs: [{ label: 'الموازنات', section: 'budgets' }, { label: 'ميزانية جديدة' }],
     view: {
       module: '@/components/NewBudget',
-      exportName: 'NewBudget'
-    }
+      exportName: 'NewBudget',
+    },
   },
   {
     id: 'new-report',
@@ -499,14 +500,11 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     category: 'workflow',
     hideFromMenu: true,
     requires: ['reports:write'],
-    breadcrumbs: [
-      { label: 'التقارير', section: 'reports' },
-      { label: 'تقرير جديد' }
-    ],
+    breadcrumbs: [{ label: 'التقارير', section: 'reports' }, { label: 'تقرير جديد' }],
     view: {
       module: '@/components/NewReport',
-      exportName: 'NewReport'
-    }
+      exportName: 'NewReport',
+    },
   },
   {
     id: 'administrative-expenses',
@@ -516,13 +514,10 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     order: 90,
     category: 'primary',
     requires: ['financial:read'],
-    breadcrumbs: [
-      { label: 'لوحة التحكم', section: 'dashboard' },
-      { label: 'المشتريات' }
-    ],
+    breadcrumbs: [{ label: 'لوحة التحكم', section: 'dashboard' }, { label: 'المشتريات' }],
     view: {
-      module: '@/components/ExpenseManagement'
-    }
+      module: '@/components/ExpenseManagement',
+    },
   },
   {
     id: 'reports',
@@ -532,23 +527,20 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     order: 100,
     category: 'reporting',
     requires: ['reports:read'],
-    breadcrumbs: [
-      { label: 'لوحة التحكم', section: 'dashboard' },
-      { label: 'التقارير' }
-    ],
+    breadcrumbs: [{ label: 'لوحة التحكم', section: 'dashboard' }, { label: 'التقارير' }],
     quickActions: [
       {
         id: 'new-report-action',
         label: 'تقرير جديد',
         icon: FileText,
         targetSection: 'new-report',
-        requires: ['reports:write']
-      }
+        requires: ['reports:write'],
+      },
     ],
     relatedSections: ['financial-reports'],
     view: {
-      module: '@/components/Reports'
-    }
+      module: '@/components/Reports',
+    },
   },
   {
     id: 'settings',
@@ -558,10 +550,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     order: 110,
     category: 'settings',
     requires: ['settings:read'],
-    breadcrumbs: [
-      { label: 'لوحة التحكم', section: 'dashboard' },
-      { label: 'الإعدادات' }
-    ],
+    breadcrumbs: [{ label: 'لوحة التحكم', section: 'dashboard' }, { label: 'الإعدادات' }],
     quickActions: [
       {
         id: 'audit-log',
@@ -569,31 +558,35 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
         icon: Activity,
         targetSection: 'settings',
         requires: ['audit:read'],
-        tooltip: 'عرض سجل التدقيق من إعدادات الأمان'
-      }
+        tooltip: 'عرض سجل التدقيق من إعدادات الأمان',
+      },
     ],
     relatedSections: ['financial', 'reports'],
     view: {
       module: '@/components/Settings',
-      exportName: 'Settings'
-    }
-  }
+      exportName: 'Settings',
+    },
+  },
 ]
 
 const NAVIGATION_MAP = new Map<NavigationSectionId, NavigationNode>(
-  NAVIGATION_SCHEMA.map(node => [node.id, node])
+  NAVIGATION_SCHEMA.map((node) => [node.id, node]),
 )
 
 export function collectNavigationPermissionsFromSchema(): NavigationPermission[] {
   const permissions = new Set<NavigationPermission>()
-  NAVIGATION_SCHEMA.forEach(node => {
-    node.requires?.forEach(permission => permissions.add(permission))
-    node.quickActions?.forEach(action => action.requires?.forEach(permission => permissions.add(permission)))
+  NAVIGATION_SCHEMA.forEach((node) => {
+    node.requires?.forEach((permission) => permissions.add(permission))
+    node.quickActions?.forEach((action) =>
+      action.requires?.forEach((permission) => permissions.add(permission)),
+    )
   })
   return Array.from(permissions)
 }
 
-export function isNavigationSection(value: string | null | undefined): value is NavigationSectionId {
+export function isNavigationSection(
+  value: string | null | undefined,
+): value is NavigationSectionId {
   return typeof value === 'string' && NAVIGATION_MAP.has(value as NavigationSectionId)
 }
 
@@ -606,11 +599,11 @@ export function getNavigationNode(section: NavigationSectionId): NavigationNode 
 }
 
 export function resolveSidebarNodes(): NavigationNode[] {
-  return NAVIGATION_SCHEMA.filter(node => !node.hideFromMenu).sort((a, b) => a.order - b.order)
+  return NAVIGATION_SCHEMA.filter((node) => !node.hideFromMenu).sort((a, b) => a.order - b.order)
 }
 
 export function resolveWorkflowNodes(): NavigationNode[] {
-  return NAVIGATION_SCHEMA.filter(node => node.category === 'workflow')
+  return NAVIGATION_SCHEMA.filter((node) => node.category === 'workflow')
 }
 
 export function resolveSectionBreadcrumbs(section: NavigationSectionId): NavigationBreadcrumb[] {

@@ -7,17 +7,21 @@ import { arSA } from 'date-fns/locale'
 interface LastUpdateIndicatorProps {
   compact?: boolean
   showRefreshButton?: boolean
+  hideFallbackLabel?: boolean
 }
 
-export function LastUpdateIndicator({ 
-  compact = false, 
-  showRefreshButton = true 
+export function LastUpdateIndicator({
+  compact = false,
+  showRefreshButton = true,
+  hideFallbackLabel = false,
 }: LastUpdateIndicatorProps) {
   const { lastRefreshAt, isRefreshing, refreshAll } = useFinancialState()
 
   const getTimeLabel = () => {
-    if (!lastRefreshAt) return 'لم يتم التحديث بعد'
-    
+    if (!lastRefreshAt) {
+      return hideFallbackLabel ? '' : 'لم يتم التحديث بعد'
+    }
+
     try {
       const distance = formatDistanceToNow(new Date(lastRefreshAt), {
         addSuffix: true,
@@ -32,17 +36,19 @@ export function LastUpdateIndicator({
   if (compact) {
     return (
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-        <span>{getTimeLabel()}</span>
+        <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
+        {getTimeLabel() && <span>{getTimeLabel()}</span>}
       </div>
     )
   }
 
   return (
-    <div className="flex items-center gap-3 text-sm">
+    <div
+      className={`flex items-center ${compact ? 'gap-2 text-xs text-muted-foreground' : 'gap-3 text-sm'}`}
+    >
       <div className="flex items-center gap-2 text-muted-foreground">
         <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
-        <span>{getTimeLabel()}</span>
+        {getTimeLabel() && <span>{getTimeLabel()}</span>}
       </div>
       {showRefreshButton && (
         <Button

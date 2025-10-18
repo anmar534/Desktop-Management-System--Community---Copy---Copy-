@@ -1,7 +1,7 @@
 /**
  * خدمة مراقبة الأخطاء والاسترداد التلقائي
  * Error Monitoring and Automatic Recovery Service
- * 
+ *
  * مراقبة الأخطاء وتطبيق آليات الاسترداد التلقائي
  * Monitor errors and apply automatic recovery mechanisms
  */
@@ -81,6 +81,8 @@ class ErrorRecoveryService {
   private strategies: RecoveryStrategy[] = []
   private isMonitoring = false
   private startTime = Date.now()
+  private errorHandler: ((event: ErrorEvent) => void) | null = null
+  private rejectionHandler: ((event: PromiseRejectionEvent) => void) | null = null
 
   /**
    * تهيئة خدمة مراقبة الأخطاء
@@ -89,13 +91,13 @@ class ErrorRecoveryService {
     try {
       // تحميل البيانات المحفوظة
       await this.loadData()
-      
+
       // تهيئة استراتيجيات الاسترداد
       await this.initializeRecoveryStrategies()
-      
+
       // بدء المراقبة
       this.startErrorMonitoring()
-      
+
       console.log('Error Recovery Service initialized successfully')
     } catch (error) {
       console.error('Failed to initialize Error Recovery Service:', error)
@@ -110,7 +112,7 @@ class ErrorRecoveryService {
     try {
       const [errorsData, attemptsData] = await Promise.all([
         asyncStorage.getItem(STORAGE_KEYS.ERROR_LOGS),
-        asyncStorage.getItem(STORAGE_KEYS.RECOVERY_ATTEMPTS)
+        asyncStorage.getItem(STORAGE_KEYS.RECOVERY_ATTEMPTS),
       ])
 
       this.errors = errorsData || []
@@ -127,7 +129,7 @@ class ErrorRecoveryService {
     try {
       await Promise.all([
         asyncStorage.setItem(STORAGE_KEYS.ERROR_LOGS, this.errors),
-        asyncStorage.setItem(STORAGE_KEYS.RECOVERY_ATTEMPTS, this.recoveryAttempts)
+        asyncStorage.setItem(STORAGE_KEYS.RECOVERY_ATTEMPTS, this.recoveryAttempts),
       ])
     } catch (error) {
       console.error('Failed to save error recovery data:', error)
@@ -151,7 +153,7 @@ class ErrorRecoveryService {
         maxAttempts: 3,
         cooldownPeriod: 5000,
         implementation: this.retryNetworkRequest.bind(this),
-        validation: this.validateNetworkRecovery.bind(this)
+        validation: this.validateNetworkRecovery.bind(this),
       },
       {
         id: 'storage-fallback',
@@ -165,7 +167,7 @@ class ErrorRecoveryService {
         maxAttempts: 2,
         cooldownPeriod: 1000,
         implementation: this.fallbackStorage.bind(this),
-        validation: this.validateStorageRecovery.bind(this)
+        validation: this.validateStorageRecovery.bind(this),
       },
       {
         id: 'ui-refresh',
@@ -179,7 +181,7 @@ class ErrorRecoveryService {
         maxAttempts: 2,
         cooldownPeriod: 2000,
         implementation: this.refreshUIComponent.bind(this),
-        validation: this.validateUIRecovery.bind(this)
+        validation: this.validateUIRecovery.bind(this),
       },
       {
         id: 'data-recovery',
@@ -193,7 +195,7 @@ class ErrorRecoveryService {
         maxAttempts: 1,
         cooldownPeriod: 10000,
         implementation: this.recoverData.bind(this),
-        validation: this.validateDataRecovery.bind(this)
+        validation: this.validateDataRecovery.bind(this),
       },
       {
         id: 'system-restart',
@@ -207,8 +209,8 @@ class ErrorRecoveryService {
         maxAttempts: 1,
         cooldownPeriod: 60000,
         implementation: this.restartSystem.bind(this),
-        validation: this.validateSystemRestart.bind(this)
-      }
+        validation: this.validateSystemRestart.bind(this),
+      },
     ]
   }
 
@@ -221,30 +223,56 @@ class ErrorRecoveryService {
     this.isMonitoring = true
 
     // مراقبة أخطاء JavaScript العامة
-    window.addEventListener('error', (event) => {
+    this.errorHandler = (event) => {
       this.captureError({
         type: 'runtime',
         severity: 'high',
         message: event.message,
         stack: event.error?.stack,
         component: 'global',
-        url: event.filename || window.location.href
+        url: event.filename || window.location.href,
       })
-    })
+    }
+    window.addEventListener('error', this.errorHandler as unknown as EventListener)
 
     // مراقبة أخطاء Promise غير المعالجة
-    window.addEventListener('unhandledrejection', (event) => {
+    this.rejectionHandler = (event) => {
       this.captureError({
         type: 'runtime',
         severity: 'high',
         message: event.reason?.message || 'Unhandled Promise Rejection',
         stack: event.reason?.stack,
         component: 'promise',
-        url: window.location.href
+        url: window.location.href,
       })
-    })
+    }
+    window.addEventListener('unhandledrejection', this.rejectionHandler as unknown as EventListener)
 
     console.log('Error monitoring started')
+  }
+
+  /**
+   * إيقاف مراقبة الأخطاء وتنظيف الموارد
+   */
+  public shutdown(): void {
+    if (!this.isMonitoring) return
+
+    // إزالة event listeners
+    if (this.errorHandler) {
+      window.removeEventListener('error', this.errorHandler as unknown as EventListener)
+      this.errorHandler = null
+    }
+
+    if (this.rejectionHandler) {
+      window.removeEventListener(
+        'unhandledrejection',
+        this.rejectionHandler as unknown as EventListener,
+      )
+      this.rejectionHandler = null
+    }
+
+    this.isMonitoring = false
+    console.log('Error monitoring stopped')
   }
 
   /**
@@ -272,11 +300,11 @@ class ErrorRecoveryService {
       sessionId: this.getSessionId(),
       context: errorData.context,
       resolved: false,
-      recoveryAttempts: 0
+      recoveryAttempts: 0,
     }
 
     this.errors.push(error)
-    
+
     // الاحتفاظ بآخر 1000 خطأ فقط
     if (this.errors.length > 1000) {
       this.errors = this.errors.slice(-1000)
@@ -299,18 +327,19 @@ class ErrorRecoveryService {
   private async attemptRecovery(error: ErrorEvent): Promise<void> {
     // العثور على الاستراتيجيات المناسبة
     const applicableStrategies = this.strategies
-      .filter(strategy => 
-        strategy.enabled &&
-        strategy.errorTypes.includes(error.type) &&
-        strategy.severity.includes(error.severity) &&
-        error.recoveryAttempts < strategy.maxAttempts
+      .filter(
+        (strategy) =>
+          strategy.enabled &&
+          strategy.errorTypes.includes(error.type) &&
+          strategy.severity.includes(error.severity) &&
+          error.recoveryAttempts < strategy.maxAttempts,
       )
       .sort((a, b) => a.priority - b.priority)
 
     for (const strategy of applicableStrategies) {
       // التحقق من فترة التهدئة
       const lastAttempt = this.recoveryAttempts
-        .filter(attempt => attempt.errorId === error.id && attempt.strategyId === strategy.id)
+        .filter((attempt) => attempt.errorId === error.id && attempt.strategyId === strategy.id)
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
 
       if (lastAttempt) {
@@ -326,7 +355,7 @@ class ErrorRecoveryService {
         strategyId: strategy.id,
         timestamp: new Date().toISOString(),
         success: false,
-        duration: 0
+        duration: 0,
       }
 
       const startTime = performance.now()
@@ -426,27 +455,30 @@ class ErrorRecoveryService {
    */
   getErrorSummary(): ErrorSummary {
     const total = this.errors.length
-    const resolved = this.errors.filter(e => e.resolved).length
+    const resolved = this.errors.filter((e) => e.resolved).length
     const pending = total - resolved
 
     const byType: Record<string, number> = {}
     const bySeverity: Record<string, number> = {}
 
-    this.errors.forEach(error => {
+    this.errors.forEach((error) => {
       byType[error.type] = (byType[error.type] || 0) + 1
       bySeverity[error.severity] = (bySeverity[error.severity] || 0) + 1
     })
 
     const recentErrors = this.errors
-      .filter(e => Date.now() - new Date(e.timestamp).getTime() < 3600000) // آخر ساعة
+      .filter((e) => Date.now() - new Date(e.timestamp).getTime() < 3600000) // آخر ساعة
       .slice(-10)
 
-    const successfulRecoveries = this.recoveryAttempts.filter(a => a.success).length
+    const successfulRecoveries = this.recoveryAttempts.filter((a) => a.success).length
     const totalRecoveries = this.recoveryAttempts.length
     const recoveryRate = totalRecoveries > 0 ? (successfulRecoveries / totalRecoveries) * 100 : 0
 
-    const avgRecoveryTime = this.recoveryAttempts.length > 0 ?
-      this.recoveryAttempts.reduce((sum, a) => sum + a.duration, 0) / this.recoveryAttempts.length : 0
+    const avgRecoveryTime =
+      this.recoveryAttempts.length > 0
+        ? this.recoveryAttempts.reduce((sum, a) => sum + a.duration, 0) /
+          this.recoveryAttempts.length
+        : 0
 
     return {
       total,
@@ -456,7 +488,7 @@ class ErrorRecoveryService {
       bySeverity,
       recentErrors,
       recoveryRate,
-      avgRecoveryTime
+      avgRecoveryTime,
     }
   }
 
@@ -465,19 +497,20 @@ class ErrorRecoveryService {
    */
   getSystemStability(): SystemStability {
     const uptime = Date.now() - this.startTime
-    const recentErrors = this.errors.filter(e => 
-      Date.now() - new Date(e.timestamp).getTime() < 60000 // آخر دقيقة
+    const recentErrors = this.errors.filter(
+      (e) => Date.now() - new Date(e.timestamp).getTime() < 60000, // آخر دقيقة
     )
     const errorRate = recentErrors.length
 
-    const criticalErrors = this.errors.filter(e => e.severity === 'critical').length
+    const criticalErrors = this.errors.filter((e) => e.severity === 'critical').length
     const lastCrash = this.errors
-      .filter(e => e.severity === 'critical')
+      .filter((e) => e.severity === 'critical')
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
 
-    const successfulRecoveries = this.recoveryAttempts.filter(a => a.success).length
+    const successfulRecoveries = this.recoveryAttempts.filter((a) => a.success).length
     const totalRecoveries = this.recoveryAttempts.length
-    const recoverySuccessRate = totalRecoveries > 0 ? (successfulRecoveries / totalRecoveries) * 100 : 100
+    const recoverySuccessRate =
+      totalRecoveries > 0 ? (successfulRecoveries / totalRecoveries) * 100 : 100
 
     let stability: SystemStability['stability'] = 'excellent'
     if (errorRate > 10 || criticalErrors > 5) stability = 'critical'
@@ -490,7 +523,7 @@ class ErrorRecoveryService {
       recoverySuccessRate,
       criticalErrors,
       lastCrash: lastCrash?.timestamp,
-      stability
+      stability,
     }
   }
 
@@ -498,7 +531,7 @@ class ErrorRecoveryService {
    * حل خطأ يدوياً
    */
   async resolveError(errorId: string, resolution: string): Promise<boolean> {
-    const error = this.errors.find(e => e.id === errorId)
+    const error = this.errors.find((e) => e.id === errorId)
     if (!error) return false
 
     error.resolved = true
@@ -519,13 +552,13 @@ class ErrorRecoveryService {
     let filteredErrors = this.errors
 
     if (filters?.type) {
-      filteredErrors = filteredErrors.filter(e => e.type === filters.type)
+      filteredErrors = filteredErrors.filter((e) => e.type === filters.type)
     }
     if (filters?.severity) {
-      filteredErrors = filteredErrors.filter(e => e.severity === filters.severity)
+      filteredErrors = filteredErrors.filter((e) => e.severity === filters.severity)
     }
     if (filters?.resolved !== undefined) {
-      filteredErrors = filteredErrors.filter(e => e.resolved === filters.resolved)
+      filteredErrors = filteredErrors.filter((e) => e.resolved === filters.resolved)
     }
 
     // ترتيب حسب الوقت (الأحدث أولاً)
@@ -545,17 +578,19 @@ class ErrorRecoveryService {
     let attempts = this.recoveryAttempts
 
     if (errorId) {
-      attempts = attempts.filter(a => a.errorId === errorId)
+      attempts = attempts.filter((a) => a.errorId === errorId)
     }
 
-    return attempts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    return attempts.sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    )
   }
 
   /**
    * تفعيل/تعطيل استراتيجية استرداد
    */
   toggleRecoveryStrategy(strategyId: string, enabled: boolean): boolean {
-    const strategy = this.strategies.find(s => s.id === strategyId)
+    const strategy = this.strategies.find((s) => s.id === strategyId)
     if (!strategy) return false
 
     strategy.enabled = enabled

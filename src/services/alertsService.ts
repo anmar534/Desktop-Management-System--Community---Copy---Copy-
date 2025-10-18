@@ -1,36 +1,50 @@
 /**
  * Alerts Service
- * 
+ *
  * خدمة إدارة التنبيهات والإشعارات الحرجة
  * تراقب النظام وتنشئ تنبيهات للحالات المهمة
- * 
+ *
  * @version 1.0.0
  * @date 2024-01-15
  */
 
-import { CentralDataService } from '@/application/services/centralDataService';
-import type { Alert } from '@/components/dashboard/enhanced/EnhancedDashboardLayout';
-import { safeLocalStorage } from '@/utils/storage';
-import { STORAGE_KEYS } from '@/config/storageKeys';
+import { CentralDataService } from '@/application/services/centralDataService'
+import type { Alert } from '@/components/analytics/enhanced/EnhancedDashboardLayout'
+import { safeLocalStorage } from '@/utils/storage'
+
+type StoredAlert = Omit<Alert, 'timestamp' | 'actions'> & {
+  timestamp: string
+  actions?: { label: string; href?: string }[]
+}
 
 /**
  * خدمة التنبيهات
  */
 export class AlertsService {
-  private static instance: AlertsService;
-  private centralDataService: CentralDataService;
-  private alertsCache: Alert[] = [];
+  private static instance: AlertsService
+  private centralDataService: CentralDataService
+  private alertsCache: Alert[] = []
 
   private constructor() {
-    this.centralDataService = CentralDataService.getInstance();
-    this.loadAlerts();
+    this.centralDataService = CentralDataService.getInstance()
+    this.loadAlerts()
+  }
+
+  private createNavigationAction(label: string, href: string) {
+    return {
+      label,
+      href,
+      onClick: () => {
+        window.location.href = href
+      },
+    } satisfies NonNullable<Alert['actions']>[number]
   }
 
   public static getInstance(): AlertsService {
     if (!AlertsService.instance) {
-      AlertsService.instance = new AlertsService();
+      AlertsService.instance = new AlertsService()
     }
-    return AlertsService.instance;
+    return AlertsService.instance
   }
 
   /**
@@ -38,41 +52,41 @@ export class AlertsService {
    */
   async getCriticalAlerts(): Promise<Alert[]> {
     // تحديث التنبيهات من مصادر البيانات
-    await this.generateSystemAlerts();
-    
+    await this.generateSystemAlerts()
+
     // ترتيب التنبيهات حسب الأولوية والوقت
     return this.alertsCache
-      .filter(alert => alert.severity === 'high' || alert.severity === 'critical')
+      .filter((alert) => alert.severity === 'high' || alert.severity === 'critical')
       .sort((a, b) => {
         // ترتيب حسب الأولوية أولاً
-        const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
-        const severityDiff = severityOrder[b.severity] - severityOrder[a.severity];
-        if (severityDiff !== 0) return severityDiff;
-        
+        const severityOrder = { critical: 4, high: 3, medium: 2, low: 1 }
+        const severityDiff = severityOrder[b.severity] - severityOrder[a.severity]
+        if (severityDiff !== 0) return severityDiff
+
         // ثم حسب الوقت (الأحدث أولاً)
-        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       })
-      .slice(0, 10); // أهم 10 تنبيهات
+      .slice(0, 10) // أهم 10 تنبيهات
   }
 
   /**
    * جلب جميع التنبيهات
    */
   async getAllAlerts(): Promise<Alert[]> {
-    await this.generateSystemAlerts();
-    return this.alertsCache.sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    await this.generateSystemAlerts()
+    return this.alertsCache.sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    )
   }
 
   /**
    * وضع علامة "تم القراءة" على التنبيه
    */
   async markAlertAsRead(alertId: string): Promise<void> {
-    const alertIndex = this.alertsCache.findIndex(alert => alert.id === alertId);
+    const alertIndex = this.alertsCache.findIndex((alert) => alert.id === alertId)
     if (alertIndex !== -1) {
-      this.alertsCache[alertIndex].isRead = true;
-      this.saveAlerts();
+      this.alertsCache[alertIndex].isRead = true
+      this.saveAlerts()
     }
   }
 
@@ -80,8 +94,8 @@ export class AlertsService {
    * إخفاء التنبيه
    */
   async dismissAlert(alertId: string): Promise<void> {
-    this.alertsCache = this.alertsCache.filter(alert => alert.id !== alertId);
-    this.saveAlerts();
+    this.alertsCache = this.alertsCache.filter((alert) => alert.id !== alertId)
+    this.saveAlerts()
   }
 
   /**
@@ -92,72 +106,73 @@ export class AlertsService {
       ...alert,
       id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
-      isRead: false
-    };
+      isRead: false,
+    }
 
-    this.alertsCache.unshift(newAlert);
-    this.saveAlerts();
-    
-    return newAlert.id;
+    this.alertsCache.unshift(newAlert)
+    this.saveAlerts()
+
+    return newAlert.id
   }
 
   /**
    * توليد تنبيهات النظام تلقائياً
    */
   private async generateSystemAlerts(): Promise<void> {
-    const newAlerts: Alert[] = [];
+    const newAlerts: Alert[] = []
 
     // تنبيهات المشاريع المتأخرة
-    const delayedProjectAlerts = await this.generateDelayedProjectAlerts();
-    newAlerts.push(...delayedProjectAlerts);
+    const delayedProjectAlerts = await this.generateDelayedProjectAlerts()
+    newAlerts.push(...delayedProjectAlerts)
 
     // تنبيهات الميزانية
-    const budgetAlerts = await this.generateBudgetAlerts();
-    newAlerts.push(...budgetAlerts);
+    const budgetAlerts = await this.generateBudgetAlerts()
+    newAlerts.push(...budgetAlerts)
 
     // تنبيهات المستحقات
-    const receivableAlerts = await this.generateReceivableAlerts();
-    newAlerts.push(...receivableAlerts);
+    const receivableAlerts = await this.generateReceivableAlerts()
+    newAlerts.push(...receivableAlerts)
 
     // تنبيهات السلامة
-    const safetyAlerts = await this.generateSafetyAlerts();
-    newAlerts.push(...safetyAlerts);
+    const safetyAlerts = await this.generateSafetyAlerts()
+    newAlerts.push(...safetyAlerts)
 
     // تنبيهات الموارد
-    const resourceAlerts = await this.generateResourceAlerts();
-    newAlerts.push(...resourceAlerts);
+    const resourceAlerts = await this.generateResourceAlerts()
+    newAlerts.push(...resourceAlerts)
 
     // إضافة التنبيهات الجديدة فقط (تجنب التكرار)
     for (const alert of newAlerts) {
-      const exists = this.alertsCache.some(existing => 
-        existing.type === alert.type && 
-        existing.title === alert.title &&
-        this.isSameDay(existing.timestamp, alert.timestamp)
-      );
-      
+      const exists = this.alertsCache.some(
+        (existing) =>
+          existing.type === alert.type &&
+          existing.title === alert.title &&
+          this.isSameDay(existing.timestamp, alert.timestamp),
+      )
+
       if (!exists) {
-        this.alertsCache.unshift(alert);
+        this.alertsCache.unshift(alert)
       }
     }
 
     // الاحتفاظ بآخر 100 تنبيه فقط
-    this.alertsCache = this.alertsCache.slice(0, 100);
-    this.saveAlerts();
+    this.alertsCache = this.alertsCache.slice(0, 100)
+    this.saveAlerts()
   }
 
   /**
    * توليد تنبيهات المشاريع المتأخرة
    */
   private async generateDelayedProjectAlerts(): Promise<Alert[]> {
-    const projects = this.centralDataService.getAllProjects();
-    const today = new Date();
-    const alerts: Alert[] = [];
+    const projects = this.centralDataService.getProjects()
+    const today = new Date()
+    const alerts: Alert[] = []
 
     for (const project of projects) {
-      if (!project.endDate || project.status === 'completed') continue;
+      if (!project.endDate || project.status === 'completed') continue
 
-      const endDate = new Date(project.endDate);
-      const daysOverdue = Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
+      const endDate = new Date(project.endDate)
+      const daysOverdue = Math.floor((today.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24))
 
       if (daysOverdue > 0) {
         alerts.push({
@@ -169,39 +184,29 @@ export class AlertsService {
           timestamp: new Date(),
           isRead: false,
           actions: [
-            {
-              label: 'مراجعة المشروع',
-              onClick: () => {
-                window.location.href = `/projects/${project.id}`;
-              }
-            },
-            {
-              label: 'تحديث الجدول',
-              onClick: () => {
-                window.location.href = `/projects/${project.id}/schedule`;
-              }
-            }
-          ]
-        });
+            this.createNavigationAction('مراجعة المشروع', `/projects/${project.id}`),
+            this.createNavigationAction('تحديث الجدول', `/projects/${project.id}/schedule`),
+          ],
+        })
       }
     }
 
-    return alerts;
+    return alerts
   }
 
   /**
    * توليد تنبيهات الميزانية
    */
   private async generateBudgetAlerts(): Promise<Alert[]> {
-    const projects = this.centralDataService.getAllProjects();
-    const alerts: Alert[] = [];
+    const projects = this.centralDataService.getProjects()
+    const alerts: Alert[] = []
 
     for (const project of projects) {
-      if (!project.budget || project.status === 'completed') continue;
+      if (!project.budget || project.status === 'completed') continue
 
       // محاكاة التكلفة الفعلية (في التطبيق الحقيقي ستأتي من قاعدة البيانات)
-      const actualCost = project.budget * (0.8 + Math.random() * 0.4); // 80% - 120% من الميزانية
-      const budgetVariance = ((actualCost - project.budget) / project.budget) * 100;
+      const actualCost = project.budget * (0.8 + Math.random() * 0.4) // 80% - 120% من الميزانية
+      const budgetVariance = ((actualCost - project.budget) / project.budget) * 100
 
       if (budgetVariance > 10) {
         alerts.push({
@@ -213,28 +218,23 @@ export class AlertsService {
           timestamp: new Date(),
           isRead: false,
           actions: [
-            {
-              label: 'مراجعة التكاليف',
-              onClick: () => {
-                window.location.href = `/projects/${project.id}/budget`;
-              }
-            }
-          ]
-        });
+            this.createNavigationAction('مراجعة التكاليف', `/projects/${project.id}/budget`),
+          ],
+        })
       }
     }
 
-    return alerts;
+    return alerts
   }
 
   /**
    * توليد تنبيهات المستحقات
    */
   private async generateReceivableAlerts(): Promise<Alert[]> {
-    const alerts: Alert[] = [];
+    const alerts: Alert[] = []
 
     // محاكاة مستحقات متأخرة
-    const overdueAmount = 450000;
+    const overdueAmount = 450000
     if (overdueAmount > 300000) {
       alerts.push({
         id: 'overdue_receivables',
@@ -245,27 +245,22 @@ export class AlertsService {
         timestamp: new Date(),
         isRead: false,
         actions: [
-          {
-            label: 'متابعة التحصيل',
-            onClick: () => {
-              window.location.href = '/finance/receivables?filter=overdue';
-            }
-          }
-        ]
-      });
+          this.createNavigationAction('متابعة التحصيل', '/finance/receivables?filter=overdue'),
+        ],
+      })
     }
 
-    return alerts;
+    return alerts
   }
 
   /**
    * توليد تنبيهات السلامة
    */
   private async generateSafetyAlerts(): Promise<Alert[]> {
-    const alerts: Alert[] = [];
+    const alerts: Alert[] = []
 
     // محاكاة تنبيهات السلامة
-    const incidentCount = 1;
+    const incidentCount = 1
     if (incidentCount > 0) {
       alerts.push({
         id: 'safety_incidents',
@@ -275,19 +270,12 @@ export class AlertsService {
         description: `تم تسجيل ${incidentCount} حادث سلامة هذا الشهر`,
         timestamp: new Date(),
         isRead: false,
-        actions: [
-          {
-            label: 'مراجعة التقارير',
-            onClick: () => {
-              window.location.href = '/safety/incidents';
-            }
-          }
-        ]
-      });
+        actions: [this.createNavigationAction('مراجعة التقارير', '/safety/incidents')],
+      })
     }
 
     // تنبيه انتهاء صلاحية التدريبات
-    const expiredTrainings = 3;
+    const expiredTrainings = 3
     if (expiredTrainings > 0) {
       alerts.push({
         id: 'expired_trainings',
@@ -297,28 +285,21 @@ export class AlertsService {
         description: `${expiredTrainings} موظفين يحتاجون تجديد تدريبات السلامة`,
         timestamp: new Date(),
         isRead: false,
-        actions: [
-          {
-            label: 'جدولة التدريبات',
-            onClick: () => {
-              window.location.href = '/safety/training';
-            }
-          }
-        ]
-      });
+        actions: [this.createNavigationAction('جدولة التدريبات', '/safety/training')],
+      })
     }
 
-    return alerts;
+    return alerts
   }
 
   /**
    * توليد تنبيهات الموارد
    */
   private async generateResourceAlerts(): Promise<Alert[]> {
-    const alerts: Alert[] = [];
+    const alerts: Alert[] = []
 
     // محاكاة تنبيهات الموارد
-    const lowStockItems = ['أسمنت', 'حديد التسليح'];
+    const lowStockItems = ['أسمنت', 'حديد التسليح']
     if (lowStockItems.length > 0) {
       alerts.push({
         id: 'low_stock_materials',
@@ -328,19 +309,12 @@ export class AlertsService {
         description: `نقص في المخزون: ${lowStockItems.join(', ')}`,
         timestamp: new Date(),
         isRead: false,
-        actions: [
-          {
-            label: 'طلب شراء',
-            onClick: () => {
-              window.location.href = '/inventory/purchase-orders/new';
-            }
-          }
-        ]
-      });
+        actions: [this.createNavigationAction('طلب شراء', '/inventory/purchase-orders/new')],
+      })
     }
 
     // تنبيه صيانة المعدات
-    const maintenanceDue = ['حفارة 001', 'رافعة 003'];
+    const maintenanceDue = ['حفارة 001', 'رافعة 003']
     if (maintenanceDue.length > 0) {
       alerts.push({
         id: 'equipment_maintenance',
@@ -350,42 +324,57 @@ export class AlertsService {
         description: `معدات تحتاج صيانة: ${maintenanceDue.join(', ')}`,
         timestamp: new Date(),
         isRead: false,
-        actions: [
-          {
-            label: 'جدولة الصيانة',
-            onClick: () => {
-              window.location.href = '/equipment/maintenance';
-            }
-          }
-        ]
-      });
+        actions: [this.createNavigationAction('جدولة الصيانة', '/equipment/maintenance')],
+      })
     }
 
-    return alerts;
+    return alerts
   }
 
   /**
    * تحميل التنبيهات من التخزين المحلي
    */
   private loadAlerts(): void {
-    const stored = safeLocalStorage.getItem<Alert[]>('dashboard_alerts', []);
-    this.alertsCache = stored.map(alert => ({
+    const stored = safeLocalStorage.getItem<StoredAlert[]>('dashboard_alerts', [])
+    this.alertsCache = stored.map((alert) => ({
       ...alert,
-      timestamp: new Date(alert.timestamp)
-    }));
+      timestamp: new Date(alert.timestamp),
+      actions: alert.actions?.map((action): NonNullable<Alert['actions']>[number] => {
+        if (action.href) {
+          return {
+            ...action,
+            onClick: () => {
+              window.location.href = action.href!
+            },
+          }
+        }
+        return { label: action.label }
+      }),
+    }))
   }
 
   /**
    * حفظ التنبيهات في التخزين المحلي
    */
   private saveAlerts(): void {
-    safeLocalStorage.setItem('dashboard_alerts', this.alertsCache);
+    const serializable: StoredAlert[] = this.alertsCache.map((alert) => ({
+      ...alert,
+      timestamp:
+        alert.timestamp instanceof Date
+          ? alert.timestamp.toISOString()
+          : new Date(alert.timestamp).toISOString(),
+      actions: alert.actions?.map((action) => ({
+        label: action.label,
+        href: action.href,
+      })),
+    }))
+    safeLocalStorage.setItem('dashboard_alerts', serializable)
   }
 
   /**
    * التحقق من تطابق التاريخ
    */
   private isSameDay(date1: Date, date2: Date): boolean {
-    return date1.toDateString() === date2.toDateString();
+    return date1.toDateString() === date2.toDateString()
   }
 }

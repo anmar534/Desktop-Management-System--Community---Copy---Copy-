@@ -30,14 +30,12 @@ import {
 
 type ViewModuleLoader = () => Promise<Record<string, unknown>>
 
-const viewModuleLoaders = import.meta.glob('./{components,features,pages}/**/*.{ts,tsx}') as Record<
-  string,
-  ViewModuleLoader
->
+const viewModuleLoaders = import.meta.glob(
+  './{components,features,pages,prototypes}/**/*.{ts,tsx}',
+) as Record<string, ViewModuleLoader>
 
 const SECTIONS_WITH_ON_SECTION_CHANGE: AppSection[] = [
   'dashboard',
-  'enhanced-dashboard',
   'projects',
   'tenders',
   'analytics',
@@ -198,23 +196,31 @@ const AppShell = () => {
   const ActiveComponent = viewComponents.get(activeSection)
 
   return (
-    <div className="h-screen bg-background text-foreground overflow-hidden" dir="rtl" lang="ar">
-      <div className="flex flex-col h-full">
-        <Header />
+    <div className="relative min-h-screen bg-muted/8 text-foreground" dir="rtl" lang="ar">
+      <div className="relative z-10">
+        <div className="sticky top-0 z-20 px-6 pt-6 bg-background/95 backdrop-blur-md">
+          <Header />
+        </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          <div className="flex-shrink-0">
+        <div className="flex gap-4 px-6 pb-6 pt-4">
+          <div className="sticky top-32 self-start h-[calc(100vh-9rem)]">
             <Sidebar />
           </div>
 
-          <main className="flex-1 w-full overflow-y-auto scroll-smooth p-4">
-            <Suspense fallback={<div className="p-6 text-muted-foreground">جارٍ التحميل...</div>}>
-              {ActiveComponent ? (
-                <ActiveComponent {...sectionProps} />
-              ) : (
-                <MissingView section={activeSection} />
-              )}
-            </Suspense>
+          <main className="flex-1 min-w-0 pb-6">
+            <div className="rounded-3xl border border-border/30 bg-card/60 shadow-xl backdrop-blur-xl">
+              <div className="p-6">
+                <Suspense
+                  fallback={<div className="p-6 text-muted-foreground">جارٍ التحميل...</div>}
+                >
+                  {ActiveComponent ? (
+                    <ActiveComponent {...sectionProps} />
+                  ) : (
+                    <MissingView section={activeSection} />
+                  )}
+                </Suspense>
+              </div>
+            </div>
           </main>
         </div>
       </div>

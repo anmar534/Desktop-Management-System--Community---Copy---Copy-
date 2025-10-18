@@ -24,7 +24,8 @@ import {
   Files,
   Trash2,
   Send,
-  Search
+  Search,
+  ListChecks,
 } from 'lucide-react'
 import {
   AlertDialog,
@@ -34,7 +35,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from './ui/alert-dialog'
 
 import { useFinancialState } from '@/application/context'
@@ -43,12 +44,8 @@ import { TenderDetails } from './TenderDetails'
 import { TenderResultsManager } from './TenderResultsManager'
 import type { Tender } from '../data/centralData'
 
-
 import { EnhancedTenderCard } from './bidding/EnhancedTenderCard'
-import {
-  getDaysRemaining,
-  isTenderExpired
-} from '../utils/tenderProgressCalculator'
+import { getDaysRemaining, isTenderExpired } from '../utils/tenderProgressCalculator'
 import type { TenderMetricsSummary } from '@/domain/contracts/metrics'
 import type { TenderMetrics as AggregatedTenderMetrics } from '@/domain/selectors/financialMetrics'
 import { useCurrencyFormatter } from '@/hooks/useCurrencyFormatter'
@@ -81,45 +78,27 @@ const getTenderDocumentPrice = (tender: Tender): number => {
 
 // Using EnhancedTenderCard component from ./bidding/EnhancedTenderCard
 
-
-
 interface TendersProps {
   onSectionChange: (section: string, tender?: Tender) => void
 }
 
 export function Tenders({ onSectionChange }: TendersProps) {
-  const { tenders: tendersState, metrics, lastRefreshAt, currency } = useFinancialState()
-  const {
-    tenders: tendersData,
-    deleteTender,
-    refreshTenders,
-    updateTender,
-  } = tendersState
+  const { tenders: tendersState, metrics } = useFinancialState()
+  const { tenders: tendersData, deleteTender, refreshTenders, updateTender } = tendersState
   const tenders = useMemo(() => tendersData, [tendersData])
   const rawTenderMetrics = metrics.tenders as AggregatedTenderMetrics
   const tenderPerformance = useMemo<TenderMetricsSummary>(() => {
     return resolveTenderPerformance(rawTenderMetrics, tenders)
   }, [rawTenderMetrics, tenders])
-  const tenderMetrics = useMemo<AggregatedTenderMetrics>(() => ({
-    ...rawTenderMetrics,
-    performance: tenderPerformance,
-  }), [rawTenderMetrics, tenderPerformance])
-  const { formatCurrencyValue, baseCurrency } = useCurrencyFormatter()
-  const timestampFormatter = useMemo(() => new Intl.DateTimeFormat('ar-SA', {
-    hour: '2-digit',
-    minute: '2-digit'
-  }), [])
-  const formatTimestamp = useCallback((value: string | number | Date | null | undefined) => {
-    if (value === null || value === undefined) {
-      return null
-    }
-    const date = value instanceof Date ? value : new Date(value)
-    if (Number.isNaN(date.getTime())) {
-      return null
-    }
-    return timestampFormatter.format(date)
-  }, [timestampFormatter])
-  const [searchTerm, setSearchTerm] = useState('')
+  const tenderMetrics = useMemo<AggregatedTenderMetrics>(
+    () => ({
+      ...rawTenderMetrics,
+      performance: tenderPerformance,
+    }),
+    [rawTenderMetrics, tenderPerformance],
+  )
+  const { formatCurrencyValue } = useCurrencyFormatter()
+  const [searchTerm] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [currentView, setCurrentView] = useState<'list' | 'pricing' | 'details' | 'results'>('list')
   const [selectedTender, setSelectedTender] = useState<Tender | null>(null)
@@ -172,52 +151,59 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
   // تصفية وترتيب البيانات
   const filteredTenders = useMemo(() => {
-    return tenders.filter((tender: Tender) => {
-      const matchesSearch = tender.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          tender.client?.toLowerCase().includes(searchTerm.toLowerCase())
-      
-      const isExpired = isTenderExpired(tender)
-      
-      let matchesTab = false
-      
-      if (activeTab === 'all') {
-        // "الكل" يعرض النشطة فقط (استثناء المنتهية)
-        matchesTab = !isExpired
-      } else if (activeTab === 'expired') {
-        // تبويب "المنتهية" يعرض المنتهية فقط
-        matchesTab = isExpired
-      } else if (activeTab === 'urgent') {
-        // المنافسات العاجلة = الجديدة + تحت الإجراء + الجاهزة للإرسال + المتبقي ≤ 7 أيام
-        const days = getDaysRemaining(tender.deadline)
-        matchesTab = !isExpired && 
-          days <= 7 && 
-          days >= 0 &&
-          (tender.status === 'new' || tender.status === 'under_action' || tender.status === 'ready_to_submit')
-      } else if (activeTab === 'new') {
-        matchesTab = !isExpired && tender.status === 'new'
-      } else if (activeTab === 'under_action') {
-        matchesTab = !isExpired && (tender.status === 'under_action' || tender.status === 'ready_to_submit')
-      } else if (activeTab === 'waiting_results') {
-        matchesTab = !isExpired && tender.status === 'submitted'
-      } else if (activeTab === 'won') {
-        matchesTab = !isExpired && tender.status === 'won'
-      } else if (activeTab === 'lost') {
-        matchesTab = !isExpired && tender.status === 'lost'
-      }
+    return tenders
+      .filter((tender: Tender) => {
+        const matchesSearch =
+          tender.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          tender.client?.toLowerCase().includes(searchTerm.toLowerCase())
 
-      return matchesSearch && matchesTab
-  }).sort((a: Tender, b: Tender) => {
-      // المنافسات المنتهية في تبويب منفصل - لا تؤثر على الترتيب هنا
-      if (activeTab === 'expired') {
-        return new Date(b.deadline).getTime() - new Date(a.deadline).getTime()
-      }
-      
-      // ترتيب حسب المدة المتبقية - الأقل أولاً (للنشطة فقط)
-      const daysRemainingA = getDaysRemaining(a.deadline)
-      const daysRemainingB = getDaysRemaining(b.deadline)
-      
-      return daysRemainingA - daysRemainingB
-    })
+        const isExpired = isTenderExpired(tender)
+
+        let matchesTab = false
+
+        if (activeTab === 'all') {
+          // "الكل" يعرض النشطة فقط (استثناء المنتهية)
+          matchesTab = !isExpired
+        } else if (activeTab === 'expired') {
+          // تبويب "المنتهية" يعرض المنتهية فقط
+          matchesTab = isExpired
+        } else if (activeTab === 'urgent') {
+          // المنافسات العاجلة = الجديدة + تحت الإجراء + الجاهزة للإرسال + المتبقي ≤ 7 أيام
+          const days = getDaysRemaining(tender.deadline)
+          matchesTab =
+            !isExpired &&
+            days <= 7 &&
+            days >= 0 &&
+            (tender.status === 'new' ||
+              tender.status === 'under_action' ||
+              tender.status === 'ready_to_submit')
+        } else if (activeTab === 'new') {
+          matchesTab = !isExpired && tender.status === 'new'
+        } else if (activeTab === 'under_action') {
+          matchesTab =
+            !isExpired && (tender.status === 'under_action' || tender.status === 'ready_to_submit')
+        } else if (activeTab === 'waiting_results') {
+          matchesTab = !isExpired && tender.status === 'submitted'
+        } else if (activeTab === 'won') {
+          matchesTab = !isExpired && tender.status === 'won'
+        } else if (activeTab === 'lost') {
+          matchesTab = !isExpired && tender.status === 'lost'
+        }
+
+        return matchesSearch && matchesTab
+      })
+      .sort((a: Tender, b: Tender) => {
+        // المنافسات المنتهية في تبويب منفصل - لا تؤثر على الترتيب هنا
+        if (activeTab === 'expired') {
+          return new Date(b.deadline).getTime() - new Date(a.deadline).getTime()
+        }
+
+        // ترتيب حسب المدة المتبقية - الأقل أولاً (للنشطة فقط)
+        const daysRemainingA = getDaysRemaining(a.deadline)
+        const daysRemainingB = getDaysRemaining(b.deadline)
+
+        return daysRemainingA - daysRemainingB
+      })
   }, [tenders, searchTerm, activeTab])
 
   const tenderSummary = useMemo(() => {
@@ -293,7 +279,9 @@ export function Tenders({ onSectionChange }: TendersProps) {
       totalDocumentValue,
       active: tenderMetrics.activeCount,
       submitted: tenderMetrics.submittedCount,
-      averageWinChance: Number.isFinite(tenderMetrics.averageWinChance) ? tenderMetrics.averageWinChance : 0,
+      averageWinChance: Number.isFinite(tenderMetrics.averageWinChance)
+        ? tenderMetrics.averageWinChance
+        : 0,
       averageCycleDays: tenderPerformance.averageCycleDays,
       submittedValue: tenderPerformance.submittedValue,
       wonValue: tenderPerformance.wonValue,
@@ -309,59 +297,69 @@ export function Tenders({ onSectionChange }: TendersProps) {
       setTenderToDelete(null)
       // لا حاجة لـ refreshTenders لأن deleteTender يحدث البيانات تلقائياً
     }
-  }, [tenderToDelete, deleteTender]);
+  }, [tenderToDelete, deleteTender])
 
   const handleStartPricing = useCallback((tender: Tender) => {
     setSelectedTender(tender)
     setCurrentView('pricing')
-  }, []);
+  }, [])
 
   // دالة تقديم العرض من بطاقة المنافسة
   const handleSubmitTender = useCallback((tender: Tender) => {
     setTenderToSubmit(tender)
-  }, []);
+  }, [])
 
   // دالة فتح إدارة النتائج للمنافسات المُسَلمة
   const handleOpenResults = useCallback((tender: Tender) => {
     setSelectedTender(tender)
     setCurrentView('results')
-  }, []);
+  }, [])
 
   // دالة التراجع عن الحالة - لإعادة المنافسة لحالة سابقة
   // won/lost → submitted (تراجع من النتيجة النهائية للحالة المُرسلة)
   // submitted → ready_to_submit (تراجع من النتائج للإرسال - يُظهر زر "إرسال" كإجراء رئيسي)
   // ready_to_submit → under_action (تراجع من الإرسال للتسعير - يُظهر زر "تسعير" كإجراء رئيسي)
-  const handleRevertStatus = useCallback(async (tender: Tender, newStatus: Tender['status']) => {
-    try {
-      // 1. إذا كان التراجع من submitted إلى ready_to_submit، نحتاج حذف أوامر الشراء
-      if (tender.status === 'submitted' && newStatus === 'ready_to_submit') {
-        console.log('🗑️ التراجع من النتيجة للإرسال - حذف أوامر الشراء المرتبطة');
-        
-  const { purchaseOrderService } = await import('@/application/services/purchaseOrderService');
-  const { deletedOrdersCount, deletedExpensesCount } = await purchaseOrderService.deleteTenderRelatedOrders(tender.id);
-        
-        console.log(`✅ تم حذف ${deletedOrdersCount} أمر شراء و ${deletedExpensesCount} مصروف`);
+  const handleRevertStatus = useCallback(
+    async (tender: Tender, newStatus: Tender['status']) => {
+      try {
+        // 1. إذا كان التراجع من submitted إلى ready_to_submit، نحتاج حذف أوامر الشراء
+        if (tender.status === 'submitted' && newStatus === 'ready_to_submit') {
+          console.log('🗑️ التراجع من النتيجة للإرسال - حذف أوامر الشراء المرتبطة')
+
+          const { purchaseOrderService } = await import(
+            '@/application/services/purchaseOrderService'
+          )
+          const { deletedOrdersCount, deletedExpensesCount } =
+            await purchaseOrderService.deleteTenderRelatedOrders(tender.id)
+
+          console.log(`✅ تم حذف ${deletedOrdersCount} أمر شراء و ${deletedExpensesCount} مصروف`)
+        }
+
+        await updateTender({
+          ...tender,
+          status: newStatus,
+          lastUpdate: new Date().toISOString(),
+          lastAction:
+            (tender.status === 'won' || tender.status === 'lost') && newStatus === 'submitted'
+              ? 'تراجع من النتيجة النهائية - عودة لحالة مُرسلة'
+              : newStatus === 'ready_to_submit'
+                ? 'تراجع عن الإرسال - عودة لحالة جاهز للإرسال'
+                : newStatus === 'under_action'
+                  ? 'تراجع للتسعير والتعديل'
+                  : 'تراجع عن الحالة',
+        } as Tender)
+
+        toast.success('تم التراجع بنجاح', {
+          description: `تم إعادة المنافسة "${tender.name}" إلى الحالة السابقة`,
+          duration: 3000,
+        })
+      } catch (error) {
+        console.error('خطأ في التراجع:', error)
+        toast.error('فشل في التراجع عن الحالة')
       }
-      
-      await updateTender({
-        ...tender,
-        status: newStatus,
-        lastUpdate: new Date().toISOString(),
-        lastAction: 
-          (tender.status === 'won' || tender.status === 'lost') && newStatus === 'submitted' ? 'تراجع من النتيجة النهائية - عودة لحالة مُرسلة' :
-          newStatus === 'ready_to_submit' ? 'تراجع عن الإرسال - عودة لحالة جاهز للإرسال' : 
-          newStatus === 'under_action' ? 'تراجع للتسعير والتعديل' : 'تراجع عن الحالة'
-      } as Tender);
-      
-      toast.success('تم التراجع بنجاح', {
-        description: `تم إعادة المنافسة "${tender.name}" إلى الحالة السابقة`,
-        duration: 3000,
-      });
-    } catch (error) {
-      console.error('خطأ في التراجع:', error);
-      toast.error('فشل في التراجع عن الحالة');
-    }
-  }, [updateTender]);
+    },
+    [updateTender],
+  )
 
   // دالة تأكيد تقديم العرض
   const handleConfirmSubmit = useCallback(async () => {
@@ -369,7 +367,9 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
     try {
       console.log('🚀 [Tenders] بدء تدفق تقديم المنافسة:', tenderToSubmit.id)
-      const { tenderSubmissionService } = await import('@/application/services/tenderSubmissionService')
+      const { tenderSubmissionService } = await import(
+        '@/application/services/tenderSubmissionService'
+      )
       const result = await tenderSubmissionService.submit(tenderToSubmit)
 
       setTenderToSubmit(null)
@@ -382,7 +382,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
         purchaseOrderId: purchaseOrder.id,
         bookletExpenseId: bookletExpense?.id ?? null,
         createdFlags: created,
-        counts
+        counts,
       })
 
       const summaryParts: string[] = []
@@ -413,7 +413,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
       }
 
       toast.success('تم تقديم العرض بنجاح', {
-        description: summaryParts.join(' • ')
+        description: summaryParts.join(' • '),
       })
     } catch (error) {
       console.error('Error submitting tender:', error)
@@ -425,19 +425,22 @@ export function Tenders({ onSectionChange }: TendersProps) {
   const handleOpenDetails = useCallback((tender: Tender) => {
     setSelectedTender(tender)
     setCurrentView('details')
-  }, []);
+  }, [])
 
-  const handleEditTender = useCallback((tender: Tender) => {
-    setSelectedTender(tender)
-    // انتقل إلى صفحة التحرير وامرر المنافسة كمعطى
-    onSectionChange('new-tender', tender)
-  }, [onSectionChange]);
+  const handleEditTender = useCallback(
+    (tender: Tender) => {
+      setSelectedTender(tender)
+      // انتقل إلى صفحة التحرير وامرر المنافسة كمعطى
+      onSectionChange('new-tender', tender)
+    },
+    [onSectionChange],
+  )
 
   const handleBackToList = useCallback(() => {
     setCurrentView('list')
     setSelectedTender(null)
     // البيانات محدثة بالفعل بواسطة custom events من TenderPricingProcess
-  }, []);
+  }, [])
 
   // التقاط حدث فتح التسعير من شاشة التفاصيل (زر تحرير بند)
   useEffect(() => {
@@ -474,21 +477,16 @@ export function Tenders({ onSectionChange }: TendersProps) {
   // إذا كان في وضع التسعير، اعرض مكون التسعير
   if (currentView === 'pricing' && selectedTender) {
     const tenderForPricing: TenderWithPricingSources = { ...selectedTender }
-    return (
-      <TenderPricingProcess 
-        tender={tenderForPricing}
-        onBack={handleBackToList}
-      />
-    )
+    return <TenderPricingProcess tender={tenderForPricing} onBack={handleBackToList} />
   }
 
   // إذا كان في وضع إدارة النتائج، اعرض مكون النتائج
   if (currentView === 'results' && selectedTender) {
     return (
-      <TenderResultsManager 
+      <TenderResultsManager
         tender={selectedTender}
         onUpdate={() => {
-          handleBackToList();
+          handleBackToList()
         }}
       />
     )
@@ -499,67 +497,32 @@ export function Tenders({ onSectionChange }: TendersProps) {
   }
 
   // عرض الشاشة الرئيسية - قائمة المنافسات
-  const quickStats = [
-    {
-      label: 'إجمالي المنافسات',
-      value: tenderSummary.total,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10'
-    },
-    {
-      label: 'منافسات عاجلة',
-      value: tenderSummary.urgent,
-      trend: tenderSummary.urgent > 0 ? ('down' as const) : ('up' as const),
-      trendValue: tenderSummary.urgent > 0 ? `${tenderSummary.urgent} خلال 7 أيام` : 'لا يوجد حالات عاجلة',
-      color: 'text-destructive',
-      bgColor: 'bg-destructive/10'
-    },
-    {
-      label: 'منافسات نشطة',
-      value: tenderSummary.active,
-      trend: tenderSummary.active > 0 ? ('up' as const) : ('stable' as const),
-      trendValue: `${tenderSummary.submitted} مقدمة`,
-      color: 'text-warning',
-      bgColor: 'bg-warning/10'
-    },
-    {
-      label: 'نسبة الفوز',
-      value: `${tenderSummary.winRate.toFixed(1)}%`,
-      trend: tenderSummary.averageWinChance >= tenderSummary.winRate ? ('up' as const) : ('down' as const),
-      trendValue: `${Math.round(tenderSummary.averageWinChance)}% متوسط احتمالية الفوز`,
-      color: 'text-success',
-      bgColor: 'bg-success/10'
-    },
-    {
-      label: 'قيمة العطاءات المقدمة',
-      value: formatCurrencyValue(tenderSummary.submittedValue, { notation: 'compact' }),
-      trend: 'up' as const,
-      trendValue: tenderSummary.averageCycleDays ? `${Math.round(tenderSummary.averageCycleDays)} يوم دورة` : 'لا بيانات للدورة',
-      color: 'text-info',
-      bgColor: 'bg-info/10'
-    },
-    {
-      label: 'قيمة العطاءات الفائزة',
-      value: formatCurrencyValue(tenderSummary.wonValue, { notation: 'compact' }),
-      color: 'text-success',
-      bgColor: 'bg-success/10'
-    }
-  ]
 
   const quickActions = [
-    { label: 'تحديث البيانات', icon: TrendingUp, onClick: () => {
-      console.log('🔄 تم تحديث بيانات المناقصات يدوياً')
-      void refreshTenders()
-    }, variant: 'outline' as const },
-    { label: 'معالج التسعير', icon: Calculator, onClick: () => onSectionChange('tender-pricing-wizard'), variant: 'outline' as const },
-    { label: 'تقارير المنافسات', icon: FileText, onClick: () => onSectionChange('reports'), variant: 'outline' as const },
-    { label: 'منافسة جديدة', icon: Plus, onClick: () => onSectionChange('new-tender'), primary: true }
+    {
+      label: 'معالج التسعير',
+      icon: Calculator,
+      onClick: () => onSectionChange('tender-pricing-wizard'),
+      variant: 'outline' as const,
+    },
+    {
+      label: 'تقارير المنافسات',
+      icon: FileText,
+      onClick: () => onSectionChange('reports'),
+      variant: 'outline' as const,
+    },
+    {
+      label: 'منافسة جديدة',
+      icon: Plus,
+      onClick: () => onSectionChange('new-tender'),
+      primary: true,
+    },
   ]
 
   const tenderSubmissionPrice = tenderToSubmit ? getTenderDocumentPrice(tenderToSubmit) : 0
 
   const tendersAnalysisCards = (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <DetailCard
         title="معدل الفوز"
         value={`${tenderSummary.winRate.toFixed(1)}%`}
@@ -569,7 +532,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
         bgColor="bg-success/10"
         trend={{
           value: `${Math.round(tenderSummary.averageWinChance)}% احتمال متوسط`,
-          direction: tenderSummary.averageWinChance >= tenderSummary.winRate ? 'up' : 'down'
+          direction: tenderSummary.averageWinChance >= tenderSummary.winRate ? 'up' : 'down',
         }}
       />
       <DetailCard
@@ -579,7 +542,10 @@ export function Tenders({ onSectionChange }: TendersProps) {
         icon={DollarSign}
         color="text-primary"
         bgColor="bg-primary/10"
-        trend={{ value: formatCurrencyValue(tenderSummary.submittedValue, { notation: 'compact' }), direction: 'up' }}
+        trend={{
+          value: formatCurrencyValue(tenderSummary.submittedValue, { notation: 'compact' }),
+          direction: 'up',
+        }}
       />
       <DetailCard
         title="المنافسات النشطة"
@@ -590,7 +556,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
         bgColor="bg-warning/10"
         trend={{
           value: `${tenderSummary.urgent} عاجلة`,
-          direction: tenderSummary.urgent > 5 ? 'down' : 'up'
+          direction: tenderSummary.urgent > 5 ? 'down' : 'up',
         }}
       />
       <DetailCard
@@ -602,28 +568,32 @@ export function Tenders({ onSectionChange }: TendersProps) {
         bgColor="bg-warning/10"
         trend={{
           value: `${tenderSummary.documentBookletsCount} كراسة مرسلة`,
-          direction: tenderSummary.documentBookletsCount > 0 ? 'up' : 'stable'
+          direction: tenderSummary.documentBookletsCount > 0 ? 'up' : 'stable',
         }}
       />
     </div>
   )
 
-  const lastUpdatedSource = currency?.lastUpdated ?? lastRefreshAt
-  const lastUpdatedLabel = formatTimestamp(lastUpdatedSource)
-
   const headerMetadata = (
-    <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
       <StatusBadge
-        status="info"
-        label={`العملة الأساسية ${baseCurrency}`}
-        icon={DollarSign}
+        status="default"
+        label={`الكل ${tenderSummary.total}`}
+        icon={ListChecks}
         size="sm"
         className="shadow-none"
       />
       <StatusBadge
-        status="onTrack"
+        status={tenderSummary.urgent > 0 ? 'warning' : 'info'}
+        label={`عاجلة ${tenderSummary.urgent}`}
+        icon={AlertTriangle}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="info"
         label={`نشطة ${tenderSummary.active}/${tenderSummary.total}`}
-        icon={Trophy}
+        icon={Clock}
         size="sm"
         className="shadow-none"
       />
@@ -635,49 +605,93 @@ export function Tenders({ onSectionChange }: TendersProps) {
         className="shadow-none"
       />
       <StatusBadge
-        status="warning"
+        status="info"
         label={`الكراسات ${formatCurrencyValue(tenderSummary.totalDocumentValue, { notation: 'compact' })}`}
         icon={Files}
         size="sm"
         className="shadow-none"
       />
-      {lastUpdatedLabel && (
-        <StatusBadge
-          status="default"
-          label={`آخر تحديث ${lastUpdatedLabel}`}
-          icon={Clock}
-          size="sm"
-          className="shadow-none"
-        />
-      )}
     </div>
   )
 
   const headerExtraContent = (
     <div className="space-y-4">
-      {headerMetadata}
-      {tendersAnalysisCards}
+      <div className="rounded-3xl border border-primary/20 bg-gradient-to-l from-primary/10 via-card/40 to-background p-5 shadow-sm">
+        {headerMetadata}
+      </div>
+      <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
+        {tendersAnalysisCards}
+      </div>
     </div>
   )
 
   const tabsConfig = [
-    { id: 'all', label: 'الكل', count: tenderSummary.total, icon: Trophy, badgeStatus: 'default' as const },
-    { id: 'urgent', label: 'العاجلة', count: tenderSummary.urgent, icon: AlertTriangle, badgeStatus: 'overdue' as const },
-    { id: 'new', label: 'الجديدة', count: tenderSummary.new, icon: Plus, badgeStatus: 'notStarted' as const },
-    { id: 'under_action', label: 'تحت الإجراء', count: tenderSummary.underAction + tenderSummary.readyToSubmit, icon: Clock, badgeStatus: 'onTrack' as const },
-    { id: 'waiting_results', label: 'بانتظار النتائج', count: tenderSummary.waitingResults, icon: Eye, badgeStatus: 'info' as const },
-    { id: 'won', label: 'فائزة', count: tenderSummary.won, icon: CheckCircle, badgeStatus: 'success' as const },
-    { id: 'lost', label: 'خاسرة', count: tenderSummary.lost, icon: XCircle, badgeStatus: 'error' as const },
-    { id: 'expired', label: 'منتهية', count: tenderSummary.expired, icon: AlertCircle, badgeStatus: 'overdue' as const }
+    {
+      id: 'all',
+      label: 'الكل',
+      count: tenderSummary.total,
+      icon: Trophy,
+      badgeStatus: 'default' as const,
+    },
+    {
+      id: 'urgent',
+      label: 'العاجلة',
+      count: tenderSummary.urgent,
+      icon: AlertTriangle,
+      badgeStatus: 'overdue' as const,
+    },
+    {
+      id: 'new',
+      label: 'الجديدة',
+      count: tenderSummary.new,
+      icon: Plus,
+      badgeStatus: 'notStarted' as const,
+    },
+    {
+      id: 'under_action',
+      label: 'تحت الإجراء',
+      count: tenderSummary.underAction + tenderSummary.readyToSubmit,
+      icon: Clock,
+      badgeStatus: 'onTrack' as const,
+    },
+    {
+      id: 'waiting_results',
+      label: 'بانتظار النتائج',
+      count: tenderSummary.waitingResults,
+      icon: Eye,
+      badgeStatus: 'info' as const,
+    },
+    {
+      id: 'won',
+      label: 'فائزة',
+      count: tenderSummary.won,
+      icon: CheckCircle,
+      badgeStatus: 'success' as const,
+    },
+    {
+      id: 'lost',
+      label: 'خاسرة',
+      count: tenderSummary.lost,
+      icon: XCircle,
+      badgeStatus: 'error' as const,
+    },
+    {
+      id: 'expired',
+      label: 'منتهية',
+      count: tenderSummary.expired,
+      icon: AlertCircle,
+      badgeStatus: 'overdue' as const,
+    },
   ]
 
   const trimmedSearch = searchTerm.trim()
   const activeTabMeta = tabsConfig.find((tab) => tab.id === activeTab)
   const activeTabLabel = activeTabMeta?.label ?? 'الكل'
   const hasAnyTenders = tenders.length > 0
-  const filterDescription = trimmedSearch.length > 0
-    ? 'لا توجد منافسات تطابق البحث الحالي. جرّب تعديل عبارة البحث أو إعادة التعيين.'
-    : `لا توجد منافسات ضمن تبويب "${activeTabLabel}" حاليًا. جرّب تغيير التبويب أو إعادة ضبط المرشحات.`
+  const filterDescription =
+    trimmedSearch.length > 0
+      ? 'لا توجد منافسات تطابق البحث الحالي. جرّب تعديل عبارة البحث أو إعادة التعيين.'
+      : `لا توجد منافسات ضمن تبويب "${activeTabLabel}" حاليًا. جرّب تغيير التبويب أو إعادة ضبط المرشحات.`
 
   return (
     <>
@@ -686,36 +700,47 @@ export function Tenders({ onSectionChange }: TendersProps) {
         title="إدارة المنافسات"
         description="متابعة وإدارة جميع المنافسات والعطاءات بفعالية"
         icon={Trophy}
-        quickStats={quickStats}
+        quickStats={[]}
         quickActions={quickActions}
-        searchPlaceholder="البحث في المنافسات..."
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
         headerExtra={headerExtraContent}
+        showSearch={false}
+        showLastUpdate={false}
       >
         {/* تبويبات المنافسات */}
-        <div className="bg-card rounded-xl border shadow-sm p-4 mb-6">
+        <div className="mb-6 overflow-hidden rounded-2xl border border-border/40 bg-card/80 p-4 shadow-sm backdrop-blur">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
-            {tabsConfig.map(tab => {
+            {tabsConfig.map((tab) => {
               const isActive = activeTab === tab.id
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all duration-200 ${
-                    isActive 
-                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25' 
-                      : 'hover:bg-muted/40 text-muted-foreground hover:text-foreground'
+                  className={`group flex flex-col items-center justify-center gap-1 rounded-xl border px-3 py-2 transition-all duration-200 ${
+                    isActive
+                      ? 'border-primary/60 bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                      : 'border-transparent bg-transparent text-muted-foreground hover:border-primary/20 hover:bg-muted/40 hover:text-foreground'
                   }`}
                 >
-                  <tab.icon className={`h-5 w-5 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-                  <span className="text-xs font-semibold">{tab.label}</span>
+                  <div className="flex items-center gap-2 text-xs font-semibold">
+                    <tab.icon
+                      className={`h-4 w-4 ${
+                        isActive
+                          ? 'text-primary-foreground'
+                          : 'text-muted-foreground group-hover:text-primary'
+                      }`}
+                    />
+                    <span>{tab.label}</span>
+                  </div>
                   <StatusBadge
                     status={isActive ? tab.badgeStatus : 'default'}
                     label={String(tab.count)}
                     size="sm"
                     showIcon={false}
-                    className={`h-5 min-w-[24px] justify-center px-2 py-0.5 text-xs shadow-none ${isActive ? 'bg-primary/15 text-primary-foreground border-primary/30' : ''}`}
+                    className={`h-5 min-w-[24px] justify-center px-2 py-0.5 text-xs shadow-none ${
+                      isActive
+                        ? 'bg-primary/15 text-primary-foreground border-primary/40'
+                        : 'bg-muted/30'
+                    }`}
                   />
                 </button>
               )
@@ -725,7 +750,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
         {/* عرض المنافسات أو الحالة الفارغة */}
         {filteredTenders.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredTenders.map((tender: Tender, index: number) => (
               <EnhancedTenderCard
                 key={tender.id}
@@ -760,7 +785,10 @@ export function Tenders({ onSectionChange }: TendersProps) {
       </PageLayout>
 
       {/* مربع حوار تأكيد الحذف */}
-      <AlertDialog open={!!tenderToDelete} onOpenChange={(open) => !open && setTenderToDelete(null)}>
+      <AlertDialog
+        open={!!tenderToDelete}
+        onOpenChange={(open) => !open && setTenderToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -768,12 +796,13 @@ export function Tenders({ onSectionChange }: TendersProps) {
               تأكيد الحذف
             </AlertDialogTitle>
             <AlertDialogDescription>
-              هل أنت متأكد من حذف المنافسة &quot;{tenderToDelete?.name}&quot;؟ هذا الإجراء لا يمكن التراجع عنه.
+              هل أنت متأكد من حذف المنافسة &quot;{tenderToDelete?.name}&quot;؟ هذا الإجراء لا يمكن
+              التراجع عنه.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
@@ -784,7 +813,10 @@ export function Tenders({ onSectionChange }: TendersProps) {
       </AlertDialog>
 
       {/* مربع حوار تأكيد تقديم العرض */}
-      <AlertDialog open={!!tenderToSubmit} onOpenChange={(open) => !open && setTenderToSubmit(null)}>
+      <AlertDialog
+        open={!!tenderToSubmit}
+        onOpenChange={(open) => !open && setTenderToSubmit(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -800,13 +832,17 @@ export function Tenders({ onSectionChange }: TendersProps) {
                     <p className="text-sm text-info font-medium">سيتم تلقائياً:</p>
                     <ul className="mt-1 space-y-1 text-xs text-info opacity-90">
                       <li>• تحديث حالة المنافسة إلى &quot;بانتظار النتائج&quot;</li>
-                      <li>• إضافة مصروف كراسة المنافسة ({formatCurrencyValue(tenderSubmissionPrice)})</li>
+                      <li>
+                        • إضافة مصروف كراسة المنافسة ({formatCurrencyValue(tenderSubmissionPrice)})
+                      </li>
                       <li>• تحديث إحصائيات المنافسات المقدمة</li>
                     </ul>
                   </div>
                 ) : (
                   <div className="rounded-lg border border-border bg-muted/20 p-3">
-                    <p className="text-sm text-muted-foreground">سيتم تحديث حالة المنافسة إلى &quot;بانتظار النتائج&quot;</p>
+                    <p className="text-sm text-muted-foreground">
+                      سيتم تحديث حالة المنافسة إلى &quot;بانتظار النتائج&quot;
+                    </p>
                   </div>
                 )}
               </div>
@@ -814,7 +850,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmSubmit}
               className="bg-success text-success-foreground hover:bg-success/90"
             >

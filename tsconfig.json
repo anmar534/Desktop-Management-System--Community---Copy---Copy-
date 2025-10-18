@@ -20,21 +20,12 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
 
-    /* TypeScript Deprecations */
-    "ignoreDeprecations": "6.0",
-
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": [
-    "src",
-    "tests",
-    "test",
-    "scripts",
-    ".storybook"
-  ],
+  "include": ["src", "tests", "test", "scripts", ".storybook"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

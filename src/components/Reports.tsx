@@ -1,12 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
 import { PageLayout, DetailCard, EmptyState } from './PageLayout'
 import type { LucideIcon } from 'lucide-react'
-import { 
+import {
   FileText,
   Download,
   Calendar,
@@ -22,7 +22,11 @@ import {
   Plus,
   Eye,
   AlertTriangle,
-  Share
+  Share,
+  ListChecks,
+  CheckCircle,
+  RefreshCw,
+  HardDrive,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatCurrency, calculateDaysLeft } from '../data/centralData'
@@ -53,9 +57,13 @@ interface QuickActionItem {
 }
 
 export default function Reports() {
-  const [searchTerm, setSearchTerm] = useState('')
-
-  const { projects: projectsState, tenders: tendersState, financial, isLoading: providerLoading, clients: clientsState } = useFinancialState()
+  const {
+    projects: projectsState,
+    tenders: tendersState,
+    financial,
+    isLoading: providerLoading,
+    clients: clientsState,
+  } = useFinancialState()
   const { projects } = projectsState
   const { tenders } = tendersState
   const { financialData, loading: financialLoading } = financial
@@ -65,23 +73,23 @@ export default function Reports() {
 
   const systemStats = useMemo(() => {
     const totalProjects = projects.length
-    const activeProjects = projects.filter(project => project.status === 'active').length
-    const completedProjects = projects.filter(project => project.status === 'completed').length
-    const delayedProjects = projects.filter(project => project.status === 'delayed').length
+    const activeProjects = projects.filter((project) => project.status === 'active').length
+    const completedProjects = projects.filter((project) => project.status === 'completed').length
+    const delayedProjects = projects.filter((project) => project.status === 'delayed').length
 
     const totalTenders = tenders.length
     const activeStatuses = new Set(['new', 'under_action', 'ready_to_submit'])
-    const activeTenders = tenders.filter(tender => activeStatuses.has(tender.status)).length
+    const activeTenders = tenders.filter((tender) => activeStatuses.has(tender.status)).length
     const urgentTenders = tenders.reduce((count, tender) => {
       if (!tender.deadline) return count
       if (!activeStatuses.has(tender.status)) return count
       const daysLeft = calculateDaysLeft(tender.deadline)
       return daysLeft <= 7 && daysLeft >= 0 ? count + 1 : count
     }, 0)
-    const wonTenders = tenders.filter(tender => tender.status === 'won').length
+    const wonTenders = tenders.filter((tender) => tender.status === 'won').length
 
     const totalClients = clients.length
-    const activeClients = clients.filter(client => client.status === 'active').length
+    const activeClients = clients.filter((client) => client.status === 'active').length
 
     const cashFlow = financialData?.cashFlow ?? {
       current: 0,
@@ -125,7 +133,7 @@ export default function Reports() {
   }, [projects, tenders, clients, financialData])
 
   const isLoading = providerLoading || clientsLoading || financialLoading
-  
+
   // Mock function for navigation
   const onSectionChange = (section: string) => {
     console.log('Navigate to:', section)
@@ -141,7 +149,7 @@ export default function Reports() {
       period: 'monthly',
       size: '2.3 MB',
       lastGenerated: '2024-02-15',
-      status: 'ready'
+      status: 'ready',
     },
     {
       id: 'financial-analysis',
@@ -151,7 +159,7 @@ export default function Reports() {
       period: 'monthly',
       size: '1.8 MB',
       lastGenerated: '2024-02-14',
-      status: 'ready'
+      status: 'ready',
     },
     {
       id: 'tenders-performance',
@@ -161,7 +169,7 @@ export default function Reports() {
       period: 'quarterly',
       size: '1.5 MB',
       lastGenerated: '2024-02-10',
-      status: 'ready'
+      status: 'ready',
     },
     {
       id: 'clients-analysis',
@@ -171,7 +179,7 @@ export default function Reports() {
       period: 'monthly',
       size: '950 KB',
       lastGenerated: '2024-02-12',
-      status: 'generating'
+      status: 'generating',
     },
     {
       id: 'kpi-dashboard',
@@ -181,7 +189,7 @@ export default function Reports() {
       period: 'weekly',
       size: '720 KB',
       lastGenerated: '2024-02-16',
-      status: 'ready'
+      status: 'ready',
     },
     {
       id: 'risk-assessment',
@@ -191,8 +199,8 @@ export default function Reports() {
       period: 'quarterly',
       size: '1.2 MB',
       lastGenerated: '2024-01-30',
-      status: 'outdated'
-    }
+      status: 'outdated',
+    },
   ]
 
   const handleExportAllReports = () => {
@@ -207,67 +215,17 @@ export default function Reports() {
     console.info('Custom report builder requested')
   }
 
-  // فلترة التقارير
-  const filteredReports = availableReports.filter(report =>
-    report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    report.description.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
   // إحصائيات التقارير
   const reportStats = {
     total: availableReports.length,
-    ready: availableReports.filter(r => r.status === 'ready').length,
-    generating: availableReports.filter(r => r.status === 'generating').length,
-    outdated: availableReports.filter(r => r.status === 'outdated').length,
-    thisMonth: availableReports.filter(r => r.period === 'monthly').length,
-    totalSize: '8.4 MB'
+    ready: availableReports.filter((r) => r.status === 'ready').length,
+    generating: availableReports.filter((r) => r.status === 'generating').length,
+    outdated: availableReports.filter((r) => r.status === 'outdated').length,
+    thisMonth: availableReports.filter((r) => r.period === 'monthly').length,
+    totalSize: '8.4 MB',
   }
 
-  // الإحصائيات السريعة للمدير
-  const quickStats = [
-    {
-      label: 'إجمالي التقارير',
-      value: reportStats.total,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10'
-    },
-    {
-      label: 'تقارير جاهزة',
-      value: reportStats.ready,
-      trend: 'up' as const,
-      trendValue: '+2',
-      color: 'text-success',
-      bgColor: 'bg-success/10'
-    },
-    {
-      label: 'قيد الإنشاء',
-      value: reportStats.generating,
-      color: 'text-warning',
-      bgColor: 'bg-warning/10'
-    },
-    {
-      label: 'تحتاج تحديث',
-      value: reportStats.outdated,
-      trend: 'down' as const,
-      trendValue: '-1',
-      color: 'text-destructive',
-      bgColor: 'bg-destructive/10'
-    },
-    {
-      label: 'تقارير شهرية',
-      value: reportStats.thisMonth,
-      color: 'text-secondary-foreground',
-      bgColor: 'bg-secondary/20'
-    },
-    {
-      label: 'حجم البيانات',
-      value: reportStats.totalSize,
-      trend: 'up' as const,
-      trendValue: '+0.8MB',
-      color: 'text-info',
-      bgColor: 'bg-info/10'
-    }
-  ]
+  const hasReports = availableReports.length > 0
 
   // الإجراءات السريعة
   const quickActions: QuickActionItem[] = [
@@ -275,20 +233,22 @@ export default function Reports() {
       label: 'تصدير الكل',
       icon: Download,
       onClick: handleExportAllReports,
-      variant: 'outline'
+      variant: 'outline',
+      primary: false,
     },
     {
       label: 'جدولة تقرير',
       icon: Calendar,
       onClick: handleScheduleReport,
-      variant: 'outline'
+      variant: 'outline',
+      primary: false,
     },
     {
       label: 'تقرير مخصص',
       icon: Plus,
       onClick: handleCreateCustomReport,
-      primary: true
-    }
+      primary: true,
+    },
   ]
 
   const getReportTypeIcon = (type: ReportType | string) => {
@@ -365,7 +325,7 @@ export default function Reports() {
 
   // مكون إحصائيات الأعمال السريعة
   const BusinessStatsCards = (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <DetailCard
         title="المشاريع النشطة"
         value={isLoading ? '—' : systemStats.projects.active}
@@ -409,6 +369,64 @@ export default function Reports() {
     </div>
   )
 
+  const headerMetadata = (
+    <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
+      <StatusBadge
+        status="default"
+        label={`إجمالي ${reportStats.total}`}
+        icon={ListChecks}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="success"
+        label={`جاهزة ${reportStats.ready}`}
+        icon={CheckCircle}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="info"
+        label={`تحت الإنشاء ${reportStats.generating}`}
+        icon={RefreshCw}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status={reportStats.outdated > 0 ? 'error' : 'default'}
+        label={`تحتاج تحديث ${reportStats.outdated}`}
+        icon={AlertTriangle}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="warning"
+        label={`تقارير شهرية ${reportStats.thisMonth}`}
+        icon={Calendar}
+        size="sm"
+        className="shadow-none"
+      />
+      <StatusBadge
+        status="info"
+        label={`حجم البيانات ${reportStats.totalSize}`}
+        icon={HardDrive}
+        size="sm"
+        className="shadow-none"
+      />
+    </div>
+  )
+
+  const headerExtraContent = (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-primary/20 bg-gradient-to-l from-primary/10 via-card/40 to-background p-5 shadow-sm">
+        {headerMetadata}
+      </div>
+      <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
+        {BusinessStatsCards}
+      </div>
+    </div>
+  )
+
   const ReportCard = ({ report, index }: { report: AvailableReport; index: number }) => {
     return (
       <motion.div
@@ -416,29 +434,28 @@ export default function Reports() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: index * 0.1 }}
       >
-        <Card className="transition-all duration-300 cursor-pointer group hover:border-primary">
-          <CardContent className="p-6">
-            
+        <Card className="rounded-3xl border border-border/40 bg-card/80 transition-all duration-300 cursor-pointer group shadow-sm backdrop-blur-sm hover:border-primary hover:shadow-lg">
+          <CardContent className="p-6 space-y-6">
             {/* الصف العلوي */}
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className={`p-3 ${getReportTypeColor(report.type)} rounded-lg group-hover:scale-110 transition-transform`}>
+                <div
+                  className={`p-3 ${getReportTypeColor(report.type)} rounded-lg group-hover:scale-110 transition-transform`}
+                >
                   {getReportTypeIcon(report.type)}
                 </div>
                 <div>
                   <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors mb-1">
                     {report.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {report.description}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{report.description}</p>
                 </div>
               </div>
               {getStatusBadge(report.status)}
             </div>
 
             {/* تفاصيل التقرير */}
-            <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+            <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
                 <span>{getPeriodText(report.period)}</span>
@@ -454,7 +471,7 @@ export default function Reports() {
             </div>
 
             {/* الإجراءات */}
-            <div className="flex items-center justify-between pt-4 border-t">
+            <div className="flex items-center justify-between pt-4 border-t border-border/40">
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="sm" className="h-8 px-2">
                   <Eye className="h-4 w-4" />
@@ -463,7 +480,7 @@ export default function Reports() {
                   <Share className="h-4 w-4" />
                 </Button>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 {report.status === 'ready' && (
                   <Button size="sm" className="h-8">
@@ -495,17 +512,15 @@ export default function Reports() {
       title="التقارير والتحليلات"
       description="تقارير شاملة ومؤشرات أداء الشركة"
       icon={FileText}
-      quickStats={quickStats}
+      quickStats={[]}
       quickActions={quickActions}
-      searchPlaceholder="البحث في التقارير..."
-      searchValue={searchTerm}
-      onSearchChange={setSearchTerm}
-      headerExtra={BusinessStatsCards}
+      showFilters={false}
+      showLastUpdate={false}
+      showSearch={false}
+      headerExtra={headerExtraContent}
     >
-      
       {/* تقارير أخرى مخصصة */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        
         {/* تقرير سريع للمشاريع */}
         <Card>
           <CardHeader className="pb-3">
@@ -517,29 +532,43 @@ export default function Reports() {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-success/10 rounded-lg">
-                <div className="text-2xl font-bold text-success">{isLoading ? '—' : systemStats.projects.active}</div>
+                <div className="text-2xl font-bold text-success">
+                  {isLoading ? '—' : systemStats.projects.active}
+                </div>
                 <div className="text-sm text-muted-foreground">مشاريع نشطة</div>
               </div>
               <div className="text-center p-3 bg-primary/10 rounded-lg">
-                <div className="text-2xl font-bold text-primary">{isLoading ? '—' : systemStats.projects.completed}</div>
+                <div className="text-2xl font-bold text-primary">
+                  {isLoading ? '—' : systemStats.projects.completed}
+                </div>
                 <div className="text-sm text-muted-foreground">مشاريع مكتملة</div>
               </div>
               <div className="text-center p-3 bg-warning/10 rounded-lg">
-                <div className="text-2xl font-bold text-warning">{isLoading ? '—' : systemStats.projects.delayed}</div>
+                <div className="text-2xl font-bold text-warning">
+                  {isLoading ? '—' : systemStats.projects.delayed}
+                </div>
                 <div className="text-sm text-muted-foreground">مشاريع متأخرة</div>
               </div>
               <div className="text-center p-3 bg-secondary/20 rounded-lg">
                 <div className="text-2xl font-bold text-secondary-foreground">
                   {isLoading
                     ? '—'
-                    : `${systemStats.projects.total > 0 
-                      ? Math.round((systemStats.projects.completed / systemStats.projects.total) * 100)
-                      : 0}%`}
+                    : `${
+                        systemStats.projects.total > 0
+                          ? Math.round(
+                              (systemStats.projects.completed / systemStats.projects.total) * 100,
+                            )
+                          : 0
+                      }%`}
                 </div>
                 <div className="text-sm text-muted-foreground">متوسط الإنجاز</div>
               </div>
             </div>
-            <Button className="w-full mt-4" variant="outline" onClick={() => onSectionChange('projects')}>
+            <Button
+              className="w-full mt-4"
+              variant="outline"
+              onClick={() => onSectionChange('projects')}
+            >
               <BarChart3 className="h-4 w-4 ml-2" />
               عرض تفاصيل المشاريع
             </Button>
@@ -558,18 +587,28 @@ export default function Reports() {
             <div className="space-y-3">
               <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
                 <span className="text-sm text-muted-foreground">السيولة الحالية</span>
-                <span className="font-bold text-success">{isLoading ? '—' : formatCurrency(systemStats.financial.cashFlow.current)}</span>
+                <span className="font-bold text-success">
+                  {isLoading ? '—' : formatCurrency(systemStats.financial.cashFlow.current)}
+                </span>
               </div>
               <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
                 <span className="text-sm text-muted-foreground">المطلوبات</span>
-                <span className="font-bold text-primary">{isLoading ? '—' : formatCurrency(systemStats.financial.receivables.total)}</span>
+                <span className="font-bold text-primary">
+                  {isLoading ? '—' : formatCurrency(systemStats.financial.receivables.total)}
+                </span>
               </div>
               <div className="flex justify-between items-center p-3 bg-secondary/20 rounded-lg">
                 <span className="text-sm text-muted-foreground">نسبة الربحية</span>
-                <span className="font-bold text-secondary-foreground">{isLoading ? '—' : `${systemStats.financial.profitability}%`}</span>
+                <span className="font-bold text-secondary-foreground">
+                  {isLoading ? '—' : `${systemStats.financial.profitability}%`}
+                </span>
               </div>
             </div>
-            <Button className="w-full mt-4" variant="outline" onClick={() => onSectionChange('financial')}>
+            <Button
+              className="w-full mt-4"
+              variant="outline"
+              onClick={() => onSectionChange('financial')}
+            >
               <PieChart className="h-4 w-4 ml-2" />
               عرض التفاصيل المالية
             </Button>
@@ -578,29 +617,20 @@ export default function Reports() {
       </div>
 
       {/* شبكة التقارير المتاحة */}
-      <div>
-        <h2 className="text-xl font-semibold text-foreground mb-4">
-          التقارير المتاحة
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredReports.map((report, index) => (
-            <ReportCard key={report.id} report={report} index={index} />
-          ))}
+      {hasReports ? (
+        <div>
+          <h2 className="text-xl font-semibold text-foreground mb-4">التقارير المتاحة</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {availableReports.map((report, index) => (
+              <ReportCard key={report.id} report={report} index={index} />
+            ))}
+          </div>
         </div>
-      </div>
-
-      {/* حالة فارغة */}
-      {filteredReports.length === 0 && (
+      ) : (
         <EmptyState
           icon={FileText}
-          title={searchTerm ? "لا توجد نتائج للتقارير" : "لا توجد تقارير بعد"}
-          description={
-            searchTerm
-              ? "لم يتم العثور على تقارير مطابقة لبحثك. جرّب تعديل الكلمات المفتاحية أو إعادة التعيين."
-              : "ابدأ بإنشاء تقرير جديد لتتبع الأداء المالي والتشغيلي."
-          }
-          actionLabel={searchTerm ? "مسح البحث" : undefined}
-          onAction={searchTerm ? () => setSearchTerm("") : undefined}
+          title="لا توجد تقارير متاحة"
+          description="ابدأ بإنشاء تقرير جديد لتتبع الأداء المالي والتشغيلي."
         />
       )}
     </PageLayout>

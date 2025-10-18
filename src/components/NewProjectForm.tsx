@@ -7,14 +7,8 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './ui/select'
-import { 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -26,16 +20,7 @@ import {
 } from './ui/alert-dialog'
 import { PageLayout } from './PageLayout'
 import { NewClientDialog } from './NewClientDialog'
-import { 
-  Building2,
-  Save,
-  Calendar,
-  FileText,
-  Target,
-  ArrowRight,
-  Plus,
-  User
-} from 'lucide-react'
+import { Building2, Save, Calendar, FileText, Target, ArrowRight, Plus, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFinancialState } from '@/application/context'
 import { saveToStorage, STORAGE_KEYS } from '../utils/storage'
@@ -60,9 +45,14 @@ const CLIENT_TYPE_LABEL: Record<string, string> = {
 interface NewProjectFormProps {
   onBack: () => void
   mode?: 'create' | 'edit' // نوع العملية
+  editProject?: Project | null
 }
 
-export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: NewProjectFormProps) {
+export function NewProjectForm({
+  onBack,
+  editProject = null,
+  mode = 'create',
+}: NewProjectFormProps) {
   const { projects, clients: clientsState } = useFinancialState()
   const { addProject, updateProject } = projects
   const { clients, isLoading: clientsLoading } = clientsState
@@ -72,7 +62,7 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
   const existingType = editProject?.type ?? editProject?.category ?? ''
   const existingPriority = editProject?.priority ?? 'medium'
   const existingManager = editProject?.manager ?? ''
-  
+
   // دالة العودة
   const handleBack = () => {
     if (hasUnsavedChanges()) {
@@ -91,34 +81,36 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
       maximumFractionDigits: 0,
     }).format(amount)
   }
-  
-    // تحديد البيانات الأولية حسب الوضع
-  const initialFormData = editProject ? {
-    name: editProject.name ?? '',
-    client: editProject.client ?? '',
-    type: existingType,
-    location: editProject.location ?? '',
-    startDate: editProject.startDate ?? '',
-    endDate: editProject.endDate ?? '',
-    contractValue: existingContractValue !== null ? existingContractValue.toString() : '',
-    estimatedCost: existingEstimatedCost !== null ? existingEstimatedCost.toString() : '',
-    description: '',
-    priority: existingPriority,
-    manager: existingManager
-  } : {
-    name: '',
-    client: '',
-    type: '',
-    location: '',
-    startDate: '',
-    endDate: '',
-    contractValue: '',
-    estimatedCost: '',
-    description: '',
-    priority: 'medium',
-    manager: ''
-  }
-  
+
+  // تحديد البيانات الأولية حسب الوضع
+  const initialFormData = editProject
+    ? {
+        name: editProject.name ?? '',
+        client: editProject.client ?? '',
+        type: existingType,
+        location: editProject.location ?? '',
+        startDate: editProject.startDate ?? '',
+        endDate: editProject.endDate ?? '',
+        contractValue: existingContractValue !== null ? existingContractValue.toString() : '',
+        estimatedCost: existingEstimatedCost !== null ? existingEstimatedCost.toString() : '',
+        description: '',
+        priority: existingPriority,
+        manager: existingManager,
+      }
+    : {
+        name: '',
+        client: '',
+        type: '',
+        location: '',
+        startDate: '',
+        endDate: '',
+        contractValue: '',
+        estimatedCost: '',
+        description: '',
+        priority: 'medium',
+        manager: '',
+      }
+
   const [formData, setFormData] = useState(initialFormData)
 
   const [showSaveDialog, setShowSaveDialog] = useState(false)
@@ -134,9 +126,9 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
   }
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
   }
 
@@ -148,8 +140,8 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
   // التحقق من صحة البيانات
   const validateForm = () => {
     const required = ['name', 'client', 'type', 'location', 'startDate', 'contractValue']
-    const missing = required.filter(field => !formData[field as keyof typeof formData])
-    
+    const missing = required.filter((field) => !formData[field as keyof typeof formData])
+
     if (missing.length > 0) {
       toast.error(`يرجى ملء الحقول المطلوبة: ${missing.join(', ')}`)
       return false
@@ -169,13 +161,13 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
 
     try {
       setIsSaving(true)
-      
+
       if (mode === 'edit' && editProject) {
         // تحديث مشروع موجود
         const contractValue = parseAmount(formData.contractValue)
         const estimatedCost = parseAmount(formData.estimatedCost)
         const expectedProfit = contractValue - estimatedCost
-        
+
         const updatedProject: Project = {
           ...editProject,
           ...formData,
@@ -190,7 +182,7 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
           // حقول للتوافق مع النظام القديم
           budget: contractValue,
           value: contractValue,
-          team: editProject.team ?? ''
+          team: editProject.team ?? '',
         }
 
         await updateProject(updatedProject)
@@ -200,7 +192,7 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
         const contractValue = parseAmount(formData.contractValue)
         const estimatedCost = parseAmount(formData.estimatedCost)
         const expectedProfit = contractValue - estimatedCost
-        
+
         const newProject = {
           ...formData,
           id: `PRJ-${Date.now()}`,
@@ -222,13 +214,13 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
           budget: contractValue,
           value: contractValue,
           phase: 'التخطيط',
-          team: ''
+          team: '',
         }
 
         await addProject(newProject)
         toast.success('تم إنشاء المشروع بنجاح!')
       }
-      
+
       onBack() // العودة لصفحة المشاريع
     } catch {
       toast.error(mode === 'edit' ? 'فشل في تحديث المشروع' : 'فشل في إنشاء المشروع')
@@ -250,7 +242,7 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
 
   // التحقق من وجود تغييرات غير محفوظة
   const hasUnsavedChanges = () => {
-    return Object.values(formData).some(value => value !== '')
+    return Object.values(formData).some((value) => value !== '')
   }
 
   // الإجراءات السريعة
@@ -260,20 +252,20 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
       icon: Save,
       onClick: () => setShowSaveDialog(true),
       variant: 'default' as const,
-      primary: true
+      primary: true,
     },
     {
       label: 'العودة للقائمة',
       icon: ArrowRight,
       onClick: () => handleBack(),
-      variant: 'outline' as const
+      variant: 'outline' as const,
     },
     {
       label: 'حفظ كمسودة',
       icon: FileText,
       onClick: handleSaveDraft,
-      variant: 'outline' as const
-    }
+      variant: 'outline' as const,
+    },
   ]
 
   const getEstimatedDuration = () => {
@@ -298,7 +290,9 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
     <PageLayout
       tone="primary"
       title={mode === 'edit' ? `تعديل المشروع: ${editProject?.name ?? ''}` : 'مشروع جديد'}
-      description={mode === 'edit' ? 'تحديث بيانات ومعلومات المشروع' : 'إضافة مشروع جديد إلى النظام'}
+      description={
+        mode === 'edit' ? 'تحديث بيانات ومعلومات المشروع' : 'إضافة مشروع جديد إلى النظام'
+      }
       icon={Building2}
       quickStats={[]}
       quickActions={quickActions}
@@ -307,7 +301,6 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* العمود الأيسر - النموذج الرئيسي */}
         <div className="xl:col-span-2 space-y-6">
-          
           {/* المعلومات الأساسية */}
           <Card className="border-0 shadow-sm">
             <CardHeader>
@@ -317,7 +310,6 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              
               {/* الخانات الإلزامية */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -341,15 +333,22 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
                   </Label>
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <Select value={formData.client} onValueChange={(value: string) => handleInputChange('client', value)}>
+                      <Select
+                        value={formData.client}
+                        onValueChange={(value: string) => handleInputChange('client', value)}
+                      >
                         <SelectTrigger className="bg-background">
                           <SelectValue placeholder="اختر العميل" />
                         </SelectTrigger>
                         <SelectContent>
                           {clientsLoading ? (
-                            <SelectItem value="loading" disabled>جاري التحميل...</SelectItem>
+                            <SelectItem value="loading" disabled>
+                              جاري التحميل...
+                            </SelectItem>
                           ) : clients.length === 0 ? (
-                            <SelectItem value="no-clients" disabled>لا يوجد عملاء مسجلين</SelectItem>
+                            <SelectItem value="no-clients" disabled>
+                              لا يوجد عملاء مسجلين
+                            </SelectItem>
                           ) : (
                             clients.map((client) => {
                               const { status, label } = resolveClientBadge(client.type)
@@ -419,7 +418,7 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="description" className="text-sm font-medium">
                   وصف المشروع
@@ -447,7 +446,10 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startDate" className="text-sm font-medium flex items-center gap-1">
+                  <Label
+                    htmlFor="startDate"
+                    className="text-sm font-medium flex items-center gap-1"
+                  >
                     تاريخ البداية
                     <span className="text-destructive">*</span>
                   </Label>
@@ -473,7 +475,10 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="contractValue" className="text-sm font-medium flex items-center gap-1">
+                  <Label
+                    htmlFor="contractValue"
+                    className="text-sm font-medium flex items-center gap-1"
+                  >
                     قيمة العقد (الإيرادات)
                     <span className="text-destructive">*</span>
                   </Label>
@@ -502,7 +507,8 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
                   <div className="text-xs text-muted-foreground">
                     {formData.contractValue && (
                       <span>
-                        الضريبة المقترحة (15%): {formatCurrency(parseInt(formData.contractValue) * 0.15)}
+                        الضريبة المقترحة (15%):{' '}
+                        {formatCurrency(parseInt(formData.contractValue) * 0.15)}
                       </span>
                     )}
                   </div>
@@ -554,9 +560,14 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
                   </div>
                   <div className="mt-2 grid grid-cols-1 gap-4 border-t border-info/20 pt-2 text-xs text-muted-foreground md:grid-cols-3">
                     <span>الإيرادات: {formatCurrency(parseAmount(formData.contractValue))}</span>
-                    <span>التكلفة التقديرية: {formatCurrency(parseAmount(formData.estimatedCost))}</span>
+                    <span>
+                      التكلفة التقديرية: {formatCurrency(parseAmount(formData.estimatedCost))}
+                    </span>
                     <span className="font-medium text-info">
-                      الربح المتوقع: {formatCurrency(parseAmount(formData.contractValue) - parseAmount(formData.estimatedCost))}
+                      الربح المتوقع:{' '}
+                      {formatCurrency(
+                        parseAmount(formData.contractValue) - parseAmount(formData.estimatedCost),
+                      )}
                     </span>
                   </div>
                 </div>
@@ -567,7 +578,6 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
 
         {/* العمود الأيمن - المعلومات المساعدة */}
         <div className="space-y-6">
-          
           {/* قائمة المراجعة */}
           <Card className="border-0 shadow-sm">
             <CardHeader>
@@ -585,15 +595,23 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
                 { item: 'قيمة العقد (الإيرادات)', completed: !!formData.contractValue },
                 { item: 'التكلفة التقديرية', completed: !!formData.estimatedCost },
                 { item: 'تحديد التاريخ', completed: !!formData.startDate },
-                { item: 'وصف المشروع', completed: !!formData.description }
+                { item: 'وصف المشروع', completed: !!formData.description },
               ].map((check, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <div className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
-                    check.completed ? 'border-success bg-success text-success-foreground' : 'border-border'
-                  }`}>
-                    {check.completed && <div className="h-2 w-2 rounded-full bg-success-foreground" />}
+                  <div
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
+                      check.completed
+                        ? 'border-success bg-success text-success-foreground'
+                        : 'border-border'
+                    }`}
+                  >
+                    {check.completed && (
+                      <div className="h-2 w-2 rounded-full bg-success-foreground" />
+                    )}
                   </div>
-                  <span className={`text-sm ${check.completed ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  <span
+                    className={`text-sm ${check.completed ? 'text-foreground' : 'text-muted-foreground'}`}
+                  >
                     {check.item}
                   </span>
                 </div>
@@ -612,19 +630,34 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
             <CardContent className="space-y-3">
               <div className="text-sm space-y-2">
                 <div className="rounded-lg border border-info/20 bg-info/10 p-3 text-sm text-muted-foreground">
-                  <p><strong className="text-foreground">قيمة العقد:</strong> هي الإيرادات المتوقعة - تأكد من دقة القيمة المتفق عليها مع العميل</p>
+                  <p>
+                    <strong className="text-foreground">قيمة العقد:</strong> هي الإيرادات المتوقعة -
+                    تأكد من دقة القيمة المتفق عليها مع العميل
+                  </p>
                 </div>
                 <div className="rounded-lg border border-success/20 bg-success/10 p-3 text-sm text-muted-foreground">
-                  <p><strong className="text-foreground">التكلفة التقديرية:</strong> الميزانية المخططة للمشروع - احسب جميع التكاليف المتوقعة</p>
+                  <p>
+                    <strong className="text-foreground">التكلفة التقديرية:</strong> الميزانية
+                    المخططة للمشروع - احسب جميع التكاليف المتوقعة
+                  </p>
                 </div>
                 <div className="rounded-lg border border-accent/20 bg-accent/10 p-3 text-sm text-muted-foreground">
-                  <p><strong className="text-foreground">الربح المتوقع:</strong> الفرق بين قيمة العقد والتكلفة التقديرية - يجب أن يكون إيجابياً</p>
+                  <p>
+                    <strong className="text-foreground">الربح المتوقع:</strong> الفرق بين قيمة العقد
+                    والتكلفة التقديرية - يجب أن يكون إيجابياً
+                  </p>
                 </div>
                 <div className="rounded-lg border border-warning/20 bg-warning/10 p-3 text-sm text-muted-foreground">
-                  <p><strong className="text-foreground">الجدولة:</strong> ضع هامش زمني إضافي 10-15% للظروف الطارئة</p>
+                  <p>
+                    <strong className="text-foreground">الجدولة:</strong> ضع هامش زمني إضافي 10-15%
+                    للظروف الطارئة
+                  </p>
                 </div>
                 <div className="rounded-lg border border-accent/20 bg-accent/10 p-3 text-sm text-muted-foreground">
-                  <p><strong className="text-foreground">الموافقات:</strong> تأكد من الحصول على جميع التصاريح قبل البدء</p>
+                  <p>
+                    <strong className="text-foreground">الموافقات:</strong> تأكد من الحصول على جميع
+                    التصاريح قبل البدء
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -638,19 +671,27 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
             <CardContent className="space-y-3">
               <div className="text-sm space-y-2">
                 <div className="flex items-center gap-2 rounded border border-border/50 bg-muted/30 p-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">1</div>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                    1
+                  </div>
                   <span>مراجعة البيانات</span>
                 </div>
                 <div className="flex items-center gap-2 rounded border border-border/50 bg-muted/30 p-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-warning text-xs text-warning-foreground">2</div>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-warning text-xs text-warning-foreground">
+                    2
+                  </div>
                   <span>الموافقة الإدارية</span>
                 </div>
                 <div className="flex items-center gap-2 rounded border border-border/50 bg-muted/30 p-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-success text-xs text-success-foreground">3</div>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-success text-xs text-success-foreground">
+                    3
+                  </div>
                   <span>الموافقة المالية</span>
                 </div>
                 <div className="flex items-center gap-2 rounded border border-border/50 bg-muted/30 p-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground">4</div>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs text-accent-foreground">
+                    4
+                  </div>
                   <span>بدء التنفيذ</span>
                 </div>
               </div>
@@ -667,22 +708,21 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
               {mode === 'edit' ? 'تأكيد تحديث المشروع' : 'تأكيد إنشاء المشروع'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {mode === 'edit' 
+              {mode === 'edit'
                 ? 'هل أنت متأكد من أنك تريد حفظ التعديلات على هذا المشروع؟'
-                : 'هل أنت متأكد من أنك تريد إنشاء هذا المشروع بالبيانات المدخلة؟ سيتم إضافة المشروع للنظام وبدء عملية المتابعة.'
-              }
+                : 'هل أنت متأكد من أنك تريد إنشاء هذا المشروع بالبيانات المدخلة؟ سيتم إضافة المشروع للنظام وبدء عملية المتابعة.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleSaveProject}
-              disabled={isSaving}
-            >
-              {isSaving 
-                ? (mode === 'edit' ? 'جاري التحديث...' : 'جاري الحفظ...') 
-                : (mode === 'edit' ? 'حفظ التعديلات' : 'إنشاء المشروع')
-              }
+            <AlertDialogAction onClick={handleSaveProject} disabled={isSaving}>
+              {isSaving
+                ? mode === 'edit'
+                  ? 'جاري التحديث...'
+                  : 'جاري الحفظ...'
+                : mode === 'edit'
+                  ? 'حفظ التعديلات'
+                  : 'إنشاء المشروع'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -725,9 +765,9 @@ export function NewProjectForm({ onBack, editProject = null, mode = 'create' }: 
       </AlertDialog>
 
       {/* Dialog إضافة عميل جديد */}
-      <NewClientDialog 
-        open={showNewClientDialog} 
-        onClose={() => setShowNewClientDialog(false)} 
+      <NewClientDialog
+        open={showNewClientDialog}
+        onClose={() => setShowNewClientDialog(false)}
         onClientAdded={handleClientAdded}
       />
     </PageLayout>
