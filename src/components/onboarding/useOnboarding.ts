@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { safeLocalStorage } from '../../utils/storage'
 
 // ============================================================================
 // Types
@@ -12,10 +13,10 @@ import { useState, useEffect, useCallback } from 'react'
 export interface UseOnboardingOptions {
   /** Tour ID / معرف الجولة */
   tourId: string
-  
+
   /** Auto-start tour / بدء تلقائي للجولة */
   autoStart?: boolean
-  
+
   /** Storage key prefix / بادئة مفتاح التخزين */
   storageKeyPrefix?: string
 }
@@ -23,19 +24,19 @@ export interface UseOnboardingOptions {
 export interface UseOnboardingReturn {
   /** Is tour active / هل الجولة نشطة */
   isActive: boolean
-  
+
   /** Has completed tour / هل تم إكمال الجولة */
   hasCompleted: boolean
-  
+
   /** Start tour / بدء الجولة */
   start: () => void
-  
+
   /** Complete tour / إكمال الجولة */
   complete: () => void
-  
+
   /** Reset tour / إعادة تعيين الجولة */
   reset: () => void
-  
+
   /** Skip tour / تخطي الجولة */
   skip: () => void
 }
@@ -57,7 +58,7 @@ function getStorageKey(tourId: string, prefix: string = STORAGE_KEY_PREFIX): str
 function getTourStatus(tourId: string, prefix?: string): boolean {
   try {
     const key = getStorageKey(tourId, prefix)
-    const value = localStorage.getItem(key)
+    const value = safeLocalStorage.getItem<string>(key, '')
     return value === 'completed'
   } catch (error) {
     console.error('Error reading tour status:', error)
@@ -69,9 +70,9 @@ function setTourStatus(tourId: string, completed: boolean, prefix?: string): voi
   try {
     const key = getStorageKey(tourId, prefix)
     if (completed) {
-      localStorage.setItem(key, 'completed')
+      safeLocalStorage.setItem(key, 'completed')
     } else {
-      localStorage.removeItem(key)
+      safeLocalStorage.removeItem(key)
     }
   } catch (error) {
     console.error('Error saving tour status:', error)
@@ -87,16 +88,10 @@ function setTourStatus(tourId: string, completed: boolean, prefix?: string): voi
  * خطاف لإدارة حالة الجولة التعريفية
  */
 export function useOnboarding(options: UseOnboardingOptions): UseOnboardingReturn {
-  const {
-    tourId,
-    autoStart = false,
-    storageKeyPrefix,
-  } = options
+  const { tourId, autoStart = false, storageKeyPrefix } = options
 
   const [isActive, setIsActive] = useState(false)
-  const [hasCompleted, setHasCompleted] = useState(() => 
-    getTourStatus(tourId, storageKeyPrefix)
-  )
+  const [hasCompleted, setHasCompleted] = useState(() => getTourStatus(tourId, storageKeyPrefix))
 
   // Auto-start tour if not completed
   useEffect(() => {
@@ -137,4 +132,3 @@ export function useOnboarding(options: UseOnboardingOptions): UseOnboardingRetur
 }
 
 export default useOnboarding
-

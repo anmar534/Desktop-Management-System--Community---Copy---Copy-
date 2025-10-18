@@ -1,10 +1,12 @@
 /**
  * Encryption Service - خدمة التشفير
  * Sprint 5.5: الأمان والحماية المتقدمة
- * 
+ *
  * Provides encryption and decryption functionality for sensitive data
  * يوفر وظائف التشفير وفك التشفير للبيانات الحساسة
  */
+
+import { safeLocalStorage } from '../../utils/storage'
 
 // ============================================================================
 // Types
@@ -13,10 +15,10 @@
 export interface EncryptionOptions {
   /** Algorithm to use / الخوارزمية المستخدمة */
   algorithm?: 'AES-GCM' | 'AES-CBC'
-  
+
   /** Key length in bits / طول المفتاح بالبت */
   keyLength?: 128 | 256
-  
+
   /** Initialization vector / متجه التهيئة */
   iv?: Uint8Array
 }
@@ -24,13 +26,13 @@ export interface EncryptionOptions {
 export interface EncryptedData {
   /** Encrypted data / البيانات المشفرة */
   ciphertext: string
-  
+
   /** Initialization vector / متجه التهيئة */
   iv: string
-  
+
   /** Algorithm used / الخوارزمية المستخدمة */
   algorithm: string
-  
+
   /** Timestamp / الوقت */
   timestamp: number
 }
@@ -109,7 +111,7 @@ function generateIV(): Uint8Array {
  */
 export async function generateKey(
   algorithm: string = DEFAULT_ALGORITHM,
-  keyLength: number = DEFAULT_KEY_LENGTH
+  keyLength: number = DEFAULT_KEY_LENGTH,
 ): Promise<CryptoKey> {
   return await crypto.subtle.generateKey(
     {
@@ -117,7 +119,7 @@ export async function generateKey(
       length: keyLength,
     },
     true, // extractable
-    ['encrypt', 'decrypt']
+    ['encrypt', 'decrypt'],
   )
 }
 
@@ -129,7 +131,7 @@ export async function deriveKeyFromPassword(
   password: string,
   salt: string,
   algorithm: string = DEFAULT_ALGORITHM,
-  keyLength: number = DEFAULT_KEY_LENGTH
+  keyLength: number = DEFAULT_KEY_LENGTH,
 ): Promise<CryptoKey> {
   // Import password as key material
   const passwordKey = await crypto.subtle.importKey(
@@ -137,7 +139,7 @@ export async function deriveKeyFromPassword(
     stringToArrayBuffer(password),
     'PBKDF2',
     false,
-    ['deriveBits', 'deriveKey']
+    ['deriveBits', 'deriveKey'],
   )
 
   // Derive key using PBKDF2
@@ -154,7 +156,7 @@ export async function deriveKeyFromPassword(
       length: keyLength,
     },
     true,
-    ['encrypt', 'decrypt']
+    ['encrypt', 'decrypt'],
   )
 }
 
@@ -173,16 +175,10 @@ export async function exportKey(key: CryptoKey): Promise<string> {
  */
 export async function importKey(
   keyData: string,
-  algorithm: string = DEFAULT_ALGORITHM
+  algorithm: string = DEFAULT_ALGORITHM,
 ): Promise<CryptoKey> {
   const keyBuffer = base64ToArrayBuffer(keyData)
-  return await crypto.subtle.importKey(
-    'raw',
-    keyBuffer,
-    algorithm,
-    true,
-    ['encrypt', 'decrypt']
-  )
+  return await crypto.subtle.importKey('raw', keyBuffer, algorithm, true, ['encrypt', 'decrypt'])
 }
 
 // ============================================================================
@@ -196,12 +192,9 @@ export async function importKey(
 export async function encrypt(
   data: string,
   key: CryptoKey,
-  options: EncryptionOptions = {}
+  options: EncryptionOptions = {},
 ): Promise<EncryptedData> {
-  const {
-    algorithm = DEFAULT_ALGORITHM,
-    iv = generateIV(),
-  } = options
+  const { algorithm = DEFAULT_ALGORITHM, iv = generateIV() } = options
 
   // Encrypt data
   const encrypted = await crypto.subtle.encrypt(
@@ -210,7 +203,7 @@ export async function encrypt(
       iv: iv,
     },
     key,
-    stringToArrayBuffer(data)
+    stringToArrayBuffer(data),
   )
 
   return {
@@ -225,10 +218,7 @@ export async function encrypt(
  * Decrypt data
  * فك تشفير البيانات
  */
-export async function decrypt(
-  encryptedData: EncryptedData,
-  key: CryptoKey
-): Promise<string> {
+export async function decrypt(encryptedData: EncryptedData, key: CryptoKey): Promise<string> {
   const ciphertext = base64ToArrayBuffer(encryptedData.ciphertext)
   const iv = base64ToArrayBuffer(encryptedData.iv)
 
@@ -238,7 +228,7 @@ export async function decrypt(
       iv: iv,
     },
     key,
-    ciphertext
+    ciphertext,
   )
 
   return arrayBufferToString(decrypted)
@@ -278,10 +268,10 @@ export async function verifyHash(data: string, hashValue: string): Promise<boole
 export async function secureStore(
   key: string,
   data: string,
-  encryptionKey: CryptoKey
+  encryptionKey: CryptoKey,
 ): Promise<void> {
   const encrypted = await encrypt(data, encryptionKey)
-  localStorage.setItem(key, JSON.stringify(encrypted))
+  safeLocalStorage.setItem(key, encrypted)
 }
 
 /**
@@ -290,13 +280,12 @@ export async function secureStore(
  */
 export async function secureRetrieve(
   key: string,
-  encryptionKey: CryptoKey
+  encryptionKey: CryptoKey,
 ): Promise<string | null> {
-  const stored = localStorage.getItem(key)
-  if (!stored) return null
+  const encrypted = safeLocalStorage.getItem<EncryptedData | null>(key, null)
+  if (!encrypted) return null
 
   try {
-    const encrypted: EncryptedData = JSON.parse(stored)
     return await decrypt(encrypted, encryptionKey)
   } catch (error) {
     console.error('Failed to decrypt data:', error)
@@ -305,11 +294,11 @@ export async function secureRetrieve(
 }
 
 /**
- * Remove encrypted data from localStorage
- * إزالة البيانات المشفرة من localStorage
+ * Remove encrypted data from storage
+ * إزالة البيانات المشفرة من التخزين
  */
 export function secureRemove(key: string): void {
-  localStorage.removeItem(key)
+  safeLocalStorage.removeItem(key)
 }
 
 // ============================================================================
@@ -331,4 +320,3 @@ export const EncryptionService = {
 }
 
 export default EncryptionService
-

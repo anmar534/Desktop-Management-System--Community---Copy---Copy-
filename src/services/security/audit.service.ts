@@ -1,10 +1,12 @@
 /**
  * Audit Service - خدمة المراجعة
  * Sprint 5.5: الأمان والحماية المتقدمة
- * 
+ *
  * Activity logging and audit trail system
  * نظام تسجيل الأنشطة وسجل المراجعة
  */
+
+import { safeLocalStorage } from '../../utils/storage'
 
 // ============================================================================
 // Types
@@ -17,7 +19,7 @@ export type AuditAction =
   | 'auth.login_failed'
   | 'auth.password_changed'
   | 'auth.password_reset'
-  
+
   // Users / المستخدمين
   | 'user.created'
   | 'user.updated'
@@ -25,7 +27,7 @@ export type AuditAction =
   | 'user.role_changed'
   | 'user.disabled'
   | 'user.enabled'
-  
+
   // Tenders / المنافسات
   | 'tender.created'
   | 'tender.updated'
@@ -33,14 +35,14 @@ export type AuditAction =
   | 'tender.approved'
   | 'tender.rejected'
   | 'tender.exported'
-  
+
   // Projects / المشاريع
   | 'project.created'
   | 'project.updated'
   | 'project.deleted'
   | 'project.approved'
   | 'project.status_changed'
-  
+
   // Financial / المالية
   | 'financial.invoice_created'
   | 'financial.invoice_updated'
@@ -48,11 +50,11 @@ export type AuditAction =
   | 'financial.payment_created'
   | 'financial.payment_approved'
   | 'financial.report_generated'
-  
+
   // Settings / الإعدادات
   | 'settings.updated'
   | 'settings.system_config_changed'
-  
+
   // Security / الأمان
   | 'security.permission_changed'
   | 'security.suspicious_activity'
@@ -66,43 +68,43 @@ export type AuditSeverity = 'low' | 'medium' | 'high' | 'critical'
 export interface AuditLog {
   /** Unique identifier / معرف فريد */
   id: string
-  
+
   /** Timestamp / الوقت */
   timestamp: Date
-  
+
   /** User ID / معرف المستخدم */
   userId: string
-  
+
   /** User name / اسم المستخدم */
   userName: string
-  
+
   /** Action performed / الإجراء المنفذ */
   action: AuditAction
-  
+
   /** Resource type / نوع المورد */
   resourceType?: string
-  
+
   /** Resource ID / معرف المورد */
   resourceId?: string
-  
+
   /** Severity level / مستوى الخطورة */
   severity: AuditSeverity
-  
+
   /** Description / الوصف */
   description: string
-  
+
   /** Arabic description / الوصف بالعربية */
   descriptionAr?: string
-  
+
   /** IP address / عنوان IP */
   ipAddress?: string
-  
+
   /** User agent / وكيل المستخدم */
   userAgent?: string
-  
+
   /** Additional metadata / بيانات إضافية */
   metadata?: Record<string, any>
-  
+
   /** Changes made / التغييرات */
   changes?: {
     before?: any
@@ -113,25 +115,25 @@ export interface AuditLog {
 export interface AuditFilter {
   /** Start date / تاريخ البداية */
   startDate?: Date
-  
+
   /** End date / تاريخ النهاية */
   endDate?: Date
-  
+
   /** User ID / معرف المستخدم */
   userId?: string
-  
+
   /** Actions / الإجراءات */
   actions?: AuditAction[]
-  
+
   /** Severity levels / مستويات الخطورة */
   severities?: AuditSeverity[]
-  
+
   /** Resource type / نوع المورد */
   resourceType?: string
-  
+
   /** Resource ID / معرف المورد */
   resourceId?: string
-  
+
   /** Search query / استعلام البحث */
   search?: string
 }
@@ -149,10 +151,7 @@ const MAX_LOGS = 10000 // Maximum number of logs to keep in memory
  */
 function getLogsFromStorage(): AuditLog[] {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (!stored) return []
-    
-    const logs = JSON.parse(stored)
+    const logs = safeLocalStorage.getItem<AuditLog[]>(STORAGE_KEY, [])
     // Convert timestamp strings back to Date objects
     return logs.map((log: any) => ({
       ...log,
@@ -172,7 +171,7 @@ function saveLogsToStorage(logs: AuditLog[]): void {
   try {
     // Keep only the most recent logs
     const logsToSave = logs.slice(-MAX_LOGS)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(logsToSave))
+    safeLocalStorage.setItem(STORAGE_KEY, logsToSave)
   } catch (error) {
     console.error('Failed to save audit logs:', error)
   }
@@ -198,7 +197,7 @@ export function logAudit(
     descriptionAr?: string
     metadata?: Record<string, any>
     changes?: { before?: any; after?: any }
-  }
+  },
 ): AuditLog {
   const log: AuditLog = {
     id: generateId(),
@@ -241,42 +240,43 @@ export function getAuditLogs(filter?: AuditFilter): AuditLog[] {
 
   // Filter by date range
   if (filter.startDate) {
-    logs = logs.filter(log => log.timestamp >= filter.startDate!)
+    logs = logs.filter((log) => log.timestamp >= filter.startDate!)
   }
   if (filter.endDate) {
-    logs = logs.filter(log => log.timestamp <= filter.endDate!)
+    logs = logs.filter((log) => log.timestamp <= filter.endDate!)
   }
 
   // Filter by user
   if (filter.userId) {
-    logs = logs.filter(log => log.userId === filter.userId)
+    logs = logs.filter((log) => log.userId === filter.userId)
   }
 
   // Filter by actions
   if (filter.actions && filter.actions.length > 0) {
-    logs = logs.filter(log => filter.actions!.includes(log.action))
+    logs = logs.filter((log) => filter.actions!.includes(log.action))
   }
 
   // Filter by severity
   if (filter.severities && filter.severities.length > 0) {
-    logs = logs.filter(log => filter.severities!.includes(log.severity))
+    logs = logs.filter((log) => filter.severities!.includes(log.severity))
   }
 
   // Filter by resource
   if (filter.resourceType) {
-    logs = logs.filter(log => log.resourceType === filter.resourceType)
+    logs = logs.filter((log) => log.resourceType === filter.resourceType)
   }
   if (filter.resourceId) {
-    logs = logs.filter(log => log.resourceId === filter.resourceId)
+    logs = logs.filter((log) => log.resourceId === filter.resourceId)
   }
 
   // Filter by search query
   if (filter.search) {
     const query = filter.search.toLowerCase()
-    logs = logs.filter(log =>
-      log.description.toLowerCase().includes(query) ||
-      log.descriptionAr?.toLowerCase().includes(query) ||
-      log.userName.toLowerCase().includes(query)
+    logs = logs.filter(
+      (log) =>
+        log.description.toLowerCase().includes(query) ||
+        log.descriptionAr?.toLowerCase().includes(query) ||
+        log.userName.toLowerCase().includes(query),
     )
   }
 
@@ -288,7 +288,7 @@ export function getAuditLogs(filter?: AuditFilter): AuditLog[] {
  * مسح جميع سجلات المراجعة
  */
 export function clearAuditLogs(): void {
-  localStorage.removeItem(STORAGE_KEY)
+  safeLocalStorage.removeItem(STORAGE_KEY)
 }
 
 /**
@@ -358,4 +358,3 @@ export const AuditService = {
 }
 
 export default AuditService
-

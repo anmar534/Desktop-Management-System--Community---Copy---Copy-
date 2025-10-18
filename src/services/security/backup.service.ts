@@ -1,12 +1,13 @@
 /**
  * Backup Service - خدمة النسخ الاحتياطي
  * Sprint 5.5: الأمان والحماية المتقدمة
- * 
+ *
  * Automatic backup and restore functionality
  * وظائف النسخ الاحتياطي والاسترداد التلقائي
  */
 
 import { EncryptionService } from './encryption.service'
+import { safeLocalStorage } from '../../utils/storage'
 
 // ============================================================================
 // Types
@@ -15,31 +16,31 @@ import { EncryptionService } from './encryption.service'
 export interface BackupMetadata {
   /** Backup ID / معرف النسخة الاحتياطية */
   id: string
-  
+
   /** Timestamp / الوقت */
   timestamp: Date
-  
+
   /** Version / الإصدار */
   version: string
-  
+
   /** User ID / معرف المستخدم */
   userId: string
-  
+
   /** User name / اسم المستخدم */
   userName: string
-  
+
   /** Backup type / نوع النسخة الاحتياطية */
   type: 'manual' | 'automatic'
-  
+
   /** Size in bytes / الحجم بالبايت */
   size: number
-  
+
   /** Encrypted / مشفرة */
   encrypted: boolean
-  
+
   /** Description / الوصف */
   description?: string
-  
+
   /** Tables included / الجداول المضمنة */
   tables: string[]
 }
@@ -47,7 +48,7 @@ export interface BackupMetadata {
 export interface BackupData {
   /** Metadata / البيانات الوصفية */
   metadata: BackupMetadata
-  
+
   /** Data / البيانات */
   data: Record<string, any[]>
 }
@@ -55,13 +56,13 @@ export interface BackupData {
 export interface BackupOptions {
   /** Encrypt backup / تشفير النسخة الاحتياطية */
   encrypt?: boolean
-  
+
   /** Encryption key / مفتاح التشفير */
   encryptionKey?: CryptoKey
-  
+
   /** Tables to include / الجداول المراد تضمينها */
   tables?: string[]
-  
+
   /** Description / الوصف */
   description?: string
 }
@@ -69,10 +70,10 @@ export interface BackupOptions {
 export interface RestoreOptions {
   /** Decryption key / مفتاح فك التشفير */
   decryptionKey?: CryptoKey
-  
+
   /** Overwrite existing data / الكتابة فوق البيانات الموجودة */
   overwrite?: boolean
-  
+
   /** Tables to restore / الجداول المراد استردادها */
   tables?: string[]
 }
@@ -106,25 +107,20 @@ export async function createBackup(
   userId: string,
   userName: string,
   type: 'manual' | 'automatic' = 'manual',
-  options: BackupOptions = {}
+  options: BackupOptions = {},
 ): Promise<BackupMetadata> {
-  const {
-    encrypt = false,
-    encryptionKey,
-    tables = DEFAULT_TABLES,
-    description,
-  } = options
+  const { encrypt = false, encryptionKey, tables = DEFAULT_TABLES, description } = options
 
   // Generate backup ID
   const id = generateBackupId()
 
-  // Collect data from localStorage
+  // Collect data from storage
   const data: Record<string, any[]> = {}
   for (const table of tables) {
-    const tableData = localStorage.getItem(table)
-    if (tableData) {
+    const tableData = safeLocalStorage.getItem<any[]>(table, [])
+    if (tableData && tableData.length > 0) {
       try {
-        data[table] = JSON.parse(tableData)
+        data[table] = tableData
       } catch (error) {
         console.error(`Failed to parse data for table ${table}:`, error)
         data[table] = []
@@ -167,7 +163,7 @@ export async function createBackup(
   metadata.size = new Blob([backupString]).size
 
   // Save backup
-  localStorage.setItem(`${BACKUP_PREFIX}${id}`, backupString)
+  safeLocalStorage.setItem(`${BACKUP_PREFIX}${id}`, backupString)
 
   // Update backup list
   const backupList = getBackupList()
@@ -181,18 +177,11 @@ export async function createBackup(
  * Restore from backup
  * الاسترداد من نسخة احتياطية
  */
-export async function restoreBackup(
-  backupId: string,
-  options: RestoreOptions = {}
-): Promise<void> {
-  const {
-    decryptionKey,
-    overwrite = true,
-    tables,
-  } = options
+export async function restoreBackup(backupId: string, options: RestoreOptions = {}): Promise<void> {
+  const { decryptionKey, overwrite = true, tables } = options
 
   // Load backup
-  const backupString = localStorage.getItem(`${BACKUP_PREFIX}${backupId}`)
+  const backupString = safeLocalStorage.getItem<string>(`${BACKUP_PREFIX}${backupId}`, '')
   if (!backupString) {
     throw new Error('Backup not found')
   }
@@ -202,13 +191,13 @@ export async function restoreBackup(
   try {
     // Try to parse as regular backup
     backup = JSON.parse(backupString)
-    
+
     // Check if it's encrypted
     if (backup.metadata.encrypted) {
       if (!decryptionKey) {
         throw new Error('Decryption key required for encrypted backup')
       }
-      
+
       // Decrypt
       const encryptedData = JSON.parse(backupString)
       const decrypted = await EncryptionService.decrypt(encryptedData, decryptionKey)
@@ -224,8 +213,9 @@ export async function restoreBackup(
   // Restore data
   for (const table of tablesToRestore) {
     if (backup.data[table]) {
-      if (overwrite || !localStorage.getItem(table)) {
-        localStorage.setItem(table, JSON.stringify(backup.data[table]))
+      const existingData = safeLocalStorage.getItem<any[]>(table, [])
+      if (overwrite || existingData.length === 0) {
+        safeLocalStorage.setItem(table, backup.data[table])
       }
     }
   }
@@ -237,11 +227,11 @@ export async function restoreBackup(
  */
 export function deleteBackup(backupId: string): void {
   // Remove backup data
-  localStorage.removeItem(`${BACKUP_PREFIX}${backupId}`)
+  safeLocalStorage.removeItem(`${BACKUP_PREFIX}${backupId}`)
 
   // Update backup list
   const backupList = getBackupList()
-  const updatedList = backupList.filter(b => b.id !== backupId)
+  const updatedList = backupList.filter((b) => b.id !== backupId)
   saveBackupList(updatedList)
 }
 
@@ -259,7 +249,7 @@ export function getBackups(): BackupMetadata[] {
  */
 export function getBackup(backupId: string): BackupMetadata | null {
   const backupList = getBackupList()
-  return backupList.find(b => b.id === backupId) || null
+  return backupList.find((b) => b.id === backupId) || null
 }
 
 /**
@@ -267,7 +257,7 @@ export function getBackup(backupId: string): BackupMetadata | null {
  * تصدير نسخة احتياطية إلى ملف
  */
 export function exportBackup(backupId: string): void {
-  const backupString = localStorage.getItem(`${BACKUP_PREFIX}${backupId}`)
+  const backupString = safeLocalStorage.getItem<string>(`${BACKUP_PREFIX}${backupId}`, '')
   if (!backupString) {
     throw new Error('Backup not found')
   }
@@ -310,7 +300,7 @@ export async function importBackup(file: File): Promise<BackupMetadata> {
         }
 
         // Save backup
-        localStorage.setItem(`${BACKUP_PREFIX}${backup.metadata.id}`, backupString)
+        safeLocalStorage.setItem(`${BACKUP_PREFIX}${backup.metadata.id}`, backupString)
 
         // Update backup list
         const backupList = getBackupList()
@@ -345,7 +335,7 @@ export async function startAutoBackup(
   userId: string,
   userName: string,
   intervalHours = 24,
-  options: BackupOptions = {}
+  options: BackupOptions = {},
 ): Promise<void> {
   // Stop existing interval
   stopAutoBackup()
@@ -394,10 +384,7 @@ function generateBackupId(): string {
  */
 function getBackupList(): BackupMetadata[] {
   try {
-    const stored = localStorage.getItem(BACKUP_LIST_KEY)
-    if (!stored) return []
-    
-    const list = JSON.parse(stored)
+    const list = safeLocalStorage.getItem<BackupMetadata[]>(BACKUP_LIST_KEY, [])
     // Convert timestamp strings back to Date objects
     return list.map((item: any) => ({
       ...item,
@@ -415,7 +402,7 @@ function getBackupList(): BackupMetadata[] {
  */
 function saveBackupList(list: BackupMetadata[]): void {
   try {
-    localStorage.setItem(BACKUP_LIST_KEY, JSON.stringify(list))
+    safeLocalStorage.setItem(BACKUP_LIST_KEY, list)
   } catch (error) {
     console.error('Failed to save backup list:', error)
   }
@@ -446,4 +433,3 @@ export const BackupService = {
 }
 
 export default BackupService
-
