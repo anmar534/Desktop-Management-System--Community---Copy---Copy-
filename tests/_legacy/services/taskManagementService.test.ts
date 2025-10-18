@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { Task, TaskStatus, TaskPriority, CreateTaskRequest, UpdateTaskRequest } from '../../src/types/tasks'
+import type { Task, TaskStatus, TaskPriority, CreateTaskRequest, UpdateTaskRequest } from '../../src/types/tasks'
 
 // Create a mock service object
 const mockTaskManagementService = {
@@ -149,23 +149,23 @@ describe('TaskManagementService', () => {
   describe('getProjectTasks', () => {
     it('should return tasks for project', async () => {
       const mockTasks = [mockTask]
-      vi.mocked(taskManagementService['repository'].getByProject).mockResolvedValue(mockTasks)
+      vi.mocked(taskManagementService.repository.getByProject).mockResolvedValue(mockTasks)
 
       const result = await taskManagementService.getProjectTasks('project-1')
 
       expect(result).toEqual(mockTasks)
-      expect(taskManagementService['repository'].getByProject).toHaveBeenCalledWith('project-1', undefined)
+      expect(taskManagementService.repository.getByProject).toHaveBeenCalledWith('project-1', undefined)
     })
 
     it('should return filtered project tasks', async () => {
       const filters = { status: 'completed' as TaskStatus }
       const mockTasks = [{ ...mockTask, status: 'completed' as TaskStatus }]
-      vi.mocked(taskManagementService['repository'].getByProject).mockResolvedValue(mockTasks)
+      vi.mocked(taskManagementService.repository.getByProject).mockResolvedValue(mockTasks)
 
       const result = await taskManagementService.getProjectTasks('project-1', filters)
 
       expect(result).toEqual(mockTasks)
-      expect(taskManagementService['repository'].getByProject).toHaveBeenCalledWith('project-1', filters)
+      expect(taskManagementService.repository.getByProject).toHaveBeenCalledWith('project-1', filters)
     })
   })
 
@@ -185,12 +185,12 @@ describe('TaskManagementService', () => {
       }
 
       const createdTask = { ...mockTask, ...createRequest, id: 'new-task-id' }
-      vi.mocked(taskManagementService['repository'].create).mockResolvedValue(createdTask)
+      vi.mocked(taskManagementService.repository.create).mockResolvedValue(createdTask)
 
       const result = await taskManagementService.createTask(createRequest)
 
       expect(result).toEqual(createdTask)
-      expect(taskManagementService['repository'].create).toHaveBeenCalledWith(
+      expect(taskManagementService.repository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           ...createRequest,
           status: 'not_started',
@@ -232,7 +232,7 @@ describe('TaskManagementService', () => {
         tags: []
       }
 
-      vi.mocked(taskManagementService['repository'].create).mockRejectedValue(new Error('Database error'))
+      vi.mocked(taskManagementService.repository.create).mockRejectedValue(new Error('Database error'))
 
       await expect(taskManagementService.createTask(createRequest)).rejects.toThrow('فشل في إنشاء المهمة')
     })
@@ -250,13 +250,13 @@ describe('TaskManagementService', () => {
       }
 
       const updatedTask = { ...mockTask, ...updateRequest, version: 2 }
-      vi.mocked(taskManagementService['repository'].getById).mockResolvedValue(mockTask)
-      vi.mocked(taskManagementService['repository'].update).mockResolvedValue(updatedTask)
+      vi.mocked(taskManagementService.repository.getById).mockResolvedValue(mockTask)
+      vi.mocked(taskManagementService.repository.update).mockResolvedValue(updatedTask)
 
       const result = await taskManagementService.updateTask(updateRequest)
 
       expect(result).toEqual(updatedTask)
-      expect(taskManagementService['repository'].update).toHaveBeenCalledWith(
+      expect(taskManagementService.repository.update).toHaveBeenCalledWith(
         expect.objectContaining({
           ...updateRequest,
           updatedAt: expect.any(String),
@@ -272,7 +272,7 @@ describe('TaskManagementService', () => {
         version: 0 // إصدار قديم
       }
 
-      vi.mocked(taskManagementService['repository'].getById).mockResolvedValue(mockTask)
+      vi.mocked(taskManagementService.repository.getById).mockResolvedValue(mockTask)
 
       await expect(taskManagementService.updateTask(updateRequest)).rejects.toThrow('تم تحديث المهمة من قبل مستخدم آخر')
     })
@@ -284,7 +284,7 @@ describe('TaskManagementService', () => {
         version: 1
       }
 
-      vi.mocked(taskManagementService['repository'].getById).mockResolvedValue(null)
+      vi.mocked(taskManagementService.repository.getById).mockResolvedValue(null)
 
       await expect(taskManagementService.updateTask(updateRequest)).rejects.toThrow('المهمة غير موجودة')
     })
@@ -292,16 +292,16 @@ describe('TaskManagementService', () => {
 
   describe('deleteTask', () => {
     it('should delete an existing task', async () => {
-      vi.mocked(taskManagementService['repository'].getById).mockResolvedValue(mockTask)
-      vi.mocked(taskManagementService['repository'].delete).mockResolvedValue(undefined)
+      vi.mocked(taskManagementService.repository.getById).mockResolvedValue(mockTask)
+      vi.mocked(taskManagementService.repository.delete).mockResolvedValue(undefined)
 
       await taskManagementService.deleteTask('task-1')
 
-      expect(taskManagementService['repository'].delete).toHaveBeenCalledWith('task-1')
+      expect(taskManagementService.repository.delete).toHaveBeenCalledWith('task-1')
     })
 
     it('should handle non-existent task', async () => {
-      vi.mocked(taskManagementService['repository'].getById).mockResolvedValue(null)
+      vi.mocked(taskManagementService.repository.getById).mockResolvedValue(null)
 
       await expect(taskManagementService.deleteTask('non-existent')).rejects.toThrow('المهمة غير موجودة')
     })
@@ -311,7 +311,7 @@ describe('TaskManagementService', () => {
         ...mockTask,
         subtasks: [{ ...mockTask, id: 'subtask-1' }]
       }
-      vi.mocked(taskManagementService['repository'].getById).mockResolvedValue(taskWithDependents)
+      vi.mocked(taskManagementService.repository.getById).mockResolvedValue(taskWithDependents)
 
       await expect(taskManagementService.deleteTask('task-1')).rejects.toThrow('لا يمكن حذف مهمة تحتوي على مهام فرعية')
     })
@@ -327,13 +327,13 @@ describe('TaskManagementService', () => {
       }
 
       const updatedTask = { ...mockTask, progress: 75, actualHours: 30, status: 'in_progress' as TaskStatus }
-      vi.mocked(taskManagementService['repository'].getById).mockResolvedValue(mockTask)
-      vi.mocked(taskManagementService['repository'].update).mockResolvedValue(updatedTask)
+      vi.mocked(taskManagementService.repository.getById).mockResolvedValue(mockTask)
+      vi.mocked(taskManagementService.repository.update).mockResolvedValue(updatedTask)
 
       const result = await taskManagementService.updateTaskProgress(progressUpdate)
 
       expect(result).toEqual(updatedTask)
-      expect(taskManagementService['repository'].update).toHaveBeenCalledWith(
+      expect(taskManagementService.repository.update).toHaveBeenCalledWith(
         expect.objectContaining({
           id: 'task-1',
           progress: 75,
@@ -351,8 +351,8 @@ describe('TaskManagementService', () => {
       }
 
       const completedTask = { ...mockTask, progress: 100, actualHours: 40, status: 'completed' as TaskStatus }
-      vi.mocked(taskManagementService['repository'].getById).mockResolvedValue(mockTask)
-      vi.mocked(taskManagementService['repository'].update).mockResolvedValue(completedTask)
+      vi.mocked(taskManagementService.repository.getById).mockResolvedValue(mockTask)
+      vi.mocked(taskManagementService.repository.update).mockResolvedValue(completedTask)
 
       const result = await taskManagementService.updateTaskProgress(progressUpdate)
 
@@ -372,66 +372,66 @@ describe('TaskManagementService', () => {
 
   describe('getTaskStatistics', () => {
     it('should return task statistics', async () => {
-      vi.mocked(taskManagementService['repository'].getStatistics).mockResolvedValue(mockTaskStatistics)
+      vi.mocked(taskManagementService.repository.getStatistics).mockResolvedValue(mockTaskStatistics)
 
       const result = await taskManagementService.getTaskStatistics()
 
       expect(result).toEqual(mockTaskStatistics)
-      expect(taskManagementService['repository'].getStatistics).toHaveBeenCalledWith(undefined)
+      expect(taskManagementService.repository.getStatistics).toHaveBeenCalledWith(undefined)
     })
 
     it('should return project-specific statistics', async () => {
-      vi.mocked(taskManagementService['repository'].getStatistics).mockResolvedValue(mockTaskStatistics)
+      vi.mocked(taskManagementService.repository.getStatistics).mockResolvedValue(mockTaskStatistics)
 
       const result = await taskManagementService.getTaskStatistics('project-1')
 
       expect(result).toEqual(mockTaskStatistics)
-      expect(taskManagementService['repository'].getStatistics).toHaveBeenCalledWith('project-1')
+      expect(taskManagementService.repository.getStatistics).toHaveBeenCalledWith('project-1')
     })
   })
 
   describe('searchTasks', () => {
     it('should search tasks by query', async () => {
       const mockTasks = [mockTask]
-      vi.mocked(taskManagementService['repository'].search).mockResolvedValue(mockTasks)
+      vi.mocked(taskManagementService.repository.search).mockResolvedValue(mockTasks)
 
       const result = await taskManagementService.searchTasks('اختبار')
 
       expect(result).toEqual(mockTasks)
-      expect(taskManagementService['repository'].search).toHaveBeenCalledWith('اختبار', undefined)
+      expect(taskManagementService.repository.search).toHaveBeenCalledWith('اختبار', undefined)
     })
 
     it('should search with filters', async () => {
       const filters = { projectId: 'project-1', priority: 'high' as TaskPriority }
       const mockTasks = [{ ...mockTask, priority: 'high' as TaskPriority }]
-      vi.mocked(taskManagementService['repository'].search).mockResolvedValue(mockTasks)
+      vi.mocked(taskManagementService.repository.search).mockResolvedValue(mockTasks)
 
       const result = await taskManagementService.searchTasks('اختبار', filters)
 
       expect(result).toEqual(mockTasks)
-      expect(taskManagementService['repository'].search).toHaveBeenCalledWith('اختبار', filters)
+      expect(taskManagementService.repository.search).toHaveBeenCalledWith('اختبار', filters)
     })
   })
 
   describe('getOverdueTasks', () => {
     it('should return overdue tasks', async () => {
       const overdueTasks = [{ ...mockTask, plannedEndDate: '2023-12-31' }]
-      vi.mocked(taskManagementService['repository'].getOverdue).mockResolvedValue(overdueTasks)
+      vi.mocked(taskManagementService.repository.getOverdue).mockResolvedValue(overdueTasks)
 
       const result = await taskManagementService.getOverdueTasks()
 
       expect(result).toEqual(overdueTasks)
-      expect(taskManagementService['repository'].getOverdue).toHaveBeenCalledWith(undefined)
+      expect(taskManagementService.repository.getOverdue).toHaveBeenCalledWith(undefined)
     })
 
     it('should return project-specific overdue tasks', async () => {
       const overdueTasks = [{ ...mockTask, plannedEndDate: '2023-12-31' }]
-      vi.mocked(taskManagementService['repository'].getOverdue).mockResolvedValue(overdueTasks)
+      vi.mocked(taskManagementService.repository.getOverdue).mockResolvedValue(overdueTasks)
 
       const result = await taskManagementService.getOverdueTasks('project-1')
 
       expect(result).toEqual(overdueTasks)
-      expect(taskManagementService['repository'].getOverdue).toHaveBeenCalledWith('project-1')
+      expect(taskManagementService.repository.getOverdue).toHaveBeenCalledWith('project-1')
     })
   })
 

@@ -212,7 +212,7 @@ class ProcurementIntegrationService {
    * حساب الإنفاق الشهري
    */
   private calculateMonthlySpending(orders: any[], budgets: any[]): MonthlySpending[] {
-    const monthlyData: { [key: string]: { planned: number; actual: number } } = {}
+    const monthlyData: Record<string, { planned: number; actual: number }> = {}
     
     // حساب الإنفاق الفعلي
     orders.forEach(order => {
@@ -254,7 +254,7 @@ class ProcurementIntegrationService {
    * حساب تحليل الفئات
    */
   private calculateCategoryBreakdown(orders: any[], budgets: any[]): CategoryBreakdown[] {
-    const categories: { [key: string]: CategoryBreakdown } = {}
+    const categories: Record<string, CategoryBreakdown> = {}
     
     // تجميع البيانات حسب الفئة
     orders.forEach(order => {
@@ -298,7 +298,7 @@ class ProcurementIntegrationService {
    * حساب مدفوعات الموردين
    */
   private calculateSupplierPayments(orders: any[], suppliers: any[], expenses: any[]): SupplierPayment[] {
-    const supplierData: { [key: string]: SupplierPayment } = {}
+    const supplierData: Record<string, SupplierPayment> = {}
     
     orders.forEach(order => {
       const supplierId = order.supplierId

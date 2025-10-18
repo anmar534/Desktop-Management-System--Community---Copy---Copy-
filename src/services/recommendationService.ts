@@ -51,11 +51,11 @@ export interface StrategicRecommendation {
   /** Supporting evidence */
   evidence: string[]
   /** Recommended actions */
-  actions: Array<{
+  actions: {
     action: string
     timeline: string
     effort: 'low' | 'medium' | 'high'
-  }>
+  }[]
   /** Confidence level (0-100) */
   confidence: number
   /** Creation timestamp */

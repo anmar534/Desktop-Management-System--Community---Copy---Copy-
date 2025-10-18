@@ -46,11 +46,11 @@ export interface MigrationConfig {
   /** Field mapping for legacy data */
   fieldMapping?: Record<string, string>
   /** Data transformation rules */
-  transformationRules?: Array<{
+  transformationRules?: {
     field: string
     rule: 'uppercase' | 'lowercase' | 'trim' | 'date_format' | 'currency_format'
     parameters?: any
-  }>
+  }[]
 }
 
 /**
@@ -78,17 +78,17 @@ export interface MigrationResult {
   /** Generated lessons learned */
   generatedLessons: number
   /** Migration errors */
-  errors: Array<{
+  errors: {
     record: any
     error: string
     timestamp: string
-  }>
+  }[]
   /** Migration warnings */
-  warnings: Array<{
+  warnings: {
     record: any
     warning: string
     timestamp: string
-  }>
+  }[]
   /** Backup information */
   backup?: {
     backupId: string
@@ -261,7 +261,7 @@ class DataMigrationService {
       const history = await this.getMigrationHistory()
       const migration = history.find(h => h.migrationId === migrationId)
       
-      if (!migration || !migration.result.backup) {
+      if (!migration?.result.backup) {
         throw new Error('Migration not found or no backup available')
       }
 
@@ -508,11 +508,11 @@ class DataMigrationService {
     return mapped
   }
 
-  private applyTransformationRules(data: any, rules: Array<{
+  private applyTransformationRules(data: any, rules: {
     field: string
     rule: string
     parameters?: any
-  }>): any {
+  }[]): any {
     const transformed = { ...data }
     
     for (const rule of rules) {

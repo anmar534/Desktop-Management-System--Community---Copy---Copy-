@@ -7,7 +7,8 @@ import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { Download, Upload, Trash2, RefreshCw, Database, Lock } from 'lucide-react'
 import { designTokens } from '@/styles/design-system'
-import { BackupMetadata, getBackups, createBackup, deleteBackup, exportBackup, importBackup, restoreBackup } from '@/services/security/backup.service'
+import type { BackupMetadata} from '@/services/security/backup.service';
+import { getBackups, createBackup, deleteBackup, exportBackup, importBackup, restoreBackup } from '@/services/security/backup.service'
 
 // ============================================================================
 // Types

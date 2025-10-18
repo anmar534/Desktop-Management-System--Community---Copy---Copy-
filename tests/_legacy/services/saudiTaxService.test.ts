@@ -4,7 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { SaudiTaxService, VATTransaction, VATReturn } from '../../src/services/saudiTaxService'
+import type { VATTransaction, VATReturn } from '../../src/services/saudiTaxService';
+import { SaudiTaxService } from '../../src/services/saudiTaxService'
 
 // محاكاة وحدة التخزين
 vi.mock('../../src/utils/storage', () => ({

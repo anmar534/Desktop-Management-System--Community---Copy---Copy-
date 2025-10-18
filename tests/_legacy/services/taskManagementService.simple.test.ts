@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { Task, TaskStatus, CreateTaskRequest } from '../../src/types/tasks'
+import type { Task, TaskStatus, CreateTaskRequest } from '../../src/types/tasks'
 
 describe('TaskManagementService - Simple Tests', () => {
   const mockTask: Task = {

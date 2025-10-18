@@ -191,12 +191,12 @@ export class FinancialAnalyticsService {
   }
 
   // تحليل الاتجاهات الزمنية
-  async analyzeTrends(historicalData: Array<{
+  async analyzeTrends(historicalData: {
     period: string;
     revenue: number;
     expenses: number;
     profit: number;
-  }>): Promise<TrendAnalysis[]> {
+  }[]): Promise<TrendAnalysis[]> {
     return historicalData.map((data, index) => {
       let growthRate = 0;
       let trend: 'increasing' | 'decreasing' | 'stable' = 'stable';
@@ -223,12 +223,12 @@ export class FinancialAnalyticsService {
 
   // التنبؤ بالتدفقات النقدية
   async forecastCashFlow(
-    historicalCashFlows: Array<{
+    historicalCashFlows: {
       period: string;
       inflow: number;
       outflow: number;
-    }>,
-    forecastPeriods: number = 12
+    }[],
+    forecastPeriods = 12
   ): Promise<CashFlowForecast[]> {
     const forecasts: CashFlowForecast[] = [];
     let cumulativeCashFlow = 0;
@@ -278,10 +278,10 @@ export class FinancialAnalyticsService {
 
   // تحليل الموسمية
   async analyzeSeasonality(
-    monthlyData: Array<{
+    monthlyData: {
       month: number;
       revenue: number;
-    }>
+    }[]
   ): Promise<SeasonalityAnalysis[]> {
     const monthlyAverages = new Map<number, number[]>();
 

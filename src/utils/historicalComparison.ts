@@ -86,12 +86,12 @@ export interface MultiPeriodComparison {
   /** Time series data for all periods */
   timeSeries: TimeSeriesPoint[]
   /** Period-over-period changes */
-  periodChanges: Array<{
+  periodChanges: {
     period: string
     value: number
     change: number
     changePercent: number
-  }>
+  }[]
   /** Overall trend analysis */
   trend: {
     direction: 'increasing' | 'decreasing' | 'stable' | 'volatile'
@@ -234,7 +234,7 @@ class HistoricalComparisonService {
     performances: BidPerformance[],
     metric: ComparisonMetric,
     periodType: 'monthly' | 'quarterly' | 'yearly',
-    numberOfPeriods: number = 12
+    numberOfPeriods = 12
   ): Promise<MultiPeriodComparison> {
     try {
       // Generate period boundaries
@@ -242,12 +242,12 @@ class HistoricalComparisonService {
       
       // Calculate metric for each period
       const timeSeries: TimeSeriesPoint[] = []
-      const periodChanges: Array<{
+      const periodChanges: {
         period: string
         value: number
         change: number
         changePercent: number
-      }> = []
+      }[] = []
 
       let previousValue: number | null = null
 
@@ -609,7 +609,7 @@ class HistoricalComparisonService {
   private generatePeriodBoundaries(
     periodType: 'monthly' | 'quarterly' | 'yearly',
     numberOfPeriods: number
-  ): Array<{ start: string; end: string }> {
+  ): { start: string; end: string }[] {
     const periods = []
     const now = new Date()
     

@@ -3,7 +3,8 @@
  * Display comprehensive project information and management options
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { 
   ArrowLeft,
   Edit,

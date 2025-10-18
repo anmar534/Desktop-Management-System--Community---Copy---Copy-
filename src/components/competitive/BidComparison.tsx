@@ -54,7 +54,8 @@ import {
   Trash2
 } from 'lucide-react'
 
-import { bidComparisonService, BidComparison as BidComparisonType, ComparisonResult, CompetitiveGapAnalysis, PositioningRecommendation } from '../../services/bidComparisonService'
+import type { BidComparison as BidComparisonType, ComparisonResult, CompetitiveGapAnalysis, PositioningRecommendation } from '../../services/bidComparisonService';
+import { bidComparisonService } from '../../services/bidComparisonService'
 
 // ===== TYPE DEFINITIONS =====
 

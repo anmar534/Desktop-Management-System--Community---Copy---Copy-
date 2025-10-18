@@ -6,7 +6,8 @@
  * Comprehensive display of project and client profitability analysis with comparisons and trends
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -20,7 +21,8 @@ import {
   TrendingUp, TrendingDown, DollarSign, Users, Building2, 
   Target, Award, AlertTriangle, RefreshCw, Download, Filter
 } from 'lucide-react'
-import { ProfitabilityAnalysisService, ProjectProfitability, ClientProfitability } from '../../services/profitabilityAnalysisService'
+import type { ProjectProfitability, ClientProfitability } from '../../services/profitabilityAnalysisService';
+import { ProfitabilityAnalysisService } from '../../services/profitabilityAnalysisService'
 
 interface ProfitabilityAnalysisProps {
   className?: string

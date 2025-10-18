@@ -3,7 +3,8 @@
  * Supplier Performance Evaluation Component
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
+import type React from 'react';
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -54,9 +55,10 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import type { 
+  Supplier} from '../../services/supplierManagementService';
 import { 
-  SupplierEvaluation, 
-  Supplier,
+  SupplierEvaluation,
   supplierManagementService 
 } from '../../services/supplierManagementService'
 

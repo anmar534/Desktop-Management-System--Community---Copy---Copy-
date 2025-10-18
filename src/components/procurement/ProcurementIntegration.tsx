@@ -24,7 +24,8 @@ import {
   BarChart3,
   Settings
 } from 'lucide-react'
-import { procurementIntegrationService, IntegrationSummary, ProjectIntegration, FinancialIntegration } from '../../services/procurementIntegrationService'
+import type { IntegrationSummary, ProjectIntegration, FinancialIntegration } from '../../services/procurementIntegrationService';
+import { procurementIntegrationService } from '../../services/procurementIntegrationService'
 
 interface ProcurementIntegrationProps {
   className?: string

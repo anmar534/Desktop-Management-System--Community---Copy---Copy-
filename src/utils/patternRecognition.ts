@@ -87,17 +87,17 @@ export interface SeasonalPattern {
   /** Seasonal period (e.g., monthly, quarterly) */
   period: 'monthly' | 'quarterly' | 'yearly'
   /** Peak periods */
-  peaks: Array<{
+  peaks: {
     period: string
     value: number
     confidence: number
-  }>
+  }[]
   /** Low periods */
-  troughs: Array<{
+  troughs: {
     period: string
     value: number
     confidence: number
-  }>
+  }[]
   /** Seasonal strength */
   strength: number
   /** Seasonal adjustment factors */
@@ -109,14 +109,14 @@ export interface SeasonalPattern {
  */
 export interface AnomalyResult {
   /** Anomalous data points */
-  anomalies: Array<{
+  anomalies: {
     date: string
     value: number
     expectedValue: number
     deviation: number
     severity: 'low' | 'medium' | 'high'
     possibleCauses: string[]
-  }>
+  }[]
   /** Anomaly detection method used */
   method: string
   /** Detection threshold */
@@ -801,7 +801,7 @@ class PatternRecognitionService {
     ]
   }
 
-  private findPeaks(data: Record<string, any>, metric: string): Array<{ period: string; value: number; confidence: number }> {
+  private findPeaks(data: Record<string, any>, metric: string): { period: string; value: number; confidence: number }[] {
     const entries = Object.entries(data)
     const peaks = []
     
@@ -822,7 +822,7 @@ class PatternRecognitionService {
     return peaks.sort((a, b) => b.value - a.value)
   }
 
-  private findTroughs(data: Record<string, any>, metric: string): Array<{ period: string; value: number; confidence: number }> {
+  private findTroughs(data: Record<string, any>, metric: string): { period: string; value: number; confidence: number }[] {
     const entries = Object.entries(data)
     const troughs = []
     

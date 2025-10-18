@@ -4,7 +4,7 @@
  * Entry point for all project-related operations
  */
 
-import React from 'react'
+import type React from 'react'
 import { ProjectsManager } from '../components/projects/ProjectsManager'
 
 export const ProjectsPage: React.FC = () => {

@@ -68,13 +68,13 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
   const [activeTab, setActiveTab] = useState<'comparison' | 'trends' | 'annual'>('comparison')
 
   // Available options
-  const periodOptions: Array<{ value: ComparisonPeriod; label: string }> = [
+  const periodOptions: { value: ComparisonPeriod; label: string }[] = [
     { value: 'month-over-month', label: 'شهر بشهر' },
     { value: 'quarter-over-quarter', label: 'ربع بربع' },
     { value: 'year-over-year', label: 'سنة بسنة' }
   ]
 
-  const metricOptions: Array<{ value: ComparisonMetric; label: string }> = [
+  const metricOptions: { value: ComparisonMetric; label: string }[] = [
     { value: 'winRate', label: 'معدل الفوز' },
     { value: 'averageMargin', label: 'متوسط الهامش' },
     { value: 'totalValue', label: 'إجمالي القيمة' },

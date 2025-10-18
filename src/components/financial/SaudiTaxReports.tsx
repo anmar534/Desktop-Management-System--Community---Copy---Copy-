@@ -3,7 +3,8 @@
  * Saudi Tax Reports Component
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -24,7 +25,8 @@ import {
   Receipt,
   Building
 } from 'lucide-react'
-import { SaudiTaxService, VATReturn, VATTransaction, ZakatCalculation, TaxSettings } from '../../services/saudiTaxService'
+import type { VATReturn, VATTransaction, ZakatCalculation, TaxSettings } from '../../services/saudiTaxService';
+import { SaudiTaxService } from '../../services/saudiTaxService'
 
 export const SaudiTaxReports: React.FC = () => {
   const [service] = useState(() => new SaudiTaxService())

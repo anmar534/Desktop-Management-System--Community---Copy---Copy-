@@ -4,11 +4,13 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { 
+  ChartFilter 
+} from '../../src/services/interactiveChartsService';
 import { 
   InteractiveChartsService, 
   ChartConfiguration, 
-  ChartDataPoint, 
-  ChartFilter 
+  ChartDataPoint 
 } from '../../src/services/interactiveChartsService';
 import { asyncStorage } from '../../src/utils/storage';
 

@@ -23,7 +23,7 @@
  * ```
  */
 
-import {
+import type {
   PricingTemplate,
   TemplateService,
   TemplateCategory,

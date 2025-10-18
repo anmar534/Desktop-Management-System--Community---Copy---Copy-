@@ -48,7 +48,7 @@ export interface AnalyticsFiltersProps {
   /** Available regions for filtering */
   availableRegions?: string[]
   /** Available outcomes for filtering */
-  availableOutcomes?: Array<'won' | 'lost' | 'pending' | 'cancelled'>
+  availableOutcomes?: ('won' | 'lost' | 'pending' | 'cancelled')[]
   /** Whether to show advanced filters */
   showAdvancedFilters?: boolean
   /** Whether filters are being applied (loading state) */

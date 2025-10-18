@@ -3,7 +3,7 @@
  * Sprint 5.4.6: تحسين الرسائل والتنبيهات
  */
 
-import React from 'react'
+import type React from 'react'
 import styled from 'styled-components'
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 import { designTokens } from '@/styles/design-system'

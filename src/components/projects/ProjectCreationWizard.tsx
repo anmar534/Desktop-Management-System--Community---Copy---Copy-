@@ -3,7 +3,8 @@
  * مكون معالج إنشاء المشاريع من المناقصات
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -32,7 +33,7 @@ import { useForm } from 'react-hook-form'
 // import { zodResolver } from '@hookform/resolvers/zod'
 // import { z } from 'zod'
 import { enhancedProjectService } from '../../services/enhancedProjectService'
-import { CreateProjectRequest } from '../../types/projects'
+import type { CreateProjectRequest } from '../../types/projects'
 import { toast } from 'sonner'
 
 // Mock tender data - في التطبيق الحقيقي سيتم جلبها من نظام المناقصات

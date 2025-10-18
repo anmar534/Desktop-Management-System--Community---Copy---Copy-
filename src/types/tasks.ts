@@ -298,22 +298,22 @@ export interface TaskPerformanceReport {
   }
   statistics: TaskStatistics
   trends: {
-    completionRate: Array<{ date: string; rate: number }>
-    productivity: Array<{ date: string; tasksCompleted: number }>
-    efficiency: Array<{ date: string; hoursPerTask: number }>
+    completionRate: { date: string; rate: number }[]
+    productivity: { date: string; tasksCompleted: number }[]
+    efficiency: { date: string; hoursPerTask: number }[]
   }
-  topPerformers: Array<{
+  topPerformers: {
     assigneeId: string
     assigneeName: string
     tasksCompleted: number
     averageCompletionTime: number
     efficiency: number
-  }>
-  bottlenecks: Array<{
+  }[]
+  bottlenecks: {
     taskId: string
     taskTitle: string
     daysOverdue: number
     blockedTasks: number
-  }>
+  }[]
   recommendations: string[]
 }

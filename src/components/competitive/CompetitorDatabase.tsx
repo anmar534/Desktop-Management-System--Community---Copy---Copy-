@@ -21,7 +21,8 @@
  * ```
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import type React from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search,

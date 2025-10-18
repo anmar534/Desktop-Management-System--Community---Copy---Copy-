@@ -707,7 +707,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
     }
   }
 
-  private generateId(prefix: string = 'change'): string {
+  private generateId(prefix = 'change'): string {
     return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 

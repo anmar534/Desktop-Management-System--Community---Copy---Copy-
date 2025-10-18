@@ -140,7 +140,7 @@ export class PredictiveAnalyticsService {
   }
 
   // خوارزميات التنبؤ
-  async predictRevenue(timeframe: number = 12): Promise<PredictionResult[]> {
+  async predictRevenue(timeframe = 12): Promise<PredictionResult[]> {
     const projects = await asyncStorage.getItem('projects') || [];
     const tenders = await asyncStorage.getItem('tenders') || [];
     
@@ -150,7 +150,7 @@ export class PredictiveAnalyticsService {
     return this.generatePredictions(model, historicalRevenue, timeframe);
   }
 
-  async predictCashFlow(timeframe: number = 12): Promise<PredictionResult[]> {
+  async predictCashFlow(timeframe = 12): Promise<PredictionResult[]> {
     const projects = await asyncStorage.getItem('projects') || [];
     const expenses = await asyncStorage.getItem('expenses') || [];
     
@@ -196,7 +196,7 @@ export class PredictiveAnalyticsService {
     return this.predictSingleValue(model, projectFeatures);
   }
 
-  async predictResourceDemand(timeframe: number = 6): Promise<PredictionResult[]> {
+  async predictResourceDemand(timeframe = 6): Promise<PredictionResult[]> {
     const projects = await asyncStorage.getItem('projects') || [];
     const resourceData = this.extractResourceData(projects);
     const model = await this.getOrCreateModel('resource_demand', 'arima');
@@ -426,7 +426,7 @@ export class PredictiveAnalyticsService {
     
     // تطبيق الخوارزمية المناسبة
     let predictedValue = 0;
-    let confidence = model.confidence;
+    const confidence = model.confidence;
     
     switch (model.algorithm) {
       case 'linear_regression':

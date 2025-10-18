@@ -3,7 +3,8 @@
  * Sprint 5.4.5: جولة تعريفية تفاعلية
  */
 
-import React, { useState, useEffect, useCallback } from 'react'
+import type React from 'react';
+import { useState, useEffect, useCallback } from 'react'
 import styled from 'styled-components'
 import { X, ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { designTokens } from '@/styles/design-system'

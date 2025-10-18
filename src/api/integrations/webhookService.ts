@@ -57,7 +57,7 @@ export type WebhookDeliveryStatus =
 // ============================================================================
 
 export class WebhookService {
-  private webhooks: Map<string, Webhook> = new Map()
+  private webhooks = new Map<string, Webhook>()
   private deliveryQueue: WebhookDelivery[] = []
   private isProcessing = false
 

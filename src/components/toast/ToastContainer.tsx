@@ -3,11 +3,12 @@
  * Sprint 5.4.6: تحسين الرسائل والتنبيهات
  */
 
-import React from 'react'
+import type React from 'react'
 import styled from 'styled-components'
 import { createPortal } from 'react-dom'
 import { designTokens } from '@/styles/design-system'
-import Toast, { ToastProps } from './Toast'
+import type { ToastProps } from './Toast';
+import Toast from './Toast'
 
 // ============================================================================
 // Types

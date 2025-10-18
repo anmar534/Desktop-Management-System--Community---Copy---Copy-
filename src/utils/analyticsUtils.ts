@@ -331,13 +331,13 @@ function groupPerformancesByPeriod(
  */
 export function createChartData(
   labels: string[],
-  datasets: Array<{
+  datasets: {
     label: string
     data: number[]
     backgroundColor?: string
     borderColor?: string
     type?: 'line' | 'bar' | 'pie' | 'doughnut'
-  }>
+  }[]
 ): ChartData {
   return {
     labels,
@@ -357,7 +357,7 @@ export function createChartData(
 /**
  * Format currency values with proper locale and currency
  */
-export function formatCurrency(amount: number, currency: string = 'SAR'): string {
+export function formatCurrency(amount: number, currency = 'SAR'): string {
   return new Intl.NumberFormat('ar-SA', {
     style: 'currency',
     currency: currency,
@@ -369,7 +369,7 @@ export function formatCurrency(amount: number, currency: string = 'SAR'): string
 /**
  * Format percentage values
  */
-export function formatPercentage(value: number, decimals: number = 1): string {
+export function formatPercentage(value: number, decimals = 1): string {
   return `${value.toFixed(decimals)}%`
 }
 

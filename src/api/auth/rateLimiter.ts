@@ -16,9 +16,7 @@ interface RateLimitEntry {
   firstRequest: number
 }
 
-interface RateLimitStore {
-  [key: string]: RateLimitEntry
-}
+type RateLimitStore = Record<string, RateLimitEntry>;
 
 // ============================================================================
 // Rate Limiter Class
@@ -151,7 +149,7 @@ export class RateLimiter {
    * Get all active rate limit entries
    * الحصول على جميع إدخالات حد المعدل النشطة
    */
-  getActiveEntries(): Array<{ key: string; entry: RateLimitEntry }> {
+  getActiveEntries(): { key: string; entry: RateLimitEntry }[] {
     const now = Date.now()
     return Object.entries(this.store)
       .filter(([, entry]) => now <= entry.resetTime)

@@ -3,7 +3,8 @@
  * Display and manage list of projects with filtering and search
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { 
   Search, 
   Plus, 

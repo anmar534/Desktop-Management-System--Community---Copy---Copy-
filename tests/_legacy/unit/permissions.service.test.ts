@@ -5,8 +5,9 @@
  */
 
 import { describe, it, expect } from 'vitest'
+import type {
+  User} from '@/services/security/permissions.service';
 import {
-  User,
   getUserPermissions,
   hasPermission,
   hasAnyPermission,

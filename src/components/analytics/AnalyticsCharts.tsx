@@ -71,13 +71,13 @@ export interface ComparisonChartProps {
   /** Chart description */
   description?: string
   /** Comparison data */
-  data: Array<{
+  data: {
     label: string
     value: number
     previousValue?: number
     target?: number
     color?: string
-  }>
+  }[]
   /** Chart type */
   type: 'bar' | 'column' | 'horizontal-bar'
   /** Value format */
@@ -101,12 +101,12 @@ export interface DistributionChartProps {
   /** Chart description */
   description?: string
   /** Distribution data */
-  data: Array<{
+  data: {
     label: string
     value: number
     percentage: number
     color?: string
-  }>
+  }[]
   /** Chart type */
   type: 'pie' | 'doughnut' | 'treemap'
   /** Chart height */

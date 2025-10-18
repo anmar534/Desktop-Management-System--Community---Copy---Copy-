@@ -475,7 +475,7 @@ export class FinancialIntegrationService {
    * الحصول على سجل التزامن
    * Get sync log
    */
-  async getSyncLog(): Promise<Array<SyncResult & { type: string }>> {
+  async getSyncLog(): Promise<(SyncResult & { type: string })[]> {
     return await asyncStorage.getItem(this.SYNC_LOG_KEY) || [];
   }
 

@@ -4,7 +4,8 @@
  * Implements User Stories US-1.1 through US-1.4
  */
 
-import React, { useState, useCallback } from 'react'
+import type React from 'react';
+import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import ProjectsList from './ProjectsList'
 import ProjectDetails from './ProjectDetails'

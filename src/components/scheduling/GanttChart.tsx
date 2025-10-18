@@ -3,8 +3,10 @@
  * مكون مخطط جانت التفاعلي
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
-import { Gantt, Task, ViewMode, DisplayOption } from 'gantt-task-react'
+import type React from 'react';
+import { useState, useEffect, useMemo } from 'react'
+import type { Task, DisplayOption } from 'gantt-task-react';
+import { Gantt, ViewMode } from 'gantt-task-react'
 import 'gantt-task-react/dist/index.css'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'

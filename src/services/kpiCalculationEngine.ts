@@ -3,9 +3,9 @@
  * محرك حساب مؤشرات الأداء الرئيسية
  */
 
-import { EnhancedProject } from '../types/projects'
-import { Task } from '../types/tasks'
-import { EVMMetrics } from '../types/evm'
+import type { EnhancedProject } from '../types/projects'
+import type { Task } from '../types/tasks'
+import type { EVMMetrics } from '../types/evm'
 
 export interface KPICalculationInput {
   projects: EnhancedProject[]
@@ -457,7 +457,7 @@ export class KPICalculationEngine {
     excellent: number, 
     warning: number, 
     critical: number,
-    lowerIsBetter: boolean = false
+    lowerIsBetter = false
   ): 'excellent' | 'good' | 'warning' | 'critical' {
     if (lowerIsBetter) {
       if (value <= excellent) return 'excellent'
@@ -700,7 +700,7 @@ export class KPICalculationEngine {
     const end = new Date(timeframe.endDate)
     const periods: string[] = []
 
-    let current = new Date(start)
+    const current = new Date(start)
     while (current <= end) {
       switch (period) {
         case 'weekly':

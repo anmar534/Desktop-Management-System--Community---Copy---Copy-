@@ -43,13 +43,13 @@ export interface OptimizationParameters {
  */
 export interface PriceSensitivityAnalysis {
   /** Price points analyzed */
-  pricePoints: Array<{
+  pricePoints: {
     bidAmount: number
     margin: number
     winProbability: number
     expectedValue: number
     roi: number
-  }>
+  }[]
   /** Optimal price point */
   optimalPrice: {
     bidAmount: number
@@ -71,12 +71,12 @@ export interface PriceSensitivityAnalysis {
  */
 export interface CompetitivePricingAnalysis {
   /** Estimated competitor bid ranges */
-  competitorBidRanges: Array<{
+  competitorBidRanges: {
     competitorName: string
     estimatedBidRange: { min: number; max: number }
     confidence: number
     reasoning: string
-  }>
+  }[]
   /** Recommended positioning */
   recommendedPositioning: 'aggressive' | 'competitive' | 'premium'
   /** Market positioning strategy */

@@ -387,9 +387,9 @@ export interface QualityDashboard {
   
   // الاتجاهات
   trends: {
-    qualityScoreTrend: Array<{ date: string; value: number }>
-    passRateTrend: Array<{ date: string; value: number }>
-    nonConformityTrend: Array<{ date: string; value: number }>
+    qualityScoreTrend: { date: string; value: number }[]
+    passRateTrend: { date: string; value: number }[]
+    nonConformityTrend: { date: string; value: number }[]
   }
   
   // التنبيهات

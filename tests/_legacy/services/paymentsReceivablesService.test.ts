@@ -4,11 +4,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import {
-  PaymentsReceivablesService,
+import type {
   Invoice,
   Payment,
   Receivable
+} from '../../src/services/paymentsReceivablesService';
+import {
+  PaymentsReceivablesService
 } from '../../src/services/paymentsReceivablesService'
 
 // محاكاة asyncStorage

@@ -6,8 +6,9 @@
  * مكون لعرض المحتوى بشكل مشروط بناءً على صلاحيات المستخدم
  */
 
-import React from 'react'
-import { Permission, Role, User, hasPermission, hasAnyPermission, hasAllPermissions, hasRole, hasAnyRole } from '@/services/security/permissions.service'
+import type React from 'react'
+import type { Permission, Role, User} from '@/services/security/permissions.service';
+import { hasPermission, hasAnyPermission, hasAllPermissions, hasRole, hasAnyRole } from '@/services/security/permissions.service'
 
 // ============================================================================
 // Types

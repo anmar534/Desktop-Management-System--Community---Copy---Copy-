@@ -3,7 +3,8 @@
  * Contract Management Component
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
+import type React from 'react';
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -52,9 +53,10 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { 
+import type { 
   SupplierContract, 
-  Supplier,
+  Supplier} from '../../services/supplierManagementService';
+import {
   supplierManagementService 
 } from '../../services/supplierManagementService'
 import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'

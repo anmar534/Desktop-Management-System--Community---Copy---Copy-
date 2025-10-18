@@ -237,10 +237,10 @@ class DecisionSupportServiceImpl implements DecisionSupportService {
       if (filters.searchTerm) {
         const searchLower = filters.searchTerm.toLowerCase()
         scenarios = scenarios.filter(s =>
-          (s.name && s.name.toLowerCase().includes(searchLower)) ||
-          (s.nameEn && s.nameEn.toLowerCase().includes(searchLower)) ||
-          (s.description && s.description.toLowerCase().includes(searchLower)) ||
-          (s.projectName && s.projectName.toLowerCase().includes(searchLower))
+          (s.name?.toLowerCase().includes(searchLower)) ||
+          (s.nameEn?.toLowerCase().includes(searchLower)) ||
+          (s.description?.toLowerCase().includes(searchLower)) ||
+          (s.projectName?.toLowerCase().includes(searchLower))
         )
       }
 

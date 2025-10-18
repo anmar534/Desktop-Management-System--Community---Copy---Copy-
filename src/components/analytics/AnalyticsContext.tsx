@@ -8,7 +8,8 @@
  * @since Phase 2 - Unified Analytics Navigation
  */
 
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react'
+import type React from 'react';
+import { createContext, useContext, useReducer, useCallback, useEffect } from 'react'
 import type { BidPerformance, CompetitorData, AnalyticsFilter } from '../../types/analytics'
 import type { MarketOpportunity, MarketTrend, SWOTAnalysis, CompetitiveBenchmark } from '../../types/competitive'
 import { analyticsService } from '../../services/analyticsService'

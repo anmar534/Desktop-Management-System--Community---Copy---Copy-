@@ -3,7 +3,8 @@
  * يعرض حالة التكامل بين جميع وحدات النظام
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
   RefreshCw, 
@@ -23,13 +24,15 @@ import { Badge } from '../ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Progress } from '../ui/progress'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog'
-import { 
-  unifiedSystemIntegrationService,
+import type {
   SystemModule,
   DataFlow,
   IntegrationSummary,
   ConflictResolution,
   RealTimeUpdate
+} from '../../services/unifiedSystemIntegrationService';
+import { 
+  unifiedSystemIntegrationService
 } from '../../services/unifiedSystemIntegrationService'
 
 const UnifiedSystemIntegration: React.FC = () => {

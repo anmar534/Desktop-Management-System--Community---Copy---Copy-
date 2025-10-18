@@ -7,7 +7,8 @@ import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import { X, Keyboard } from 'lucide-react'
 import { designTokens } from '@/styles/design-system'
-import { KeyboardShortcut, formatShortcut } from '@/hooks/useKeyboardShortcuts'
+import type { KeyboardShortcut} from '@/hooks/useKeyboardShortcuts';
+import { formatShortcut } from '@/hooks/useKeyboardShortcuts'
 
 // ============================================================================
 // Types

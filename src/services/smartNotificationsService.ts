@@ -106,9 +106,9 @@ export interface NotificationAnalytics {
   byCategory: Record<string, number>;
   byChannel: Record<string, number>;
   trends: {
-    daily: Array<{ date: string; count: number }>;
-    weekly: Array<{ week: string; count: number }>;
-    monthly: Array<{ month: string; count: number }>;
+    daily: { date: string; count: number }[];
+    weekly: { week: string; count: number }[];
+    monthly: { month: string; count: number }[];
   };
 }
 
@@ -485,7 +485,7 @@ export class SmartNotificationsService {
   }
 
   // حساب الاتجاهات اليومية
-  private calculateDailyTrends(notifications: SmartNotification[]): Array<{ date: string; count: number }> {
+  private calculateDailyTrends(notifications: SmartNotification[]): { date: string; count: number }[] {
     const trends: Record<string, number> = {};
     
     notifications.forEach(notification => {
@@ -497,13 +497,13 @@ export class SmartNotificationsService {
   }
 
   // حساب الاتجاهات الأسبوعية
-  private calculateWeeklyTrends(notifications: SmartNotification[]): Array<{ week: string; count: number }> {
+  private calculateWeeklyTrends(notifications: SmartNotification[]): { week: string; count: number }[] {
     // تنفيذ حساب الاتجاهات الأسبوعية
     return [];
   }
 
   // حساب الاتجاهات الشهرية
-  private calculateMonthlyTrends(notifications: SmartNotification[]): Array<{ month: string; count: number }> {
+  private calculateMonthlyTrends(notifications: SmartNotification[]): { month: string; count: number }[] {
     // تنفيذ حساب الاتجاهات الشهرية
     return [];
   }

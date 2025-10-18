@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { costTrackingService } from '../../src/services/costTrackingService'
-import { CostEntry, CostCategory, CostEntryStatus, CreateCostEntryRequest } from '../../src/types/evm'
+import type { CostEntry, CostCategory, CostEntryStatus, CreateCostEntryRequest } from '../../src/types/evm'
 
 // Mock localStorage
 const mockLocalStorage = {

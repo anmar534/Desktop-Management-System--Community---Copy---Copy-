@@ -3,7 +3,7 @@
  * خدمة تتبع التكاليف
  */
 
-import { CostTrackingEntry } from '../types/evm'
+import type { CostTrackingEntry } from '../types/evm'
 import { safeLocalStorage } from '../utils/storage'
 
 export class CostTrackingService {

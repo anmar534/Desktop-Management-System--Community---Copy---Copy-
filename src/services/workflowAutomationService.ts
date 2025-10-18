@@ -506,7 +506,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
   }
 
   private applyActions(actions: AssignmentAction[], task: WorkflowTask): WorkflowTask {
-    let updatedTask = { ...task }
+    const updatedTask = { ...task }
 
     for (const action of actions) {
       switch (action.type) {
@@ -917,7 +917,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     const startDate = new Date(schedule.startDate)
     const [hours, minutes] = schedule.time.split(':').map(Number)
 
-    let nextDate = new Date(Math.max(now.getTime(), startDate.getTime()))
+    const nextDate = new Date(Math.max(now.getTime(), startDate.getTime()))
     nextDate.setHours(hours, minutes, 0, 0)
 
     // If the time has already passed today, move to next occurrence

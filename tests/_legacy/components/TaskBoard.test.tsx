@@ -3,12 +3,13 @@
  * اختبارات مكون لوحة المهام
  */
 
-import React from 'react'
+import type React from 'react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { DragDropContext } from 'react-beautiful-dnd'
 import TaskBoard from '../../../src/components/tasks/TaskBoard'
-import { Task, TaskStatus } from '../../../src/types/tasks'
+import type { Task} from '../../../src/types/tasks';
+import { TaskStatus } from '../../../src/types/tasks'
 
 // Mock the task management service
 vi.mock('../../../src/services/taskManagementService', () => ({

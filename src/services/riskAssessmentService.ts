@@ -23,7 +23,7 @@
  * ```
  */
 
-import {
+import type {
   RiskAssessment,
   RiskAssessmentService,
   RiskFactor,

@@ -6,7 +6,8 @@
  * Interactive comparison of project and client profitability with filtering and export capabilities
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -22,7 +23,8 @@ import {
   BarChart3, TrendingUp, TrendingDown, Award, AlertTriangle,
   Download, Filter, Search, Plus, Minus
 } from 'lucide-react'
-import { ProfitabilityAnalysisService, ProfitabilityComparison } from '../../services/profitabilityAnalysisService'
+import type { ProfitabilityComparison } from '../../services/profitabilityAnalysisService';
+import { ProfitabilityAnalysisService } from '../../services/profitabilityAnalysisService'
 
 interface ProfitabilityComparisonProps {
   className?: string

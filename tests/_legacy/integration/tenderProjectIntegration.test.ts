@@ -6,7 +6,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { enhancedProjectService } from '../../src/services/enhancedProjectService'
 import { taskManagementService } from '../../src/services/taskManagementService'
-import { CreateProjectRequest, EnhancedProject } from '../../src/types/projects'
+import type { CreateProjectRequest} from '../../src/types/projects';
+import { EnhancedProject } from '../../src/types/projects'
 
 // Mock localStorage
 const mockLocalStorage = {
@@ -221,15 +222,15 @@ describe('Tender-Project Integration', () => {
 
     it('should handle non-existent tender', async () => {
       // Mock getTenderData to return null
-      const originalGetTenderData = enhancedProjectService['getTenderData']
-      enhancedProjectService['getTenderData'] = vi.fn().mockResolvedValue(null)
+      const originalGetTenderData = enhancedProjectService.getTenderData
+      enhancedProjectService.getTenderData = vi.fn().mockResolvedValue(null)
 
       await expect(
         enhancedProjectService.createProjectFromTender('non-existent-tender')
       ).rejects.toThrow('المناقصة غير موجودة')
 
       // Restore original method
-      enhancedProjectService['getTenderData'] = originalGetTenderData
+      enhancedProjectService.getTenderData = originalGetTenderData
     })
   })
 
@@ -333,8 +334,8 @@ describe('Tender-Project Integration', () => {
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       // Mock invalid tender data
-      const originalGetTenderData = enhancedProjectService['getTenderData']
-      enhancedProjectService['getTenderData'] = vi.fn().mockResolvedValue({
+      const originalGetTenderData = enhancedProjectService.getTenderData
+      enhancedProjectService.getTenderData = vi.fn().mockResolvedValue({
         id: 'invalid-tender',
         title: '', // عنوان فارغ
         value: -1000, // قيمة سالبة
@@ -348,7 +349,7 @@ describe('Tender-Project Integration', () => {
       expect(project).toBeDefined()
 
       // Restore original method
-      enhancedProjectService['getTenderData'] = originalGetTenderData
+      enhancedProjectService.getTenderData = originalGetTenderData
     })
 
     it('should handle missing BOQ data', async () => {
@@ -356,8 +357,8 @@ describe('Tender-Project Integration', () => {
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       // Mock tender without BOQ
-      const originalGetTenderData = enhancedProjectService['getTenderData']
-      enhancedProjectService['getTenderData'] = vi.fn().mockResolvedValue({
+      const originalGetTenderData = enhancedProjectService.getTenderData
+      enhancedProjectService.getTenderData = vi.fn().mockResolvedValue({
         ...mockTenderData,
         boq: undefined
       })
@@ -367,7 +368,7 @@ describe('Tender-Project Integration', () => {
       expect(project.metadata.boqItems).toBe(0)
 
       // Restore original method
-      enhancedProjectService['getTenderData'] = originalGetTenderData
+      enhancedProjectService.getTenderData = originalGetTenderData
     })
 
     it('should handle missing timeline data', async () => {
@@ -375,8 +376,8 @@ describe('Tender-Project Integration', () => {
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       // Mock tender without timeline
-      const originalGetTenderData = enhancedProjectService['getTenderData']
-      enhancedProjectService['getTenderData'] = vi.fn().mockResolvedValue({
+      const originalGetTenderData = enhancedProjectService.getTenderData
+      enhancedProjectService.getTenderData = vi.fn().mockResolvedValue({
         ...mockTenderData,
         timeline: undefined
       })
@@ -386,7 +387,7 @@ describe('Tender-Project Integration', () => {
       expect(project.phases).toHaveLength(0)
 
       // Restore original method
-      enhancedProjectService['getTenderData'] = originalGetTenderData
+      enhancedProjectService.getTenderData = originalGetTenderData
     })
   })
 
@@ -404,15 +405,15 @@ describe('Tender-Project Integration', () => {
 
     it('should handle network errors when fetching tender data', async () => {
       // Mock network error
-      const originalGetTenderData = enhancedProjectService['getTenderData']
-      enhancedProjectService['getTenderData'] = vi.fn().mockRejectedValue(new Error('Network error'))
+      const originalGetTenderData = enhancedProjectService.getTenderData
+      enhancedProjectService.getTenderData = vi.fn().mockRejectedValue(new Error('Network error'))
 
       await expect(
         enhancedProjectService.createProjectFromTender('tender-123')
       ).rejects.toThrow('فشل في إنشاء مشروع من مناقصة')
 
       // Restore original method
-      enhancedProjectService['getTenderData'] = originalGetTenderData
+      enhancedProjectService.getTenderData = originalGetTenderData
     })
   })
 

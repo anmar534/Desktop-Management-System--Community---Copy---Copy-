@@ -3,7 +3,7 @@
  * Sprint 5.4.5: جولة تعريفية تفاعلية
  */
 
-import { TourStep } from '@/components/onboarding/OnboardingTour'
+import type { TourStep } from '@/components/onboarding/OnboardingTour'
 
 // ============================================================================
 // Main Application Tour

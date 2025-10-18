@@ -7,10 +7,11 @@
  */
 
 import { useMemo, useCallback } from 'react'
-import {
+import type {
   Permission,
   Role,
-  User,
+  User} from '@/services/security/permissions.service';
+import {
   getUserPermissions,
   hasPermission as checkPermission,
   hasAnyPermission as checkAnyPermission,

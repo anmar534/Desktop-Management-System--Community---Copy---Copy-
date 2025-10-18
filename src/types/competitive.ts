@@ -217,30 +217,30 @@ export interface MarketOpportunity {
     compliance: string[]
   }
   /** Risk assessment */
-  risks: Array<{
+  risks: {
     type: 'technical' | 'financial' | 'schedule' | 'commercial' | 'regulatory'
     description: string
     impact: number
     probability: number
     mitigation: string
-  }>
+  }[]
   /** Action items and next steps */
-  actions: Array<{
+  actions: {
     id: string
     description: string
     assignee: string
     dueDate: string
     status: 'pending' | 'in-progress' | 'completed' | 'cancelled'
     priority: 'low' | 'medium' | 'high' | 'critical'
-  }>
+  }[]
   /** Data sources */
-  sources: Array<{
+  sources: {
     type: 'government-portal' | 'industry-report' | 'competitor-intel' | 'client-contact'
     name: string
     url?: string
     reliability: number
     lastUpdated: string
-  }>
+  }[]
   /** Creation and update tracking */
   createdAt: string
   updatedAt: string
@@ -287,21 +287,21 @@ export interface MarketTrend {
       end: string
     }
     /** Maturity timeline */
-    maturityPhases: Array<{
+    maturityPhases: {
       phase: string
       startDate: string
       endDate: string
       characteristics: string[]
-    }>
+    }[]
   }
   /** Quantitative indicators */
-  indicators: Array<{
+  indicators: {
     name: string
     value: number
     unit: string
     trend: 'up' | 'down' | 'stable'
     lastUpdated: string
-  }>
+  }[]
   /** Strategic implications */
   implications: {
     /** Opportunities created */
@@ -320,11 +320,11 @@ export interface MarketTrend {
     /** Monitoring frequency */
     frequency: 'daily' | 'weekly' | 'monthly' | 'quarterly'
     /** Alert thresholds */
-    alertThresholds: Array<{
+    alertThresholds: {
       metric: string
       threshold: number
       condition: 'above' | 'below' | 'change'
-    }>
+    }[]
   }
   /** Creation and update tracking */
   createdAt: string
@@ -353,25 +353,25 @@ export interface SWOTAnalysis {
     end: string
   }
   /** Strengths */
-  strengths: Array<{
+  strengths: {
     id: string
     description: string
     category: 'financial' | 'operational' | 'technical' | 'market' | 'strategic'
     impact: number
     evidence: string[]
     sustainability: 'high' | 'medium' | 'low'
-  }>
+  }[]
   /** Weaknesses */
-  weaknesses: Array<{
+  weaknesses: {
     id: string
     description: string
     category: 'financial' | 'operational' | 'technical' | 'market' | 'strategic'
     severity: number
     evidence: string[]
     addressability: 'easy' | 'moderate' | 'difficult' | 'very-difficult'
-  }>
+  }[]
   /** Opportunities */
-  opportunities: Array<{
+  opportunities: {
     id: string
     description: string
     category: 'market' | 'technology' | 'regulatory' | 'competitive' | 'strategic'
@@ -379,9 +379,9 @@ export interface SWOTAnalysis {
     timeframe: 'short-term' | 'medium-term' | 'long-term'
     requirements: string[]
     probability: number
-  }>
+  }[]
   /** Threats */
-  threats: Array<{
+  threats: {
     id: string
     description: string
     category: 'competitive' | 'market' | 'regulatory' | 'economic' | 'technological'
@@ -389,9 +389,9 @@ export interface SWOTAnalysis {
     probability: number
     timeframe: 'immediate' | 'short-term' | 'medium-term' | 'long-term'
     mitigation: string[]
-  }>
+  }[]
   /** Strategic recommendations */
-  recommendations: Array<{
+  recommendations: {
     id: string
     type: 'leverage-strength' | 'address-weakness' | 'pursue-opportunity' | 'mitigate-threat'
     description: string
@@ -400,7 +400,7 @@ export interface SWOTAnalysis {
     impact: 'low' | 'medium' | 'high'
     timeline: string
     resources: string[]
-  }>
+  }[]
   /** Analysis metadata */
   methodology: string
   confidence: number
@@ -426,7 +426,7 @@ export interface CompetitiveBenchmark {
     end: string
   }
   /** Benchmark metrics */
-  metrics: Array<{
+  metrics: {
     name: string
     description: string
     unit: string
@@ -442,21 +442,21 @@ export interface CompetitiveBenchmark {
       rank: number
       percentile: number
     }
-    competitors: Array<{
+    competitors: {
       id: string
       name: string
       value: number
       rank: number
-    }>
-  }>
+    }[]
+  }[]
   /** Performance gaps */
-  gaps: Array<{
+  gaps: {
     metric: string
     gap: number
     gapType: 'positive' | 'negative'
     significance: 'critical' | 'important' | 'moderate' | 'minor'
     recommendations: string[]
-  }>
+  }[]
   /** Benchmark insights */
   insights: {
     keyFindings: string[]
@@ -497,43 +497,43 @@ export interface IntelligenceReport {
   /** Key findings */
   keyFindings: string[]
   /** Detailed analysis sections */
-  sections: Array<{
+  sections: {
     title: string
     content: string
-    charts?: Array<{
+    charts?: {
       type: string
       data: any
       title: string
-    }>
-    tables?: Array<{
+    }[]
+    tables?: {
       title: string
       headers: string[]
       rows: string[][]
-    }>
-  }>
+    }[]
+  }[]
   /** Recommendations */
-  recommendations: Array<{
+  recommendations: {
     priority: 'high' | 'medium' | 'low'
     recommendation: string
     rationale: string
     expectedImpact: string
     timeline: string
     resources: string[]
-  }>
+  }[]
   /** Risk assessment */
-  risks: Array<{
+  risks: {
     description: string
     probability: number
     impact: number
     mitigation: string
-  }>
+  }[]
   /** Data sources and reliability */
-  sources: Array<{
+  sources: {
     name: string
     type: 'primary' | 'secondary'
     reliability: number
     date: string
-  }>
+  }[]
   /** Report metadata */
   confidentiality: 'public' | 'internal' | 'restricted' | 'confidential'
   distribution: string[]
@@ -559,11 +559,11 @@ export interface CompetitiveAlert {
   name: string
   description: string
   type: 'competitor-activity' | 'market-change' | 'opportunity' | 'threat'
-  conditions: Array<{
+  conditions: {
     metric: string
     operator: 'equals' | 'greater-than' | 'less-than' | 'contains' | 'changes'
     value: any
-  }>
+  }[]
   recipients: string[]
   frequency: 'immediate' | 'daily' | 'weekly' | 'monthly'
   isActive: boolean
@@ -579,7 +579,7 @@ export interface CompetitiveDashboard {
   id: string
   name: string
   description: string
-  widgets: Array<{
+  widgets: {
     id: string
     type: 'chart' | 'table' | 'metric' | 'alert' | 'report'
     title: string
@@ -590,12 +590,12 @@ export interface CompetitiveDashboard {
       width: number
       height: number
     }
-  }>
-  filters: Array<{
+  }[]
+  filters: {
     name: string
     type: 'date' | 'category' | 'competitor' | 'region'
     defaultValue: any
-  }>
+  }[]
   refreshInterval: number
   isPublic: boolean
   owner: string

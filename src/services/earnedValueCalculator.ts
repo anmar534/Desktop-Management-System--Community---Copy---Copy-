@@ -3,7 +3,7 @@
  * حاسبة إدارة القيمة المكتسبة
  */
 
-import { 
+import type { 
   EVMMetrics, 
   EVMCalculationInput, 
   EVMTaskData, 

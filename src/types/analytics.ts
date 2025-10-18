@@ -95,11 +95,11 @@ export interface MarketIntelligence {
     /** Growth rate percentage */
     growthRate: number
     /** Market share by company */
-    marketShare: Array<{
+    marketShare: {
       company: string
       percentage: number
       value: number
-    }>
+    }[]
   }
   /** Pricing trends */
   pricingTrends: {
@@ -110,10 +110,10 @@ export interface MarketIntelligence {
     /** Price volatility index */
     volatility: number
     /** Seasonal factors */
-    seasonalFactors: Array<{
+    seasonalFactors: {
       month: number
       factor: number
-    }>
+    }[]
   }
   /** Competitive landscape */
   competitiveLandscape: {
@@ -125,11 +125,11 @@ export interface MarketIntelligence {
     barrierToEntry: number
   }
   /** Data sources and reliability */
-  sources: Array<{
+  sources: {
     name: string
     reliability: number
     lastUpdated: string
-  }>
+  }[]
   /** Creation timestamp */
   createdAt: string
   /** Last update timestamp */
@@ -201,12 +201,12 @@ export interface CompetitorData {
   /** Historical performance */
   performance: {
     /** Recent projects won */
-    recentWins: Array<{
+    recentWins: {
       projectName: string
       value: number
       date: string
       margin?: number
-    }>
+    }[]
     /** Performance trends */
     trends: {
       winRateTrend: 'improving' | 'stable' | 'declining'
@@ -228,12 +228,12 @@ export interface CompetitorData {
   /** Relationship and collaboration history */
   relationship: {
     /** Past collaborations */
-    collaborations: Array<{
+    collaborations: {
       type: 'partner' | 'subcontractor' | 'joint-venture'
       project: string
       date: string
       outcome: string
-    }>
+    }[]
     /** Relationship status */
     status: 'competitor' | 'potential-partner' | 'strategic-alliance' | 'neutral'
   }
@@ -273,28 +273,28 @@ export interface PerformanceSummary {
     efficiencyTrend: number
   }
   /** Breakdown by category */
-  byCategory: Array<{
+  byCategory: {
     category: string
     bids: number
     wins: number
     winRate: number
     averageValue: number
     margin: number
-  }>
+  }[]
   /** Breakdown by region */
-  byRegion: Array<{
+  byRegion: {
     region: string
     bids: number
     wins: number
     winRate: number
     marketShare: number
-  }>
+  }[]
   /** Top performing segments */
-  topSegments: Array<{
+  topSegments: {
     segment: string
     performance: number
     growth: number
-  }>
+  }[]
 }
 
 /**
@@ -313,27 +313,27 @@ export interface CompetitiveAnalysis {
     competitiveStrength: number
   }
   /** Key competitors */
-  keyCompetitors: Array<{
+  keyCompetitors: {
     id: string
     name: string
     marketShare: number
     threatLevel: 'low' | 'medium' | 'high' | 'critical'
     winRateAgainst: number
-  }>
+  }[]
   /** Competitive gaps and opportunities */
-  opportunities: Array<{
+  opportunities: {
     type: 'market-gap' | 'competitor-weakness' | 'emerging-trend'
     description: string
     potential: number
     difficulty: number
-  }>
+  }[]
   /** Recommended actions */
-  recommendations: Array<{
+  recommendations: {
     priority: 'high' | 'medium' | 'low'
     action: string
     expectedImpact: string
     timeline: string
-  }>
+  }[]
 }
 
 // ============================================================================
@@ -355,14 +355,14 @@ export interface TimeSeriesPoint {
  */
 export interface ChartData {
   labels: string[]
-  datasets: Array<{
+  datasets: {
     label: string
     data: number[]
     backgroundColor?: string | string[]
     borderColor?: string
     borderWidth?: number
     type?: 'line' | 'bar' | 'pie' | 'doughnut' | 'scatter'
-  }>
+  }[]
 }
 
 /**
@@ -376,7 +376,7 @@ export interface AnalyticsFilter {
   categories?: string[]
   regions?: string[]
   clients?: string[]
-  outcomes?: Array<'won' | 'lost' | 'pending' | 'cancelled'>
+  outcomes?: ('won' | 'lost' | 'pending' | 'cancelled')[]
   valueRange?: {
     min: number
     max: number

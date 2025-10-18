@@ -111,7 +111,7 @@ export const DecisionSupport: React.FC<DecisionSupportProps> = React.memo(({
     return scenarios.filter(scenario => {
       const matchesSearch = !searchTerm || 
         scenario.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (scenario.nameEn && scenario.nameEn.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (scenario.nameEn?.toLowerCase().includes(searchTerm.toLowerCase())) ||
         scenario.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         scenario.projectName.toLowerCase().includes(searchTerm.toLowerCase())
 

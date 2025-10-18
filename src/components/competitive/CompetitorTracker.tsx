@@ -57,12 +57,12 @@ interface CompetitorFormData {
   }
   strengths: string[]
   weaknesses: string[]
-  recentActivities: Array<{
+  recentActivities: {
     date: string
     type: 'tender_win' | 'tender_loss' | 'new_project' | 'partnership' | 'expansion'
     description: string
     value?: number
-  }>
+  }[]
 }
 
 /**

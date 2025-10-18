@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { earnedValueCalculator } from '../../src/services/earnedValueCalculator'
-import { EVMCalculationInput, EVMTaskData, EVMMetrics, EVMThresholds } from '../../src/types/evm'
+import type { EVMCalculationInput, EVMTaskData, EVMMetrics, EVMThresholds } from '../../src/types/evm'
 
 describe('EarnedValueCalculator', () => {
   const mockTaskData: EVMTaskData[] = [

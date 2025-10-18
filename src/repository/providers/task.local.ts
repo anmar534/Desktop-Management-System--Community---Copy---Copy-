@@ -3,7 +3,7 @@
  * تنفيذ مستودع المهام المحلي
  */
 
-import { 
+import type { 
   Task, 
   CreateTaskRequest, 
   UpdateTaskRequest, 
@@ -17,7 +17,7 @@ import {
   TaskStatus,
   TaskPriority
 } from '../../types/tasks'
-import { TaskRepository } from '../task.repository'
+import type { TaskRepository } from '../task.repository'
 import { safeLocalStorage } from '../../utils/storage'
 
 class LocalTaskRepository implements TaskRepository {

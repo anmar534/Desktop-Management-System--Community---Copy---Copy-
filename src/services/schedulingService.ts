@@ -349,7 +349,7 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
       }))
   }
 
-  private hasCircularDependency(task: GanttTask, allTasks: GanttTask[], visited: Set<string> = new Set()): boolean {
+  private hasCircularDependency(task: GanttTask, allTasks: GanttTask[], visited = new Set<string>()): boolean {
     if (visited.has(task.id)) {
       return true
     }

@@ -241,7 +241,7 @@ export function createShortcut(
  * تنسيق مفاتيح الاختصار للعرض
  */
 export function formatShortcut(keys: string[]): string {
-  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0
+  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().includes('MAC')
 
   return keys
     .map(key => {

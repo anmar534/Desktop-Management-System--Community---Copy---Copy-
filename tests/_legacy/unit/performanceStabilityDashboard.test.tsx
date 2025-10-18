@@ -9,7 +9,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 
 import PerformanceStabilityDashboard from '../../../src/components/performance/PerformanceStabilityDashboard'
-import { SystemHealth, PerformanceMetrics, OptimizationRule } from '../../../src/services/performanceOptimizationService'
+import type { SystemHealth, PerformanceMetrics, OptimizationRule } from '../../../src/services/performanceOptimizationService'
 
 // Mock the performance optimization service
 const mockPerformanceService = {

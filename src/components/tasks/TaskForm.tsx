@@ -3,7 +3,8 @@
  * مكون نموذج المهمة لإنشاء وتعديل المهام
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 // import { zodResolver } from '@hookform/resolvers/zod'
 // import * as z from 'zod'
@@ -20,7 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { CalendarIcon, X, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
-import { Task, CreateTaskRequest, UpdateTaskRequest, TaskPriority, TaskType } from '../../types/tasks'
+import type { Task, CreateTaskRequest, UpdateTaskRequest, TaskPriority, TaskType } from '../../types/tasks'
 import { taskManagementService } from '../../services/taskManagementService'
 import { toast } from 'sonner'
 

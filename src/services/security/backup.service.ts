@@ -344,7 +344,7 @@ let autoBackupInterval: NodeJS.Timeout | null = null
 export async function startAutoBackup(
   userId: string,
   userName: string,
-  intervalHours: number = 24,
+  intervalHours = 24,
   options: BackupOptions = {}
 ): Promise<void> {
   // Stop existing interval

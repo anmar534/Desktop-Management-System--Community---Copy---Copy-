@@ -4,7 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CustomizationService, Widget, Theme, DashboardLayout, UserCustomization } from '../../src/services/customizationService';
+import type { Widget, Theme, DashboardLayout, UserCustomization } from '../../src/services/customizationService';
+import { CustomizationService } from '../../src/services/customizationService';
 import { asyncStorage } from '../../src/utils/storage';
 
 // Mock asyncStorage

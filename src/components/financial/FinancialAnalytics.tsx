@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Progress } from '../ui/progress';
-import { 
-  FinancialAnalyticsService, 
+import type { 
   LiquidityRatios, 
   ProfitabilityRatios, 
   ActivityRatios, 
@@ -16,6 +16,9 @@ import {
   SeasonalityAnalysis,
   EarlyWarningIndicator,
   FinancialKPI
+} from '../../services/financialAnalyticsService';
+import { 
+  FinancialAnalyticsService
 } from '../../services/financialAnalyticsService';
 import { 
   LineChart, 

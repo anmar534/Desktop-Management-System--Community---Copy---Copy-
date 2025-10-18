@@ -5,8 +5,8 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { projectReportingService } from '../../src/services/projectReportingService'
-import { EnhancedProject } from '../../src/types/projects'
-import { EVMMetrics } from '../../src/types/evm'
+import type { EnhancedProject } from '../../src/types/projects'
+import type { EVMMetrics } from '../../src/types/evm'
 
 // Mock dependencies
 vi.mock('../../src/services/enhancedProjectService', () => ({

@@ -3,7 +3,8 @@
  * Financial Integration Management Component
  */
 
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -25,12 +26,13 @@ import {
   Zap,
   BarChart3
 } from 'lucide-react';
-import { FinancialIntegrationService, IntegrationSettings, SyncResult } from '../../services/financialIntegrationService';
+import type { IntegrationSettings, SyncResult } from '../../services/financialIntegrationService';
+import { FinancialIntegrationService } from '../../services/financialIntegrationService';
 
 export const FinancialIntegration: React.FC = () => {
   const [service] = useState(() => new FinancialIntegrationService());
   const [settings, setSettings] = useState<IntegrationSettings | null>(null);
-  const [syncLog, setSyncLog] = useState<Array<SyncResult & { type: string }>>([]);
+  const [syncLog, setSyncLog] = useState<(SyncResult & { type: string })[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -71,7 +73,7 @@ export const FinancialIntegration: React.FC = () => {
   const handleManualSync = async (type: 'projects' | 'tenders' | 'all') => {
     setSyncing(true);
     try {
-      let results: SyncResult[] = [];
+      const results: SyncResult[] = [];
       
       if (type === 'projects' || type === 'all') {
         const projectResult = await service.integrateWithProjects();

@@ -538,8 +538,8 @@ class InventoryManagementService {
         item.itemName.toLowerCase().includes(searchTerm) ||
         item.itemCode.toLowerCase().includes(searchTerm) ||
         item.category.toLowerCase().includes(searchTerm) ||
-        (item.itemNameEn && item.itemNameEn.toLowerCase().includes(searchTerm)) ||
-        (item.description && item.description.toLowerCase().includes(searchTerm))
+        (item.itemNameEn?.toLowerCase().includes(searchTerm)) ||
+        (item.description?.toLowerCase().includes(searchTerm))
       )
     } catch (error) {
       console.error('خطأ في البحث عن العناصر:', error)

@@ -102,7 +102,7 @@ export interface ProfitabilityComparison {
   titleEn: string
   
   // البيانات المقارنة - Comparison Data
-  items: Array<{
+  items: {
     id: string
     name: string
     nameEn: string
@@ -112,7 +112,7 @@ export interface ProfitabilityComparison {
     profitMargin: number
     roi: number
     rank: number
-  }>
+  }[]
   
   // الإحصائيات - Statistics
   totalRevenue: number
@@ -139,7 +139,7 @@ export interface ProfitabilityTrend {
   entityNameEn: string
   
   // البيانات الشهرية - Monthly Data
-  monthlyData: Array<{
+  monthlyData: {
     month: string
     year: number
     revenue: number
@@ -147,7 +147,7 @@ export interface ProfitabilityTrend {
     profit: number
     profitMargin: number
     cumulativeProfit: number
-  }>
+  }[]
   
   // الاتجاهات - Trends
   revenueGrowthRate: number
@@ -456,7 +456,7 @@ export class ProfitabilityAnalysisService {
   async analyzeProfitabilityTrend(
     entityId: string,
     entityType: 'project' | 'client',
-    months: number = 12
+    months = 12
   ): Promise<ProfitabilityTrend> {
     try {
       const entityData = entityType === 'project'
@@ -518,7 +518,7 @@ export class ProfitabilityAnalysisService {
    * جلب أفضل المشاريع ربحية
    * Get most profitable projects
    */
-  async getMostProfitableProjects(limit: number = 10): Promise<ProjectProfitability[]> {
+  async getMostProfitableProjects(limit = 10): Promise<ProjectProfitability[]> {
     try {
       const allProfitabilities = await asyncStorage.getItem(this.projectProfitabilityKey) || []
 
@@ -535,7 +535,7 @@ export class ProfitabilityAnalysisService {
    * جلب أفضل العملاء ربحية
    * Get most profitable clients
    */
-  async getMostProfitableClients(limit: number = 10): Promise<ClientProfitability[]> {
+  async getMostProfitableClients(limit = 10): Promise<ClientProfitability[]> {
     try {
       const allProfitabilities = await asyncStorage.getItem(this.clientProfitabilityKey) || []
 

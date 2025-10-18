@@ -3,7 +3,8 @@
  * Sprint 5.4.2: تحسين التنقل والقوائم
  */
 
-import React, { useState } from 'react'
+import type React from 'react';
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import styled from 'styled-components'
 import {

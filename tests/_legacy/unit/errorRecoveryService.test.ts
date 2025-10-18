@@ -15,9 +15,10 @@ vi.mock('../../../src/utils/storage', () => ({
   }
 }))
 
+import type {
+  ErrorEvent} from '../../../src/services/errorRecoveryService';
 import {
   errorRecoveryService,
-  ErrorEvent,
   RecoveryStrategy,
   ErrorSummary,
   SystemStability

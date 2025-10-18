@@ -6,7 +6,8 @@
  * Monitor and optimize system performance and stability
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Activity,
@@ -31,11 +32,13 @@ import { Progress } from '../ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Alert, AlertDescription } from '../ui/alert'
 
-import { 
-  performanceOptimizationService,
+import type {
   SystemHealth,
   PerformanceMetrics,
   OptimizationRule
+} from '../../services/performanceOptimizationService';
+import { 
+  performanceOptimizationService
 } from '../../services/performanceOptimizationService'
 
 interface PerformanceStabilityDashboardProps {

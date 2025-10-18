@@ -3,7 +3,8 @@
  * مكون لوحة معلومات إدارة القيمة المكتسبة
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Progress } from '../ui/progress'
@@ -34,7 +35,8 @@ import {
   PieChart as RechartsPieChart,
   Cell
 } from 'recharts'
-import { EVMMetrics, EVMDashboardData, EVMAlert } from '../../types/evm'
+import type { EVMMetrics, EVMDashboardData} from '../../types/evm';
+import { EVMAlert } from '../../types/evm'
 import { earnedValueCalculator } from '../../services/earnedValueCalculator'
 import { toast } from 'sonner'
 

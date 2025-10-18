@@ -4,7 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { smartNotificationsService, NotificationRule, SmartNotification, NotificationSettings } from '../../src/services/smartNotificationsService';
+import type { NotificationRule, SmartNotification, NotificationSettings } from '../../src/services/smartNotificationsService';
+import { smartNotificationsService } from '../../src/services/smartNotificationsService';
 import { asyncStorage } from '../../src/utils/storage';
 
 // Mock asyncStorage

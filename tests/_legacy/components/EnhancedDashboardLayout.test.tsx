@@ -7,7 +7,6 @@
  * @date 2024-01-15
  */
 
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Building, DollarSign, AlertTriangle } from 'lucide-react';

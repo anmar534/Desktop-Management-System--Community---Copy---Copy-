@@ -3,9 +3,12 @@
  * Sprint 5.4.6: تحسين الرسائل والتنبيهات
  */
 
-import React, { createContext, useContext } from 'react'
-import ToastContainer, { ToastPosition } from './ToastContainer'
-import { useToast, UseToastReturn } from './useToast'
+import type React from 'react';
+import { createContext, useContext } from 'react'
+import type { ToastPosition } from './ToastContainer';
+import ToastContainer from './ToastContainer'
+import type { UseToastReturn } from './useToast';
+import { useToast } from './useToast'
 
 // ============================================================================
 // Context

@@ -8,7 +8,8 @@
  * @since Phase 1 Implementation
  */
 
-import React, { useState, useCallback, useMemo, useEffect } from 'react'
+import type React from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   AlertTriangle,

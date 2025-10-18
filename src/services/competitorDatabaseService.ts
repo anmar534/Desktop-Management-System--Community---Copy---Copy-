@@ -62,7 +62,7 @@ export interface CompetitorDatabaseService {
   // Bulk Operations
   importCompetitors(competitors: CreateCompetitorData[]): Promise<ImportResult>
   exportCompetitors(format: 'json' | 'csv'): Promise<string>
-  bulkUpdateCompetitors(updates: Array<{ id: string; data: Partial<Competitor> }>): Promise<BulkUpdateResult>
+  bulkUpdateCompetitors(updates: { id: string; data: Partial<Competitor> }[]): Promise<BulkUpdateResult>
 
   // Utility Functions
   validateCompetitorData(data: Partial<Competitor>): ValidationResult
@@ -118,12 +118,12 @@ export interface CompetitiveAnalysisResult {
 
 export interface MarketShareAnalysis {
   totalMarket: number
-  competitors: Array<{
+  competitors: {
     id: string
     name: string
     marketShare: number
     trend: 'increasing' | 'decreasing' | 'stable'
-  }>
+  }[]
   ourPosition: number
   topCompetitors: string[]
   marketConcentration: number
@@ -133,16 +133,16 @@ export interface MarketShareAnalysis {
 export interface PricingIntelligence {
   competitor: Competitor
   averageMargin: number
-  pricingTrends: Array<{
+  pricingTrends: {
     period: string
     averagePrice: number
     marginRange: [number, number]
-  }>
-  discountPatterns: Array<{
+  }[]
+  discountPatterns: {
     projectType: string
     averageDiscount: number
     frequency: number
-  }>
+  }[]
   competitivePricing: {
     vsMarketAverage: number
     vsOurPricing: number
@@ -153,44 +153,44 @@ export interface PricingIntelligence {
 
 export interface PerformanceComparison {
   competitors: Competitor[]
-  metrics: Array<{
+  metrics: {
     name: string
     unit: string
-    values: Array<{
+    values: {
       competitorId: string
       value: number
       rank: number
-    }>
-  }>
+    }[]
+  }[]
   summary: {
     topPerformer: string
     averagePerformance: number
-    performanceGaps: Array<{
+    performanceGaps: {
       metric: string
       gap: number
       significance: 'high' | 'medium' | 'low'
-    }>
+    }[]
   }
 }
 
 export interface ImportResult {
   successful: number
   failed: number
-  errors: Array<{
+  errors: {
     row: number
     error: string
     data: any
-  }>
+  }[]
   importedIds: string[]
 }
 
 export interface BulkUpdateResult {
   successful: number
   failed: number
-  errors: Array<{
+  errors: {
     id: string
     error: string
-  }>
+  }[]
 }
 
 export interface ValidationResult {
@@ -745,7 +745,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     }
   }
 
-  async bulkUpdateCompetitors(updates: Array<{ id: string; data: Partial<Competitor> }>): Promise<BulkUpdateResult> {
+  async bulkUpdateCompetitors(updates: { id: string; data: Partial<Competitor> }[]): Promise<BulkUpdateResult> {
     const result: BulkUpdateResult = {
       successful: 0,
       failed: 0,
@@ -965,15 +965,15 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     return 'stable'
   }
 
-  private calculateMarketConcentration(competitors: Array<{ marketShare: number }>): number {
+  private calculateMarketConcentration(competitors: { marketShare: number }[]): number {
     // Calculate Herfindahl-Hirschman Index (HHI)
     const hhi = competitors.reduce((sum, c) => sum + Math.pow(c.marketShare, 2), 0)
     return Math.round(hhi)
   }
 
-  private analyzePricingTrends(projects: CompetitorProject[]): Array<{ period: string; averagePrice: number; marginRange: [number, number] }> {
+  private analyzePricingTrends(projects: CompetitorProject[]): { period: string; averagePrice: number; marginRange: [number, number] }[] {
     // Group projects by year and calculate trends
-    const yearlyData: { [year: string]: { prices: number[]; margins: number[] } } = {}
+    const yearlyData: Record<string, { prices: number[]; margins: number[] }> = {}
 
     projects.forEach(project => {
       if (project.startDate && project.bidValue > 0) {
@@ -1047,13 +1047,13 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     return Math.round(totalStrength / competitors.length)
   }
 
-  private identifyPerformanceGaps(competitors: Competitor[]): Array<{
+  private identifyPerformanceGaps(competitors: Competitor[]): {
     metric: string;
     gap: number;
     significance: 'high' | 'medium' | 'low';
-  }> {
+  }[] {
     // Analyze performance gaps between competitors
-    const gaps: Array<{ metric: string; gap: number; significance: 'high' | 'medium' | 'low' }> = []
+    const gaps: { metric: string; gap: number; significance: 'high' | 'medium' | 'low' }[] = []
 
     const marketShares = competitors.map(c => c.marketShare)
     const winRates = competitors.map(c => c.winRate)

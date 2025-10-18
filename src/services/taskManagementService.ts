@@ -3,7 +3,7 @@
  * خدمة إدارة المهام والأنشطة
  */
 
-import { 
+import type { 
   Task, 
   CreateTaskRequest, 
   UpdateTaskRequest, 
@@ -12,7 +12,8 @@ import {
   TaskStatistics,
   TaskValidationResult,
   TaskProgressUpdate,
-  TaskNotification,
+  TaskNotification} from '../types/tasks';
+import {
   TaskPerformanceReport
 } from '../types/tasks'
 import { taskRepository } from '../repository/task.repository'

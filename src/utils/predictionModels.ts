@@ -81,11 +81,11 @@ export interface BidOptimization {
   /** Optimization strategy */
   strategy: 'aggressive' | 'balanced' | 'conservative'
   /** Detailed recommendations */
-  recommendations: Array<{
+  recommendations: {
     type: 'pricing' | 'timing' | 'strategy' | 'risk'
     recommendation: string
     impact: 'high' | 'medium' | 'low'
-  }>
+  }[]
 }
 
 // ============================================================================
@@ -300,7 +300,7 @@ export function predictMarketTrend(
   region: string,
   historicalOpportunities: MarketOpportunity[],
   historicalTrends: MarketTrend[],
-  timeHorizon: number = 6 // months
+  timeHorizon = 6 // months
 ): MarketTrendPrediction {
   // Filter relevant historical data
   const relevantOpportunities = historicalOpportunities.filter(o => 
@@ -346,7 +346,7 @@ export function predictMarketTrend(
  * Group opportunities by month for trend analysis
  */
 function groupOpportunitiesByMonth(opportunities: MarketOpportunity[]) {
-  const monthlyData: Array<{ month: string; count: number; totalValue: number }> = []
+  const monthlyData: { month: string; count: number; totalValue: number }[] = []
   
   // Group by month
   const grouped = opportunities.reduce((acc, opp) => {

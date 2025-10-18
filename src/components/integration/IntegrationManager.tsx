@@ -111,7 +111,7 @@ const IntegrationManager: React.FC<IntegrationManagerProps> = React.memo(({
     return integrations.filter(integration => {
       const matchesSearch = !searchTerm || 
         integration.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (integration.nameEn && integration.nameEn.toLowerCase().includes(searchTerm.toLowerCase()))
+        (integration.nameEn?.toLowerCase().includes(searchTerm.toLowerCase()))
       
       const matchesStatus = statusFilter === 'all' || integration.status === statusFilter
       const matchesType = typeFilter === 'all' || integration.type === typeFilter

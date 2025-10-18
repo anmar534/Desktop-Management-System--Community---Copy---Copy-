@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PermissionGuard } from '@/components/security/PermissionGuard'
-import { User } from '@/services/security/permissions.service'
+import type { User } from '@/services/security/permissions.service'
 
 describe('PermissionGuard Component', () => {
   const adminUser: User = {

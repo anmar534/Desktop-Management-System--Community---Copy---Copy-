@@ -418,37 +418,37 @@ export class AccountingConnector {
 
 export interface TrialBalance {
   date: string
-  accounts: Array<{
+  accounts: {
     code: string
     name: string
     nameAr?: string
     debit: number
     credit: number
-  }>
+  }[]
   totalDebit: number
   totalCredit: number
 }
 
 export interface BalanceSheet {
   date: string
-  assets: Array<{
+  assets: {
     code: string
     name: string
     nameAr?: string
     amount: number
-  }>
-  liabilities: Array<{
+  }[]
+  liabilities: {
     code: string
     name: string
     nameAr?: string
     amount: number
-  }>
-  equity: Array<{
+  }[]
+  equity: {
     code: string
     name: string
     nameAr?: string
     amount: number
-  }>
+  }[]
   totalAssets: number
   totalLiabilities: number
   totalEquity: number

@@ -746,7 +746,7 @@ class UnifiedSystemIntegrationService {
   /**
    * الحصول على التحديثات الأخيرة
    */
-  async getRecentUpdates(limit: number = 50): Promise<RealTimeUpdate[]> {
+  async getRecentUpdates(limit = 50): Promise<RealTimeUpdate[]> {
     return this.realTimeUpdates
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, limit)

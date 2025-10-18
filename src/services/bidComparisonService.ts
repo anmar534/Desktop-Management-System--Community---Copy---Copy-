@@ -67,7 +67,7 @@ export interface ComparisonSummary {
   priceRange: { min: number; max: number; average: number }
   timelineRange: { min: number; max: number; average: number }
   qualityScoreRange: { min: number; max: number; average: number }
-  winProbability: { [bidId: string]: number }
+  winProbability: Record<string, number>
   competitiveAdvantage: string[]
   keyDifferentiators: string[]
 }
@@ -81,10 +81,10 @@ export interface DetailedAnalysis {
 }
 
 export interface PriceAnalysis {
-  bidPrices: { [bidId: string]: number }
+  bidPrices: Record<string, number>
   priceVariation: number
-  costBreakdown: { [bidId: string]: CostBreakdown }
-  pricingStrategy: { [bidId: string]: string }
+  costBreakdown: Record<string, CostBreakdown>
+  pricingStrategy: Record<string, string>
   competitivePricing: CompetitivePricing
 }
 
@@ -105,25 +105,25 @@ export interface CompetitivePricing {
 }
 
 export interface TechnicalAnalysis {
-  technicalScores: { [bidId: string]: number }
-  technicalStrengths: { [bidId: string]: string[] }
-  technicalWeaknesses: { [bidId: string]: string[] }
-  innovationLevel: { [bidId: string]: 'low' | 'medium' | 'high' }
-  complianceLevel: { [bidId: string]: number }
+  technicalScores: Record<string, number>
+  technicalStrengths: Record<string, string[]>
+  technicalWeaknesses: Record<string, string[]>
+  innovationLevel: Record<string, 'low' | 'medium' | 'high'>
+  complianceLevel: Record<string, number>
 }
 
 export interface TimelineAnalysis {
-  proposedTimelines: { [bidId: string]: number }
-  timelineRealism: { [bidId: string]: 'optimistic' | 'realistic' | 'conservative' }
-  criticalPath: { [bidId: string]: string[] }
-  timelineRisk: { [bidId: string]: 'low' | 'medium' | 'high' }
+  proposedTimelines: Record<string, number>
+  timelineRealism: Record<string, 'optimistic' | 'realistic' | 'conservative'>
+  criticalPath: Record<string, string[]>
+  timelineRisk: Record<string, 'low' | 'medium' | 'high'>
 }
 
 export interface ResourceAnalysis {
-  resourceRequirements: { [bidId: string]: ResourceRequirement }
-  resourceAvailability: { [bidId: string]: number }
-  resourceOptimization: { [bidId: string]: string[] }
-  capacityUtilization: { [bidId: string]: number }
+  resourceRequirements: Record<string, ResourceRequirement>
+  resourceAvailability: Record<string, number>
+  resourceOptimization: Record<string, string[]>
+  capacityUtilization: Record<string, number>
 }
 
 export interface ResourceRequirement {
@@ -134,9 +134,9 @@ export interface ResourceRequirement {
 }
 
 export interface RiskAnalysis {
-  riskProfiles: { [bidId: string]: RiskProfile }
-  riskMitigation: { [bidId: string]: string[] }
-  overallRiskScore: { [bidId: string]: number }
+  riskProfiles: Record<string, RiskProfile>
+  riskMitigation: Record<string, string[]>
+  overallRiskScore: Record<string, number>
 }
 
 export interface RiskProfile {
@@ -462,7 +462,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
           const searchLower = filters.searchTerm.toLowerCase()
           return (
             (comparison.name && comparison.name.toLowerCase().includes(searchLower)) ||
-            (comparison.nameEn && comparison.nameEn.toLowerCase().includes(searchLower)) ||
+            (comparison.nameEn?.toLowerCase().includes(searchLower)) ||
             (comparison.description && comparison.description.toLowerCase().includes(searchLower)) ||
             (comparison.projectName && comparison.projectName.toLowerCase().includes(searchLower))
           )
@@ -1608,7 +1608,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
   }
 
   private translatePosition(position: string): string {
-    const translations: { [key: string]: string } = {
+    const translations: Record<string, string> = {
       'leader': 'قائد',
       'challenger': 'متحدي',
       'follower': 'تابع',
@@ -1629,7 +1629,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
   }
 
   private translatePriority(priority: string): string {
-    const translations: { [key: string]: string } = {
+    const translations: Record<string, string> = {
       'low': 'منخفضة',
       'medium': 'متوسطة',
       'high': 'عالية',
@@ -1639,7 +1639,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
   }
 
   private translateRisk(risk: string): string {
-    const translations: { [key: string]: string } = {
+    const translations: Record<string, string> = {
       'low': 'منخفضة',
       'medium': 'متوسطة',
       'high': 'عالية',

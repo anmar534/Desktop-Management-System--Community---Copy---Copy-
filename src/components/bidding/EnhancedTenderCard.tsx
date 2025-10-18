@@ -38,7 +38,7 @@ import { InlineAlert } from '../ui/inline-alert'
 import { EntityActions } from '../ui/ActionButtons'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
-import { Tender } from '../../data/centralData'
+import type { Tender } from '../../data/centralData'
 import { useTenderStatus } from '../../application/hooks/useTenderStatus'
 import { calculateTenderProgress } from '../../utils/tenderProgressCalculator'
 import {
@@ -47,7 +47,7 @@ import {
   formatTenderDate,
   formatTenderType
 } from '../../utils/formatters'
-import { CurrencyOptions } from '../../utils/formatters'
+import type { CurrencyOptions } from '../../utils/formatters'
 import { predictWinProbability } from '../../utils/predictionModels'
 import { optimizeBidAmount } from '../../utils/priceOptimization'
 import { analyticsService } from '../../services/analyticsService'

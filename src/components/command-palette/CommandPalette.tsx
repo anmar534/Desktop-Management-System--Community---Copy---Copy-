@@ -6,7 +6,8 @@
  * لوحة أوامر قوية للوصول السريع لجميع الميزات
  */
 
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import type React from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import {

@@ -3,8 +3,8 @@
  * خدمة تصدير التقارير
  */
 
-import { ProjectStatusReport, ProjectDashboardData } from './projectReportingService'
-import { KPIDashboard } from './kpiCalculationEngine'
+import type { ProjectStatusReport, ProjectDashboardData } from './projectReportingService'
+import type { KPIDashboard } from './kpiCalculationEngine'
 
 export interface ExportOptions {
   format: 'pdf' | 'excel' | 'csv'

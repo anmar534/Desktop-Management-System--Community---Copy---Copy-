@@ -21,7 +21,7 @@ export class ApiClient {
   private token: string | null = null
   private rateLimitInfo: RateLimitInfo | null = null
 
-  constructor(baseUrl: string = '') {
+  constructor(baseUrl = '') {
     this.baseUrl = baseUrl || API_CONFIG.basePath
   }
 

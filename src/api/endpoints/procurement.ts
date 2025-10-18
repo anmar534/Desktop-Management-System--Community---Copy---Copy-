@@ -138,7 +138,7 @@ export async function approvePurchaseOrder(id: string): Promise<ApiResponse<Purc
 
 export async function receivePurchaseOrder(
   id: string,
-  items: Array<{ itemId: string; receivedQuantity: number }>
+  items: { itemId: string; receivedQuantity: number }[]
 ): Promise<ApiResponse<PurchaseOrder>> {
   return apiClient.post(`/procurement/orders/${id}/receive`, { items })
 }
@@ -248,12 +248,12 @@ export interface InventoryValuation {
   totalItems: number
   totalQuantity: number
   totalValue: number
-  byCategory: Array<{
+  byCategory: {
     category: string
     items: number
     quantity: number
     value: number
-  }>
+  }[]
 }
 
 // ============================================================================
@@ -286,23 +286,23 @@ export async function getSpendAnalysis(
 export interface SpendAnalysis {
   period: { startDate: string; endDate: string }
   totalSpend: number
-  bySupplier: Array<{
+  bySupplier: {
     supplierId: string
     supplierName: string
     amount: number
     percentage: number
-  }>
-  byCategory: Array<{
+  }[]
+  byCategory: {
     category: string
     amount: number
     percentage: number
-  }>
-  byProject: Array<{
+  }[]
+  byProject: {
     projectId: string
     projectName: string
     amount: number
     percentage: number
-  }>
+  }[]
 }
 
 export async function getSupplierComparison(

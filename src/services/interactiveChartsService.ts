@@ -78,8 +78,8 @@ export class InteractiveChartsService {
   private readonly STORAGE_KEY = 'interactive_charts';
   private readonly CONFIG_KEY = 'chart_configurations';
   private readonly CACHE_KEY = 'chart_data_cache';
-  private updateIntervals: Map<string, NodeJS.Timeout> = new Map();
-  private eventListeners: Map<string, Function[]> = new Map();
+  private updateIntervals = new Map<string, NodeJS.Timeout>();
+  private eventListeners = new Map<string, Function[]>();
 
   /**
    * إنشاء تكوين رسم بياني جديد
@@ -265,13 +265,13 @@ export class InteractiveChartsService {
   /**
    * بدء التحديثات في الوقت الفعلي
    */
-  startRealTimeUpdates(chartId: string, intervalSeconds: number = 30): void {
+  startRealTimeUpdates(chartId: string, intervalSeconds = 30): void {
     this.stopRealTimeUpdates(chartId);
 
     const interval = setInterval(async () => {
       try {
         const config = await this.getChartConfiguration(chartId);
-        if (!config || !config.realTimeUpdates) {
+        if (!config?.realTimeUpdates) {
           this.stopRealTimeUpdates(chartId);
           return;
         }
@@ -677,7 +677,7 @@ export class InteractiveChartsService {
     });
   }
 
-  private isCacheValid(timestamp: string, maxAgeMinutes: number = 5): boolean {
+  private isCacheValid(timestamp: string, maxAgeMinutes = 5): boolean {
     const cacheTime = new Date(timestamp).getTime();
     const now = new Date().getTime();
     return (now - cacheTime) < (maxAgeMinutes * 60 * 1000);

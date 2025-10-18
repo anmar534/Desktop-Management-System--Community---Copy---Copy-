@@ -3,7 +3,8 @@
  * Payments and Receivables Management Component
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -15,13 +16,15 @@ import {
   CheckCircle, Clock, DollarSign, TrendingUp, Calendar,
   Users, Receipt, CreditCard, Bell
 } from 'lucide-react'
-import {
-  PaymentsReceivablesService,
+import type {
   Invoice,
   Payment,
   Receivable,
   PaymentAlert,
   CollectionMetrics
+} from '../../services/paymentsReceivablesService';
+import {
+  PaymentsReceivablesService
 } from '../../services/paymentsReceivablesService'
 
 export const PaymentsReceivables: React.FC = () => {

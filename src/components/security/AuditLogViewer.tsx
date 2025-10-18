@@ -3,11 +3,13 @@
  * Sprint 5.5: الأمان والحماية المتقدمة
  */
 
-import React, { useState, useMemo } from 'react'
+import type React from 'react';
+import { useState, useMemo } from 'react'
 import styled from 'styled-components'
 import { Download, Filter, Search, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react'
 import { designTokens } from '@/styles/design-system'
-import { AuditLog, AuditFilter, AuditSeverity, getAuditLogs, exportAuditLogs } from '@/services/security/audit.service'
+import type { AuditFilter, AuditSeverity} from '@/services/security/audit.service';
+import { AuditLog, getAuditLogs, exportAuditLogs } from '@/services/security/audit.service'
 
 // ============================================================================
 // Types

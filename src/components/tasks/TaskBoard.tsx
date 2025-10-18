@@ -3,8 +3,10 @@
  * مكون لوحة المهام بنمط كانبان
  */
 
-import React, { useState, useEffect } from 'react'
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'
+import type React from 'react';
+import { useState, useEffect } from 'react'
+import type { DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -22,7 +24,7 @@ import {
   Pause,
   X
 } from 'lucide-react'
-import { Task, TaskStatus, TaskPriority, TaskBoardColumn } from '../../types/tasks'
+import type { Task, TaskStatus, TaskPriority, TaskBoardColumn } from '../../types/tasks'
 import { taskManagementService } from '../../services/taskManagementService'
 import { toast } from 'sonner'
 

@@ -190,16 +190,16 @@ export interface ChangeManagementDashboard {
   }
   recentChanges: ChangeOrder[]
   pendingApprovals: ChangeOrder[]
-  costImpactTrend: Array<{
+  costImpactTrend: {
     month: string
     totalImpact: number
     approvedImpact: number
-  }>
-  changesByType: Array<{
+  }[]
+  changesByType: {
     type: ChangeOrderType
     count: number
     totalCost: number
-  }>
+  }[]
   approvalMetrics: {
     averageApprovalTime: number
     approvalRate: number
@@ -282,12 +282,12 @@ export interface ChangeMetrics {
   averageScheduleImpact: number
   changesByType: Record<ChangeOrderType, number>
   changesByPriority: Record<ChangePriority, number>
-  monthlyTrends: Array<{
+  monthlyTrends: {
     month: string
     count: number
     totalCost: number
     averageApprovalTime: number
-  }>
+  }[]
 }
 
 // Approval Metrics
@@ -295,16 +295,16 @@ export interface ApprovalMetrics {
   averageApprovalTime: number
   approvalRate: number
   rejectionRate: number
-  bottleneckSteps: Array<{
+  bottleneckSteps: {
     stepName: string
     averageTime: number
     count: number
-  }>
-  approverPerformance: Array<{
+  }[]
+  approverPerformance: {
     approverId: string
     approverName: string
     averageTime: number
     approvalRate: number
     totalApprovals: number
-  }>
+  }[]
 }

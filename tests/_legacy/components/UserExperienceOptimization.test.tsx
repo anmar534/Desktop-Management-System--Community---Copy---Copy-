@@ -3,7 +3,6 @@
  * User Experience Optimization Component Tests
  */
 
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { UserExperienceOptimization } from '../../../src/components/dashboard/UserExperienceOptimization';

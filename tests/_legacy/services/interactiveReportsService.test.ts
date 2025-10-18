@@ -4,12 +4,14 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { 
-  InteractiveReportsService, 
+import type { 
   InteractiveReport, 
   ReportFilter, 
   ExportOptions,
   ShareConfig 
+} from '../../src/services/interactiveReportsService';
+import { 
+  InteractiveReportsService 
 } from '../../src/services/interactiveReportsService';
 import { asyncStorage } from '../../src/utils/storage';
 

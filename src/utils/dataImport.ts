@@ -51,19 +51,19 @@ export interface ImportResult {
   /** Skipped duplicates */
   skippedDuplicates: number
   /** Import errors */
-  errors: Array<{
+  errors: {
     row: number
     field?: string
     message: string
     data?: any
-  }>
+  }[]
   /** Import warnings */
-  warnings: Array<{
+  warnings: {
     row: number
     field?: string
     message: string
     data?: any
-  }>
+  }[]
   /** Processing time in milliseconds */
   processingTime: number
 }
@@ -432,7 +432,7 @@ class DataImportService {
   // UTILITY METHODS
   // ============================================================================
 
-  private parseNumber(value: any, required: boolean = false): number {
+  private parseNumber(value: any, required = false): number {
     if (value === undefined || value === null || value === '') {
       if (required) throw new Error('Required numeric value is missing')
       return 0

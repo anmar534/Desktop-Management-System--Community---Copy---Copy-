@@ -27,12 +27,12 @@ export interface ReportSummary {
   totalRecords: number
   totalValue: number
   averageValue: number
-  topPerformers: Array<{
+  topPerformers: {
     id: string
     name: string
     value: number
     metric: string
-  }>
+  }[]
   trends: {
     direction: 'increasing' | 'decreasing' | 'stable'
     percentage: number

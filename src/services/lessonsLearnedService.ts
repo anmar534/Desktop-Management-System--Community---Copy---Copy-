@@ -72,11 +72,11 @@ export interface LessonLearned {
   /** Tags for easy searching */
   tags: string[]
   /** Stakeholders involved */
-  stakeholders: Array<{
+  stakeholders: {
     name: string
     role: string
     department?: string
-  }>
+  }[]
   /** Financial impact */
   financialImpact?: {
     costSavings?: number
@@ -92,12 +92,12 @@ export interface LessonLearned {
     implementationDate?: string
   }
   /** Attachments and references */
-  attachments: Array<{
+  attachments: {
     name: string
     type: string
     url?: string
     description?: string
-  }>
+  }[]
   /** Review information */
   review?: {
     reviewedBy: string

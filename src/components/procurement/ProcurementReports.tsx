@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
@@ -26,7 +27,8 @@ import {
   Search,
   RefreshCw
 } from 'lucide-react'
-import { procurementReportingService, ProcurementReport } from '../../services/procurementReportingService'
+import type { ProcurementReport } from '../../services/procurementReportingService';
+import { procurementReportingService } from '../../services/procurementReportingService'
 import { toast } from 'sonner'
 
 interface ProcurementReportsProps {
@@ -62,7 +64,7 @@ export function ProcurementReports({ className }: ProcurementReportsProps) {
   // تصفية التقارير
   const filteredReports = reports.filter(report => {
     const matchesSearch = report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (report.titleEn && report.titleEn.toLowerCase().includes(searchTerm.toLowerCase()))
+                         (report.titleEn?.toLowerCase().includes(searchTerm.toLowerCase()))
     const matchesType = selectedType === 'all' || report.type === selectedType
     return matchesSearch && matchesType
   })

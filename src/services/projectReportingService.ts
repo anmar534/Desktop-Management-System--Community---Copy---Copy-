@@ -7,9 +7,9 @@ import { enhancedProjectService } from './enhancedProjectService'
 import { taskManagementService } from './taskManagementService'
 import { earnedValueCalculator } from './earnedValueCalculator'
 import { costTrackingService } from './costTrackingService'
-import { EnhancedProject } from '../types/projects'
-import { Task } from '../types/tasks'
-import { EVMMetrics, EVMReport } from '../types/evm'
+import type { EnhancedProject } from '../types/projects'
+import type { Task } from '../types/tasks'
+import type { EVMMetrics, EVMReport } from '../types/evm'
 
 export interface ProjectStatusReport {
   projectId: string

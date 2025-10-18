@@ -3,7 +3,8 @@
  * Stock Movement Management Component
  */
 
-import React, { useState, useEffect, useMemo } from 'react'
+import type React from 'react';
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import {

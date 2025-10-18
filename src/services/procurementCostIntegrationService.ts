@@ -512,7 +512,7 @@ class ProcurementCostIntegrationService {
     }
 
     // البحث عن فئة ميزانية مناسبة أو إنشاء واحدة افتراضية
-    let budgetCategory = await this.findOrCreateDefaultBudgetCategory(
+    const budgetCategory = await this.findOrCreateDefaultBudgetCategory(
       purchaseOrder.projectId,
       'مشتريات عامة'
     )

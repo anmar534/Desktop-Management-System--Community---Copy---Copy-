@@ -4,8 +4,8 @@
  */
 
 import { useState, useCallback } from 'react'
-import { ToastType } from './Toast'
-import { ToastData } from './ToastContainer'
+import type { ToastType } from './Toast'
+import type { ToastData } from './ToastContainer'
 
 // ============================================================================
 // Types

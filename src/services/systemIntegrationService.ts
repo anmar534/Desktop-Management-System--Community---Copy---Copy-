@@ -4,7 +4,7 @@
  */
 
 import { asyncStorage } from '../utils/storage'
-import { EnhancedProject } from '../types/project'
+import type { EnhancedProject } from '../types/project'
 import { enhancedProjectService } from './enhancedProjectService'
 
 export interface TenderSystem {

@@ -3,7 +3,8 @@
  * مكون تفاصيل المهمة
  */
 
-import React, { useState, useEffect } from 'react'
+import type React from 'react';
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
@@ -26,7 +27,7 @@ import {
   TrendingUp,
   Target
 } from 'lucide-react'
-import { Task, TaskStatus, TaskPriority } from '../../types/tasks'
+import type { Task, TaskStatus, TaskPriority } from '../../types/tasks'
 import { taskManagementService } from '../../services/taskManagementService'
 import { toast } from 'sonner'
 

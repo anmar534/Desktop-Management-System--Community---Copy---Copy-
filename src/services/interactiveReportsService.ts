@@ -42,12 +42,12 @@ export interface ReportChart {
 
 export interface DrillDownConfig {
   enabled: boolean;
-  levels: Array<{
+  levels: {
     field: string;
     name: string;
     nameEn: string;
     type: 'category' | 'time' | 'hierarchy';
-  }>;
+  }[];
   maxDepth: number;
 }
 
