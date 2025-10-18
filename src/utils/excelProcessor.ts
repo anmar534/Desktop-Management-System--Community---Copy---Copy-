@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import type { QuantityItem } from '../types/contracts'
 
 const HEADER_KEYWORDS = [
@@ -13,51 +13,75 @@ const HEADER_KEYWORDS = [
   'item',
   'description',
   'م',
-  'بيان'
+  'بيان',
 ]
 
+/**
+ * Excel file processor using ExcelJS for better security
+ * Replaces the old xlsx library to fix security vulnerabilities
+ */
 export class ExcelProcessor {
   /**
    * معالجة ملف Excel وإرجاع البيانات
+   * Updated to use ExcelJS instead of xlsx
    */
   public static async processExcelFile(file: File): Promise<QuantityItem[]> {
     try {
       console.log('🚀 بدء معالجة ملف Excel:', file.name)
       console.log('📊 حجم الملف:', file.size, 'بايت')
 
+      // Validate file size (max 10MB)
+      const MAX_FILE_SIZE = 10 * 1024 * 1024
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error('حجم الملف كبير جداً. الحد الأقصى 10 ميجابايت')
+      }
+
       // قراءة الملف
       const arrayBuffer = await file.arrayBuffer()
       console.log('✅ تم قراءة الملف بنجاح')
 
-      // تحليل ملف Excel
-      const workbook = XLSX.read(arrayBuffer, {
-        type: 'array',
-        cellText: true,
-        cellDates: false,
-      })
+      // تحليل ملف Excel باستخدام ExcelJS
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.load(arrayBuffer)
 
-      console.log('📋 الأوراق المتاحة:', workbook.SheetNames)
+      console.log(
+        '📋 الأوراق المتاحة:',
+        workbook.worksheets.map((ws) => ws.name),
+      )
 
-      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+      if (!workbook.worksheets || workbook.worksheets.length === 0) {
         throw new Error('لا توجد أوراق عمل في الملف')
       }
 
       // أخذ أول ورقة عمل
-      const firstSheetName = workbook.SheetNames[0]
-      const worksheet = workbook.Sheets[firstSheetName]
+      const worksheet = workbook.worksheets[0]
 
       if (!worksheet) {
         throw new Error('فشل في قراءة ورقة العمل')
       }
 
-      console.log('✅ تم تحديد ورقة العمل:', firstSheetName)
+      console.log('✅ تم تحديد ورقة العمل:', worksheet.name)
 
       // تحويل إلى مصفوفة من المصفوفات
-      const rawData = XLSX.utils.sheet_to_json<string[]>(worksheet, {
-        header: 1,
-        blankrows: false,
-        defval: '',
-        raw: false, // لضمان تحويل كل شيء لنص
+      const rawData: string[][] = []
+
+      worksheet.eachRow((row, rowNumber) => {
+        const rowData: string[] = []
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          // Convert cell value to string
+          let cellValue = ''
+          if (cell.value !== null && cell.value !== undefined) {
+            if (typeof cell.value === 'object' && 'text' in cell.value) {
+              cellValue = String(cell.value.text)
+            } else if (typeof cell.value === 'object' && 'result' in cell.value) {
+              cellValue = String(cell.value.result)
+            } else {
+              cellValue = String(cell.value)
+            }
+          }
+          rowData.push(cellValue)
+        })
+        rawData.push(rowData)
       })
 
       console.log('🎯 البيانات الخام:', rawData)
@@ -67,7 +91,7 @@ export class ExcelProcessor {
       }
 
       // تحليل البيانات وتحويلها لكميات
-      const quantities = this.parseDataToQuantities(rawData, firstSheetName)
+      const quantities = this.parseDataToQuantities(rawData, worksheet.name)
 
       console.log('🎉 تم استخراج البيانات بنجاح:', quantities.length, 'عنصر')
       return quantities
@@ -82,15 +106,16 @@ export class ExcelProcessor {
    */
   private static parseDataToQuantities(rawData: string[][], sheetName: string): QuantityItem[] {
     const quantities: QuantityItem[] = []
-  let startRow = 0
+    let startRow = 0
 
     // التحقق من وجود صف عناوين
     if (rawData.length > 0) {
       const firstRow = rawData[0]
-      const hasHeaders = firstRow?.some(cell => {
-        const cellStr = cell?.trim().toLowerCase()
-        return cellStr ? HEADER_KEYWORDS.some(keyword => cellStr.includes(keyword)) : false
-      }) ?? false
+      const hasHeaders =
+        firstRow?.some((cell) => {
+          const cellStr = cell?.trim().toLowerCase()
+          return cellStr ? HEADER_KEYWORDS.some((keyword) => cellStr.includes(keyword)) : false
+        }) ?? false
 
       if (hasHeaders) {
         startRow = 1
@@ -101,14 +126,14 @@ export class ExcelProcessor {
     // تحويل كل صف إلى عنصر كمية
     for (let i = startRow; i < rawData.length; i++) {
       const row = rawData[i]
-      
+
       if (!row || row.length === 0) continue
 
       // تنظيف البيانات
-      const cleanRow = row.map(cell => (cell ?? '').trim())
+      const cleanRow = row.map((cell) => (cell ?? '').trim())
 
       // تخطي الصفوف الفارغة تماماً
-      if (cleanRow.every(cell => !cell)) continue
+      if (cleanRow.every((cell) => !cell)) continue
 
       console.log(`📋 معالجة الصف ${i + 1}:`, cleanRow)
 
@@ -126,7 +151,7 @@ export class ExcelProcessor {
         specifications: probableDescription || cleanRow[1] || 'غير محدد',
         originalDescription: descriptionValue || undefined,
         description: descriptionValue || undefined,
-        canonicalDescription: descriptionValue || undefined
+        canonicalDescription: descriptionValue || undefined,
       }
 
       // إضافة فقط إذا كان هناك رقم مسلسل أو مواصفات
@@ -153,10 +178,12 @@ export class ExcelProcessor {
    */
   public static isExcelFile(fileName: string): boolean {
     const lowerName = fileName.toLowerCase()
-    return lowerName.endsWith('.xlsx') || 
-           lowerName.endsWith('.xls') || 
-           lowerName.endsWith('.xlsm') ||
-           lowerName.endsWith('.xlsb')
+    return (
+      lowerName.endsWith('.xlsx') ||
+      lowerName.endsWith('.xls') ||
+      lowerName.endsWith('.xlsm') ||
+      lowerName.endsWith('.xlsb')
+    )
   }
 
   /**
@@ -164,8 +191,6 @@ export class ExcelProcessor {
    */
   public static isTextFile(fileName: string): boolean {
     const lowerName = fileName.toLowerCase()
-    return lowerName.endsWith('.csv') || 
-           lowerName.endsWith('.tsv') || 
-           lowerName.endsWith('.txt')
+    return lowerName.endsWith('.csv') || lowerName.endsWith('.tsv') || lowerName.endsWith('.txt')
   }
 }
