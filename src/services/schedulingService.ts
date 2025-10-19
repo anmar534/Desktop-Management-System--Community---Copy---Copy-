@@ -17,7 +17,7 @@ import type {
   WorkingCalendar,
   ScheduleConflict,
   ScheduleExport,
-  SchedulingServiceInterface
+  SchedulingServiceInterface,
 } from '../types/scheduling'
 import type { Task } from '../types/tasks'
 import { taskRepository } from '../repository/task.repository'
@@ -28,7 +28,7 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
     SCHEDULES: 'project_schedules',
     BASELINES: 'schedule_baselines',
     CALENDARS: 'working_calendars',
-    RESOURCE_ASSIGNMENTS: 'resource_assignments'
+    RESOURCE_ASSIGNMENTS: 'resource_assignments',
   }
 
   private readonly DEFAULT_CALENDAR: WorkingCalendar = {
@@ -40,11 +40,11 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
       end: '17:00',
       break: {
         start: '12:00',
-        end: '13:00'
-      }
+        end: '13:00',
+      },
     },
     holidays: [],
-    exceptions: []
+    exceptions: [],
   }
 
   /**
@@ -54,10 +54,10 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
     try {
       // جلب المهام من المشروع
       const tasks = await taskRepository.getTasksByProject(projectId)
-      
+
       // تحويل المهام إلى مهام جانت
       const ganttTasks = await this.convertTasksToGantt(tasks)
-      
+
       // إنشاء الجدولة
       const schedule: ProjectSchedule = {
         id: `schedule_${projectId}_${Date.now()}`,
@@ -74,7 +74,7 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
         holidays: options.calendar.holidays,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        version: 1
+        version: 1,
       }
 
       // حساب المسار الحرج
@@ -110,11 +110,14 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
   /**
    * تحديث الجدولة
    */
-  async updateSchedule(projectId: string, updates: Partial<ProjectSchedule>): Promise<ProjectSchedule> {
+  async updateSchedule(
+    projectId: string,
+    updates: Partial<ProjectSchedule>,
+  ): Promise<ProjectSchedule> {
     try {
       const schedules = await asyncStorage.getItem(this.STORAGE_KEYS.SCHEDULES, [])
       const index = schedules.findIndex((s: ProjectSchedule) => s.projectId === projectId)
-      
+
       if (index === -1) {
         throw new Error('الجدولة غير موجودة')
       }
@@ -123,7 +126,7 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
         ...schedules[index],
         ...updates,
         updatedAt: new Date().toISOString(),
-        version: schedules[index].version + 1
+        version: schedules[index].version + 1,
       }
 
       await asyncStorage.setItem(this.STORAGE_KEYS.SCHEDULES, schedules)
@@ -170,7 +173,7 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
         parent: task.parent,
         resource: task.resource,
         color: task.color,
-        critical: false
+        critical: false,
       }
 
       schedule.tasks.push(newTask)
@@ -186,21 +189,25 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
   /**
    * تحديث جدولة مهمة
    */
-  async updateTaskSchedule(projectId: string, taskId: string, updates: Partial<GanttTask>): Promise<GanttTask> {
+  async updateTaskSchedule(
+    projectId: string,
+    taskId: string,
+    updates: Partial<GanttTask>,
+  ): Promise<GanttTask> {
     try {
       const schedule = await this.getSchedule(projectId)
       if (!schedule) {
         throw new Error('الجدولة غير موجودة')
       }
 
-      const taskIndex = schedule.tasks.findIndex(t => t.id === taskId)
+      const taskIndex = schedule.tasks.findIndex((t) => t.id === taskId)
       if (taskIndex === -1) {
         throw new Error('المهمة غير موجودة')
       }
 
       schedule.tasks[taskIndex] = {
         ...schedule.tasks[taskIndex],
-        ...updates
+        ...updates,
       }
 
       await this.updateSchedule(projectId, { tasks: schedule.tasks })
@@ -214,13 +221,18 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
   /**
    * إعادة جدولة مهمة
    */
-  async rescheduleTask(projectId: string, taskId: string, newStart: Date, newEnd?: Date): Promise<GanttTask> {
+  async rescheduleTask(
+    projectId: string,
+    taskId: string,
+    newStart: Date,
+    newEnd?: Date,
+  ): Promise<GanttTask> {
     try {
-      const calculatedEnd = newEnd || new Date(newStart.getTime() + (24 * 60 * 60 * 1000)) // Default 1 day
-      
+      const calculatedEnd = newEnd || new Date(newStart.getTime() + 24 * 60 * 60 * 1000) // Default 1 day
+
       return await this.updateTaskSchedule(projectId, taskId, {
         start: newStart,
-        end: calculatedEnd
+        end: calculatedEnd,
       })
     } catch (error) {
       console.error('Error rescheduling task:', error)
@@ -231,14 +243,19 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
   /**
    * إضافة تبعية بين المهام
    */
-  async addDependency(projectId: string, taskId: string, dependsOnTaskId: string, type = 'finish_to_start'): Promise<void> {
+  async addDependency(
+    projectId: string,
+    taskId: string,
+    dependsOnTaskId: string,
+    type = 'finish_to_start',
+  ): Promise<void> {
     try {
       const schedule = await this.getSchedule(projectId)
       if (!schedule) {
         throw new Error('الجدولة غير موجودة')
       }
 
-      const task = schedule.tasks.find(t => t.id === taskId)
+      const task = schedule.tasks.find((t) => t.id === taskId)
       if (!task) {
         throw new Error('المهمة غير موجودة')
       }
@@ -256,19 +273,23 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
   /**
    * إزالة تبعية بين المهام
    */
-  async removeDependency(projectId: string, taskId: string, dependsOnTaskId: string): Promise<void> {
+  async removeDependency(
+    projectId: string,
+    taskId: string,
+    dependsOnTaskId: string,
+  ): Promise<void> {
     try {
       const schedule = await this.getSchedule(projectId)
       if (!schedule) {
         throw new Error('الجدولة غير موجودة')
       }
 
-      const task = schedule.tasks.find(t => t.id === taskId)
+      const task = schedule.tasks.find((t) => t.id === taskId)
       if (!task) {
         throw new Error('المهمة غير موجودة')
       }
 
-      task.dependencies = task.dependencies.filter(dep => dep !== dependsOnTaskId)
+      task.dependencies = task.dependencies.filter((dep) => dep !== dependsOnTaskId)
       await this.updateSchedule(projectId, { tasks: schedule.tasks })
     } catch (error) {
       console.error('Error removing dependency:', error)
@@ -287,7 +308,7 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
       }
 
       const conflicts: ScheduleConflict[] = []
-      
+
       // فحص التبعيات الدائرية
       for (const task of schedule.tasks) {
         if (this.hasCircularDependency(task, schedule.tasks)) {
@@ -297,7 +318,7 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
             severity: 'high',
             description: `تبعية دائرية في المهمة: ${task.name}`,
             affectedTasks: [task.id],
-            autoResolvable: false
+            autoResolvable: false,
           })
         }
       }
@@ -311,45 +332,49 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
 
   // Helper methods
   private async convertTasksToGantt(tasks: Task[]): Promise<GanttTask[]> {
-    return tasks.map(task => ({
+    return tasks.map((task) => ({
       id: task.id,
       name: task.title,
       nameEn: task.titleEn,
       start: new Date(task.plannedStartDate),
       end: new Date(task.plannedEndDate),
       progress: task.progress,
-      dependencies: task.dependencies.map(dep => dep.dependsOnTaskId),
+      dependencies: task.dependencies.map((dep) => dep.dependsOnTaskId),
       type: task.type as any,
       parent: task.parentTaskId,
-      critical: false
+      critical: false,
     }))
   }
 
   private calculateProjectStart(tasks: GanttTask[]): Date {
     if (tasks.length === 0) return new Date()
-    return new Date(Math.min(...tasks.map(t => t.start.getTime())))
+    return new Date(Math.min(...tasks.map((t) => t.start.getTime())))
   }
 
   private calculateProjectEnd(tasks: GanttTask[]): Date {
     if (tasks.length === 0) return new Date()
-    return new Date(Math.max(...tasks.map(t => t.end.getTime())))
+    return new Date(Math.max(...tasks.map((t) => t.end.getTime())))
   }
 
   private async extractMilestones(tasks: GanttTask[]): Promise<Milestone[]> {
     return tasks
-      .filter(task => task.type === 'milestone')
-      .map(task => ({
+      .filter((task) => task.type === 'milestone')
+      .map((task) => ({
         id: task.id,
         name: task.name,
         nameEn: task.nameEn,
         date: task.end,
         type: 'deliverable' as const,
         status: 'pending' as const,
-        dependencies: task.dependencies
+        dependencies: task.dependencies,
       }))
   }
 
-  private hasCircularDependency(task: GanttTask, allTasks: GanttTask[], visited = new Set<string>()): boolean {
+  private hasCircularDependency(
+    task: GanttTask,
+    allTasks: GanttTask[],
+    visited = new Set<string>(),
+  ): boolean {
     if (visited.has(task.id)) {
       return true
     }
@@ -357,7 +382,7 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
     visited.add(task.id)
 
     for (const depId of task.dependencies) {
-      const depTask = allTasks.find(t => t.id === depId)
+      const depTask = allTasks.find((t) => t.id === depId)
       if (depTask && this.hasCircularDependency(depTask, allTasks, new Set(visited))) {
         return true
       }
@@ -386,27 +411,37 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
     return analysis.tasks
   }
 
-  async createBaseline(projectId: string, name: string, description?: string): Promise<ScheduleBaseline> {
+  async createBaseline(
+    _projectId: string,
+    _name: string,
+    _description?: string,
+  ): Promise<ScheduleBaseline> {
     throw new Error('Method not implemented')
   }
 
-  async getBaselines(projectId: string): Promise<ScheduleBaseline[]> {
+  async getBaselines(_projectId: string): Promise<ScheduleBaseline[]> {
     return []
   }
 
-  async compareToBaseline(projectId: string, baselineId: string): Promise<ScheduleVariance[]> {
+  async compareToBaseline(_projectId: string, _baselineId: string): Promise<ScheduleVariance[]> {
     return []
   }
 
-  async assignResource(projectId: string, assignment: Omit<ResourceAssignment, 'id'>): Promise<ResourceAssignment> {
+  async assignResource(
+    _projectId: string,
+    _assignment: Omit<ResourceAssignment, 'id'>,
+  ): Promise<ResourceAssignment> {
     throw new Error('Method not implemented')
   }
 
-  async getResourceAssignments(projectId: string, resourceId?: string): Promise<ResourceAssignment[]> {
+  async getResourceAssignments(
+    _projectId: string,
+    _resourceId?: string,
+  ): Promise<ResourceAssignment[]> {
     return []
   }
 
-  async checkResourceConflicts(projectId: string): Promise<ScheduleConflict[]> {
+  async checkResourceConflicts(_projectId: string): Promise<ScheduleConflict[]> {
     return []
   }
 
@@ -424,7 +459,7 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
   async calculateWorkingDays(start: Date, end: Date, calendar: WorkingCalendar): Promise<number> {
     let workingDays = 0
     const current = new Date(start)
-    
+
     while (current <= end) {
       const dayOfWeek = current.getDay()
       if (calendar.workingDays.includes(dayOfWeek)) {
@@ -432,23 +467,23 @@ class SchedulingServiceImpl implements SchedulingServiceInterface {
       }
       current.setDate(current.getDate() + 1)
     }
-    
+
     return workingDays
   }
 
-  async exportSchedule(projectId: string, options: ScheduleExport): Promise<Blob> {
+  async exportSchedule(_projectId: string, _options: ScheduleExport): Promise<Blob> {
     throw new Error('Method not implemented')
   }
 
-  async importSchedule(projectId: string, file: File): Promise<ProjectSchedule> {
+  async importSchedule(_projectId: string, _file: File): Promise<ProjectSchedule> {
     throw new Error('Method not implemented')
   }
 
-  async getScheduleMetrics(projectId: string): Promise<any> {
+  async getScheduleMetrics(_projectId: string): Promise<any> {
     return {}
   }
 
-  async getProgressReport(projectId: string): Promise<any> {
+  async getProgressReport(_projectId: string): Promise<any> {
     return {}
   }
 }

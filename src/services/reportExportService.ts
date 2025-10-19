@@ -27,12 +27,12 @@ class ReportExportService {
    * تصدير تقرير حالة المشروع
    */
   async exportProjectReport(
-    report: ProjectStatusReport, 
-    options: ExportOptions
+    report: ProjectStatusReport,
+    options: ExportOptions,
   ): Promise<ExportResult> {
     try {
       const fileName = this.generateFileName('project_report', report.projectId, options.format)
-      
+
       switch (options.format) {
         case 'pdf':
           return await this.exportToPDF(report, fileName, options)
@@ -48,7 +48,7 @@ class ReportExportService {
       return {
         success: false,
         fileName: '',
-        error: error instanceof Error ? error.message : 'خطأ غير معروف'
+        error: error instanceof Error ? error.message : 'خطأ غير معروف',
       }
     }
   }
@@ -58,11 +58,11 @@ class ReportExportService {
    */
   async exportDashboard(
     dashboard: ProjectDashboardData,
-    options: ExportOptions
+    options: ExportOptions,
   ): Promise<ExportResult> {
     try {
       const fileName = this.generateFileName('dashboard', 'all_projects', options.format)
-      
+
       switch (options.format) {
         case 'pdf':
           return await this.exportDashboardToPDF(dashboard, fileName, options)
@@ -78,7 +78,7 @@ class ReportExportService {
       return {
         success: false,
         fileName: '',
-        error: error instanceof Error ? error.message : 'خطأ غير معروف'
+        error: error instanceof Error ? error.message : 'خطأ غير معروف',
       }
     }
   }
@@ -86,13 +86,10 @@ class ReportExportService {
   /**
    * تصدير مؤشرات الأداء
    */
-  async exportKPIs(
-    kpis: KPIDashboard,
-    options: ExportOptions
-  ): Promise<ExportResult> {
+  async exportKPIs(kpis: KPIDashboard, options: ExportOptions): Promise<ExportResult> {
     try {
       const fileName = this.generateFileName('kpis', 'dashboard', options.format)
-      
+
       switch (options.format) {
         case 'pdf':
           return await this.exportKPIsToPDF(kpis, fileName, options)
@@ -108,7 +105,7 @@ class ReportExportService {
       return {
         success: false,
         fileName: '',
-        error: error instanceof Error ? error.message : 'خطأ غير معروف'
+        error: error instanceof Error ? error.message : 'خطأ غير معروف',
       }
     }
   }
@@ -119,142 +116,142 @@ class ReportExportService {
   }
 
   private async exportToPDF(
-    report: ProjectStatusReport, 
-    fileName: string, 
-    options: ExportOptions
+    _report: ProjectStatusReport,
+    fileName: string,
+    _options: ExportOptions,
   ): Promise<ExportResult> {
     // TODO: تطبيق تصدير PDF باستخدام مكتبة مثل jsPDF أو Puppeteer
     await this.simulateExport(2000)
-    
+
     return {
       success: true,
       fileName,
-      downloadUrl: `/downloads/${fileName}`
+      downloadUrl: `/downloads/${fileName}`,
     }
   }
 
   private async exportToExcel(
-    report: ProjectStatusReport, 
-    fileName: string, 
-    options: ExportOptions
+    _report: ProjectStatusReport,
+    fileName: string,
+    _options: ExportOptions,
   ): Promise<ExportResult> {
     // TODO: تطبيق تصدير Excel باستخدام مكتبة مثل ExcelJS
     await this.simulateExport(1500)
-    
+
     return {
       success: true,
       fileName,
-      downloadUrl: `/downloads/${fileName}`
+      downloadUrl: `/downloads/${fileName}`,
     }
   }
 
   private async exportToCSV(
-    report: ProjectStatusReport, 
-    fileName: string, 
-    options: ExportOptions
+    _report: ProjectStatusReport,
+    fileName: string,
+    _options: ExportOptions,
   ): Promise<ExportResult> {
     // TODO: تطبيق تصدير CSV
     await this.simulateExport(1000)
-    
+
     return {
       success: true,
       fileName,
-      downloadUrl: `/downloads/${fileName}`
+      downloadUrl: `/downloads/${fileName}`,
     }
   }
 
   private async exportDashboardToPDF(
-    dashboard: ProjectDashboardData,
+    _dashboard: ProjectDashboardData,
     fileName: string,
-    options: ExportOptions
+    _options: ExportOptions,
   ): Promise<ExportResult> {
     // TODO: تطبيق تصدير لوحة المعلومات إلى PDF
     await this.simulateExport(3000)
-    
+
     return {
       success: true,
       fileName,
-      downloadUrl: `/downloads/${fileName}`
+      downloadUrl: `/downloads/${fileName}`,
     }
   }
 
   private async exportDashboardToExcel(
-    dashboard: ProjectDashboardData,
+    _dashboard: ProjectDashboardData,
     fileName: string,
-    options: ExportOptions
+    _options: ExportOptions,
   ): Promise<ExportResult> {
     // TODO: تطبيق تصدير لوحة المعلومات إلى Excel
     await this.simulateExport(2500)
-    
+
     return {
       success: true,
       fileName,
-      downloadUrl: `/downloads/${fileName}`
+      downloadUrl: `/downloads/${fileName}`,
     }
   }
 
   private async exportDashboardToCSV(
-    dashboard: ProjectDashboardData,
+    _dashboard: ProjectDashboardData,
     fileName: string,
-    options: ExportOptions
+    _options: ExportOptions,
   ): Promise<ExportResult> {
     // TODO: تطبيق تصدير لوحة المعلومات إلى CSV
     await this.simulateExport(1500)
-    
+
     return {
       success: true,
       fileName,
-      downloadUrl: `/downloads/${fileName}`
+      downloadUrl: `/downloads/${fileName}`,
     }
   }
 
   private async exportKPIsToPDF(
-    kpis: KPIDashboard,
+    _kpis: KPIDashboard,
     fileName: string,
-    options: ExportOptions
+    _options: ExportOptions,
   ): Promise<ExportResult> {
     // TODO: تطبيق تصدير مؤشرات الأداء إلى PDF
     await this.simulateExport(2000)
-    
+
     return {
       success: true,
       fileName,
-      downloadUrl: `/downloads/${fileName}`
+      downloadUrl: `/downloads/${fileName}`,
     }
   }
 
   private async exportKPIsToExcel(
-    kpis: KPIDashboard,
+    _kpis: KPIDashboard,
     fileName: string,
-    options: ExportOptions
+    _options: ExportOptions,
   ): Promise<ExportResult> {
     // TODO: تطبيق تصدير مؤشرات الأداء إلى Excel
     await this.simulateExport(1500)
-    
+
     return {
       success: true,
       fileName,
-      downloadUrl: `/downloads/${fileName}`
+      downloadUrl: `/downloads/${fileName}`,
     }
   }
 
   private async exportKPIsToCSV(
-    kpis: KPIDashboard,
+    _kpis: KPIDashboard,
     fileName: string,
-    options: ExportOptions
+    _options: ExportOptions,
   ): Promise<ExportResult> {
     // TODO: تطبيق تصدير مؤشرات الأداء إلى CSV
     await this.simulateExport(1000)
-    
+
     return {
       success: true,
       fileName,
-      downloadUrl: `/downloads/${fileName}`
+      downloadUrl: `/downloads/${fileName}`,
     }
   }
 
   private async simulateExport(delay: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, delay))
+    return new Promise((resolve) => setTimeout(resolve, delay))
   }
 
   /**
@@ -278,16 +275,16 @@ class ReportExportService {
     const multipliers = {
       pdf: 2.5,
       excel: 1.8,
-      csv: 0.3
+      csv: 0.3,
     }
-    
+
     const multiplier = multipliers[format as keyof typeof multipliers] || 1
     const sizeInKB = Math.round(dataSize * multiplier)
-    
+
     if (sizeInKB < 1024) {
       return `${sizeInKB} KB`
     } else {
-      return `${Math.round(sizeInKB / 1024 * 10) / 10} MB`
+      return `${Math.round((sizeInKB / 1024) * 10) / 10} MB`
     }
   }
 }

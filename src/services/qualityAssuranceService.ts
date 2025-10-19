@@ -21,37 +21,6 @@ import type {
   QualityFilters,
   QualityAssuranceServiceInterface,
   QualityStatus,
-  QualityCheckType,
-  NonConformityType,
-  CorrectionType,
-  FailedCorrection,
-  CorrectionSummary,
-  ConsistencyIssue,
-  ConsistencyWarning,
-  ConsistencyRecommendation,
-  ConsistencySummary,
-  BackupScope,
-  BackupDataType,
-  BackupError,
-  BackupWarning,
-  BackupMetadata,
-  RestoreError,
-  RestoreWarning,
-  RestoreSummary,
-  BackupStatus,
-  ScheduleFrequency,
-  BackupStatistics,
-  OverallQualityMetrics,
-  PricingQualityMetrics,
-  CompletenessQualityMetrics,
-  ConsistencyQualityMetrics,
-  ErrorQualityMetrics,
-  QualityTrends,
-  QualityBenchmarks,
-  QualityReportData,
-  QualityReportSummary,
-  QualityChart,
-  QualityRecommendation
 } from '../types/quality'
 
 class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
@@ -64,7 +33,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
     QUALITY_ATTACHMENTS: 'quality_attachments',
     QUALITY_COMMENTS: 'quality_comments',
     QUALITY_ALERTS: 'quality_alerts',
-    QUALITY_ACTIVITIES: 'quality_activities'
+    QUALITY_ACTIVITIES: 'quality_activities',
   } as const
 
   /**
@@ -92,7 +61,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
         status: 'planned',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        version: 1
+        version: 1,
       }
 
       plans.push(newPlan)
@@ -107,7 +76,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
         descriptionEn: `Quality plan created: ${newPlan.nameEn || newPlan.name}`,
         entityId: newPlan.id,
         entityType: 'plan',
-        performedBy: 'current-user'
+        performedBy: 'current-user',
       })
 
       return newPlan
@@ -123,7 +92,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   async getQualityPlan(planId: string): Promise<QualityPlan | null> {
     try {
       const plans = await this.getAllQualityPlans()
-      return plans.find(plan => plan.id === planId) || null
+      return plans.find((plan) => plan.id === planId) || null
     } catch (error) {
       console.error('Error getting quality plan:', error)
       return null
@@ -136,7 +105,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   async updateQualityPlan(planId: string, updates: Partial<QualityPlan>): Promise<QualityPlan> {
     try {
       const plans = await this.getAllQualityPlans()
-      const planIndex = plans.findIndex(plan => plan.id === planId)
+      const planIndex = plans.findIndex((plan) => plan.id === planId)
 
       if (planIndex === -1) {
         throw new Error('خطة الجودة غير موجودة')
@@ -147,7 +116,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
         ...existingPlan,
         ...updates,
         updatedAt: new Date().toISOString(),
-        version: existingPlan.version + 1
+        version: existingPlan.version + 1,
       }
 
       plans[planIndex] = updatedPlan
@@ -166,7 +135,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   async deleteQualityPlan(planId: string): Promise<void> {
     try {
       const plans = await this.getAllQualityPlans()
-      const planIndex = plans.findIndex(plan => plan.id === planId)
+      const planIndex = plans.findIndex((plan) => plan.id === planId)
 
       if (planIndex === -1) {
         throw new Error('خطة الجودة غير موجودة')
@@ -189,7 +158,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   async getQualityPlansByProject(projectId: string): Promise<QualityPlan[]> {
     try {
       const allPlans = await this.getAllQualityPlans()
-      return allPlans.filter(plan => plan.projectId === projectId)
+      return allPlans.filter((plan) => plan.projectId === projectId)
     } catch (error) {
       console.error('Error getting project quality plans:', error)
       return []
@@ -214,10 +183,10 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
         type: request.type,
         category: request.category,
         standards: request.standards,
-        acceptanceCriteria: request.acceptanceCriteria.map(criteria => ({
+        acceptanceCriteria: request.acceptanceCriteria.map((criteria) => ({
           ...criteria,
           id: this.generateId(),
-          checkId: ''
+          checkId: '',
         })),
         plannedDate: request.plannedDate,
         duration: request.duration,
@@ -229,13 +198,13 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
         comments: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        version: 1
+        version: 1,
       }
 
       // تحديث معرف الفحص في معايير القبول
-      newCheck.acceptanceCriteria = newCheck.acceptanceCriteria.map(criteria => ({
+      newCheck.acceptanceCriteria = newCheck.acceptanceCriteria.map((criteria) => ({
         ...criteria,
-        checkId: newCheck.id
+        checkId: newCheck.id,
       }))
 
       checks.push(newCheck)
@@ -254,7 +223,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   async getQualityCheck(checkId: string): Promise<QualityCheck | null> {
     try {
       const checks = await this.getAllQualityChecks()
-      return checks.find(check => check.id === checkId) || null
+      return checks.find((check) => check.id === checkId) || null
     } catch (error) {
       console.error('Error getting quality check:', error)
       return null
@@ -267,7 +236,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   async updateQualityCheck(checkId: string, updates: Partial<QualityCheck>): Promise<QualityCheck> {
     try {
       const checks = await this.getAllQualityChecks()
-      const checkIndex = checks.findIndex(check => check.id === checkId)
+      const checkIndex = checks.findIndex((check) => check.id === checkId)
 
       if (checkIndex === -1) {
         throw new Error('فحص الجودة غير موجود')
@@ -278,7 +247,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
         ...existingCheck,
         ...updates,
         updatedAt: new Date().toISOString(),
-        version: existingCheck.version + 1
+        version: existingCheck.version + 1,
       }
 
       checks[checkIndex] = updatedCheck
@@ -297,7 +266,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   async deleteQualityCheck(checkId: string): Promise<void> {
     try {
       const checks = await this.getAllQualityChecks()
-      const checkIndex = checks.findIndex(check => check.id === checkId)
+      const checkIndex = checks.findIndex((check) => check.id === checkId)
 
       if (checkIndex === -1) {
         throw new Error('فحص الجودة غير موجود')
@@ -319,10 +288,13 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   /**
    * جلب فحوصات الجودة للمشروع
    */
-  async getQualityChecksByProject(projectId: string, filters?: QualityFilters): Promise<QualityCheck[]> {
+  async getQualityChecksByProject(
+    projectId: string,
+    filters?: QualityFilters,
+  ): Promise<QualityCheck[]> {
     try {
       const allChecks = await this.getAllQualityChecks()
-      let projectChecks = allChecks.filter(check => check.projectId === projectId)
+      let projectChecks = allChecks.filter((check) => check.projectId === projectId)
 
       // تطبيق الفلاتر
       if (filters) {
@@ -344,7 +316,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
       const updatedCheck = await this.updateQualityCheck(checkId, {
         status: 'in_progress',
         inspector,
-        actualDate: new Date().toISOString()
+        actualDate: new Date().toISOString(),
       })
 
       // إضافة نشاط
@@ -356,7 +328,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
         descriptionEn: `Check started: ${updatedCheck.titleEn || updatedCheck.title}`,
         entityId: checkId,
         entityType: 'check',
-        performedBy: inspector
+        performedBy: inspector,
       })
 
       return updatedCheck
@@ -369,12 +341,15 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   /**
    * إكمال فحص جودة
    */
-  async completeQualityCheck(checkId: string, result: Omit<QualityResult, 'id' | 'checkId'>): Promise<QualityCheck> {
+  async completeQualityCheck(
+    checkId: string,
+    result: Omit<QualityResult, 'id' | 'checkId'>,
+  ): Promise<QualityCheck> {
     try {
       const resultWithId: QualityResult = {
         ...result,
         id: this.generateId(),
-        checkId
+        checkId,
       }
 
       const status: QualityStatus = result.overallResult === 'pass' ? 'passed' : 'failed'
@@ -382,11 +357,12 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
       const updatedCheck = await this.updateQualityCheck(checkId, {
         status,
         result: resultWithId,
-        completedAt: new Date().toISOString()
+        completedAt: new Date().toISOString(),
       })
 
       // حفظ النتيجة
-      const results = await asyncStorage.getItem<QualityResult[]>(this.STORAGE_KEYS.QUALITY_RESULTS) || []
+      const results =
+        (await asyncStorage.getItem<QualityResult[]>(this.STORAGE_KEYS.QUALITY_RESULTS)) || []
       results.push(resultWithId)
       await asyncStorage.setItem(this.STORAGE_KEYS.QUALITY_RESULTS, results)
 
@@ -399,7 +375,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
         descriptionEn: `Check completed: ${updatedCheck.titleEn || updatedCheck.title} - Result: ${result.overallResult}`,
         entityId: checkId,
         entityType: 'check',
-        performedBy: result.inspector
+        performedBy: result.inspector,
       })
 
       return updatedCheck
@@ -413,11 +389,11 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
    * طرق مساعدة خاصة
    */
   private async getAllQualityPlans(): Promise<QualityPlan[]> {
-    return await asyncStorage.getItem<QualityPlan[]>(this.STORAGE_KEYS.QUALITY_PLANS) || []
+    return (await asyncStorage.getItem<QualityPlan[]>(this.STORAGE_KEYS.QUALITY_PLANS)) || []
   }
 
   private async getAllQualityChecks(): Promise<QualityCheck[]> {
-    return await asyncStorage.getItem<QualityCheck[]>(this.STORAGE_KEYS.QUALITY_CHECKS) || []
+    return (await asyncStorage.getItem<QualityCheck[]>(this.STORAGE_KEYS.QUALITY_CHECKS)) || []
   }
 
   private generateId(): string {
@@ -425,7 +401,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   }
 
   private applyFilters(checks: QualityCheck[], filters: QualityFilters): QualityCheck[] {
-    return checks.filter(check => {
+    return checks.filter((check) => {
       if (filters.status && !filters.status.includes(check.status)) return false
       if (filters.type && !filters.type.includes(check.type)) return false
       if (filters.inspector && !filters.inspector.includes(check.inspector)) return false
@@ -439,8 +415,11 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
 
       if (filters.searchQuery) {
         const query = filters.searchQuery.toLowerCase()
-        if (!check.title.toLowerCase().includes(query) &&
-            !check.description.toLowerCase().includes(query)) return false
+        if (
+          !check.title.toLowerCase().includes(query) &&
+          !check.description.toLowerCase().includes(query)
+        )
+          return false
       }
 
       return true
@@ -449,12 +428,13 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
 
   private async addActivity(activity: Omit<QualityActivity, 'id' | 'performedAt'>): Promise<void> {
     try {
-      const activities = await asyncStorage.getItem<QualityActivity[]>(this.STORAGE_KEYS.QUALITY_ACTIVITIES) || []
+      const activities =
+        (await asyncStorage.getItem<QualityActivity[]>(this.STORAGE_KEYS.QUALITY_ACTIVITIES)) || []
 
       const newActivity: QualityActivity = {
         ...activity,
         id: this.generateId(),
-        performedAt: new Date().toISOString()
+        performedAt: new Date().toISOString(),
       }
 
       activities.unshift(newActivity) // إضافة في المقدمة
@@ -473,7 +453,7 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   private async deleteChecksByPlan(planId: string): Promise<void> {
     try {
       const checks = await this.getAllQualityChecks()
-      const filteredChecks = checks.filter(check => check.planId !== planId)
+      const filteredChecks = checks.filter((check) => check.planId !== planId)
       await asyncStorage.setItem(this.STORAGE_KEYS.QUALITY_CHECKS, filteredChecks)
     } catch (error) {
       console.error('Error deleting checks by plan:', error)
@@ -482,8 +462,9 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
 
   private async deleteNonConformitiesByCheck(checkId: string): Promise<void> {
     try {
-      const nonConformities = await asyncStorage.getItem<NonConformity[]>(this.STORAGE_KEYS.NON_CONFORMITIES) || []
-      const filteredNonConformities = nonConformities.filter(nc => nc.checkId !== checkId)
+      const nonConformities =
+        (await asyncStorage.getItem<NonConformity[]>(this.STORAGE_KEYS.NON_CONFORMITIES)) || []
+      const filteredNonConformities = nonConformities.filter((nc) => nc.checkId !== checkId)
       await asyncStorage.setItem(this.STORAGE_KEYS.NON_CONFORMITIES, filteredNonConformities)
     } catch (error) {
       console.error('Error deleting non-conformities by check:', error)
@@ -492,8 +473,12 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
 
   private async deleteAttachmentsByEntity(entityId: string): Promise<void> {
     try {
-      const attachments = await asyncStorage.getItem<QualityAttachment[]>(this.STORAGE_KEYS.QUALITY_ATTACHMENTS) || []
-      const filteredAttachments = attachments.filter(attachment => attachment.entityId !== entityId)
+      const attachments =
+        (await asyncStorage.getItem<QualityAttachment[]>(this.STORAGE_KEYS.QUALITY_ATTACHMENTS)) ||
+        []
+      const filteredAttachments = attachments.filter(
+        (attachment) => attachment.entityId !== entityId,
+      )
       await asyncStorage.setItem(this.STORAGE_KEYS.QUALITY_ATTACHMENTS, filteredAttachments)
     } catch (error) {
       console.error('Error deleting attachments by entity:', error)
@@ -502,8 +487,9 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
 
   private async deleteCommentsByEntity(entityId: string): Promise<void> {
     try {
-      const comments = await asyncStorage.getItem<QualityComment[]>(this.STORAGE_KEYS.QUALITY_COMMENTS) || []
-      const filteredComments = comments.filter(comment => comment.entityId !== entityId)
+      const comments =
+        (await asyncStorage.getItem<QualityComment[]>(this.STORAGE_KEYS.QUALITY_COMMENTS)) || []
+      const filteredComments = comments.filter((comment) => comment.entityId !== entityId)
       await asyncStorage.setItem(this.STORAGE_KEYS.QUALITY_COMMENTS, filteredComments)
     } catch (error) {
       console.error('Error deleting comments by entity:', error)
@@ -511,63 +497,87 @@ class QualityAssuranceServiceImpl implements QualityAssuranceServiceInterface {
   }
 
   // Placeholder implementations for interface compliance
-  async raiseNonConformity(checkId: string, nonConformity: any): Promise<NonConformity> {
+  async raiseNonConformity(_checkId: string, _nonConformity: any): Promise<NonConformity> {
     throw new Error('Method not implemented yet')
   }
 
-  async updateNonConformity(nonConformityId: string, updates: Partial<NonConformity>): Promise<NonConformity> {
+  async updateNonConformity(
+    _nonConformityId: string,
+    _updates: Partial<NonConformity>,
+  ): Promise<NonConformity> {
     throw new Error('Method not implemented yet')
   }
 
-  async closeNonConformity(nonConformityId: string, closedBy: string): Promise<NonConformity> {
+  async closeNonConformity(_nonConformityId: string, _closedBy: string): Promise<NonConformity> {
     throw new Error('Method not implemented yet')
   }
 
-  async createCorrectiveAction(nonConformityId: string, action: any): Promise<CorrectiveAction> {
+  async createCorrectiveAction(_nonConformityId: string, _action: any): Promise<CorrectiveAction> {
     throw new Error('Method not implemented yet')
   }
 
-  async updateCorrectiveAction(actionId: string, updates: Partial<CorrectiveAction>): Promise<CorrectiveAction> {
+  async updateCorrectiveAction(
+    _actionId: string,
+    _updates: Partial<CorrectiveAction>,
+  ): Promise<CorrectiveAction> {
     throw new Error('Method not implemented yet')
   }
 
-  async verifyCorrectiveAction(actionId: string, verifiedBy: string, effectiveness: CorrectiveAction['effectiveness']): Promise<CorrectiveAction> {
+  async verifyCorrectiveAction(
+    _actionId: string,
+    _verifiedBy: string,
+    _effectiveness: CorrectiveAction['effectiveness'],
+  ): Promise<CorrectiveAction> {
     throw new Error('Method not implemented yet')
   }
 
-  async getQualityMetrics(projectId: string, period: { start: string; end: string }): Promise<QualityMetrics> {
+  async getQualityMetrics(
+    _projectId: string,
+    _period: { start: string; end: string },
+  ): Promise<QualityMetrics> {
     throw new Error('Method not implemented yet')
   }
 
-  async getQualityDashboard(projectId: string): Promise<QualityDashboard> {
+  async getQualityDashboard(_projectId: string): Promise<QualityDashboard> {
     throw new Error('Method not implemented yet')
   }
 
-  async generateQualityReport(projectId: string, format: 'pdf' | 'excel'): Promise<Blob> {
+  async generateQualityReport(_projectId: string, _format: 'pdf' | 'excel'): Promise<Blob> {
     throw new Error('Method not implemented yet')
   }
 
-  async getQualityAlerts(projectId: string): Promise<QualityAlert[]> {
+  async getQualityAlerts(_projectId: string): Promise<QualityAlert[]> {
     throw new Error('Method not implemented yet')
   }
 
-  async acknowledgeAlert(alertId: string, acknowledgedBy: string): Promise<QualityAlert> {
+  async acknowledgeAlert(_alertId: string, _acknowledgedBy: string): Promise<QualityAlert> {
     throw new Error('Method not implemented yet')
   }
 
-  async getQualityActivities(projectId: string, limit?: number): Promise<QualityActivity[]> {
+  async getQualityActivities(_projectId: string, _limit?: number): Promise<QualityActivity[]> {
     throw new Error('Method not implemented yet')
   }
 
-  async addAttachment(entityId: string, entityType: QualityAttachment['entityType'], file: File, category: QualityAttachment['category'], description?: string): Promise<QualityAttachment> {
+  async addAttachment(
+    _entityId: string,
+    _entityType: QualityAttachment['entityType'],
+    _file: File,
+    _category: QualityAttachment['category'],
+    _description?: string,
+  ): Promise<QualityAttachment> {
     throw new Error('Method not implemented yet')
   }
 
-  async deleteAttachment(attachmentId: string): Promise<void> {
+  async deleteAttachment(_attachmentId: string): Promise<void> {
     throw new Error('Method not implemented yet')
   }
 
-  async addComment(entityId: string, entityType: QualityComment['entityType'], content: string, author: string): Promise<QualityComment> {
+  async addComment(
+    _entityId: string,
+    _entityType: QualityComment['entityType'],
+    _content: string,
+    _author: string,
+  ): Promise<QualityComment> {
     throw new Error('Method not implemented yet')
   }
 }
