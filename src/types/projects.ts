@@ -3,13 +3,7 @@
  * Advanced project management types for Sprint 1.1 implementation
  */
 
-import type { 
-  Status, 
-  Priority, 
-  Health, 
-  FileAttachment,
-  Client 
-} from './contracts'
+import type { Status, Priority, Health, FileAttachment } from './contracts'
 
 // =====================================
 // 🏗️ Enhanced Project Types
@@ -133,7 +127,7 @@ export interface ProjectRisk {
   actualDate?: string
 }
 
-export type RiskCategory = 
+export type RiskCategory =
   | 'technical'
   | 'financial'
   | 'schedule'
@@ -180,13 +174,13 @@ export interface EnhancedProject {
   nameEn?: string
   description: string
   code: string // Project code/number
-  
+
   // Client Information
   client: string
   clientId: string
   clientContact: string
   clientContactId?: string
-  
+
   // Status and Progress
   status: Status
   priority: Priority
@@ -194,7 +188,7 @@ export interface EnhancedProject {
   progress: number
   phase: string
   phaseId: string
-  
+
   // Dates
   startDate: string
   endDate: string
@@ -202,7 +196,7 @@ export interface EnhancedProject {
   actualEndDate?: string
   createdAt: string
   updatedAt: string
-  
+
   // Location and Classification
   location: string
   address?: string
@@ -213,31 +207,31 @@ export interface EnhancedProject {
   category: string
   type: string
   tags: string[]
-  
+
   // Financial Information
   budget: ProjectBudget
   contractValue: number
   profitMargin: number
-  
+
   // Team and Resources
   team: ProjectTeam
-  
+
   // Planning and Execution
   phases: ProjectPhase[]
   milestones: ProjectMilestone[]
   risks: ProjectRisk[]
-  
+
   // Tender Integration
   tenderLink?: TenderProjectLink
   fromTender?: ProjectFromTender
-  
+
   // Documentation
   attachments: FileAttachment[]
   notes: string
-  
+
   // Metadata
   metadata: Record<string, any>
-  
+
   // Audit Trail
   createdBy: string
   lastModifiedBy: string

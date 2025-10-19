@@ -1,9 +1,9 @@
 /**
  * Data Migration Utilities for Phase 2 Implementation
- * 
+ *
  * This file provides utilities for migrating existing tender data from
  * legacy systems to the new analytics and historical data structure.
- * 
+ *
  * @author Desktop Management System Team
  * @version 2.0.0
  * @since Phase 2 Implementation - Historical Data Integration
@@ -15,7 +15,6 @@ import { lessonsLearnedService } from '../services/lessonsLearnedService'
 import { dataImportService } from './dataImport'
 import type { BidPerformance } from '../types/analytics'
 import type { Tender } from '../types/contracts'
-import type { LessonLearned } from '../services/lessonsLearnedService'
 
 /**
  * Migration source types
@@ -131,11 +130,11 @@ class DataMigrationService {
    */
   async migrateTenderData(
     tenders: Tender[],
-    config: MigrationConfig = {}
+    config: MigrationConfig = {},
   ): Promise<MigrationResult> {
     const migrationId = this.generateMigrationId()
     const startTime = new Date().toISOString()
-    
+
     const result: MigrationResult = {
       migrationId,
       status: 'in_progress',
@@ -150,8 +149,8 @@ class DataMigrationService {
       warnings: [],
       performance: {
         processingTime: 0,
-        recordsPerSecond: 0
-      }
+        recordsPerSecond: 0,
+      },
     }
 
     try {
@@ -175,23 +174,22 @@ class DataMigrationService {
 
       result.status = 'completed'
       result.endTime = new Date().toISOString()
-      result.performance.processingTime = 
+      result.performance.processingTime =
         new Date(result.endTime).getTime() - new Date(result.startTime).getTime()
-      result.performance.recordsPerSecond = 
+      result.performance.recordsPerSecond =
         result.migratedRecords / (result.performance.processingTime / 1000)
 
       // Save migration history
       await this.saveMigrationHistory(result, config)
 
       return result
-
     } catch (error) {
       result.status = 'failed'
       result.endTime = new Date().toISOString()
       result.errors.push({
         record: null,
         error: error instanceof Error ? error.message : 'Unknown migration error',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       })
 
       await this.saveMigrationHistory(result, config)
@@ -202,10 +200,7 @@ class DataMigrationService {
   /**
    * Migrate from CSV file content
    */
-  async migrateFromCSV(
-    csvContent: string,
-    config: MigrationConfig = {}
-  ): Promise<MigrationResult> {
+  async migrateFromCSV(csvContent: string, config: MigrationConfig = {}): Promise<MigrationResult> {
     try {
       // Use data import service to parse CSV
       const importResult = await dataImportService.importHistoricalTenders(csvContent, {
@@ -213,7 +208,7 @@ class DataMigrationService {
         validateData: config.validateData,
         skipDuplicates: config.skipDuplicates,
         batchSize: config.batchSize,
-        fieldMapping: config.fieldMapping
+        fieldMapping: config.fieldMapping,
       })
 
       // Convert import result to migration result
@@ -228,25 +223,24 @@ class DataMigrationService {
         failedRecords: importResult.failedImports,
         skippedDuplicates: importResult.skippedDuplicates,
         generatedLessons: 0,
-        errors: importResult.errors.map(err => ({
+        errors: importResult.errors.map((err) => ({
           record: err.data,
           error: err.message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         })),
-        warnings: importResult.warnings.map(warn => ({
+        warnings: importResult.warnings.map((warn) => ({
           record: warn.data,
           warning: warn.message,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         })),
         performance: {
           processingTime: importResult.processingTime,
-          recordsPerSecond: importResult.successfulImports / (importResult.processingTime / 1000)
-        }
+          recordsPerSecond: importResult.successfulImports / (importResult.processingTime / 1000),
+        },
       }
 
       await this.saveMigrationHistory(migrationResult, config)
       return migrationResult
-
     } catch (error) {
       console.error('Error migrating from CSV:', error)
       throw new Error('Failed to migrate data from CSV')
@@ -259,8 +253,8 @@ class DataMigrationService {
   async rollbackMigration(migrationId: string): Promise<boolean> {
     try {
       const history = await this.getMigrationHistory()
-      const migration = history.find(h => h.migrationId === migrationId)
-      
+      const migration = history.find((h) => h.migrationId === migrationId)
+
       if (!migration?.result.backup) {
         throw new Error('Migration not found or no backup available')
       }
@@ -273,7 +267,6 @@ class DataMigrationService {
       await this.saveMigrationHistory(migration.result, migration.config)
 
       return true
-
     } catch (error) {
       console.error('Error rolling back migration:', error)
       return false
@@ -319,7 +312,7 @@ class DataMigrationService {
       // Validate each record
       for (let i = 0; i < data.length; i++) {
         const record = data[i]
-        
+
         // Check required fields
         if (!record.id && !record.tenderRef) {
           errors.push(`Record ${i + 1}: Missing required identifier`)
@@ -342,9 +335,8 @@ class DataMigrationService {
       return {
         isValid: errors.length === 0,
         errors,
-        warnings
+        warnings,
       }
-
     } catch (error) {
       errors.push(`Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`)
       return { isValid: false, errors, warnings }
@@ -364,19 +356,25 @@ class DataMigrationService {
   }> {
     try {
       const history = await this.getMigrationHistory()
-      
-      const totalMigrations = history.length
-      const successfulMigrations = history.filter(h => h.result.status === 'completed').length
-      const failedMigrations = history.filter(h => h.result.status === 'failed').length
-      const totalRecordsMigrated = history.reduce((sum, h) => sum + h.result.migratedRecords, 0)
-      
-      const averageProcessingTime = history.length > 0
-        ? history.reduce((sum, h) => sum + h.result.performance.processingTime, 0) / history.length
-        : 0
 
-      const lastMigrationDate = history.length > 0
-        ? history.sort((a, b) => new Date(b.result.startTime).getTime() - new Date(a.result.startTime).getTime())[0].result.startTime
-        : null
+      const totalMigrations = history.length
+      const successfulMigrations = history.filter((h) => h.result.status === 'completed').length
+      const failedMigrations = history.filter((h) => h.result.status === 'failed').length
+      const totalRecordsMigrated = history.reduce((sum, h) => sum + h.result.migratedRecords, 0)
+
+      const averageProcessingTime =
+        history.length > 0
+          ? history.reduce((sum, h) => sum + h.result.performance.processingTime, 0) /
+            history.length
+          : 0
+
+      const lastMigrationDate =
+        history.length > 0
+          ? history.sort(
+              (a, b) =>
+                new Date(b.result.startTime).getTime() - new Date(a.result.startTime).getTime(),
+            )[0].result.startTime
+          : null
 
       return {
         totalMigrations,
@@ -384,9 +382,8 @@ class DataMigrationService {
         failedMigrations,
         totalRecordsMigrated,
         averageProcessingTime,
-        lastMigrationDate
+        lastMigrationDate,
       }
-
     } catch (error) {
       console.error('Error getting migration statistics:', error)
       return {
@@ -395,7 +392,7 @@ class DataMigrationService {
         failedMigrations: 0,
         totalRecordsMigrated: 0,
         averageProcessingTime: 0,
-        lastMigrationDate: null
+        lastMigrationDate: null,
       }
     }
   }
@@ -419,15 +416,15 @@ class DataMigrationService {
   private async processTenderBatch(
     tenders: Tender[],
     config: MigrationConfig,
-    result: MigrationResult
+    result: MigrationResult,
   ): Promise<void> {
     for (const tender of tenders) {
       try {
         // Transform tender to bid performance
         const bidPerformance = this.transformTenderToBidPerformance(tender, config)
-        
+
         // Check for duplicates if enabled
-        if (config.skipDuplicates && await this.isDuplicate(bidPerformance)) {
+        if (config.skipDuplicates && (await this.isDuplicate(bidPerformance))) {
           result.skippedDuplicates++
           continue
         }
@@ -435,13 +432,12 @@ class DataMigrationService {
         // Create bid performance record
         await analyticsService.createBidPerformance(bidPerformance)
         result.migratedRecords++
-
       } catch (error) {
         result.failedRecords++
         result.errors.push({
           record: tender,
           error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         })
       }
     }
@@ -449,10 +445,10 @@ class DataMigrationService {
 
   private transformTenderToBidPerformance(
     tender: Tender,
-    config: MigrationConfig
+    config: MigrationConfig,
   ): Omit<BidPerformance, 'id' | 'createdAt' | 'updatedAt'> {
     // Apply field mapping if provided
-    const mappedTender = config.fieldMapping 
+    const mappedTender = config.fieldMapping
       ? this.applyFieldMapping(tender, config.fieldMapping)
       : tender
 
@@ -463,7 +459,10 @@ class DataMigrationService {
 
     return {
       tenderId: transformedTender.id || transformedTender.reference || `tender_${Date.now()}`,
-      submissionDate: transformedTender.submissionDate || transformedTender.deadline || new Date().toISOString().split('T')[0],
+      submissionDate:
+        transformedTender.submissionDate ||
+        transformedTender.deadline ||
+        new Date().toISOString().split('T')[0],
       outcome: this.inferOutcome(transformedTender),
       bidAmount: Number(transformedTender.estimatedValue || transformedTender.value || 0),
       estimatedValue: Number(transformedTender.estimatedValue || transformedTender.value || 0),
@@ -478,43 +477,46 @@ class DataMigrationService {
         id: `client_${(transformedTender.client || 'unknown').toLowerCase().replace(/\s+/g, '_')}`,
         name: transformedTender.client || 'Unknown Client',
         type: this.inferClientType(transformedTender),
-        paymentHistory: 'average'
+        paymentHistory: 'average',
       },
       riskScore: this.inferRiskScore(transformedTender),
       metrics: {
         roi: 0,
         efficiency: 50,
-        strategicValue: 50
-      }
+        strategicValue: 50,
+      },
     }
   }
 
   private applyFieldMapping(data: any, mapping: Record<string, string>): any {
     const mapped: any = {}
-    
+
     for (const [targetField, sourceField] of Object.entries(mapping)) {
       if (data[sourceField] !== undefined) {
         mapped[targetField] = data[sourceField]
       }
     }
-    
+
     // Include unmapped fields
     for (const [key, value] of Object.entries(data)) {
       if (!Object.values(mapping).includes(key)) {
         mapped[key] = value
       }
     }
-    
+
     return mapped
   }
 
-  private applyTransformationRules(data: any, rules: {
-    field: string
-    rule: string
-    parameters?: any
-  }[]): any {
+  private applyTransformationRules(
+    data: any,
+    rules: {
+      field: string
+      rule: string
+      parameters?: any
+    }[],
+  ): any {
     const transformed = { ...data }
-    
+
     for (const rule of rules) {
       if (transformed[rule.field] !== undefined) {
         switch (rule.rule) {
@@ -542,16 +544,20 @@ class DataMigrationService {
         }
       }
     }
-    
+
     return transformed
   }
 
-  private async isDuplicate(bidPerformance: Omit<BidPerformance, 'id' | 'createdAt' | 'updatedAt'>): Promise<boolean> {
+  private async isDuplicate(
+    bidPerformance: Omit<BidPerformance, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<boolean> {
     try {
       const existing = await analyticsService.getAllBidPerformances()
-      return existing.some(bp => 
-        bp.tenderId === bidPerformance.tenderId ||
-        (bp.submissionDate === bidPerformance.submissionDate && bp.bidAmount === bidPerformance.bidAmount)
+      return existing.some(
+        (bp) =>
+          bp.tenderId === bidPerformance.tenderId ||
+          (bp.submissionDate === bidPerformance.submissionDate &&
+            bp.bidAmount === bidPerformance.bidAmount),
       )
     } catch (error) {
       return false
@@ -607,35 +613,35 @@ class DataMigrationService {
   }> {
     const backupId = `backup_${Date.now()}`
     const backupKey = `${this.backupPrefix}${backupId}`
-    
+
     // Get current analytics data
     const bidPerformances = await analyticsService.getAllBidPerformances()
     const backupData = {
       bidPerformances,
       timestamp: new Date().toISOString(),
-      version: '2.0.0'
+      version: '2.0.0',
     }
-    
+
     const backupString = JSON.stringify(backupData)
     await safeLocalStorage.setItem(backupKey, backupString)
-    
+
     return {
       backupId,
       backupPath: backupKey,
-      backupSize: backupString.length
+      backupSize: backupString.length,
     }
   }
 
   private async restoreFromBackup(backupId: string): Promise<void> {
     const backupKey = `${this.backupPrefix}${backupId}`
     const backupData = await safeLocalStorage.getItem(backupKey)
-    
+
     if (!backupData) {
       throw new Error('Backup not found')
     }
-    
+
     const parsed = JSON.parse(backupData)
-    
+
     // Clear current data and restore backup
     await safeLocalStorage.removeItem('app_bid_performances')
     await safeLocalStorage.setItem('app_bid_performances', JSON.stringify(parsed.bidPerformances))
@@ -646,10 +652,11 @@ class DataMigrationService {
       // Get recently migrated bid performances
       const bidPerformances = await analyticsService.getAllBidPerformances()
       const recentPerformances = bidPerformances.slice(-result.migratedRecords)
-      
+
       for (const performance of recentPerformances) {
         if (performance.outcome === 'won' || performance.outcome === 'lost') {
-          const lessonTemplate = await lessonsLearnedService.generateLessonFromBidPerformance(performance)
+          const lessonTemplate =
+            await lessonsLearnedService.generateLessonFromBidPerformance(performance)
           await lessonsLearnedService.createLesson(lessonTemplate as any)
           result.generatedLessons++
         }
@@ -659,25 +666,28 @@ class DataMigrationService {
     }
   }
 
-  private async saveMigrationHistory(result: MigrationResult, config: MigrationConfig): Promise<void> {
+  private async saveMigrationHistory(
+    result: MigrationResult,
+    config: MigrationConfig,
+  ): Promise<void> {
     try {
       const history = await this.getMigrationHistory()
-      
+
       const historyEntry: MigrationHistory = {
         migrationId: result.migrationId,
         result,
         config,
         initiatedBy: 'system',
-        notes: `Migration from ${config.source}`
+        notes: `Migration from ${config.source}`,
       }
-      
+
       history.push(historyEntry)
-      
+
       // Keep only last 50 migration records
       if (history.length > 50) {
         history.splice(0, history.length - 50)
       }
-      
+
       await safeLocalStorage.setItem(this.migrationHistoryKey, JSON.stringify(history))
     } catch (error) {
       console.error('Error saving migration history:', error)
@@ -693,14 +703,14 @@ export const dataMigrationService = new DataMigrationService()
  */
 export async function migrateTendersToAnalytics(
   tenders: Tender[],
-  config?: MigrationConfig
+  config?: MigrationConfig,
 ): Promise<MigrationResult> {
   return dataMigrationService.migrateTenderData(tenders, config)
 }
 
 export async function migrateFromCSVFile(
   csvContent: string,
-  config?: MigrationConfig
+  config?: MigrationConfig,
 ): Promise<MigrationResult> {
   return dataMigrationService.migrateFromCSV(csvContent, config)
 }

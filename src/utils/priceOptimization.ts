@@ -1,20 +1,19 @@
 /**
  * Price Optimization Algorithms for Advanced Analytics
- * 
+ *
  * This module provides sophisticated price optimization algorithms for:
  * - Optimal bid amount calculation based on win probability
  * - Margin optimization considering risk and competition
  * - Dynamic pricing strategies based on market conditions
  * - ROI maximization and profit optimization
- * 
+ *
  * @author Desktop Management System Team
  * @version 2.0.0
  * @since Phase 2 - Advanced Analytics Implementation
  */
 
 import type { BidPerformance, CompetitorData } from '../types/analytics'
-import type { MarketOpportunity } from '../types/competitive'
-import { predictWinProbability, type WinProbabilityPrediction, type BidOptimization } from './predictionModels'
+import { predictWinProbability, type BidOptimization } from './predictionModels'
 
 // ============================================================================
 // OPTIMIZATION INTERFACES
@@ -103,7 +102,7 @@ export function optimizeBidAmount(
   clientType: string,
   historicalPerformances: BidPerformance[],
   competitors: CompetitorData[],
-  parameters: OptimizationParameters
+  parameters: OptimizationParameters,
 ): BidOptimization {
   // Generate price sensitivity analysis
   const sensitivity = analyzePriceSensitivity(
@@ -114,7 +113,7 @@ export function optimizeBidAmount(
     clientType,
     historicalPerformances,
     competitors,
-    parameters
+    parameters,
   )
 
   // Select optimal price based on objective
@@ -126,7 +125,7 @@ export function optimizeBidAmount(
     optimalPoint,
     sensitivity,
     parameters,
-    competitors
+    competitors,
   )
 
   return {
@@ -135,7 +134,7 @@ export function optimizeBidAmount(
     expectedWinProbability: optimalPoint.winProbability,
     riskLevel: assessRiskLevel(optimalPoint, sensitivity.riskAnalysis),
     strategy: strategy,
-    recommendations
+    recommendations,
   }
 }
 
@@ -150,17 +149,20 @@ export function analyzePriceSensitivity(
   clientType: string,
   historicalPerformances: BidPerformance[],
   competitors: CompetitorData[],
-  parameters: OptimizationParameters
+  parameters: OptimizationParameters,
 ): PriceSensitivityAnalysis {
   const pricePoints: PriceSensitivityAnalysis['pricePoints'] = []
 
   // Generate price points from aggressive to conservative
   const baseMargin = (parameters.minMargin + parameters.maxMargin) / 2
   const marginRange = parameters.maxMargin - parameters.minMargin
-  
+
   for (let i = 0; i <= 20; i++) {
     const marginOffset = (i - 10) * (marginRange / 20)
-    const margin = Math.max(parameters.minMargin, Math.min(parameters.maxMargin, baseMargin + marginOffset))
+    const margin = Math.max(
+      parameters.minMargin,
+      Math.min(parameters.maxMargin, baseMargin + marginOffset),
+    )
     const bidAmount = estimatedValue * (1 + margin / 100)
 
     // Predict win probability for this price point
@@ -172,7 +174,7 @@ export function analyzePriceSensitivity(
       region,
       clientType,
       historicalPerformances,
-      competitors
+      competitors,
     )
 
     // Calculate expected value and ROI
@@ -185,7 +187,7 @@ export function analyzePriceSensitivity(
       margin,
       winProbability: prediction.probability,
       expectedValue,
-      roi
+      roi,
     })
   }
 
@@ -199,9 +201,9 @@ export function analyzePriceSensitivity(
     pricePoints,
     optimalPrice: {
       ...optimalPrice,
-      reasoning: generateOptimalPriceReasoning(optimalPrice, parameters)
+      reasoning: generateOptimalPriceReasoning(optimalPrice, parameters),
     },
-    riskAnalysis
+    riskAnalysis,
   }
 }
 
@@ -210,7 +212,7 @@ export function analyzePriceSensitivity(
  */
 function selectOptimalPrice(
   sensitivity: Pick<PriceSensitivityAnalysis, 'pricePoints'>,
-  parameters: OptimizationParameters
+  parameters: OptimizationParameters,
 ) {
   const { pricePoints } = sensitivity
   let optimalPoint = pricePoints[0]
@@ -219,38 +221,32 @@ function selectOptimalPrice(
     case 'win-probability':
       // Maximize win probability while maintaining minimum margin
       optimalPoint = pricePoints
-        .filter(p => p.margin >= parameters.minMargin)
-        .reduce((best, current) => 
-          current.winProbability > best.winProbability ? current : best
-        )
+        .filter((p) => p.margin >= parameters.minMargin)
+        .reduce((best, current) => (current.winProbability > best.winProbability ? current : best))
       break
 
     case 'profit-margin':
       // Maximize margin while maintaining target win probability
       optimalPoint = pricePoints
-        .filter(p => p.winProbability >= parameters.targetWinProbability * 0.8)
-        .reduce((best, current) => 
-          current.margin > best.margin ? current : best
-        )
+        .filter((p) => p.winProbability >= parameters.targetWinProbability * 0.8)
+        .reduce((best, current) => (current.margin > best.margin ? current : best))
       break
 
     case 'roi':
       // Maximize ROI considering win probability
-      optimalPoint = pricePoints
-        .reduce((best, current) => {
-          const currentScore = current.roi * (current.winProbability / 100)
-          const bestScore = best.roi * (best.winProbability / 100)
-          return currentScore > bestScore ? current : best
-        })
+      optimalPoint = pricePoints.reduce((best, current) => {
+        const currentScore = current.roi * (current.winProbability / 100)
+        const bestScore = best.roi * (best.winProbability / 100)
+        return currentScore > bestScore ? current : best
+      })
       break
 
     case 'balanced':
     default:
       // Balanced approach: maximize expected value
-      optimalPoint = pricePoints
-        .reduce((best, current) => 
-          current.expectedValue > best.expectedValue ? current : best
-        )
+      optimalPoint = pricePoints.reduce((best, current) =>
+        current.expectedValue > best.expectedValue ? current : best,
+      )
       break
   }
 
@@ -262,34 +258,34 @@ function selectOptimalPrice(
  */
 function analyzeRiskRanges(
   pricePoints: PriceSensitivityAnalysis['pricePoints'],
-  parameters: OptimizationParameters
+  parameters: OptimizationParameters,
 ): PriceSensitivityAnalysis['riskAnalysis'] {
   const sortedByMargin = [...pricePoints].sort((a, b) => a.margin - b.margin)
-  
+
   // Define risk ranges based on win probability and margin
-  const lowRiskPoints = sortedByMargin.filter(p => 
-    p.winProbability >= 60 && p.margin >= parameters.minMargin
+  const lowRiskPoints = sortedByMargin.filter(
+    (p) => p.winProbability >= 60 && p.margin >= parameters.minMargin,
   )
-  const highRiskPoints = sortedByMargin.filter(p => 
-    p.winProbability < 30 || p.margin > parameters.maxMargin * 0.9
+  const highRiskPoints = sortedByMargin.filter(
+    (p) => p.winProbability < 30 || p.margin > parameters.maxMargin * 0.9,
   )
-  const mediumRiskPoints = sortedByMargin.filter(p => 
-    !lowRiskPoints.includes(p) && !highRiskPoints.includes(p)
+  const mediumRiskPoints = sortedByMargin.filter(
+    (p) => !lowRiskPoints.includes(p) && !highRiskPoints.includes(p),
   )
 
   return {
     lowRiskRange: {
-      min: Math.min(...lowRiskPoints.map(p => p.bidAmount)),
-      max: Math.max(...lowRiskPoints.map(p => p.bidAmount))
+      min: Math.min(...lowRiskPoints.map((p) => p.bidAmount)),
+      max: Math.max(...lowRiskPoints.map((p) => p.bidAmount)),
     },
     mediumRiskRange: {
-      min: Math.min(...mediumRiskPoints.map(p => p.bidAmount)),
-      max: Math.max(...mediumRiskPoints.map(p => p.bidAmount))
+      min: Math.min(...mediumRiskPoints.map((p) => p.bidAmount)),
+      max: Math.max(...mediumRiskPoints.map((p) => p.bidAmount)),
     },
     highRiskRange: {
-      min: Math.min(...highRiskPoints.map(p => p.bidAmount)),
-      max: Math.max(...highRiskPoints.map(p => p.bidAmount))
-    }
+      min: Math.min(...highRiskPoints.map((p) => p.bidAmount)),
+      max: Math.max(...highRiskPoints.map((p) => p.bidAmount)),
+    },
   }
 }
 
@@ -298,7 +294,7 @@ function analyzeRiskRanges(
  */
 function determineOptimizationStrategy(
   optimalPoint: PriceSensitivityAnalysis['pricePoints'][0],
-  parameters: OptimizationParameters
+  parameters: OptimizationParameters,
 ): BidOptimization['strategy'] {
   if (optimalPoint.margin < parameters.minMargin + 5) {
     return 'aggressive'
@@ -314,13 +310,16 @@ function determineOptimizationStrategy(
  */
 function assessRiskLevel(
   optimalPoint: PriceSensitivityAnalysis['pricePoints'][0],
-  riskAnalysis: PriceSensitivityAnalysis['riskAnalysis']
+  riskAnalysis: PriceSensitivityAnalysis['riskAnalysis'],
 ): BidOptimization['riskLevel'] {
   const { bidAmount } = optimalPoint
 
   if (bidAmount >= riskAnalysis.lowRiskRange.min && bidAmount <= riskAnalysis.lowRiskRange.max) {
     return 'low'
-  } else if (bidAmount >= riskAnalysis.highRiskRange.min && bidAmount <= riskAnalysis.highRiskRange.max) {
+  } else if (
+    bidAmount >= riskAnalysis.highRiskRange.min &&
+    bidAmount <= riskAnalysis.highRiskRange.max
+  ) {
     return 'high'
   } else {
     return 'medium'
@@ -332,7 +331,7 @@ function assessRiskLevel(
  */
 function generateOptimalPriceReasoning(
   optimalPoint: PriceSensitivityAnalysis['pricePoints'][0],
-  parameters: OptimizationParameters
+  parameters: OptimizationParameters,
 ): string {
   const reasons: string[] = []
 
@@ -341,7 +340,9 @@ function generateOptimalPriceReasoning(
   } else if (parameters.objective === 'profit-margin') {
     reasons.push(`تم اختيار هذا السعر لتحقيق أعلى هامش ربح (${optimalPoint.margin.toFixed(1)}%)`)
   } else if (parameters.objective === 'roi') {
-    reasons.push(`تم اختيار هذا السعر لتحقيق أعلى عائد على الاستثمار (${optimalPoint.roi.toFixed(1)}%)`)
+    reasons.push(
+      `تم اختيار هذا السعر لتحقيق أعلى عائد على الاستثمار (${optimalPoint.roi.toFixed(1)}%)`,
+    )
   } else {
     reasons.push(`تم اختيار هذا السعر لتحقيق أفضل توازن بين الربحية واحتمالية الفوز`)
   }
@@ -362,7 +363,7 @@ function generateOptimizationRecommendations(
   optimalPoint: PriceSensitivityAnalysis['pricePoints'][0],
   sensitivity: PriceSensitivityAnalysis,
   parameters: OptimizationParameters,
-  competitors: CompetitorData[]
+  competitors: CompetitorData[],
 ): BidOptimization['recommendations'] {
   const recommendations: BidOptimization['recommendations'] = []
 
@@ -371,7 +372,7 @@ function generateOptimizationRecommendations(
     recommendations.push({
       type: 'pricing',
       recommendation: 'الهامش منخفض - فكر في تقليل التكاليف أو زيادة القيمة المضافة',
-      impact: 'high'
+      impact: 'high',
     })
   }
 
@@ -379,7 +380,7 @@ function generateOptimizationRecommendations(
     recommendations.push({
       type: 'strategy',
       recommendation: 'احتمالية الفوز منخفضة - راجع الاستراتيجية التنافسية',
-      impact: 'high'
+      impact: 'high',
     })
   }
 
@@ -387,7 +388,7 @@ function generateOptimizationRecommendations(
   recommendations.push({
     type: 'timing',
     recommendation: 'قدم العطاء في الوقت المناسب لتجنب الأخطاء اللحظية',
-    impact: 'medium'
+    impact: 'medium',
   })
 
   // Risk recommendations
@@ -396,19 +397,19 @@ function generateOptimizationRecommendations(
     recommendations.push({
       type: 'risk',
       recommendation: 'مستوى مخاطرة عالي - فكر في استراتيجيات تخفيف المخاطر',
-      impact: 'high'
+      impact: 'high',
     })
   }
 
   // Competitive recommendations
-  const strongCompetitors = competitors.filter(c => 
-    c.threatLevel === 'high' || c.threatLevel === 'critical'
+  const strongCompetitors = competitors.filter(
+    (c) => c.threatLevel === 'high' || c.threatLevel === 'critical',
   )
   if (strongCompetitors.length > 0) {
     recommendations.push({
       type: 'strategy',
       recommendation: `منافسة قوية من ${strongCompetitors.length} منافسين - ركز على التميز`,
-      impact: 'high'
+      impact: 'high',
     })
   }
 
@@ -426,16 +427,21 @@ export function analyzeCompetitivePricing(
   estimatedValue: number,
   category: string,
   competitors: CompetitorData[],
-  historicalPerformances: BidPerformance[]
+  historicalPerformances: BidPerformance[],
 ): CompetitivePricingAnalysis {
-  const competitorBidRanges = estimateCompetitorBids(estimatedValue, category, competitors, historicalPerformances)
+  const competitorBidRanges = estimateCompetitorBids(
+    estimatedValue,
+    category,
+    competitors,
+    historicalPerformances,
+  )
   const positioning = determineRecommendedPositioning(competitorBidRanges, estimatedValue)
   const strategy = developPositioningStrategy(positioning, competitorBidRanges)
 
   return {
     competitorBidRanges,
     recommendedPositioning: positioning,
-    strategy
+    strategy,
   }
 }
 
@@ -446,11 +452,11 @@ function estimateCompetitorBids(
   estimatedValue: number,
   category: string,
   competitors: CompetitorData[],
-  historicalPerformances: BidPerformance[]
+  historicalPerformances: BidPerformance[],
 ): CompetitivePricingAnalysis['competitorBidRanges'] {
   return competitors
-    .filter(c => c.categories.includes(category) && c.status === 'active')
-    .map(competitor => {
+    .filter((c) => c.categories.includes(category) && c.status === 'active')
+    .map((competitor) => {
       // Estimate based on competitor characteristics
       let bidMultiplier = 1.0
       let confidence = 50
@@ -463,7 +469,7 @@ function estimateCompetitorBids(
         bidMultiplier = 0.95 // Competitive pricing
         confidence += 15
       } else if (competitor.marketPosition === 'follower') {
-        bidMultiplier = 0.90 // Aggressive pricing
+        bidMultiplier = 0.9 // Aggressive pricing
         confidence += 10
       }
 
@@ -479,10 +485,10 @@ function estimateCompetitorBids(
         competitorName: competitor.name,
         estimatedBidRange: {
           min: baseBid - variance,
-          max: baseBid + variance
+          max: baseBid + variance,
         },
         confidence: Math.min(90, confidence),
-        reasoning: `تقدير بناءً على موقع السوق (${competitor.marketPosition}) والحصة السوقية`
+        reasoning: `تقدير بناءً على موقع السوق (${competitor.marketPosition}) والحصة السوقية`,
       }
     })
 }
@@ -492,13 +498,15 @@ function estimateCompetitorBids(
  */
 function determineRecommendedPositioning(
   competitorBidRanges: CompetitivePricingAnalysis['competitorBidRanges'],
-  estimatedValue: number
+  estimatedValue: number,
 ): CompetitivePricingAnalysis['recommendedPositioning'] {
   if (competitorBidRanges.length === 0) return 'competitive'
 
-  const averageCompetitorBid = competitorBidRanges.reduce((sum, range) => 
-    sum + (range.estimatedBidRange.min + range.estimatedBidRange.max) / 2, 0
-  ) / competitorBidRanges.length
+  const averageCompetitorBid =
+    competitorBidRanges.reduce(
+      (sum, range) => sum + (range.estimatedBidRange.min + range.estimatedBidRange.max) / 2,
+      0,
+    ) / competitorBidRanges.length
 
   const competitiveRatio = averageCompetitorBid / estimatedValue
 
@@ -512,27 +520,31 @@ function determineRecommendedPositioning(
  */
 function developPositioningStrategy(
   positioning: CompetitivePricingAnalysis['recommendedPositioning'],
-  competitorBidRanges: CompetitivePricingAnalysis['competitorBidRanges']
+  competitorBidRanges: CompetitivePricingAnalysis['competitorBidRanges'],
 ): CompetitivePricingAnalysis['strategy'] {
   const strategies = {
     aggressive: {
       description: 'استراتيجية تسعير هجومية للفوز بالمناقصة',
       advantages: ['احتمالية فوز عالية', 'تنافسية قوية', 'كسب حصة سوقية'],
       risks: ['هوامش ربح منخفضة', 'ضغط على التكاليف', 'تحديات في التنفيذ'],
-      recommendations: ['تأكد من دقة تقدير التكاليف', 'ركز على الكفاءة التشغيلية', 'راقب جودة التنفيذ']
+      recommendations: [
+        'تأكد من دقة تقدير التكاليف',
+        'ركز على الكفاءة التشغيلية',
+        'راقب جودة التنفيذ',
+      ],
     },
     competitive: {
       description: 'استراتيجية تسعير متوازنة تنافسية',
       advantages: ['توازن بين الربحية والتنافسية', 'مخاطر معتدلة', 'استدامة طويلة المدى'],
       risks: ['منافسة متوسطة', 'حاجة للتميز في عوامل أخرى'],
-      recommendations: ['ركز على القيمة المضافة', 'أبرز نقاط القوة', 'حافظ على جودة الخدمة']
+      recommendations: ['ركز على القيمة المضافة', 'أبرز نقاط القوة', 'حافظ على جودة الخدمة'],
     },
     premium: {
       description: 'استراتيجية تسعير مميزة عالية القيمة',
       advantages: ['هوامش ربح عالية', 'تموضع مميز', 'عملاء عالي الجودة'],
       risks: ['احتمالية فوز منخفضة', 'منافسة محدودة', 'حاجة لتبرير القيمة'],
-      recommendations: ['أبرز التميز والجودة', 'قدم قيمة مضافة واضحة', 'استهدف العملاء المناسبين']
-    }
+      recommendations: ['أبرز التميز والجودة', 'قدم قيمة مضافة واضحة', 'استهدف العملاء المناسبين'],
+    },
   }
 
   return strategies[positioning]
