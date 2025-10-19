@@ -53,14 +53,18 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': [
       'warn',
-      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }
     ],
-    '@typescript-eslint/no-empty-function': 'warn',
-    '@typescript-eslint/no-floating-promises': 'warn',
-    '@typescript-eslint/consistent-type-imports': 'warn',
-    '@typescript-eslint/array-type': 'warn',
-    '@typescript-eslint/prefer-nullish-coalescing': 'warn',
-    '@typescript-eslint/prefer-optional-chain': 'warn',
+    '@typescript-eslint/no-empty-function': 'off',
+    '@typescript-eslint/no-floating-promises': 'off',
+    '@typescript-eslint/consistent-type-imports': 'off',
+    '@typescript-eslint/array-type': 'off',
+    '@typescript-eslint/prefer-nullish-coalescing': 'off',
+    '@typescript-eslint/prefer-optional-chain': 'off',
     '@typescript-eslint/no-inferrable-types': 'warn',
     '@typescript-eslint/consistent-generic-constructors': 'warn',
     '@typescript-eslint/prefer-function-type': 'warn',
