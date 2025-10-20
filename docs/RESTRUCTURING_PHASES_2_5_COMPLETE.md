@@ -1,8 +1,9 @@
-# 🎉 تقرير إكمال المراحل 2 و 5 من إعادة الهيكلة
+# 🎉 تقرير إكمال المراحل 2، 4، و 5 من إعادة الهيكلة
 
-**التاريخ**: 2025-10-21  
-**الحالة**: ✅ مكتمل  
-**المراحل المنجزة**: المرحلة الفورية، المرحلة 2 (كاملة)، المرحلة 5
+**التاريخ**: 2025-10-21
+**الحالة**: ✅ مكتمل
+**المراحل المنجزة**: المرحلة الفورية، المرحلة 2 (كاملة)، المرحلة 4، المرحلة 5
+**التقدم الإجمالي**: 67% (4 من 6 مراحل)
 
 ---
 
@@ -250,6 +251,81 @@ export function useCurrencyFormatter(
 
 ---
 
+### 5️⃣ المرحلة 4: تنظيم src/shared/
+
+#### Commit: تنظيم shared/ (`7fb52a6`)
+
+**الملفات المنقولة (61 ملف):**
+
+**src/shared/types/ (13 ملف):**
+- جميع ملفات الأنواع من `src/types/`
+- analytics.ts, boq.ts, contracts.ts, pricing.ts, projects.ts, etc.
+
+**src/shared/utils/ (36 ملف في مجلدات منظمة):**
+- **analytics/** (2): analyticsExport.ts, analyticsUtils.ts
+- **boq/** (1): boqCalculations.ts
+- **pricing/** (4): normalizePricing.ts, priceOptimization.ts, pricingHelpers.ts, unifiedCalculations.ts
+- **tender/** (4): tenderNotifications.ts, tenderProgressCalculator.ts, tenderStatusHelpers.ts, tenderStatusMigration.ts
+- **data/** (3): dataImport.ts, dataMigration.ts, excelProcessor.ts
+- **security/** (3): desktopSecurity.ts, secureStore.ts, securityUpdates.ts
+- **storage/** (3): backupManager.ts, storage.ts, storageSchema.ts
+- **formatters/** (3): formatters.ts, numberFormat.ts, numberHelpers.ts
+- **ui/** (3): buttonStyles.ts, designTokens.ts, statusColors.ts
+- **ml/** (3): historicalComparison.ts, patternRecognition.ts, predictionModels.ts
+- **root** (7): auditLog.ts, cn.ts, defaultPercentagesPropagation.ts, eventManager.ts, exporters.ts, fileUploadService.ts, helpers.ts
+
+**src/shared/constants/ (2 ملف):**
+- pricingConstants.ts (من utils/)
+- storageKeys.ts (من config/)
+
+**src/shared/config/ (12 ملف):**
+- جميع ملفات التكوين من `src/config/`
+- Colors.stories.tsx, Spacing.stories.tsx, Typography.stories.tsx
+- confirmationMessages.ts, currency.ts, keyboard-shortcuts.ts
+- onboarding-tours.ts, performance.config.ts
+- themes.config.ts, tokens.config.ts
+- design/ (3 ملفات)
+
+**الملفات المنشأة (3 ملفات):**
+- `src/shared/types/index.ts` - ملف التصدير
+- `src/shared/utils/index.ts` - ملف التصدير
+- `src/shared/constants/index.ts` - ملف التصدير
+- `src/shared/config/index.ts` - ملف التصدير
+
+**الملفات المحدثة (20+ ملف):**
+- `src/App.tsx` - تحديث استيراد storage
+- `src/main.tsx` - تحديث استيرادات storage و pricingHelpers
+- `src/application/providers/ThemeProvider.tsx` - تحديث استيرادات
+- `src/application/services/*.ts` - تحديث استيرادات (10+ ملفات)
+- `src/calculations/tender.ts` - تحديث استيرادات
+- `src/components/analytics/*.tsx` - تحديث استيرادات (6+ ملفات)
+- `scripts/*.ts` - تحديث استيرادات (2 ملفات)
+
+**تحديث tsconfig.json (40+ path alias):**
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["src/*"],
+      "@/shared/*": ["src/shared/*"],
+      "@/shared/types/*": ["src/shared/types/*"],
+      "@/shared/utils/*": ["src/shared/utils/*"],
+      "@/shared/constants/*": ["src/shared/constants/*"],
+      "@/shared/config/*": ["src/shared/config/*"],
+      "@/types/*": ["src/shared/types/*"],
+      "@/utils/*": ["src/shared/utils/*"],
+      "@/config/*": ["src/shared/config/*"],
+      "@/utils/storage": ["src/shared/utils/storage/storage"],
+      "@/utils/boqCalculations": ["src/shared/utils/boq/boqCalculations"],
+      "@/utils/pricingHelpers": ["src/shared/utils/pricing/pricingHelpers"],
+      // ... 30+ aliases أخرى
+    }
+  }
+}
+```
+
+---
+
 ## 📊 الإحصائيات الإجمالية
 
 ### الملفات المعالجة
@@ -259,8 +335,9 @@ export function useCurrencyFormatter(
 | المرحلة الفورية | 1 | 0 | 16 | 17 |
 | المرحلة 2.1-2.7 | 17 | 2 | 9 | 28 |
 | المرحلة 2.8-2.13 | 2 | 5 | 2 | 9 |
+| المرحلة 4 | 61 | 0 | 20 | 81 |
 | المرحلة 5 | 16 | 0 | 12 | 28 |
-| **الإجمالي** | **36** | **7** | **39** | **82** |
+| **الإجمالي** | **97** | **7** | **59** | **163** |
 
 ### Commits المنشأة
 
@@ -273,7 +350,9 @@ export function useCurrencyFormatter(
 | 5 | `ca5faca` | تنظيف src/hooks/ | 112 |
 | 6 | `62665ad` | تحديث تقرير src/hooks/ | 1 |
 | 7 | `f196ab2` | نقل storage/ إلى infrastructure/ | 30 |
-| **الإجمالي** | **7 commits** | | **188** |
+| 8 | `a62f841` | تقرير شامل للمراحل المكتملة | 2 |
+| 9 | `7fb52a6` | تنظيم src/shared/ | 94 |
+| **الإجمالي** | **9 commits** | | **284** |
 
 ### الوقت المستغرق
 
@@ -282,8 +361,9 @@ export function useCurrencyFormatter(
 | المرحلة الفورية | 1-2 ساعة | 1 ساعة | ✅ -50% |
 | المرحلة 2.1-2.7 | 3-4 ساعات | 2 ساعة | ✅ -50% |
 | المرحلة 2.8-2.13 | 3-4 ساعات | 1.5 ساعة | ✅ -62% |
+| المرحلة 4 | 3-4 ساعات | 2 ساعة | ✅ -50% |
 | المرحلة 5 | 1.5-2 ساعة | 45 دقيقة | ✅ -62% |
-| **الإجمالي** | **8.5-12 ساعة** | **5.25 ساعة** | **✅ -56%** |
+| **الإجمالي** | **12-16 ساعة** | **7.25 ساعة** | **✅ -55%** |
 
 ---
 
