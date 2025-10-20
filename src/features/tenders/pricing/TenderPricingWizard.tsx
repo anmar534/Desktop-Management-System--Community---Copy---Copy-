@@ -12,7 +12,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from '@/components/ui/card'
 import { StatusBadge, type StatusBadgeProps } from '@/components/ui/status-badge'
 import { Input } from '@/components/ui/input'
@@ -23,10 +23,16 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
 import { EmptyState } from '@/components/PageLayout'
 import {
   AlertTriangle,
@@ -39,9 +45,9 @@ import {
   Target,
   Sparkles,
   Upload,
-  XCircle
+  XCircle,
 } from 'lucide-react'
-import { useCurrencyFormatter } from '@/hooks/useCurrencyFormatter'
+import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { formatDateValue } from '@/utils/formatters'
 import { RiskAssessmentMatrix } from '../../../components/bidding/RiskAssessmentMatrix'
 import type { RiskAssessment } from '../../../types/templates'
@@ -123,7 +129,10 @@ const CHECKLIST_BADGE_META = {
   incomplete: { status: 'warning' as StatusBadgeProps['status'], label: 'غير مكتمل' },
 }
 
-const STRATEGY_BADGE_META: Record<TenderPricingWizardDraft['financial']['strategy'], { status: StatusBadgeProps['status']; label: string }> = {
+const STRATEGY_BADGE_META: Record<
+  TenderPricingWizardDraft['financial']['strategy'],
+  { status: StatusBadgeProps['status']; label: string }
+> = {
   boq: { status: 'info', label: 'جداول الكميات (BoQ)' },
   'lump-sum': { status: 'success', label: 'عقد مقطوعية' },
   hybrid: { status: 'warning', label: 'استراتيجية هجينة' },
@@ -134,68 +143,68 @@ const WIZARD_STEPS: WizardStep[] = [
     id: 'registration',
     title: 'التسجيل',
     description: 'تأكيد البيانات الأساسية للمنافسة قبل البدء في التسعير',
-    icon: <ClipboardList className="h-5 w-5" />
+    icon: <ClipboardList className="h-5 w-5" />,
   },
   {
     id: 'technical',
     title: 'الملفات الفنية',
     description: 'رفع الملفات والتحقق من استكمال المتطلبات الفنية',
-    icon: <FileText className="h-5 w-5" />
+    icon: <FileText className="h-5 w-5" />,
   },
   {
     id: 'financial',
     title: 'الملفات المالية',
     description: 'مراجعة استراتيجية التسعير وتأكيد النسب والمؤشرات',
-    icon: <Target className="h-5 w-5" />
+    icon: <Target className="h-5 w-5" />,
   },
   {
     id: 'review',
     title: 'المراجعة',
     description: 'تلخيص الحالة وتأكيد الجاهزية قبل الإرسال',
-    icon: <Sparkles className="h-5 w-5" />
+    icon: <Sparkles className="h-5 w-5" />,
   },
   {
     id: 'submit',
     title: 'الإرسال',
     description: 'إرسال المنافسة واعتماد السجل النهائي',
-    icon: <CheckCircle2 className="h-5 w-5" />
-  }
+    icon: <CheckCircle2 className="h-5 w-5" />,
+  },
 ]
 
 const TECHNICAL_CHECKLIST: ChecklistItem[] = [
   {
     key: 'specsReviewed',
     label: 'مراجعة المواصفات الفنية',
-    description: 'تم التحقق من مطابقة نطاق العمل وجداول الكميات للمتطلبات'
+    description: 'تم التحقق من مطابقة نطاق العمل وجداول الكميات للمتطلبات',
   },
   {
     key: 'complianceConfirmed',
     label: 'اكتمال نماذج المطابقة',
-    description: 'تم تجهيز نماذج الامتثال والتوقيعات المطلوبة'
+    description: 'تم تجهيز نماذج الامتثال والتوقيعات المطلوبة',
   },
   {
     key: 'approvalsCollected',
     label: 'توثيق الموافقات الداخلية',
-    description: 'حصلت المنافسة على موافقة الجهات الفنية الداخلية'
-  }
+    description: 'حصلت المنافسة على موافقة الجهات الفنية الداخلية',
+  },
 ]
 
 const FINANCIAL_CHECKLIST: ChecklistItem[] = [
   {
     key: 'pricingDataImported',
     label: 'استيراد بيانات التسعير',
-    description: 'تم استيراد/تجهيز بنود الأسعار النهائية'
+    description: 'تم استيراد/تجهيز بنود الأسعار النهائية',
   },
   {
     key: 'totalsReconciled',
     label: 'مطابقة الإجماليات',
-    description: 'تم التحقق من اتساق الإجماليات مع التقارير المالية'
+    description: 'تم التحقق من اتساق الإجماليات مع التقارير المالية',
   },
   {
     key: 'approvalsSecured',
     label: 'الموافقات المالية',
-    description: 'تم أخذ الموافقات النهائية على استراتيجية التسعير'
-  }
+    description: 'تم أخذ الموافقات النهائية على استراتيجية التسعير',
+  },
 ]
 
 type DraftMap = Record<string, TenderPricingWizardDraft>
@@ -224,11 +233,12 @@ async function clearDraft(tenderId: string): Promise<void> {
 }
 
 function createDefaultDraft(tenderId: string, tender: Tender | null): TenderPricingWizardDraft {
-  const estimatedValue = typeof tender?.totalValue === 'number'
-    ? tender.totalValue
-    : typeof tender?.value === 'number'
-      ? tender.value
-      : null
+  const estimatedValue =
+    typeof tender?.totalValue === 'number'
+      ? tender.totalValue
+      : typeof tender?.value === 'number'
+        ? tender.value
+        : null
 
   return {
     tenderId,
@@ -240,20 +250,20 @@ function createDefaultDraft(tenderId: string, tender: Tender | null): TenderPric
         client: tender?.client ?? '',
         deadline: tender?.deadline ?? '',
         type: tender?.type ?? '',
-        estimatedValue: estimatedValue !== null ? String(estimatedValue) : ''
+        estimatedValue: estimatedValue !== null ? String(estimatedValue) : '',
       },
       notes: '',
-      lastSavedAt: null
+      lastSavedAt: null,
     },
     technical: {
       uploadedFiles: [],
       checklist: {
         specsReviewed: tender?.technicalFilesUploaded ?? false,
         complianceConfirmed: false,
-        approvalsCollected: false
+        approvalsCollected: false,
       },
       notes: '',
-      lastSavedAt: null
+      lastSavedAt: null,
     },
     financial: {
       strategy: 'boq',
@@ -264,16 +274,16 @@ function createDefaultDraft(tenderId: string, tender: Tender | null): TenderPric
       checklist: {
         pricingDataImported: false,
         totalsReconciled: false,
-        approvalsSecured: false
+        approvalsSecured: false,
       },
       notes: '',
-      lastSavedAt: null
+      lastSavedAt: null,
     },
     review: {
       comments: '',
       notifyTeam: true,
-      readyForSubmission: false
-    }
+      readyForSubmission: false,
+    },
   }
 }
 
@@ -288,7 +298,10 @@ function isChecklistComplete(checklist: Record<string, boolean>): boolean {
   return Object.values(checklist).every(Boolean)
 }
 
-function getStepStatus(draft: TenderPricingWizardDraft | null, stepId: WizardStepId): 'pending' | 'current' | 'done' {
+function getStepStatus(
+  draft: TenderPricingWizardDraft | null,
+  stepId: WizardStepId,
+): 'pending' | 'current' | 'done' {
   if (!draft) {
     return 'pending'
   }
@@ -299,7 +312,7 @@ function StepIndicator({
   steps,
   activeStep,
   draft,
-  onStepClick
+  onStepClick,
 }: {
   steps: WizardStep[]
   activeStep: WizardStepId
@@ -311,7 +324,8 @@ function StepIndicator({
       {steps.map((step, index) => {
         const status = getStepStatus(draft, step.id)
         const isCurrent = step.id === activeStep
-        const isClickable = status === 'done' || index <= steps.findIndex(s => s.id === activeStep)
+        const isClickable =
+          status === 'done' || index <= steps.findIndex((s) => s.id === activeStep)
         return (
           <li key={step.id}>
             <button
@@ -326,13 +340,15 @@ function StepIndicator({
               } ${isClickable ? 'hover:border-primary/40 hover:bg-primary/10' : 'cursor-not-allowed opacity-60'}`}
             >
               <div className="flex w-full items-center justify-between">
-                <div className={`rounded-full border p-2 ${
-                  status === 'done'
-                    ? 'border-success/40 bg-success/10 text-success'
-                    : isCurrent
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground'
-                }`}>
+                <div
+                  className={`rounded-full border p-2 ${
+                    status === 'done'
+                      ? 'border-success/40 bg-success/10 text-success'
+                      : isCurrent
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground'
+                  }`}
+                >
                   {step.icon}
                 </div>
                 {status === 'done' && <CheckCircle2 className="h-4 w-4 text-success" />}
@@ -355,7 +371,9 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
   const { tenders, updateTender, refreshTenders } = tendersState
   const { formatCurrencyValue } = useCurrencyFormatter()
 
-  const [selectedTenderId, setSelectedTenderId] = useState<string>(() => tender?.id ?? params.tenderId ?? '')
+  const [selectedTenderId, setSelectedTenderId] = useState<string>(
+    () => tender?.id ?? params.tenderId ?? '',
+  )
   const [activeStepIndex, setActiveStepIndex] = useState(0)
   const [draft, setDraft] = useState<TenderPricingWizardDraft | null>(null)
   const [isDraftLoading, setIsDraftLoading] = useState(false)
@@ -372,7 +390,7 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
     if (!selectedTenderId) {
       return tender ?? null
     }
-    const match = tenders.find(item => item.id === selectedTenderId)
+    const match = tenders.find((item) => item.id === selectedTenderId)
     if (match) {
       return match
     }
@@ -397,7 +415,7 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
     }
     navigate('tender-pricing-wizard', {
       tender: activeTender ?? undefined,
-      params: { tenderId: selectedTenderId }
+      params: { tenderId: selectedTenderId },
     })
   }, [selectedTenderId, params.tenderId, navigate, activeTender])
 
@@ -414,7 +432,8 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
       try {
         const map = await loadDraftMap()
         const stored = map[selectedTenderId]
-        const baseDraft = stored ?? createDefaultDraft(selectedTenderId, activeTender ?? tender ?? null)
+        const baseDraft =
+          stored ?? createDefaultDraft(selectedTenderId, activeTender ?? tender ?? null)
         if (!cancelled) {
           skipNextAutoSaveRef.current = true
           setDraft(baseDraft)
@@ -450,7 +469,7 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
     const timer = window.setTimeout(() => {
       void persistDraft(selectedTenderId, draft)
         .then(() => setAutoSaveState('saved'))
-        .catch(error => {
+        .catch((error) => {
           console.error('[TenderPricingWizard] فشل الحفظ التلقائي', error)
           setAutoSaveState('error')
         })
@@ -459,41 +478,50 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
     return () => window.clearTimeout(timer)
   }, [draft, selectedTenderId, isDraftLoading])
 
-  const updateDraftState = useCallback((updater: (current: TenderPricingWizardDraft) => TenderPricingWizardDraft) => {
-    setDraft(prev => {
-      if (!prev) {
-        return prev
-      }
-      const next = updater(prev)
-      return {
-        ...next,
-        updatedAt: new Date().toISOString()
-      }
-    })
-  }, [])
-
-  const markStepCompleted = useCallback((stepId: WizardStepId) => {
-    updateDraftState(current => ({
-      ...current,
-      completedSteps: {
-        ...current.completedSteps,
-        [stepId]: true
-      }
-    }))
-  }, [updateDraftState])
-
-  const handleRegistrationFieldChange = useCallback((field: keyof TenderPricingWizardDraft['registration']['form'], value: string) => {
-    updateDraftState(current => ({
-      ...current,
-      registration: {
-        ...current.registration,
-        form: {
-          ...current.registration.form,
-          [field]: value
+  const updateDraftState = useCallback(
+    (updater: (current: TenderPricingWizardDraft) => TenderPricingWizardDraft) => {
+      setDraft((prev) => {
+        if (!prev) {
+          return prev
         }
-      }
-    }))
-  }, [updateDraftState])
+        const next = updater(prev)
+        return {
+          ...next,
+          updatedAt: new Date().toISOString(),
+        }
+      })
+    },
+    [],
+  )
+
+  const markStepCompleted = useCallback(
+    (stepId: WizardStepId) => {
+      updateDraftState((current) => ({
+        ...current,
+        completedSteps: {
+          ...current.completedSteps,
+          [stepId]: true,
+        },
+      }))
+    },
+    [updateDraftState],
+  )
+
+  const handleRegistrationFieldChange = useCallback(
+    (field: keyof TenderPricingWizardDraft['registration']['form'], value: string) => {
+      updateDraftState((current) => ({
+        ...current,
+        registration: {
+          ...current.registration,
+          form: {
+            ...current.registration.form,
+            [field]: value,
+          },
+        },
+      }))
+    },
+    [updateDraftState],
+  )
 
   const handleRegistrationNext = useCallback(async (): Promise<boolean> => {
     if (!draft || !activeTender) {
@@ -515,19 +543,23 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
         client,
         deadline,
         type: type || activeTender.type,
-        value: Number.isFinite(parsedValue) ? parsedValue ?? activeTender.value : activeTender.value,
-        totalValue: Number.isFinite(parsedValue) ? parsedValue ?? activeTender.totalValue ?? activeTender.value : activeTender.totalValue,
+        value: Number.isFinite(parsedValue)
+          ? (parsedValue ?? activeTender.value)
+          : activeTender.value,
+        totalValue: Number.isFinite(parsedValue)
+          ? (parsedValue ?? activeTender.totalValue ?? activeTender.value)
+          : activeTender.totalValue,
         lastUpdate: new Date().toISOString(),
-        lastAction: 'تحديث بيانات التسجيل عبر معالج التسعير'
+        lastAction: 'تحديث بيانات التسجيل عبر معالج التسعير',
       }
 
       await updateTender(nextTender)
-      updateDraftState(current => ({
+      updateDraftState((current) => ({
         ...current,
         registration: {
           ...current.registration,
-          lastSavedAt: new Date().toISOString()
-        }
+          lastSavedAt: new Date().toISOString(),
+        },
       }))
       markStepCompleted('registration')
       toast.success('تم تحديث بيانات المنافسة بنجاح')
@@ -541,52 +573,55 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
     }
   }, [draft, activeTender, updateTender, updateDraftState, markStepCompleted])
 
-  const handleTechnicalFilesSelected = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
-    if (!draft || !activeTender) {
-      return
-    }
-    const input = event.target
-    const files = Array.from(input.files ?? [])
-    if (!files.length) {
-      return
-    }
-    const fileNames = files.map(file => file.name)
-    updateDraftState(current => ({
-      ...current,
-      technical: {
-        ...current.technical,
-        uploadedFiles: fileNames,
-        lastSavedAt: new Date().toISOString()
+  const handleTechnicalFilesSelected = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      if (!draft || !activeTender) {
+        return
       }
-    }))
+      const input = event.target
+      const files = Array.from(input.files ?? [])
+      if (!files.length) {
+        return
+      }
+      const fileNames = files.map((file) => file.name)
+      updateDraftState((current) => ({
+        ...current,
+        technical: {
+          ...current.technical,
+          uploadedFiles: fileNames,
+          lastSavedAt: new Date().toISOString(),
+        },
+      }))
 
-    try {
-      await updateTender({
-        ...activeTender,
-        technicalFilesUploaded: true,
-        lastUpdate: new Date().toISOString(),
-        lastAction: 'تأكيد رفع الملفات الفنية عبر معالج التسعير'
-      })
-      toast.success('تم تسجيل رفع الملفات الفنية بنجاح')
-    } catch (error) {
-      console.error('[TenderPricingWizard] فشل تحديث حالة الملفات الفنية', error)
-      toast.error('تعذر تحديث حالة الملفات الفنية، سيتم حفظ التغيير في المسودة فقط')
-    } finally {
-      input.value = ''
-    }
-  }, [draft, activeTender, updateDraftState, updateTender])
+      try {
+        await updateTender({
+          ...activeTender,
+          technicalFilesUploaded: true,
+          lastUpdate: new Date().toISOString(),
+          lastAction: 'تأكيد رفع الملفات الفنية عبر معالج التسعير',
+        })
+        toast.success('تم تسجيل رفع الملفات الفنية بنجاح')
+      } catch (error) {
+        console.error('[TenderPricingWizard] فشل تحديث حالة الملفات الفنية', error)
+        toast.error('تعذر تحديث حالة الملفات الفنية، سيتم حفظ التغيير في المسودة فقط')
+      } finally {
+        input.value = ''
+      }
+    },
+    [draft, activeTender, updateDraftState, updateTender],
+  )
 
   const handleTechnicalFilesReset = useCallback(async () => {
     if (!draft || !activeTender) {
       return
     }
-    updateDraftState(current => ({
+    updateDraftState((current) => ({
       ...current,
       technical: {
         ...current.technical,
         uploadedFiles: [],
-        lastSavedAt: new Date().toISOString()
-      }
+        lastSavedAt: new Date().toISOString(),
+      },
     }))
 
     try {
@@ -595,7 +630,7 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
           ...activeTender,
           technicalFilesUploaded: false,
           lastUpdate: new Date().toISOString(),
-          lastAction: 'إعادة تعيين حالة الملفات الفنية عبر معالج التسعير'
+          lastAction: 'إعادة تعيين حالة الملفات الفنية عبر معالج التسعير',
         })
       }
       toast.info('تم إعادة تعيين حالة الملفات الفنية')
@@ -604,45 +639,55 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
     }
   }, [draft, activeTender, updateDraftState, updateTender])
 
-  const handleTechnicalChecklistToggle = useCallback((key: string, checked: boolean) => {
-    updateDraftState(current => ({
-      ...current,
-      technical: {
-        ...current.technical,
-        checklist: {
-          ...current.technical.checklist,
-          [key]: checked
-        }
-      }
-    }))
-  }, [updateDraftState])
+  const handleTechnicalChecklistToggle = useCallback(
+    (key: string, checked: boolean) => {
+      updateDraftState((current) => ({
+        ...current,
+        technical: {
+          ...current.technical,
+          checklist: {
+            ...current.technical.checklist,
+            [key]: checked,
+          },
+        },
+      }))
+    },
+    [updateDraftState],
+  )
 
-  const handleFinancialChecklistToggle = useCallback((key: string, checked: boolean) => {
-    updateDraftState(current => ({
-      ...current,
-      financial: {
-        ...current.financial,
-        checklist: {
-          ...current.financial.checklist,
-          [key]: checked
-        }
-      }
-    }))
-  }, [updateDraftState])
+  const handleFinancialChecklistToggle = useCallback(
+    (key: string, checked: boolean) => {
+      updateDraftState((current) => ({
+        ...current,
+        financial: {
+          ...current.financial,
+          checklist: {
+            ...current.financial.checklist,
+            [key]: checked,
+          },
+        },
+      }))
+    },
+    [updateDraftState],
+  )
 
-  const handleRiskAssessmentSave = useCallback((assessment: RiskAssessment) => {
-    updateDraftState(current => ({
-      ...current,
-      financial: {
-        ...current.financial,
-        riskAssessment: assessment,
-        // Update risk level based on assessment
-        riskLevel: assessment.overallRiskLevel === 'critical' ? 'high' : assessment.overallRiskLevel
-      }
-    }))
-    setRiskAssessmentOpen(false)
-    toast.success('تم حفظ تقييم المخاطر بنجاح')
-  }, [updateDraftState])
+  const handleRiskAssessmentSave = useCallback(
+    (assessment: RiskAssessment) => {
+      updateDraftState((current) => ({
+        ...current,
+        financial: {
+          ...current.financial,
+          riskAssessment: assessment,
+          // Update risk level based on assessment
+          riskLevel:
+            assessment.overallRiskLevel === 'critical' ? 'high' : assessment.overallRiskLevel,
+        },
+      }))
+      setRiskAssessmentOpen(false)
+      toast.success('تم حفظ تقييم المخاطر بنجاح')
+    },
+    [updateDraftState],
+  )
 
   const handleTechnicalNext = useCallback((): boolean => {
     if (!draft || !activeTender) {
@@ -657,12 +702,12 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
       toast.error('يرجى استكمال عناصر التحقق الفني قبل المتابعة')
       return false
     }
-    updateDraftState(current => ({
+    updateDraftState((current) => ({
       ...current,
       technical: {
         ...current.technical,
-        lastSavedAt: new Date().toISOString()
-      }
+        lastSavedAt: new Date().toISOString(),
+      },
     }))
     markStepCompleted('technical')
     return true
@@ -677,12 +722,12 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
       toast.error('يرجى إكمال عناصر التحقق المالي قبل المتابعة')
       return false
     }
-    updateDraftState(current => ({
+    updateDraftState((current) => ({
       ...current,
       financial: {
         ...current.financial,
-        lastSavedAt: new Date().toISOString()
-      }
+        lastSavedAt: new Date().toISOString(),
+      },
     }))
     markStepCompleted('financial')
     return true
@@ -713,7 +758,9 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
 
     try {
       setIsSubmitting(true)
-      const { tenderSubmissionService } = await import('@/application/services/tenderSubmissionService')
+      const { tenderSubmissionService } = await import(
+        '@/application/services/tenderSubmissionService'
+      )
       await tenderSubmissionService.submit(activeTender)
       await refreshTenders()
       await clearDraft(activeTender.id)
@@ -732,7 +779,7 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
   }, [draft, activeTender, refreshTenders, onExit, navigate])
 
   const goToStep = useCallback((stepId: WizardStepId) => {
-    const index = WIZARD_STEPS.findIndex(step => step.id === stepId)
+    const index = WIZARD_STEPS.findIndex((step) => step.id === stepId)
     if (index !== -1) {
       setActiveStepIndex(index)
     }
@@ -757,12 +804,18 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
     }
 
     if (canProceed) {
-      setActiveStepIndex(prev => Math.min(prev + 1, WIZARD_STEPS.length - 1))
+      setActiveStepIndex((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1))
     }
-  }, [activeStepIndex, handleFinancialNext, handleRegistrationNext, handleReviewNext, handleTechnicalNext])
+  }, [
+    activeStepIndex,
+    handleFinancialNext,
+    handleRegistrationNext,
+    handleReviewNext,
+    handleTechnicalNext,
+  ])
 
   const handleBack = useCallback(() => {
-    setActiveStepIndex(prev => Math.max(prev - 1, 0))
+    setActiveStepIndex((prev) => Math.max(prev - 1, 0))
   }, [])
 
   const autoSaveLabel = useMemo(() => {
@@ -782,11 +835,16 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
   const technicalChecklistCompleted = isChecklistComplete(draft?.technical?.checklist ?? {})
   const financialChecklistCompleted = isChecklistComplete(draft?.financial?.checklist ?? {})
   const hasUploadedFiles = (draft?.technical?.uploadedFiles?.length ?? 0) > 0
-  const technicalUploadBadge = (hasUploadedFiles || (activeTender?.technicalFilesUploaded ?? false))
-    ? UPLOAD_BADGE_META.completed
-    : UPLOAD_BADGE_META.pending
-  const technicalChecklistBadge = technicalChecklistCompleted ? CHECKLIST_BADGE_META.completed : CHECKLIST_BADGE_META.incomplete
-  const financialChecklistBadge = financialChecklistCompleted ? CHECKLIST_BADGE_META.completed : CHECKLIST_BADGE_META.incomplete
+  const technicalUploadBadge =
+    hasUploadedFiles || (activeTender?.technicalFilesUploaded ?? false)
+      ? UPLOAD_BADGE_META.completed
+      : UPLOAD_BADGE_META.pending
+  const technicalChecklistBadge = technicalChecklistCompleted
+    ? CHECKLIST_BADGE_META.completed
+    : CHECKLIST_BADGE_META.incomplete
+  const financialChecklistBadge = financialChecklistCompleted
+    ? CHECKLIST_BADGE_META.completed
+    : CHECKLIST_BADGE_META.incomplete
   const strategyBadge = STRATEGY_BADGE_META[draft?.financial?.strategy ?? 'hybrid']
 
   if (!tenders.length && !tender) {
@@ -809,7 +867,8 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
         <div>
           <h1 className="text-2xl font-bold text-card-foreground">معالج تسعير المنافسة</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            اتبع الخطوات المتسلسلة لتجهيز المنافسة بالكامل من التسجيل وحتى الإرسال، مع حفظ تلقائي لكل خطوة.
+            اتبع الخطوات المتسلسلة لتجهيز المنافسة بالكامل من التسجيل وحتى الإرسال، مع حفظ تلقائي
+            لكل خطوة.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -820,7 +879,9 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
             className="shadow-none gap-1.5"
           >
             <>
-              {autoSaveState === 'saving' && <Loader2 className="h-3.5 w-3.5 animate-spin text-info" />}
+              {autoSaveState === 'saving' && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-info" />
+              )}
               <span>{autoSaveLabel}</span>
             </>
           </StatusBadge>
@@ -838,21 +899,20 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Select
-            value={selectedTenderId}
-            onValueChange={value => setSelectedTenderId(value)}
-          >
+          <Select value={selectedTenderId} onValueChange={(value) => setSelectedTenderId(value)}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="اختر المنافسة" />
             </SelectTrigger>
             <SelectContent>
-              {tenders.map(item => (
+              {tenders.map((item) => (
                 <SelectItem key={item.id} value={item.id}>
                   {item.name} — الموعد النهائي: {formatDate(item.deadline)}
                 </SelectItem>
               ))}
-              {tender && !tenders.some(item => item.id === tender.id) && (
-                <SelectItem value={tender.id}>{tender.name ?? tender.title ?? tender.id}</SelectItem>
+              {tender && !tenders.some((item) => item.id === tender.id) && (
+                <SelectItem value={tender.id}>
+                  {tender.name ?? tender.title ?? tender.id}
+                </SelectItem>
               )}
             </SelectContent>
           </Select>
@@ -868,7 +928,9 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
               </div>
               <div>
                 <span className="font-medium text-card-foreground">القيمة التقديرية:</span>
-                <span className="mr-2">{formatCurrencyValue(activeTender.totalValue ?? activeTender.value ?? 0)}</span>
+                <span className="mr-2">
+                  {formatCurrencyValue(activeTender.totalValue ?? activeTender.value ?? 0)}
+                </span>
               </div>
             </div>
           )}
@@ -879,10 +941,10 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
         steps={WIZARD_STEPS}
         activeStep={activeStepId}
         draft={draft}
-        onStepClick={stepId => goToStep(stepId)}
+        onStepClick={(stepId) => goToStep(stepId)}
       />
 
-      {(!activeTender || !draft) ? (
+      {!activeTender || !draft ? (
         <Card>
           <CardHeader>
             <CardTitle>لم يتم تحديد منافسة بعد</CardTitle>
@@ -900,62 +962,84 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
               <div className="grid gap-6 lg:grid-cols-2">
                 <div className="space-y-4">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-card-foreground">اسم المنافسة</label>
+                    <label className="mb-2 block text-sm font-medium text-card-foreground">
+                      اسم المنافسة
+                    </label>
                     <Input
                       value={draft.registration.form.name}
-                      onChange={event => handleRegistrationFieldChange('name', event.target.value)}
+                      onChange={(event) =>
+                        handleRegistrationFieldChange('name', event.target.value)
+                      }
                       placeholder="مثال: مشروع تطوير المجمع التجاري"
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-card-foreground">الجهة المالكة</label>
+                    <label className="mb-2 block text-sm font-medium text-card-foreground">
+                      الجهة المالكة
+                    </label>
                     <Input
                       value={draft.registration.form.client}
-                      onChange={event => handleRegistrationFieldChange('client', event.target.value)}
+                      onChange={(event) =>
+                        handleRegistrationFieldChange('client', event.target.value)
+                      }
                       placeholder="اسم الجهة أو العميل"
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-card-foreground">نوع المنافسة</label>
+                    <label className="mb-2 block text-sm font-medium text-card-foreground">
+                      نوع المنافسة
+                    </label>
                     <Input
                       value={draft.registration.form.type}
-                      onChange={event => handleRegistrationFieldChange('type', event.target.value)}
+                      onChange={(event) =>
+                        handleRegistrationFieldChange('type', event.target.value)
+                      }
                       placeholder="إنشائي، تشغيلي، توريد..."
                     />
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-card-foreground">الموعد النهائي</label>
+                    <label className="mb-2 block text-sm font-medium text-card-foreground">
+                      الموعد النهائي
+                    </label>
                     <Input
                       type="date"
                       value={draft.registration.form.deadline}
-                      onChange={event => handleRegistrationFieldChange('deadline', event.target.value)}
+                      onChange={(event) =>
+                        handleRegistrationFieldChange('deadline', event.target.value)
+                      }
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-card-foreground">القيمة التقديرية</label>
+                    <label className="mb-2 block text-sm font-medium text-card-foreground">
+                      القيمة التقديرية
+                    </label>
                     <Input
                       type="number"
                       min="0"
                       value={draft.registration.form.estimatedValue}
-                      onChange={event => handleRegistrationFieldChange('estimatedValue', event.target.value)}
+                      onChange={(event) =>
+                        handleRegistrationFieldChange('estimatedValue', event.target.value)
+                      }
                       placeholder="أدخل القيمة الرقمية"
                     />
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-card-foreground">ملاحظات التسجيل</label>
+                    <label className="mb-2 block text-sm font-medium text-card-foreground">
+                      ملاحظات التسجيل
+                    </label>
                     <Textarea
                       rows={4}
                       value={draft.registration.notes}
-                      onChange={event => {
+                      onChange={(event) => {
                         const value = event.target.value
-                        updateDraftState(current => ({
+                        updateDraftState((current) => ({
                           ...current,
                           registration: {
                             ...current.registration,
-                            notes: value
-                          }
+                            notes: value,
+                          },
                         }))
                       }}
                       placeholder="أضف أي ملاحظات أو تعليمات مرتبطة بالمنافسة"
@@ -968,9 +1052,12 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
             {activeStepId === 'technical' && (
               <div className="space-y-6">
                 <div className="rounded-xl border bg-muted/10 p-4">
-                  <h3 className="text-sm font-semibold text-card-foreground mb-2">رفع الملفات الفنية</h3>
+                  <h3 className="text-sm font-semibold text-card-foreground mb-2">
+                    رفع الملفات الفنية
+                  </h3>
                   <p className="text-xs text-muted-foreground mb-4">
-                    يتم حفظ الملفات المرفوعة مباشرة في مساحة التخزين الآمنة للمستخدم وتحديث حالة المنافسة تلقائياً.
+                    يتم حفظ الملفات المرفوعة مباشرة في مساحة التخزين الآمنة للمستخدم وتحديث حالة
+                    المنافسة تلقائياً.
                   </p>
                   <div className="space-y-4">
                     <input
@@ -982,11 +1069,16 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                       onChange={handleTechnicalFilesSelected}
                     />
                     <div className="flex flex-wrap items-center gap-3">
-                      <Button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex items-center gap-2"
+                      >
                         <Upload className="h-4 w-4" />
                         اختر الملفات الفنية
                       </Button>
-                      {(draft.technical.uploadedFiles.length > 0 || activeTender.technicalFilesUploaded) && (
+                      {(draft.technical.uploadedFiles.length > 0 ||
+                        activeTender.technicalFilesUploaded) && (
                         <Button
                           type="button"
                           variant="ghost"
@@ -1002,10 +1094,15 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                     <div className="space-y-2 text-sm">
                       {draft.technical.uploadedFiles.length > 0 ? (
                         <>
-                          <p className="text-card-foreground font-medium">الملفات المرفوعة (يتم حفظها محلياً):</p>
+                          <p className="text-card-foreground font-medium">
+                            الملفات المرفوعة (يتم حفظها محلياً):
+                          </p>
                           <ul className="space-y-1 text-muted-foreground">
-                            {draft.technical.uploadedFiles.map(file => (
-                              <li key={file} className="rounded border border-border bg-card/80 px-3 py-1 text-xs">
+                            {draft.technical.uploadedFiles.map((file) => (
+                              <li
+                                key={file}
+                                className="rounded border border-border bg-card/80 px-3 py-1 text-xs"
+                              >
                                 {file}
                               </li>
                             ))}
@@ -1013,7 +1110,8 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                         </>
                       ) : activeTender.technicalFilesUploaded ? (
                         <p className="text-xs text-muted-foreground">
-                          تم تأكيد رفع الملفات الفنية مسبقاً لهذه المنافسة. يمكنك إعادة رفعها إذا لزم الأمر.
+                          تم تأكيد رفع الملفات الفنية مسبقاً لهذه المنافسة. يمكنك إعادة رفعها إذا
+                          لزم الأمر.
                         </p>
                       ) : (
                         <p className="text-xs text-muted-foreground">
@@ -1025,39 +1123,49 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                 </div>
                 <Separator />
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-card-foreground">قائمة التحقق الفنية</h3>
+                  <h3 className="text-sm font-semibold text-card-foreground">
+                    قائمة التحقق الفنية
+                  </h3>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {TECHNICAL_CHECKLIST.map(item => (
+                    {TECHNICAL_CHECKLIST.map((item) => (
                       <label
                         key={item.key}
                         className="flex cursor-pointer items-start gap-3 rounded-lg border bg-card p-4 shadow-sm transition hover:border-primary/40 hover:bg-primary/5"
                       >
                         <Checkbox
                           checked={draft.technical.checklist[item.key] ?? false}
-                          onCheckedChange={value => handleTechnicalChecklistToggle(item.key, Boolean(value))}
+                          onCheckedChange={(value) =>
+                            handleTechnicalChecklistToggle(item.key, Boolean(value))
+                          }
                           className="mt-1"
                         />
                         <div>
                           <p className="text-sm font-medium text-card-foreground">{item.label}</p>
                           {item.description && (
-                            <p className="text-xs text-muted-foreground mt-1 leading-5">{item.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1 leading-5">
+                              {item.description}
+                            </p>
                           )}
                         </div>
                       </label>
                     ))}
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-card-foreground">ملاحظات فنية إضافية</label>
+                    <label className="mb-2 block text-sm font-medium text-card-foreground">
+                      ملاحظات فنية إضافية
+                    </label>
                     <Textarea
                       rows={4}
                       value={draft.technical.notes}
-                      onChange={event => updateDraftState(current => ({
-                        ...current,
-                        technical: {
-                          ...current.technical,
-                          notes: event.target.value
-                        }
-                      }))}
+                      onChange={(event) =>
+                        updateDraftState((current) => ({
+                          ...current,
+                          technical: {
+                            ...current.technical,
+                            notes: event.target.value,
+                          },
+                        }))
+                      }
                       placeholder="أضف ملاحظات فنية أو نقاط متابعة (اختياري)"
                     />
                   </div>
@@ -1070,16 +1178,20 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                 <div className="grid gap-6 lg:grid-cols-2">
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-card-foreground">استراتيجية التسعير</label>
+                      <label className="mb-2 block text-sm font-medium text-card-foreground">
+                        استراتيجية التسعير
+                      </label>
                       <Select
                         value={draft.financial.strategy}
-                        onValueChange={value => updateDraftState(current => ({
-                          ...current,
-                          financial: {
-                            ...current.financial,
-                            strategy: value as TenderPricingWizardDraft['financial']['strategy']
-                          }
-                        }))}
+                        onValueChange={(value) =>
+                          updateDraftState((current) => ({
+                            ...current,
+                            financial: {
+                              ...current.financial,
+                              strategy: value as TenderPricingWizardDraft['financial']['strategy'],
+                            },
+                          }))
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="حدد الاستراتيجية" />
@@ -1092,20 +1204,22 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                       </Select>
                     </div>
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-card-foreground">هامش الربح المستهدف (%)</label>
+                      <label className="mb-2 block text-sm font-medium text-card-foreground">
+                        هامش الربح المستهدف (%)
+                      </label>
                       <Input
                         type="number"
                         min="0"
                         max="100"
                         value={draft.financial.profitMargin ?? ''}
-                        onChange={event => {
+                        onChange={(event) => {
                           const numericValue = Number(event.target.value)
-                          updateDraftState(current => ({
+                          updateDraftState((current) => ({
                             ...current,
                             financial: {
                               ...current.financial,
-                              profitMargin: Number.isFinite(numericValue) ? numericValue : null
-                            }
+                              profitMargin: Number.isFinite(numericValue) ? numericValue : null,
+                            },
                           }))
                         }}
                       />
@@ -1114,13 +1228,15 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                       <Checkbox
                         id="vatIncluded"
                         checked={draft.financial.vatIncluded}
-                        onCheckedChange={value => updateDraftState(current => ({
-                          ...current,
-                          financial: {
-                            ...current.financial,
-                            vatIncluded: Boolean(value)
-                          }
-                        }))}
+                        onCheckedChange={(value) =>
+                          updateDraftState((current) => ({
+                            ...current,
+                            financial: {
+                              ...current.financial,
+                              vatIncluded: Boolean(value),
+                            },
+                          }))
+                        }
                       />
                       <label htmlFor="vatIncluded" className="text-sm text-card-foreground">
                         الأسعار تشمل ضريبة القيمة المضافة
@@ -1129,7 +1245,9 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-card-foreground">تقييم المخاطر</label>
+                      <label className="mb-2 block text-sm font-medium text-card-foreground">
+                        تقييم المخاطر
+                      </label>
                       <div className="space-y-3">
                         {draft.financial.riskAssessment ? (
                           <div className="rounded-lg border bg-card p-4">
@@ -1138,16 +1256,22 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                                 <span className="text-sm font-medium">مستوى المخاطر:</span>
                                 <StatusBadge
                                   status={
-                                    draft.financial.riskAssessment.overallRiskLevel === 'low' ? 'success' :
-                                    draft.financial.riskAssessment.overallRiskLevel === 'medium' ? 'warning' :
-                                    draft.financial.riskAssessment.overallRiskLevel === 'high' ? 'destructive' :
-                                    'destructive'
+                                    draft.financial.riskAssessment.overallRiskLevel === 'low'
+                                      ? 'success'
+                                      : draft.financial.riskAssessment.overallRiskLevel === 'medium'
+                                        ? 'warning'
+                                        : draft.financial.riskAssessment.overallRiskLevel === 'high'
+                                          ? 'destructive'
+                                          : 'destructive'
                                   }
                                   label={
-                                    draft.financial.riskAssessment.overallRiskLevel === 'low' ? 'منخفض' :
-                                    draft.financial.riskAssessment.overallRiskLevel === 'medium' ? 'متوسط' :
-                                    draft.financial.riskAssessment.overallRiskLevel === 'high' ? 'مرتفع' :
-                                    'حرج'
+                                    draft.financial.riskAssessment.overallRiskLevel === 'low'
+                                      ? 'منخفض'
+                                      : draft.financial.riskAssessment.overallRiskLevel === 'medium'
+                                        ? 'متوسط'
+                                        : draft.financial.riskAssessment.overallRiskLevel === 'high'
+                                          ? 'مرتفع'
+                                          : 'حرج'
                                   }
                                 />
                               </div>
@@ -1162,27 +1286,32 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                             <div className="grid grid-cols-2 gap-4 text-sm">
                               <div>
                                 <span className="text-muted-foreground">نقاط المخاطر:</span>
-                                <span className="ml-2 font-medium">{draft.financial.riskAssessment.riskScore.toFixed(1)}</span>
+                                <span className="ml-2 font-medium">
+                                  {draft.financial.riskAssessment.riskScore.toFixed(1)}
+                                </span>
                               </div>
                               <div>
                                 <span className="text-muted-foreground">هامش الربح المقترح:</span>
-                                <span className="ml-2 font-medium">{draft.financial.riskAssessment.recommendedMargin}%</span>
+                                <span className="ml-2 font-medium">
+                                  {draft.financial.riskAssessment.recommendedMargin}%
+                                </span>
                               </div>
                             </div>
                             {draft.financial.riskAssessment.mitigationPlan && (
                               <div className="mt-3 pt-3 border-t">
                                 <span className="text-xs text-muted-foreground">خطة التخفيف:</span>
-                                <p className="text-sm mt-1">{draft.financial.riskAssessment.mitigationPlan}</p>
+                                <p className="text-sm mt-1">
+                                  {draft.financial.riskAssessment.mitigationPlan}
+                                </p>
                               </div>
                             )}
                           </div>
                         ) : (
                           <div className="rounded-lg border border-dashed bg-muted/10 p-4 text-center">
-                            <p className="text-sm text-muted-foreground mb-3">لم يتم إجراء تقييم مخاطر مفصل بعد</p>
-                            <Button
-                              variant="outline"
-                              onClick={() => setRiskAssessmentOpen(true)}
-                            >
+                            <p className="text-sm text-muted-foreground mb-3">
+                              لم يتم إجراء تقييم مخاطر مفصل بعد
+                            </p>
+                            <Button variant="outline" onClick={() => setRiskAssessmentOpen(true)}>
                               <AlertTriangle className="w-4 h-4 mr-2" />
                               إجراء تقييم المخاطر
                             </Button>
@@ -1191,17 +1320,19 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                       </div>
                     </div>
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-card-foreground">ملاحظات مالية</label>
+                      <label className="mb-2 block text-sm font-medium text-card-foreground">
+                        ملاحظات مالية
+                      </label>
                       <Textarea
                         value={draft.financial.notes}
-                        onChange={event => {
+                        onChange={(event) => {
                           const value = event.target.value
-                          updateDraftState(current => ({
+                          updateDraftState((current) => ({
                             ...current,
                             financial: {
                               ...current.financial,
-                              notes: value
-                            }
+                              notes: value,
+                            },
                           }))
                         }}
                         rows={4}
@@ -1214,22 +1345,28 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                 <Separator />
 
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-card-foreground">قائمة التحقق المالية</h3>
+                  <h3 className="text-sm font-semibold text-card-foreground">
+                    قائمة التحقق المالية
+                  </h3>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {FINANCIAL_CHECKLIST.map(item => (
+                    {FINANCIAL_CHECKLIST.map((item) => (
                       <label
                         key={item.key}
                         className="flex cursor-pointer items-start gap-3 rounded-lg border bg-card p-4 shadow-sm transition hover:border-primary/40 hover:bg-primary/5"
                       >
                         <Checkbox
                           checked={draft.financial.checklist[item.key] ?? false}
-                          onCheckedChange={value => handleFinancialChecklistToggle(item.key, Boolean(value))}
+                          onCheckedChange={(value) =>
+                            handleFinancialChecklistToggle(item.key, Boolean(value))
+                          }
                           className="mt-1"
                         />
                         <div>
                           <p className="text-sm font-medium text-card-foreground">{item.label}</p>
                           {item.description && (
-                            <p className="text-xs text-muted-foreground mt-1 leading-5">{item.description}</p>
+                            <p className="text-xs text-muted-foreground mt-1 leading-5">
+                              {item.description}
+                            </p>
                           )}
                         </div>
                       </label>
@@ -1252,7 +1389,9 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                   <Card className="border-success/30 bg-success/10">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base">ملخص التحقق الفني</CardTitle>
-                      <CardDescription>الحالة الحالية للملفات الفنية وقائمة التحقق.</CardDescription>
+                      <CardDescription>
+                        الحالة الحالية للملفات الفنية وقائمة التحقق.
+                      </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                       <div className="flex items-center justify-between">
@@ -1312,17 +1451,21 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
 
                 <div className="space-y-4">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-card-foreground">ملاحظات المراجعة النهائية</label>
+                    <label className="mb-2 block text-sm font-medium text-card-foreground">
+                      ملاحظات المراجعة النهائية
+                    </label>
                     <Textarea
                       rows={4}
                       value={draft.review.comments}
-                      onChange={event => updateDraftState(current => ({
-                        ...current,
-                        review: {
-                          ...current.review,
-                          comments: event.target.value
-                        }
-                      }))}
+                      onChange={(event) =>
+                        updateDraftState((current) => ({
+                          ...current,
+                          review: {
+                            ...current.review,
+                            comments: event.target.value,
+                          },
+                        }))
+                      }
                       placeholder="أضف أي ملاحظات أو توصيات قبل الإرسال"
                     />
                   </div>
@@ -1330,26 +1473,32 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                     <label className="inline-flex items-center gap-3">
                       <Checkbox
                         checked={draft.review.notifyTeam}
-                        onCheckedChange={value => updateDraftState(current => ({
-                          ...current,
-                          review: {
-                            ...current.review,
-                            notifyTeam: Boolean(value)
-                          }
-                        }))}
+                        onCheckedChange={(value) =>
+                          updateDraftState((current) => ({
+                            ...current,
+                            review: {
+                              ...current.review,
+                              notifyTeam: Boolean(value),
+                            },
+                          }))
+                        }
                       />
-                      <span className="text-sm text-card-foreground">إشعار فريق التسعير بعد الإرسال</span>
+                      <span className="text-sm text-card-foreground">
+                        إشعار فريق التسعير بعد الإرسال
+                      </span>
                     </label>
                     <label className="inline-flex items-center gap-3">
                       <Checkbox
                         checked={draft.review.readyForSubmission}
-                        onCheckedChange={value => updateDraftState(current => ({
-                          ...current,
-                          review: {
-                            ...current.review,
-                            readyForSubmission: Boolean(value)
-                          }
-                        }))}
+                        onCheckedChange={(value) =>
+                          updateDraftState((current) => ({
+                            ...current,
+                            review: {
+                              ...current.review,
+                              readyForSubmission: Boolean(value),
+                            },
+                          }))
+                        }
                       />
                       <span className="text-sm font-medium text-card-foreground">
                         تم الانتهاء من جميع المتطلبات والمنافسة جاهزة للإرسال
@@ -1365,7 +1514,8 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                 <div className="rounded-xl border bg-muted/10 p-4">
                   <h3 className="text-sm font-semibold text-card-foreground mb-2">ملخص الإرسال</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    سيتم تغيير حالة المنافسة إلى الحالة «submitted» وتسجيل الأنشطة المرتبطة (أوامر الشراء، مصروفات الكراسة) تلقائياً.
+                    سيتم تغيير حالة المنافسة إلى الحالة «submitted» وتسجيل الأنشطة المرتبطة (أوامر
+                    الشراء، مصروفات الكراسة) تلقائياً.
                   </p>
                   <ul className="space-y-3 text-sm text-muted-foreground">
                     <li className="flex items-start gap-2">
@@ -1378,7 +1528,10 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                     </li>
                     <li className="flex items-start gap-2">
                       <AlertTriangle className="mt-1 h-4 w-4 text-warning" />
-                      <span>تأكد من اكتمال جميع الخطوات السابقة قبل الإرسال النهائي، لا يمكن التراجع إلا عبر واجهة المنافسات.</span>
+                      <span>
+                        تأكد من اكتمال جميع الخطوات السابقة قبل الإرسال النهائي، لا يمكن التراجع إلا
+                        عبر واجهة المنافسات.
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -1387,9 +1540,20 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
           </CardContent>
           <CardFooter className="flex flex-wrap items-center justify-between gap-3 border-t bg-muted/10">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {draft.updatedAt && <span>آخر حفظ: {formatDateValue(draft.updatedAt, { locale: 'ar-SA' }, draft.updatedAt)}</span>}
+              {draft.updatedAt && (
+                <span>
+                  آخر حفظ: {formatDateValue(draft.updatedAt, { locale: 'ar-SA' }, draft.updatedAt)}
+                </span>
+              )}
               {draft.registration.lastSavedAt && activeStepId === 'registration' && (
-                <span>— تم تحديث البيانات في {formatDateValue(draft.registration.lastSavedAt, { locale: 'ar-SA', timeStyle: 'short', dateStyle: 'short' }, draft.registration.lastSavedAt)}</span>
+                <span>
+                  — تم تحديث البيانات في{' '}
+                  {formatDateValue(
+                    draft.registration.lastSavedAt,
+                    { locale: 'ar-SA', timeStyle: 'short', dateStyle: 'short' },
+                    draft.registration.lastSavedAt,
+                  )}
+                </span>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -1406,9 +1570,13 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                 <Button
                   type="button"
                   onClick={() => void handleNext()}
-                  disabled={isDraftLoading || (activeStepId === 'registration' && isSavingRegistration)}
+                  disabled={
+                    isDraftLoading || (activeStepId === 'registration' && isSavingRegistration)
+                  }
                 >
-                  {activeStepId === 'registration' && isSavingRegistration && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+                  {activeStepId === 'registration' && isSavingRegistration && (
+                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  )}
                   التالي
                   <ChevronLeft className="mr-1 h-4 w-4" />
                 </Button>

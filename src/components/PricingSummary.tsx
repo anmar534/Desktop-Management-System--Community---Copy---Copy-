@@ -1,5 +1,5 @@
 import type React from 'react'
-import { useCurrencyFormatter } from '@/hooks/useCurrencyFormatter'
+import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 
 interface PricingSummaryMetrics {
   totalValue: number
@@ -39,18 +39,18 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({ totals, dir = 'r
     adminOperational,
     profitPercentage,
     adminOperationalPercentage,
-    vatRate
+    vatRate,
   } = totals
-  
+
   console.log('💰 [PricingSummary] Extracted values:', {
     totalValue,
-    vatAmount, 
+    vatAmount,
     totalWithVat,
     profit,
     adminOperational,
     profitPercentage,
     adminOperationalPercentage,
-    vatRate
+    vatRate,
   })
   const summaryItems: {
     label: string
@@ -62,31 +62,31 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({ totals, dir = 'r
       label: 'إجمالي المشروع',
       amount: totalValue,
       tone: 'primary',
-      subLabel: 'ر.س (قبل الضريبة)'
+      subLabel: 'ر.س (قبل الضريبة)',
     },
     {
       label: `ضريبة القيمة المضافة (${(vatRate * 100).toFixed(0)}%)`,
       amount: vatAmount,
       tone: 'warning',
-      subLabel: 'ر.س'
+      subLabel: 'ر.س',
     },
     {
       label: 'الإجمالي شامل الضريبة',
       amount: totalWithVat,
       tone: 'success',
-      subLabel: 'ر.س'
+      subLabel: 'ر.س',
     },
     {
       label: `إجمالي الربح (${profitPercentage?.toFixed(2)}%)`,
       amount: profit,
       tone: 'info',
-      subLabel: 'ر.س'
+      subLabel: 'ر.س',
     },
     {
       label: `التكاليف الإدارية + التشغيلية (${adminOperationalPercentage?.toFixed(2)}%)`,
       amount: adminOperational,
       tone: 'secondary',
-      subLabel: 'ر.س'
+      subLabel: 'ر.س',
     },
   ]
 
@@ -97,28 +97,28 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({ totals, dir = 'r
     primary: {
       container: 'bg-primary/10 border-primary/20',
       heading: 'text-primary',
-      value: 'text-primary'
+      value: 'text-primary',
     },
     warning: {
       container: 'bg-warning/10 border-warning/20',
       heading: 'text-warning',
-      value: 'text-warning'
+      value: 'text-warning',
     },
     success: {
       container: 'bg-success/10 border-success/20',
       heading: 'text-success',
-      value: 'text-success'
+      value: 'text-success',
     },
     info: {
       container: 'bg-info/10 border-info/20',
       heading: 'text-info',
-      value: 'text-info'
+      value: 'text-info',
     },
     secondary: {
       container: 'bg-muted/20 border-muted/30',
       heading: 'text-muted-foreground',
-      value: 'text-muted-foreground'
-    }
+      value: 'text-muted-foreground',
+    },
   }
 
   return (
@@ -134,7 +134,7 @@ export const PricingSummary: React.FC<PricingSummaryProps> = ({ totals, dir = 'r
             <div className={`mt-1 text-lg font-bold leading-tight ${style.value}`}>
               {formatCurrencyValue(item.amount, {
                 minimumFractionDigits: 0,
-                maximumFractionDigits: 0
+                maximumFractionDigits: 0,
               })}
             </div>
             <div className={`mt-0.5 text-xs ${style.heading}`}>{item.subLabel}</div>

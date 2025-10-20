@@ -32,7 +32,7 @@ vi.mock('lucide-react', async (importOriginal) => {
 })
 
 // Mock useCurrencyFormatter hook
-vi.mock('../../src/hooks/useCurrencyFormatter', () => ({
+vi.mock('../../src/application/hooks/useCurrencyFormatter', () => ({
   useCurrencyFormatter: () => ({
     formatCurrencyValue: (amount: number | string | null | undefined) => {
       const numericAmount = typeof amount === 'number' ? amount : Number(amount || 0)
@@ -72,7 +72,7 @@ vi.mock('../../src/utils/predictionModels', () => ({
     probability: 75,
     confidence: 85,
     factors: [],
-    recommendations: []
+    recommendations: [],
   }),
 }))
 
@@ -80,7 +80,7 @@ vi.mock('../../src/utils/priceOptimization', () => ({
   optimizeBidAmount: vi.fn().mockReturnValue({
     recommendedBid: 4500000,
     margin: 15,
-    strategy: 'balanced'
+    strategy: 'balanced',
   }),
 }))
 
@@ -89,22 +89,33 @@ vi.mock('../../src/application/hooks/useTenderStatus', () => ({
   useTenderStatus: vi.fn((tender) => {
     const getUrgencyText = (priority: string) => {
       switch (priority) {
-        case 'high': return 'عاجل'
-        case 'critical': return 'عاجل'
-        case 'medium': return 'متوسط'
-        case 'low': return 'منخفض'
-        default: return 'متوسط'
+        case 'high':
+          return 'عاجل'
+        case 'critical':
+          return 'عاجل'
+        case 'medium':
+          return 'متوسط'
+        case 'low':
+          return 'منخفض'
+        default:
+          return 'متوسط'
       }
     }
 
     const getStatusText = (status: string) => {
       switch (status) {
-        case 'under_action': return 'تحت الإجراء'
-        case 'ready_to_submit': return 'جاهزة للتقديم'
-        case 'submitted': return 'بانتظار النتائج'
-        case 'won': return 'فائزة'
-        case 'lost': return 'خاسرة'
-        default: return 'جديدة'
+        case 'under_action':
+          return 'تحت الإجراء'
+        case 'ready_to_submit':
+          return 'جاهزة للتقديم'
+        case 'submitted':
+          return 'بانتظار النتائج'
+        case 'won':
+          return 'فائزة'
+        case 'lost':
+          return 'خاسرة'
+        default:
+          return 'جديدة'
       }
     }
 
@@ -114,10 +125,10 @@ vi.mock('../../src/application/hooks/useTenderStatus', () => ({
       completionInfo: {
         isReadyToSubmit: false,
         isPricingCompleted: false,
-        isTechnicalFilesUploaded: false
+        isTechnicalFilesUploaded: false,
       },
       shouldShowSubmitButton: false,
-      shouldShowPricingButton: true
+      shouldShowPricingButton: true,
     }
   }),
 }))
@@ -156,7 +167,7 @@ describe('EnhancedTenderCard', () => {
     lastAction: 'تحديث التسعير',
     lastUpdate: '2024-01-15',
     category: 'سكني',
-    type: 'مقاولات عامة'
+    type: 'مقاولات عامة',
   }
 
   const defaultProps = {
@@ -367,7 +378,7 @@ describe('EnhancedTenderCard', () => {
         lastAction: 'إنشاء',
         lastUpdate: '2024-01-01',
         category: 'عام',
-        type: 'مقاولات'
+        type: 'مقاولات',
       }
 
       render(<EnhancedTenderCard {...defaultProps} tender={minimalTender} />)
@@ -380,7 +391,8 @@ describe('EnhancedTenderCard', () => {
       const longNameTender = {
         ...mockTender,
         name: 'مشروع إنشاء مجمع سكني متكامل مع جميع المرافق والخدمات والمساحات الخضراء والمرافق الترفيهية والتجارية',
-        title: 'مشروع إنشاء مجمع سكني متكامل مع جميع المرافق والخدمات والمساحات الخضراء والمرافق الترفيهية والتجارية'
+        title:
+          'مشروع إنشاء مجمع سكني متكامل مع جميع المرافق والخدمات والمساحات الخضراء والمرافق الترفيهية والتجارية',
       }
 
       render(<EnhancedTenderCard {...defaultProps} tender={longNameTender} />)

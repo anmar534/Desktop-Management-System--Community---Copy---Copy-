@@ -1,5 +1,3 @@
-'use client'
-
 import type React from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import {
@@ -45,7 +43,7 @@ import { Textarea } from './ui/textarea'
 
 import { useFinancialState } from '@/application/context'
 import { useExpenses } from '@/application/hooks/useExpenses'
-import { useCurrencyFormatter } from '@/hooks/useCurrencyFormatter'
+import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { formatDateValue } from '@/utils/formatters'
 import type { Expense, ExpenseCategory } from '@/data/expenseCategories'
 import {

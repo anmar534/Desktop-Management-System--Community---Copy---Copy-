@@ -1,7 +1,5 @@
-'use client'
-
 import { useState } from 'react'
-import { useCurrencyFormatter } from '@/hooks/useCurrencyFormatter'
+import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { formatDateValue } from '@/utils/formatters'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
@@ -9,13 +7,7 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { 
-  Target,
-  ArrowRight,
-  Save,
-  Plus,
-  Trash2
-} from 'lucide-react'
+import { Target, ArrowRight, Save, Plus, Trash2 } from 'lucide-react'
 
 interface NewBudgetProps {
   onSectionChange: (section: string) => void
@@ -23,22 +15,22 @@ interface NewBudgetProps {
 
 export function NewBudget({ onSectionChange }: NewBudgetProps) {
   interface BudgetCategoryForm {
-    id: number;
-    name: string;
-    allocatedAmount: string;
-    description: string;
+    id: number
+    name: string
+    allocatedAmount: string
+    description: string
   }
 
   interface BudgetFormState {
-    name: string;
-    description: string;
-    totalAmount: string;
-    startDate: string;
-    endDate: string;
-    department: string;
-    category: string;
-    status: 'draft' | 'active';
-    categories: BudgetCategoryForm[];
+    name: string
+    description: string
+    totalAmount: string
+    startDate: string
+    endDate: string
+    department: string
+    category: string
+    status: 'draft' | 'active'
+    categories: BudgetCategoryForm[]
   }
 
   const [formData, setFormData] = useState<BudgetFormState>({
@@ -55,9 +47,9 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
         id: 1,
         name: '',
         allocatedAmount: '',
-        description: ''
-      }
-    ]
+        description: '',
+      },
+    ],
   })
 
   const parseAmount = (value: string): number => {
@@ -75,7 +67,7 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
     'التنفيذ والتشييد',
     'المبيعات والتسويق',
     'الموارد البشرية',
-    'تقنية المعلومات'
+    'تقنية المعلومات',
   ]
 
   // فئات الموازنة
@@ -85,23 +77,24 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
     'موازنة مشاريع',
     'موازنة طوارئ',
     'موازنة صيانة',
-    'موازنة تطوير'
+    'موازنة تطوير',
   ]
 
   // إضافة فئة جديدة
   const addCategory = () => {
     setFormData((prev) => {
-      const nextId = prev.categories.reduce((maxId, category) => Math.max(maxId, category.id), 0) + 1
+      const nextId =
+        prev.categories.reduce((maxId, category) => Math.max(maxId, category.id), 0) + 1
       const newCategory: BudgetCategoryForm = {
         id: nextId,
         name: '',
         allocatedAmount: '',
-        description: ''
+        description: '',
       }
 
       return {
         ...prev,
-        categories: [...prev.categories, newCategory]
+        categories: [...prev.categories, newCategory],
       }
     })
   }
@@ -109,25 +102,32 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
   // حذف فئة
   const removeCategory = (id: number) => {
     if (formData.categories.length > 1) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        categories: prev.categories.filter(cat => cat.id !== id)
+        categories: prev.categories.filter((cat) => cat.id !== id),
       }))
     }
   }
 
   // تحديث فئة
-  const updateCategory = <Field extends keyof BudgetCategoryForm>(id: number, field: Field, value: BudgetCategoryForm[Field]) => {
+  const updateCategory = <Field extends keyof BudgetCategoryForm>(
+    id: number,
+    field: Field,
+    value: BudgetCategoryForm[Field],
+  ) => {
     setFormData((prev) => ({
       ...prev,
       categories: prev.categories.map((category) =>
-        category.id === id ? { ...category, [field]: value } : category
-      )
+        category.id === id ? { ...category, [field]: value } : category,
+      ),
     }))
   }
 
   // حساب الإجمالي المخصص
-  const totalAllocated = formData.categories.reduce((sum, category) => sum + parseAmount(category.allocatedAmount), 0)
+  const totalAllocated = formData.categories.reduce(
+    (sum, category) => sum + parseAmount(category.allocatedAmount),
+    0,
+  )
   const totalAmountValue = parseAmount(formData.totalAmount)
   const remainingAmount = totalAmountValue - totalAllocated
 
@@ -140,13 +140,13 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
 
     const sanitizedCategories = formData.categories.map((category) => ({
       ...category,
-      allocatedAmount: parseAmount(category.allocatedAmount)
+      allocatedAmount: parseAmount(category.allocatedAmount),
     }))
 
     const sanitizedData = {
       ...formData,
       totalAmount: parseAmount(formData.totalAmount),
-      categories: sanitizedCategories
+      categories: sanitizedCategories,
     }
 
     console.log('حفظ الموازنة الجديدة:', sanitizedData)
@@ -159,14 +159,14 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
       label: 'العودة للموازنات',
       icon: ArrowRight,
       onClick: () => onSectionChange('budgets'),
-      variant: 'outline' as const
+      variant: 'outline' as const,
     },
     {
       label: 'حفظ الموازنة',
       icon: Save,
       onClick: handleSave,
-      primary: true
-    }
+      primary: true,
+    },
   ]
 
   const NOT_SET_LABEL = 'لم يتم تحديده'
@@ -179,7 +179,6 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-primary/5">
-      
       {/* الهيدر */}
       <div className="bg-card border-b border-border shadow-sm">
         <div className="px-6 py-4">
@@ -191,12 +190,12 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                 <p className="text-sm text-muted-foreground">إنشاء موازنة جديدة للمشروع أو القسم</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               {quickActions.map((action, index) => (
                 <Button
                   key={index}
-                  variant={action.primary ? 'default' : action.variant ?? 'outline'}
+                  variant={action.primary ? 'default' : (action.variant ?? 'outline')}
                   onClick={action.onClick}
                   className="flex items-center gap-2"
                 >
@@ -213,7 +212,6 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
       <div className="p-6">
         <div className="max-w-6xl mx-auto">
           <div className="space-y-6">
-
             {/* المعلومات الأساسية */}
             <Card>
               <CardHeader>
@@ -226,7 +224,7 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                     <Input
                       id="budgetName"
                       value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                       placeholder="موازنة مشروع برج الأعمال"
                       required
                     />
@@ -239,33 +237,49 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                       min="0"
                       step="0.01"
                       value={formData.totalAmount}
-                      onChange={(e) => setFormData(prev => ({ ...prev, totalAmount: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, totalAmount: e.target.value }))
+                      }
                       placeholder="1000000"
                       required
                     />
                   </div>
                   <div>
                     <Label htmlFor="department">القسم المسؤول</Label>
-                    <Select value={formData.department} onValueChange={(value: string) => setFormData(prev => ({ ...prev, department: value }))}>
+                    <Select
+                      value={formData.department}
+                      onValueChange={(value: string) =>
+                        setFormData((prev) => ({ ...prev, department: value }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="اختر القسم" />
                       </SelectTrigger>
                       <SelectContent>
                         {departments.map((dept) => (
-                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                          <SelectItem key={dept} value={dept}>
+                            {dept}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label htmlFor="category">فئة الموازنة</Label>
-                    <Select value={formData.category} onValueChange={(value: string) => setFormData(prev => ({ ...prev, category: value }))}>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value: string) =>
+                        setFormData((prev) => ({ ...prev, category: value }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="اختر الفئة" />
                       </SelectTrigger>
                       <SelectContent>
                         {budgetCategories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -276,7 +290,9 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                       id="startDate"
                       type="date"
                       value={formData.startDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, startDate: e.target.value }))
+                      }
                     />
                   </div>
                   <div>
@@ -285,17 +301,21 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                       id="endDate"
                       type="date"
                       value={formData.endDate}
-                      onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, endDate: e.target.value }))
+                      }
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="description">وصف الموازنة</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, description: e.target.value }))
+                    }
                     placeholder="وصف تفصيلي للموازنة وأهدافها..."
                     rows={3}
                   />
@@ -314,7 +334,6 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  
                   {/* رأس الجدول */}
                   <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground border-b pb-2">
                     <div className="col-span-4">اسم الفئة</div>
@@ -339,14 +358,18 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                           min="0"
                           step="0.01"
                           value={category.allocatedAmount}
-                          onChange={(e) => updateCategory(category.id, 'allocatedAmount', e.target.value)}
+                          onChange={(e) =>
+                            updateCategory(category.id, 'allocatedAmount', e.target.value)
+                          }
                           placeholder="0.00"
                         />
                       </div>
                       <div className="col-span-4">
                         <Input
                           value={category.description}
-                          onChange={(e) => updateCategory(category.id, 'description', e.target.value)}
+                          onChange={(e) =>
+                            updateCategory(category.id, 'description', e.target.value)
+                          }
                           placeholder="وصف مختصر للفئة"
                         />
                       </div>
@@ -371,21 +394,27 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                     <div className="w-80 space-y-2">
                       <div className="flex justify-between">
                         <span>إجمالي الموازنة:</span>
-                        <span className="font-medium">{formatCurrencyValue(totalAmountValue, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 2,
-                        })}</span>
+                        <span className="font-medium">
+                          {formatCurrencyValue(totalAmountValue, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>إجمالي المخصص:</span>
-                        <span className="font-medium">{formatCurrencyValue(totalAllocated, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 2,
-                        })}</span>
+                        <span className="font-medium">
+                          {formatCurrencyValue(totalAllocated, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
                       </div>
                       <div className="flex justify-between border-t pt-2">
                         <span>المتبقي:</span>
-                        <span className={`font-bold ${remainingAmount >= 0 ? 'text-success' : 'text-destructive'}`}>
+                        <span
+                          className={`font-bold ${remainingAmount >= 0 ? 'text-success' : 'text-destructive'}`}
+                        >
                           {formatCurrencyValue(remainingAmount, {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 2,
@@ -416,10 +445,12 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">إجمالي الموازنة:</span>
-                    <span className="font-medium">{formatCurrencyValue(totalAmountValue, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 2,
-                    })}</span>
+                    <span className="font-medium">
+                      {formatCurrencyValue(totalAmountValue, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">القسم المسؤول:</span>
@@ -432,18 +463,22 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">فترة الموازنة:</span>
                     <span className="font-medium">
-                      {formatDateValue(formData.startDate, {
-                        locale: 'ar-SA',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      }, 'غير محدد')}
+                      {formatDateValue(
+                        formData.startDate,
+                        {
+                          locale: 'ar-SA',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        },
+                        'غير محدد',
+                      )}
                       {formData.endDate
                         ? ` - ${formatDateValue(formData.endDate, {
                             locale: 'ar-SA',
                             year: 'numeric',
                             month: 'long',
-                            day: 'numeric'
+                            day: 'numeric',
                           })}`
                         : ''}
                     </span>
@@ -455,7 +490,6 @@ export function NewBudget({ onSectionChange }: NewBudgetProps) {
                 </div>
               </CardContent>
             </Card>
-
           </div>
         </div>
       </div>

@@ -1,101 +1,124 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { ChevronDown, ChevronUp, Grid3X3, Calculator, FileText, Settings, Plus, ExternalLink, AlertTriangle, Trash2, ShoppingCart, Save, MoreHorizontal, Loader2 } from 'lucide-react';
-import { useProjectBOQ } from '@/application/hooks/useProjectBOQ';
-import { projectCostService } from '@/application/services/projectCostService';
-import type { ProjectCostItem, CostBreakdownSet, BreakdownRow } from '@/application/services/projectCostService';
-import { DeleteConfirmation, SaveConfirmation } from '../ui/confirmation-dialog';
-import { useCurrencyFormatter } from '@/hooks/useCurrencyFormatter';
-import { EmptyState } from '../PageLayout';
+import React, { useState, useMemo, useEffect } from 'react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronUp,
+  Grid3X3,
+  Calculator,
+  FileText,
+  Settings,
+  Plus,
+  ExternalLink,
+  AlertTriangle,
+  Trash2,
+  ShoppingCart,
+  Save,
+  MoreHorizontal,
+  Loader2,
+} from 'lucide-react'
+import { useProjectBOQ } from '@/application/hooks/useProjectBOQ'
+import { projectCostService } from '@/application/services/projectCostService'
+import type {
+  ProjectCostItem,
+  CostBreakdownSet,
+  BreakdownRow,
+} from '@/application/services/projectCostService'
+import { DeleteConfirmation, SaveConfirmation } from '../ui/confirmation-dialog'
+import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
+import { EmptyState } from '../PageLayout'
 
 interface SimplifiedProjectCostViewProps {
-  projectId: string;
-  tenderId?: string;
+  projectId: string
+  tenderId?: string
 }
 
-export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps> = ({ projectId, tenderId }) => {
-  const { draft, loading, refresh, mergeFromTender, ensure } = useProjectBOQ(projectId);
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [expandedBreakdownSections, setExpandedBreakdownSections] = useState<Set<string>>(new Set());
-  const [actionMessage, setActionMessage] = useState<string>('');
-  const [forceUpdateKey, setForceUpdateKey] = useState(0);
-  const [isImporting, setIsImporting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps> = ({
+  projectId,
+  tenderId,
+}) => {
+  const { draft, loading, refresh, mergeFromTender, ensure } = useProjectBOQ(projectId)
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
+  const [expandedBreakdownSections, setExpandedBreakdownSections] = useState<Set<string>>(new Set())
+  const [actionMessage, setActionMessage] = useState<string>('')
+  const [forceUpdateKey, setForceUpdateKey] = useState(0)
+  const [isImporting, setIsImporting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    console.log('🧭 [SimplifiedProjectCostView] tenderId prop:', tenderId ?? '<none>');
-  }, [tenderId]);
+    console.log('🧭 [SimplifiedProjectCostView] tenderId prop:', tenderId ?? '<none>')
+  }, [tenderId])
 
-  const items = useMemo<ProjectCostItem[]>(() => draft?.items ?? [], [draft?.items]);
-  const defaultPercentages: Readonly<Record<'administrative' | 'operational' | 'profit', number>> = {
-    administrative: 5,
-    operational: 3,
-    profit: 10
-  };
+  const items = useMemo<ProjectCostItem[]>(() => draft?.items ?? [], [draft?.items])
+  const defaultPercentages: Readonly<Record<'administrative' | 'operational' | 'profit', number>> =
+    {
+      administrative: 5,
+      operational: 3,
+      profit: 10,
+    }
   useEffect(() => {
-    if (!items.length) return;
-    setExpandedItems(prev => {
-      if (prev.size > 0) return prev;
-      const next = new Set(prev);
-      next.add(items[0].id);
-      return next;
-    });
-  }, [items]);
+    if (!items.length) return
+    setExpandedItems((prev) => {
+      if (prev.size > 0) return prev
+      const next = new Set(prev)
+      next.add(items[0].id)
+      return next
+    })
+  }, [items])
 
   const severityMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    return map;
-  }, []);
+    const map: Record<string, string> = {}
+    return map
+  }, [])
 
-  const { formatCurrencyValue, baseCurrency } = useCurrencyFormatter();
+  const { formatCurrencyValue, baseCurrency } = useCurrencyFormatter()
 
   const formatCurrency = (
     value: number | undefined | null,
-    options?: Parameters<typeof formatCurrencyValue>[1]
+    options?: Parameters<typeof formatCurrencyValue>[1],
   ) => {
     return formatCurrencyValue(value ?? 0, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
       ...options,
-    });
-  };
+    })
+  }
 
   const formatDecimal = (value: number | undefined | null, options?: Intl.NumberFormatOptions) => {
     return new Intl.NumberFormat('ar-SA', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
       ...options,
-    }).format(value ?? 0);
-  };
-
-  const formatInteger = (value: number | undefined | null) => {
-    return new Intl.NumberFormat('ar-SA').format(value ?? 0);
-  };
-
-  interface LegacyProjectCostItem extends ProjectCostItem {
-    actualQuantity?: number;
-    actualUnitPrice?: number;
-    unitPrice?: number;
-    totalPrice?: number;
+    }).format(value ?? 0)
   }
 
-  type ActionButtonTone = 'primary' | 'warning' | 'success' | 'danger' | 'neutral';
+  const formatInteger = (value: number | undefined | null) => {
+    return new Intl.NumberFormat('ar-SA').format(value ?? 0)
+  }
+
+  interface LegacyProjectCostItem extends ProjectCostItem {
+    actualQuantity?: number
+    actualUnitPrice?: number
+    unitPrice?: number
+    totalPrice?: number
+  }
+
+  type ActionButtonTone = 'primary' | 'warning' | 'success' | 'danger' | 'neutral'
 
   const actionToneStyles: Record<ActionButtonTone, string> = {
     primary: 'border-info/30 text-info hover:bg-info/10 hover:text-info',
     warning: 'border-warning/30 text-warning hover:bg-warning/10 hover:text-warning',
     success: 'border-success/30 text-success hover:bg-success/10 hover:text-success',
     danger: 'border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive',
-    neutral: 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
-  };
+    neutral: 'border-border text-muted-foreground hover:bg-muted hover:text-foreground',
+  }
 
   interface ActionRoundButtonProps {
-    icon: LucideIcon;
-    label: string;
-    tone: ActionButtonTone;
-    onClick?: () => void;
-    tooltip: string;
-    disabled?: boolean;
+    icon: LucideIcon
+    label: string
+    tone: ActionButtonTone
+    onClick?: () => void
+    tooltip: string
+    disabled?: boolean
   }
 
   const ActionRoundButton = React.forwardRef<HTMLButtonElement, ActionRoundButtonProps>(
@@ -111,100 +134,103 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
       >
         <Icon className="w-4 h-4" />
       </button>
-    )
-  );
-  ActionRoundButton.displayName = 'ActionRoundButton';
+    ),
+  )
+  ActionRoundButton.displayName = 'ActionRoundButton'
 
   const sumRows = (rows: readonly BreakdownRow[] | undefined): number => {
     if (!rows?.length) {
-      return 0;
+      return 0
     }
     return rows.reduce((sum, row) => {
-      const total = row.totalCost ?? row.quantity * row.unitCost;
-      return sum + (Number.isFinite(total) ? total : 0);
-    }, 0);
-  };
+      const total = row.totalCost ?? row.quantity * row.unitCost
+      return sum + (Number.isFinite(total) ? total : 0)
+    }, 0)
+  }
 
   const parseNumericInput = (input: string): number => {
-    const parsed = Number.parseFloat(input);
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
+    const parsed = Number.parseFloat(input)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
 
   const resolveRowId = (row: BreakdownRow, fallbackPrefix: string, index: number): string => {
-    const rawId = typeof row.id === 'string' ? row.id.trim() : '';
+    const rawId = typeof row.id === 'string' ? row.id.trim() : ''
     if (rawId.length > 0) {
-      return rawId;
+      return rawId
     }
-    const fallbackName = typeof row.name === 'string' ? row.name.trim() : 'row';
-    const safeName = fallbackName.length > 0 ? fallbackName : 'row';
-    return `${fallbackPrefix}-${index}-${safeName}`;
-  };
+    const fallbackName = typeof row.name === 'string' ? row.name.trim() : 'row'
+    const safeName = fallbackName.length > 0 ? fallbackName : 'row'
+    return `${fallbackPrefix}-${index}-${safeName}`
+  }
 
   // التحقق من تطابق الحسابات بين جدول التكاليف وجدول البنود
   const validateCalculationConsistency = (item: ProjectCostItem): boolean => {
-    const breakdown = item.actual?.breakdown;
-    if (!breakdown) return true;
+    const breakdown = item.actual?.breakdown
+    if (!breakdown) return true
 
     const calculatedBase =
       sumRows(breakdown.materials) +
       sumRows(breakdown.labor) +
       sumRows(breakdown.equipment) +
-      sumRows(breakdown.subcontractors);
+      sumRows(breakdown.subcontractors)
 
-    const admin = calculatedBase * ((item.actual?.additionalPercentages?.administrative ?? 0) / 100);
-    const operational = calculatedBase * ((item.actual?.additionalPercentages?.operational ?? 0) / 100);
-    const profit = calculatedBase * ((item.actual?.additionalPercentages?.profit ?? 0) / 100);
-    const calculatedTotal = calculatedBase + admin + operational + profit;
+    const admin = calculatedBase * ((item.actual?.additionalPercentages?.administrative ?? 0) / 100)
+    const operational =
+      calculatedBase * ((item.actual?.additionalPercentages?.operational ?? 0) / 100)
+    const profit = calculatedBase * ((item.actual?.additionalPercentages?.profit ?? 0) / 100)
+    const calculatedTotal = calculatedBase + admin + operational + profit
 
-    const currentTotal = item.actual?.totalPrice ?? 0;
-    const tolerance = 0.01; // هامش خطأ مقبول
+    const currentTotal = item.actual?.totalPrice ?? 0
+    const tolerance = 0.01 // هامش خطأ مقبول
 
-    return Math.abs(calculatedTotal - currentTotal) <= tolerance;
-  };
+    return Math.abs(calculatedTotal - currentTotal) <= tolerance
+  }
 
   const toggleExpanded = (itemId: string) => {
-    setExpandedItems(prev => {
-      const next = new Set(prev);
+    setExpandedItems((prev) => {
+      const next = new Set(prev)
       if (next.has(itemId)) {
-        next.delete(itemId);
+        next.delete(itemId)
       } else {
-        next.add(itemId);
+        next.add(itemId)
       }
-      return next;
-    });
-  };
+      return next
+    })
+  }
 
   const toggleBreakdownSection = (itemId: string, section: string) => {
-    const key = `${itemId}:${section}`;
-    setExpandedBreakdownSections(prev => {
-      const next = new Set(prev);
+    const key = `${itemId}:${section}`
+    setExpandedBreakdownSections((prev) => {
+      const next = new Set(prev)
       if (next.has(key)) {
-        next.delete(key);
+        next.delete(key)
       } else {
-        next.add(key);
+        next.add(key)
       }
-      return next;
-    });
-  };
+      return next
+    })
+  }
 
   const handleRecalculateItemFromBreakdown = (itemId: string) => {
-    console.log(`🚀 [بدء إعادة الحساب] تم استدعاء handleRecalculateItemFromBreakdown للبند: ${itemId}`);
+    console.log(
+      `🚀 [بدء إعادة الحساب] تم استدعاء handleRecalculateItemFromBreakdown للبند: ${itemId}`,
+    )
     try {
-      projectCostService.saveDraft(projectId, draft => {
-        const item = draft.items.find(i => i.id === itemId);
-        if (!item) return;
+      projectCostService.saveDraft(projectId, (draft) => {
+        const item = draft.items.find((i) => i.id === itemId)
+        if (!item) return
 
-        const breakdown = item.actual?.breakdown;
+        const breakdown = item.actual?.breakdown
         if (!breakdown) {
-          console.log(`⚠️ [${itemId}] لا يوجد تحليل تكلفة فعلي لإعادة الحساب.`);
-          return;
+          console.log(`⚠️ [${itemId}] لا يوجد تحليل تكلفة فعلي لإعادة الحساب.`)
+          return
         }
 
-        const materialsTotal = sumRows(breakdown.materials);
-        const laborTotal = sumRows(breakdown.labor);
-        const equipmentTotal = sumRows(breakdown.equipment);
-        const subcontractorsTotal = sumRows(breakdown.subcontractors);
-        const base = materialsTotal + laborTotal + equipmentTotal + subcontractorsTotal;
+        const materialsTotal = sumRows(breakdown.materials)
+        const laborTotal = sumRows(breakdown.labor)
+        const equipmentTotal = sumRows(breakdown.equipment)
+        const subcontractorsTotal = sumRows(breakdown.subcontractors)
+        const base = materialsTotal + laborTotal + equipmentTotal + subcontractorsTotal
 
         console.log(`🔍 [تحليل البند] ${itemId}:`, {
           materials: materialsTotal,
@@ -217,48 +243,51 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
             materials: breakdown.materials.length,
             labor: breakdown.labor.length,
             equipment: breakdown.equipment.length,
-            subcontractors: breakdown.subcontractors.length
-          }
-        });
+            subcontractors: breakdown.subcontractors.length,
+          },
+        })
 
         if (base > 0) {
-          const administrativePct = item.actual.additionalPercentages?.administrative ?? defaultPercentages.administrative;
-          const operationalPct = item.actual.additionalPercentages?.operational ?? defaultPercentages.operational;
-          const profitPct = item.actual.additionalPercentages?.profit ?? defaultPercentages.profit;
+          const administrativePct =
+            item.actual.additionalPercentages?.administrative ?? defaultPercentages.administrative
+          const operationalPct =
+            item.actual.additionalPercentages?.operational ?? defaultPercentages.operational
+          const profitPct = item.actual.additionalPercentages?.profit ?? defaultPercentages.profit
 
-          const admin = base * (administrativePct / 100);
-          const operational = base * (operationalPct / 100);
-          const profit = base * (profitPct / 100);
-          const total = base + admin + operational + profit;
+          const admin = base * (administrativePct / 100)
+          const operational = base * (operationalPct / 100)
+          const profit = base * (profitPct / 100)
+          const total = base + admin + operational + profit
 
           // تطبيق نفس معادلة التسعير المستخدمة في المناقصات - التأكد من أن الكمية أكبر من صفر
-          const normalizedQuantity = item.actual.quantity && item.actual.quantity > 0 ? item.actual.quantity : 1;
-          item.actual.quantity = normalizedQuantity;
+          const normalizedQuantity =
+            item.actual.quantity && item.actual.quantity > 0 ? item.actual.quantity : 1
+          item.actual.quantity = normalizedQuantity
 
           // حساب سعر الوحدة = المجموع الكلي ÷ الكمية
-          const calculatedUnitPrice = +(total / normalizedQuantity).toFixed(4);
-          const calculatedTotalPrice = +total.toFixed(2);
+          const calculatedUnitPrice = +(total / normalizedQuantity).toFixed(4)
+          const calculatedTotalPrice = +total.toFixed(2)
 
           console.log(`🧮 [المعادلة] حساب البند ${itemId}:`, {
             total: total.toFixed(2),
             quantity: normalizedQuantity,
             unitPriceCalculation: `${total.toFixed(2)} ÷ ${normalizedQuantity} = ${calculatedUnitPrice}`,
             oldUnitPrice: item.actual.unitPrice,
-            newUnitPrice: calculatedUnitPrice
-          });
+            newUnitPrice: calculatedUnitPrice,
+          })
 
-          item.actual.unitPrice = calculatedUnitPrice;
-          item.actual.totalPrice = calculatedTotalPrice;
+          item.actual.unitPrice = calculatedUnitPrice
+          item.actual.totalPrice = calculatedTotalPrice
 
-          const legacyItem = item as LegacyProjectCostItem;
-          legacyItem.actualQuantity = normalizedQuantity;
-          legacyItem.actualUnitPrice = calculatedUnitPrice;
-          legacyItem.unitPrice = calculatedUnitPrice;
-          legacyItem.totalPrice = calculatedTotalPrice;
+          const legacyItem = item as LegacyProjectCostItem
+          legacyItem.actualQuantity = normalizedQuantity
+          legacyItem.actualUnitPrice = calculatedUnitPrice
+          legacyItem.unitPrice = calculatedUnitPrice
+          legacyItem.totalPrice = calculatedTotalPrice
 
           console.log(`✅ تم تحديث البند ${itemId}:`, {
             base: base.toFixed(2),
-            admin: admin.toFixed(2), 
+            admin: admin.toFixed(2),
             operational: operational.toFixed(2),
             profit: profit.toFixed(2),
             total: total.toFixed(2),
@@ -268,215 +297,240 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
             savedUnitPrice: item.actual.unitPrice,
             savedTotalPrice: item.actual.totalPrice,
             mainTableUnitPrice: legacyItem.unitPrice,
-            mainTableTotalPrice: legacyItem.totalPrice
-          });
+            mainTableTotalPrice: legacyItem.totalPrice,
+          })
         } else {
-          console.log(`⚠️ [البند ${itemId}] لا يحتوي على بيانات تكلفة في التحليل (base = 0) - تخطي إعادة الحساب`);
-          console.log(`   للبند "${item.description?.substring(0, 50)}..."`);
-          console.log(`   تحقق من وجود بيانات في: المواد، العمالة، المعدات، أو المقاولين من الباطن`);
+          console.log(
+            `⚠️ [البند ${itemId}] لا يحتوي على بيانات تكلفة في التحليل (base = 0) - تخطي إعادة الحساب`,
+          )
+          console.log(`   للبند "${item.description?.substring(0, 50)}..."`)
+          console.log(`   تحقق من وجود بيانات في: المواد، العمالة، المعدات، أو المقاولين من الباطن`)
         }
-        
+
         // Clear the pending sync flag
-        item.state = { ...item.state, isModified: true, breakdownDirty: false };
-      });
-      
+        item.state = { ...item.state, isModified: true, breakdownDirty: false }
+      })
+
       // Force a refresh to update the UI
-      console.log('🔄 [SimplifiedProjectCostView] استدعاء refresh() بعد الحفظ...');
-      
+      console.log('🔄 [SimplifiedProjectCostView] استدعاء refresh() بعد الحفظ...')
+
       // فحص البيانات مباشرة من المخزن
-      const updatedEnvelope = projectCostService.getEnvelope(projectId);
-      const updatedItem = updatedEnvelope?.draft?.items?.find(draftItem => draftItem.id === itemId);
+      const updatedEnvelope = projectCostService.getEnvelope(projectId)
+      const updatedItem = updatedEnvelope?.draft?.items?.find(
+        (draftItem) => draftItem.id === itemId,
+      )
       console.log('📊 [SimplifiedProjectCostView] البيانات المحدثة في المخزن:', {
         itemId,
         updatedUnitPrice: updatedItem?.actual.unitPrice,
         updatedTotalPrice: updatedItem?.actual.totalPrice,
-        draftItemsCount: updatedEnvelope?.draft?.items.length
-      });
+        draftItemsCount: updatedEnvelope?.draft?.items.length,
+      })
 
-      refresh();
-      
+      refresh()
+
       // فرض إعادة rendering للمكون
-      setForceUpdateKey(prev => prev + 1);
-      
+      setForceUpdateKey((prev) => prev + 1)
+
       // إضافة تأخير قصير للتأكد من تحديث الواجهة
       setTimeout(() => {
-        console.log('🔄 [SimplifiedProjectCostView] استدعاء refresh() إضافي للتأكد...');
-        refresh();
-        setForceUpdateKey(prev => prev + 1);
-      }, 100);
-      
-      setActionMessage('تم تحديث سعر البند بناءً على التحليل.');
-      setTimeout(() => setActionMessage(''), 4000);
-    } catch (error) {
-      console.error('Error saving item:', error);
-      setActionMessage('❌ حدث خطأ أثناء حفظ البيانات');
-      setTimeout(() => setActionMessage(''), 4000);
-    }
-  };
+        console.log('🔄 [SimplifiedProjectCostView] استدعاء refresh() إضافي للتأكد...')
+        refresh()
+        setForceUpdateKey((prev) => prev + 1)
+      }, 100)
 
-  type BreakdownEditableField = 'name' | 'unit' | 'quantity' | 'unitCost';
+      setActionMessage('تم تحديث سعر البند بناءً على التحليل.')
+      setTimeout(() => setActionMessage(''), 4000)
+    } catch (error) {
+      console.error('Error saving item:', error)
+      setActionMessage('❌ حدث خطأ أثناء حفظ البيانات')
+      setTimeout(() => setActionMessage(''), 4000)
+    }
+  }
+
+  type BreakdownEditableField = 'name' | 'unit' | 'quantity' | 'unitCost'
 
   const handleBreakdownRowChange = (
     itemId: string,
     section: keyof CostBreakdownSet,
     rowId: string,
     field: BreakdownEditableField,
-    value: string
+    value: string,
   ) => {
-    projectCostService.saveDraft(projectId, draft => {
-      const item = draft.items.find(i => i.id === itemId);
-      if (!item) return;
-      
-      const rows = item.actual.breakdown[section];
-      let row = rows.find(r => r.id === rowId);
+    projectCostService.saveDraft(projectId, (draft) => {
+      const item = draft.items.find((i) => i.id === itemId)
+      if (!item) return
+
+      const rows = item.actual.breakdown[section]
+      let row = rows.find((r) => r.id === rowId)
 
       if (!row) {
-        row = { id: rowId, name: 'عنصر جديد', quantity: 0, unitCost: 0, totalCost: 0, origin: 'actual-only' };
-        rows.push(row);
+        row = {
+          id: rowId,
+          name: 'عنصر جديد',
+          quantity: 0,
+          unitCost: 0,
+          totalCost: 0,
+          origin: 'actual-only',
+        }
+        rows.push(row)
       }
 
       if (field === 'quantity' || field === 'unitCost') {
-        const numericValue = parseNumericInput(value);
+        const numericValue = parseNumericInput(value)
         if (field === 'quantity') {
-          row.quantity = numericValue;
+          row.quantity = numericValue
         } else {
-          row.unitCost = numericValue;
+          row.unitCost = numericValue
         }
-        row.totalCost = +(row.quantity * row.unitCost).toFixed(2);
+        row.totalCost = +(row.quantity * row.unitCost).toFixed(2)
 
         // تحديث فوري لحالة البند وتفعيل تسجيل التغيير
-        item.state = { ...item.state, isModified: true, breakdownDirty: true };
+        item.state = { ...item.state, isModified: true, breakdownDirty: true }
 
         // إعطاء تغذية راجعة فورية للمستخدم
-        console.log(`📝 تم تحديث ${section} - ${field}: ${value} للبند ${itemId}`);
+        console.log(`📝 تم تحديث ${section} - ${field}: ${value} للبند ${itemId}`)
       } else if (field === 'name') {
-        row.name = value;
-        item.state = { ...item.state, isModified: true, breakdownDirty: true };
+        row.name = value
+        item.state = { ...item.state, isModified: true, breakdownDirty: true }
       } else if (field === 'unit') {
-        row.unit = value;
-        item.state = { ...item.state, isModified: true, breakdownDirty: true };
+        row.unit = value
+        item.state = { ...item.state, isModified: true, breakdownDirty: true }
       }
-    });
-    
+    })
+
     // تحديث الواجهة فوراً لإظهار التغييرات
-    refresh();
-  };
+    refresh()
+  }
 
   const handleImportFromTender = async () => {
     console.log('▶️ [SimplifiedProjectCostView] Import button clicked:', {
       tenderId: tenderId ?? null,
-      isImporting
-    });
+      isImporting,
+    })
 
     if (!tenderId || isImporting) {
       if (!tenderId) {
-        console.warn('⛔ [SimplifiedProjectCostView] Import blocked: no tenderId provided');
+        console.warn('⛔ [SimplifiedProjectCostView] Import blocked: no tenderId provided')
       }
       if (isImporting) {
-        console.warn('⏳ [SimplifiedProjectCostView] Import already in progress');
+        console.warn('⏳ [SimplifiedProjectCostView] Import already in progress')
       }
-      return;
+      return
     }
 
-    console.info('▶️ [SimplifiedProjectCostView] Import requested for tender:', tenderId);
-    setIsImporting(true);
-    setActionMessage('');
-    setErrorMessage(null);
+    console.info('▶️ [SimplifiedProjectCostView] Import requested for tender:', tenderId)
+    setIsImporting(true)
+    setActionMessage('')
+    setErrorMessage(null)
 
     try {
-      ensure();
-      const result = await mergeFromTender(tenderId);
-      refresh();
-      setForceUpdateKey(prev => prev + 1);
+      ensure()
+      const result = await mergeFromTender(tenderId)
+      refresh()
+      setForceUpdateKey((prev) => prev + 1)
 
-      const summaryParts: string[] = [];
+      const summaryParts: string[] = []
       if (result?.added) {
-        summaryParts.push(`${result.added} بند جديد`);
+        summaryParts.push(`${result.added} بند جديد`)
       }
       if (result?.updated) {
-        summaryParts.push(`${result.updated} بند محدث`);
+        summaryParts.push(`${result.updated} بند محدث`)
       }
       if (result?.conflicted) {
-        summaryParts.push(`${result.conflicted} بند بحاجة للمراجعة`);
+        summaryParts.push(`${result.conflicted} بند بحاجة للمراجعة`)
       }
-      const summary = summaryParts.length > 0
-        ? `تم استيراد بنود التكلفة من المنافسة (${summaryParts.join('، ')}).`
-        : 'تم تحديث بنود التكلفة من المنافسة.';
+      const summary =
+        summaryParts.length > 0
+          ? `تم استيراد بنود التكلفة من المنافسة (${summaryParts.join('، ')}).`
+          : 'تم تحديث بنود التكلفة من المنافسة.'
 
-      setActionMessage(summary);
-      setTimeout(() => setActionMessage(''), 6000);
+      setActionMessage(summary)
+      setTimeout(() => setActionMessage(''), 6000)
     } catch (error) {
-      console.error('❌ [SimplifiedProjectCostView] Failed to import from tender:', error);
-      setErrorMessage('تعذر استيراد البنود من المنافسة. حاول مرة أخرى.');
-      setTimeout(() => setErrorMessage(null), 6000);
+      console.error('❌ [SimplifiedProjectCostView] Failed to import from tender:', error)
+      setErrorMessage('تعذر استيراد البنود من المنافسة. حاول مرة أخرى.')
+      setTimeout(() => setErrorMessage(null), 6000)
     } finally {
-      setIsImporting(false);
+      setIsImporting(false)
     }
-  };
+  }
 
-  type PercentageKey = 'administrative' | 'operational' | 'profit';
+  type PercentageKey = 'administrative' | 'operational' | 'profit'
 
   const handlePercentagesChange = (itemId: string, type: PercentageKey, value: string) => {
-    projectCostService.saveDraft(projectId, draft => {
-      const item = draft.items.find(i => i.id === itemId);
-      if (!item) return;
-      
-      const numericValue = parseNumericInput(value);
+    projectCostService.saveDraft(projectId, (draft) => {
+      const item = draft.items.find((i) => i.id === itemId)
+      if (!item) return
+
+      const numericValue = parseNumericInput(value)
       item.actual.additionalPercentages = {
         ...item.actual.additionalPercentages,
-        [type]: numericValue
-      };
-      item.state = { ...item.state, isModified: true, breakdownDirty: true };
-    });
-  };
+        [type]: numericValue,
+      }
+      item.state = { ...item.state, isModified: true, breakdownDirty: true }
+    })
+  }
 
   const handleAddBreakdownRow = (itemId: string, section: keyof CostBreakdownSet) => {
-    const rowId = `new-${Date.now()}`;
-    handleBreakdownRowChange(itemId, section, rowId, 'name', `عنصر جديد ${Date.now()}`);
-  };
+    const rowId = `new-${Date.now()}`
+    handleBreakdownRowChange(itemId, section, rowId, 'name', `عنصر جديد ${Date.now()}`)
+  }
 
-  const handleDeleteBreakdownRow = (itemId: string, section: keyof CostBreakdownSet, rowId: string) => {
-    projectCostService.saveDraft(projectId, draft => {
-      const item = draft.items.find(i => i.id === itemId);
-      if (!item) return;
-      
-      const rows = item.actual.breakdown[section];
-      const index = rows.findIndex(r => r.id === rowId);
-      
+  const handleDeleteBreakdownRow = (
+    itemId: string,
+    section: keyof CostBreakdownSet,
+    rowId: string,
+  ) => {
+    projectCostService.saveDraft(projectId, (draft) => {
+      const item = draft.items.find((i) => i.id === itemId)
+      if (!item) return
+
+      const rows = item.actual.breakdown[section]
+      const index = rows.findIndex((r) => r.id === rowId)
+
       if (index >= 0) {
-        rows.splice(index, 1);
-        item.state = { ...item.state, isModified: true, breakdownDirty: true };
+        rows.splice(index, 1)
+        item.state = { ...item.state, isModified: true, breakdownDirty: true }
       }
-    });
-  };
+    })
+  }
 
   const handleIssuePurchaseOrder = (itemId: string) => {
     // Implementation for purchase order
-    console.log('Issue purchase order for item:', itemId);
-  };
+    console.log('Issue purchase order for item:', itemId)
+  }
 
   const handleDeleteItem = (itemId: string) => {
-    const itemName = items.find(item => item.id === itemId)?.description ?? 'البند';
-    projectCostService.saveDraft(projectId, draft => {
-      draft.items = draft.items.filter(i => i.id !== itemId);
-    });
-    refresh();
-    setActionMessage(`❌ تم حذف "${itemName}" وجميع بياناته بنجاح`);
-    setTimeout(() => setActionMessage(''), 4000);
-  };
+    const itemName = items.find((item) => item.id === itemId)?.description ?? 'البند'
+    projectCostService.saveDraft(projectId, (draft) => {
+      draft.items = draft.items.filter((i) => i.id !== itemId)
+    })
+    refresh()
+    setActionMessage(`❌ تم حذف "${itemName}" وجميع بياناته بنجاح`)
+    setTimeout(() => setActionMessage(''), 4000)
+  }
 
   const renderPricingSummary = () => {
-    const totals = draft?.totals ?? { estimatedTotal: 0, actualTotal: 0, varianceTotal: 0, variancePct: 0 };
-    
+    const totals = draft?.totals ?? {
+      estimatedTotal: 0,
+      actualTotal: 0,
+      varianceTotal: 0,
+      variancePct: 0,
+    }
+
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <div className="rounded-lg border border-info/30 bg-info/10 p-4">
           <div className="mb-1 text-sm text-info">التكلفة التقديرية</div>
-          <div className="text-2xl font-bold text-info">{formatCurrency(totals.estimatedTotal)}</div>
+          <div className="text-2xl font-bold text-info">
+            {formatCurrency(totals.estimatedTotal)}
+          </div>
         </div>
         <div className="rounded-lg border border-success/30 bg-success/10 p-4">
           <div className="mb-1 text-sm text-success">التكلفة الفعلية</div>
-          <div className="text-2xl font-bold text-success">{formatCurrency(totals.actualTotal)}</div>
+          <div className="text-2xl font-bold text-success">
+            {formatCurrency(totals.actualTotal)}
+          </div>
         </div>
         <div
           className={`rounded-lg border p-4 ${
@@ -511,37 +565,59 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
           </div>
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   const renderBreakdownAnalysis = (item: ProjectCostItem) => {
-    const sections: { key: keyof CostBreakdownSet; label: string; dotClass: string; badgeClass: string }[] = [
-      { key: 'materials', label: 'المواد', dotClass: 'bg-warning', badgeClass: 'bg-warning/10 text-warning' },
+    const sections: {
+      key: keyof CostBreakdownSet
+      label: string
+      dotClass: string
+      badgeClass: string
+    }[] = [
+      {
+        key: 'materials',
+        label: 'المواد',
+        dotClass: 'bg-warning',
+        badgeClass: 'bg-warning/10 text-warning',
+      },
       { key: 'labor', label: 'العمالة', dotClass: 'bg-info', badgeClass: 'bg-info/10 text-info' },
-      { key: 'equipment', label: 'المعدات', dotClass: 'bg-success', badgeClass: 'bg-success/10 text-success' },
-      { key: 'subcontractors', label: 'مقاولو الباطن', dotClass: 'bg-accent', badgeClass: 'bg-accent/20 text-accent-foreground' }
-    ];
+      {
+        key: 'equipment',
+        label: 'المعدات',
+        dotClass: 'bg-success',
+        badgeClass: 'bg-success/10 text-success',
+      },
+      {
+        key: 'subcontractors',
+        label: 'مقاولو الباطن',
+        dotClass: 'bg-accent',
+        badgeClass: 'bg-accent/20 text-accent-foreground',
+      },
+    ]
 
-    const hasPendingSync = Boolean(item.state?.breakdownDirty);
-    const breakdown = item.actual.breakdown;
+    const hasPendingSync = Boolean(item.state?.breakdownDirty)
+    const breakdown = item.actual.breakdown
     const baseAmount =
       sumRows(breakdown.materials) +
       sumRows(breakdown.labor) +
       sumRows(breakdown.equipment) +
-      sumRows(breakdown.subcontractors);
+      sumRows(breakdown.subcontractors)
 
-    const administrativePercent = item.actual.additionalPercentages?.administrative ?? defaultPercentages.administrative;
-    const operationalPercent = item.actual.additionalPercentages?.operational ?? defaultPercentages.operational;
-    const profitPercent = item.actual.additionalPercentages?.profit ?? defaultPercentages.profit;
+    const administrativePercent =
+      item.actual.additionalPercentages?.administrative ?? defaultPercentages.administrative
+    const operationalPercent =
+      item.actual.additionalPercentages?.operational ?? defaultPercentages.operational
+    const profitPercent = item.actual.additionalPercentages?.profit ?? defaultPercentages.profit
 
-    const administrativeAmount = baseAmount * (administrativePercent / 100);
-    const operationalAmount = baseAmount * (operationalPercent / 100);
-    const profitAmount = baseAmount * (profitPercent / 100);
+    const administrativeAmount = baseAmount * (administrativePercent / 100)
+    const operationalAmount = baseAmount * (operationalPercent / 100)
+    const profitAmount = baseAmount * (profitPercent / 100)
 
-    const subtotalWithoutVAT = baseAmount + administrativeAmount + operationalAmount + profitAmount;
-    const vatAmount = subtotalWithoutVAT * 0.15;
-    const totalWithVAT = subtotalWithoutVAT + vatAmount;
-    const unitPrice = item.actual.quantity > 0 ? subtotalWithoutVAT / item.actual.quantity : 0;
+    const subtotalWithoutVAT = baseAmount + administrativeAmount + operationalAmount + profitAmount
+    const vatAmount = subtotalWithoutVAT * 0.15
+    const totalWithVAT = subtotalWithoutVAT + vatAmount
+    const unitPrice = item.actual.quantity > 0 ? subtotalWithoutVAT / item.actual.quantity : 0
 
     return (
       <div className="space-y-4">
@@ -551,9 +627,19 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
               <div className="mb-1 flex items-center justify-center gap-1 text-xs text-muted-foreground">
                 <span>التكلفة الأساسية</span>
                 {validateCalculationConsistency(item) ? (
-                  <span className="rounded bg-success/10 px-1 text-xs text-success" title="الحسابات متطابقة">✓</span>
+                  <span
+                    className="rounded bg-success/10 px-1 text-xs text-success"
+                    title="الحسابات متطابقة"
+                  >
+                    ✓
+                  </span>
                 ) : (
-                  <span className="rounded bg-warning/10 px-1 text-xs text-warning" title="يحتاج إعادة حساب">⚠</span>
+                  <span
+                    className="rounded bg-warning/10 px-1 text-xs text-warning"
+                    title="يحتاج إعادة حساب"
+                  >
+                    ⚠
+                  </span>
                 )}
               </div>
               <div className="text-lg font-bold text-foreground">{formatCurrency(baseAmount)}</div>
@@ -565,7 +651,9 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
               <div className="mb-1 inline-block rounded-full border border-info/40 px-2 py-0.5 text-xs font-bold text-info">
                 {administrativePercent.toFixed(1)}%
               </div>
-              <div className="text-lg font-bold text-info">{formatCurrency(administrativeAmount)}</div>
+              <div className="text-lg font-bold text-info">
+                {formatCurrency(administrativeAmount)}
+              </div>
               <div className="text-xs text-info">{baseCurrency}</div>
             </div>
 
@@ -574,7 +662,9 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
               <div className="mb-1 inline-block rounded-full border border-success/40 px-2 py-0.5 text-xs font-bold text-success">
                 {operationalPercent.toFixed(1)}%
               </div>
-              <div className="text-lg font-bold text-success">{formatCurrency(operationalAmount)}</div>
+              <div className="text-lg font-bold text-success">
+                {formatCurrency(operationalAmount)}
+              </div>
               <div className="text-xs text-success">{baseCurrency}</div>
             </div>
 
@@ -591,14 +681,20 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
             <div className="rounded-md border border-warning/30 bg-warning/10 p-3 text-center">
               <div className="mb-1 text-xs font-medium text-warning">قيمة الضريبة</div>
-              <div className="mb-1 inline-block rounded-full border border-warning/40 px-2 py-0.5 text-xs font-bold text-warning">15%</div>
+              <div className="mb-1 inline-block rounded-full border border-warning/40 px-2 py-0.5 text-xs font-bold text-warning">
+                15%
+              </div>
               <div className="text-lg font-bold text-warning">{formatCurrency(vatAmount)}</div>
               <div className="text-xs text-warning">{baseCurrency}</div>
             </div>
 
             <div className="rounded-md border border-accent/30 bg-accent/10 p-3 text-center">
-              <div className="mb-1 text-xs font-medium text-accent-foreground">الإجمالي مع الضريبة</div>
-              <div className="text-lg font-bold text-accent-foreground">{formatCurrency(totalWithVAT)}</div>
+              <div className="mb-1 text-xs font-medium text-accent-foreground">
+                الإجمالي مع الضريبة
+              </div>
+              <div className="text-lg font-bold text-accent-foreground">
+                {formatCurrency(totalWithVAT)}
+              </div>
               <div className="text-xs text-accent-foreground">{baseCurrency}</div>
             </div>
 
@@ -627,7 +723,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 step={0.1}
                 defaultValue={administrativePercent.toFixed(1)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                onBlur={e => handlePercentagesChange(item.id, 'administrative', e.target.value)}
+                onBlur={(e) => handlePercentagesChange(item.id, 'administrative', e.target.value)}
               />
             </label>
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
@@ -639,7 +735,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 step={0.1}
                 defaultValue={operationalPercent.toFixed(1)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                onBlur={e => handlePercentagesChange(item.id, 'operational', e.target.value)}
+                onBlur={(e) => handlePercentagesChange(item.id, 'operational', e.target.value)}
               />
             </label>
             <label className="flex flex-col gap-1 text-xs text-muted-foreground">
@@ -651,41 +747,50 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 step={0.1}
                 defaultValue={profitPercent.toFixed(1)}
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                onBlur={e => handlePercentagesChange(item.id, 'profit', e.target.value)}
+                onBlur={(e) => handlePercentagesChange(item.id, 'profit', e.target.value)}
               />
             </label>
           </div>
         </div>
 
-        {sections.map(section => {
-          const sectionKey = `${item.id}:${section.key}`;
-          const isOpen = expandedBreakdownSections.has(sectionKey);
+        {sections.map((section) => {
+          const sectionKey = `${item.id}:${section.key}`
+          const isOpen = expandedBreakdownSections.has(sectionKey)
 
-          const estimatedRows = item.estimated?.breakdown?.[section.key] ?? [];
-          const actualRows = item.actual?.breakdown?.[section.key] ?? [];
+          const estimatedRows = item.estimated?.breakdown?.[section.key] ?? []
+          const actualRows = item.actual?.breakdown?.[section.key] ?? []
 
           const estimatedPairs = estimatedRows.map((row, idx) => {
-            const id = resolveRowId(row, `est-${section.key}`, idx);
-            return [id, row] as const;
-          });
+            const id = resolveRowId(row, `est-${section.key}`, idx)
+            return [id, row] as const
+          })
           const actualPairs = actualRows.map((row, idx) => {
-            const id = resolveRowId(row, `act-${section.key}`, idx);
-            return [id, row] as const;
-          });
+            const id = resolveRowId(row, `act-${section.key}`, idx)
+            return [id, row] as const
+          })
 
-          const estimatedRowMap = new Map(estimatedPairs);
-          const actualRowMap = new Map(actualPairs);
-          const allRowIds = Array.from(new Set([...estimatedRowMap.keys(), ...actualRowMap.keys()]));
+          const estimatedRowMap = new Map(estimatedPairs)
+          const actualRowMap = new Map(actualPairs)
+          const allRowIds = Array.from(new Set([...estimatedRowMap.keys(), ...actualRowMap.keys()]))
 
-          const estimatedTotal = sumRows(estimatedRows);
-          const actualTotal = sumRows(actualRows);
-          const varianceValue = actualTotal - estimatedTotal;
-          const variancePct = estimatedTotal > 0 ? (varianceValue / estimatedTotal) * 100 : 0;
-          const varianceClass = varianceValue > 0 ? 'text-destructive' : varianceValue < 0 ? 'text-success' : 'text-muted-foreground';
-          const displayedRowCount = actualRows.length !== 0 ? actualRows.length : estimatedRows.length;
+          const estimatedTotal = sumRows(estimatedRows)
+          const actualTotal = sumRows(actualRows)
+          const varianceValue = actualTotal - estimatedTotal
+          const variancePct = estimatedTotal > 0 ? (varianceValue / estimatedTotal) * 100 : 0
+          const varianceClass =
+            varianceValue > 0
+              ? 'text-destructive'
+              : varianceValue < 0
+                ? 'text-success'
+                : 'text-muted-foreground'
+          const displayedRowCount =
+            actualRows.length !== 0 ? actualRows.length : estimatedRows.length
 
           return (
-            <div key={section.key} className="overflow-hidden rounded-xl border border-border bg-card">
+            <div
+              key={section.key}
+              className="overflow-hidden rounded-xl border border-border bg-card"
+            >
               <button
                 type="button"
                 onClick={() => toggleBreakdownSection(item.id, section.key)}
@@ -694,7 +799,11 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
               >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground">
-                    {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    {isOpen ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
                   </span>
                   <div className="flex items-center gap-2">
                     <span className={`inline-block w-2.5 h-2.5 rounded-full ${section.dotClass}`} />
@@ -714,9 +823,14 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
               </button>
 
               {isOpen && (
-                <div className="space-y-3 border-t border-border/40 p-3 md:p-4" id={`${sectionKey}-panel`}>
+                <div
+                  className="space-y-3 border-t border-border/40 p-3 md:p-4"
+                  id={`${sectionKey}-panel`}
+                >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-muted-foreground">تفاصيل {section.label}</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      تفاصيل {section.label}
+                    </p>
                     <button
                       className="flex items-center gap-1 text-sm text-success hover:text-success"
                       onClick={() => handleAddBreakdownRow(item.id, section.key)}
@@ -751,13 +865,14 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                           </tr>
                         )}
                         {allRowIds.map((rowId, idx) => {
-                          const estimatedRow = estimatedRowMap.get(rowId);
-                          const actualRow = actualRowMap.get(rowId);
-                          const fallbackName = actualRow?.name ?? estimatedRow?.name ?? `عنصر ${idx + 1}`;
-                          const quantity = actualRow?.quantity ?? estimatedRow?.quantity ?? 0;
-                          const unitCost = actualRow?.unitCost ?? estimatedRow?.unitCost ?? 0;
-                          const unit = estimatedRow?.unit ?? actualRow?.unit ?? '-';
-                          const totalCost = quantity * unitCost;
+                          const estimatedRow = estimatedRowMap.get(rowId)
+                          const actualRow = actualRowMap.get(rowId)
+                          const fallbackName =
+                            actualRow?.name ?? estimatedRow?.name ?? `عنصر ${idx + 1}`
+                          const quantity = actualRow?.quantity ?? estimatedRow?.quantity ?? 0
+                          const unitCost = actualRow?.unitCost ?? estimatedRow?.unitCost ?? 0
+                          const unit = estimatedRow?.unit ?? actualRow?.unit ?? '-'
+                          const totalCost = quantity * unitCost
 
                           return (
                             <tr key={rowId} className="odd:bg-background even:bg-muted">
@@ -769,18 +884,36 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                                     className="w-full rounded border border-input bg-background px-2 py-1 text-sm"
                                     defaultValue={fallbackName}
                                     placeholder="وصف العنصر"
-                                    onBlur={e => handleBreakdownRowChange(item.id, section.key, rowId, 'name', e.target.value)}
+                                    onBlur={(e) =>
+                                      handleBreakdownRowChange(
+                                        item.id,
+                                        section.key,
+                                        rowId,
+                                        'name',
+                                        e.target.value,
+                                      )
+                                    }
                                   />
                                 )}
                               </td>
-                              <td className="px-3 py-2 text-center align-middle text-muted-foreground">{unit}</td>
+                              <td className="px-3 py-2 text-center align-middle text-muted-foreground">
+                                {unit}
+                              </td>
                               <td className="px-3 py-2 text-center">
                                 <input
                                   className="w-20 md:w-24 rounded border border-input bg-background px-2 py-1 text-sm text-center"
                                   defaultValue={quantity.toFixed(2)}
                                   title="الكمية"
                                   placeholder="0.00"
-                                  onBlur={e => handleBreakdownRowChange(item.id, section.key, rowId, 'quantity', e.target.value)}
+                                  onBlur={(e) =>
+                                    handleBreakdownRowChange(
+                                      item.id,
+                                      section.key,
+                                      rowId,
+                                      'quantity',
+                                      e.target.value,
+                                    )
+                                  }
                                 />
                               </td>
                               <td className="px-3 py-2 text-center">
@@ -789,10 +922,20 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                                   defaultValue={unitCost.toFixed(2)}
                                   title="سعر الوحدة"
                                   placeholder="0.00"
-                                  onBlur={e => handleBreakdownRowChange(item.id, section.key, rowId, 'unitCost', e.target.value)}
+                                  onBlur={(e) =>
+                                    handleBreakdownRowChange(
+                                      item.id,
+                                      section.key,
+                                      rowId,
+                                      'unitCost',
+                                      e.target.value,
+                                    )
+                                  }
                                 />
                               </td>
-                              <td className="px-3 py-2 text-center font-medium text-foreground">{formatCurrency(totalCost)}</td>
+                              <td className="px-3 py-2 text-center font-medium text-foreground">
+                                {formatCurrency(totalCost)}
+                              </td>
                               <td className="px-3 py-2 text-center">
                                 <div className="flex items-center justify-center">
                                   {estimatedRow ? (
@@ -800,7 +943,9 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                                   ) : (
                                     <DeleteConfirmation
                                       itemName={fallbackName}
-                                      onConfirm={() => handleDeleteBreakdownRow(item.id, section.key, rowId)}
+                                      onConfirm={() =>
+                                        handleDeleteBreakdownRow(item.id, section.key, rowId)
+                                      }
                                       trigger={
                                         <ActionRoundButton
                                           icon={Trash2}
@@ -814,7 +959,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                                 </div>
                               </td>
                             </tr>
-                          );
+                          )
                         })}
                       </tbody>
                     </table>
@@ -822,7 +967,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 </div>
               )}
             </div>
-          );
+          )
         })}
 
         {(hasPendingSync || !validateCalculationConsistency(item)) && (
@@ -832,7 +977,10 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning" />
                 <div className="text-sm text-warning">
                   <p className="font-medium">تحديث مطلوب</p>
-                  <p>تم تعديل بيانات التكاليف. يرجى النقر على &quot;حفظ وتحديث&quot; لتطبيق التغييرات على سعر البند.</p>
+                  <p>
+                    تم تعديل بيانات التكاليف. يرجى النقر على &quot;حفظ وتحديث&quot; لتطبيق التغييرات
+                    على سعر البند.
+                  </p>
                 </div>
               </div>
             )}
@@ -841,7 +989,10 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning" />
                 <div className="text-sm text-warning">
                   <p className="font-medium">تحذير: عدم تطابق في الحسابات</p>
-                  <p>الحسابات الحالية لا تتطابق مع سعر البند المعروض. يُنصح بإعادة الحساب للتأكد من الدقة.</p>
+                  <p>
+                    الحسابات الحالية لا تتطابق مع سعر البند المعروض. يُنصح بإعادة الحساب للتأكد من
+                    الدقة.
+                  </p>
                 </div>
               </div>
             )}
@@ -899,14 +1050,16 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
               </div>
 
               <div className="text-center mt-2">
-                <p className="text-xs text-muted-foreground">💡 قم بتعديل البيانات في الجداول أعلاه ثم اضغط على زر الحفظ لتحديث السعر النهائي</p>
+                <p className="text-xs text-muted-foreground">
+                  💡 قم بتعديل البيانات في الجداول أعلاه ثم اضغط على زر الحفظ لتحديث السعر النهائي
+                </p>
               </div>
             </div>
           </div>
         )}
       </div>
-    );
-  };
+    )
+  }
 
   if (loading) {
     return (
@@ -915,25 +1068,36 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
           <div className="text-lg text-muted-foreground">جاري التحميل...</div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
     <div className="min-h-screen bg-muted/20" dir="rtl">
       <div className="p-6 space-y-6">
         {actionMessage && (
-          <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success shadow-sm" role="status" aria-live="polite">
-            <span className="text-lg" role="img" aria-hidden="true">✅</span>
+          <div
+            className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success shadow-sm"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="text-lg" role="img" aria-hidden="true">
+              ✅
+            </span>
             <span>{actionMessage}</span>
           </div>
         )}
         {errorMessage && (
-          <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive shadow-sm" role="alert">
-            <span className="text-lg" role="img" aria-hidden="true">⚠️</span>
+          <div
+            className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive shadow-sm"
+            role="alert"
+          >
+            <span className="text-lg" role="img" aria-hidden="true">
+              ⚠️
+            </span>
             <span>{errorMessage}</span>
           </div>
         )}
-        
+
         {/* Header */}
         <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
           <div className="mb-4 flex items-start justify-between">
@@ -942,7 +1106,9 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                 <Calculator className="h-6 w-6 text-info" />
                 بنود التكلفة
               </h1>
-              <p className="mt-1 text-muted-foreground">إدارة وتحليل التكاليف التقديرية والفعلية للمشروع</p>
+              <p className="mt-1 text-muted-foreground">
+                إدارة وتحليل التكاليف التقديرية والفعلية للمشروع
+              </p>
             </div>
             <div className="flex items-center gap-2">
               {tenderId && (
@@ -1000,43 +1166,73 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
               </colgroup>
               <thead className="sticky top-0 z-10 bg-card">
                 <tr className="border-b border-border bg-muted/40">
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">إجراءات</th>
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">فارق %</th>
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">فارق القيمة</th>
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">الإجمالي الفعلي</th>
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">السعر الفعلي</th>
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">الكمية الفعلية</th>
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">الإجمالي التقديري</th>
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">السعر التقديري</th>
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">الكمية التقديرية</th>
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">الوحدة</th>
-                  <th className="border border-border px-3 py-2 text-right text-sm font-semibold text-muted-foreground">وصف البند</th>
-                  <th className="border border-border px-3 py-2 text-right text-sm font-semibold text-muted-foreground">رقم البند</th>
-                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">عرض</th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    إجراءات
+                  </th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    فارق %
+                  </th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    فارق القيمة
+                  </th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    الإجمالي الفعلي
+                  </th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    السعر الفعلي
+                  </th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    الكمية الفعلية
+                  </th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    الإجمالي التقديري
+                  </th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    السعر التقديري
+                  </th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    الكمية التقديرية
+                  </th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    الوحدة
+                  </th>
+                  <th className="border border-border px-3 py-2 text-right text-sm font-semibold text-muted-foreground">
+                    وصف البند
+                  </th>
+                  <th className="border border-border px-3 py-2 text-right text-sm font-semibold text-muted-foreground">
+                    رقم البند
+                  </th>
+                  <th className="border border-border px-3 py-2 text-center text-sm font-semibold text-muted-foreground">
+                    عرض
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item, index) => {
-                  const isExpanded = expandedItems.has(item.id);
-                  const estimatedQuantity = item.estimated?.quantity ?? 0;
-                  const estimatedUnitPrice = item.estimated?.unitPrice ?? 0;
-                  const estimatedTotal = item.estimated?.totalPrice ?? +(estimatedQuantity * estimatedUnitPrice).toFixed(2);
-                  const actualQuantity = item.actual?.quantity ?? 0;
-                  const actualUnitPrice = item.actual?.unitPrice ?? 0;
-                  const actualTotal = item.actual?.totalPrice ?? +(actualQuantity * actualUnitPrice).toFixed(2);
-                  
+                  const isExpanded = expandedItems.has(item.id)
+                  const estimatedQuantity = item.estimated?.quantity ?? 0
+                  const estimatedUnitPrice = item.estimated?.unitPrice ?? 0
+                  const estimatedTotal =
+                    item.estimated?.totalPrice ??
+                    +(estimatedQuantity * estimatedUnitPrice).toFixed(2)
+                  const actualQuantity = item.actual?.quantity ?? 0
+                  const actualUnitPrice = item.actual?.unitPrice ?? 0
+                  const actualTotal =
+                    item.actual?.totalPrice ?? +(actualQuantity * actualUnitPrice).toFixed(2)
+
                   // تشخيص: فحص حالة البيانات لكل بند
                   if (actualUnitPrice > 0 || actualTotal > 0) {
-                    const hasBreakdownData = item.actual?.breakdown && (
-                      (item.actual.breakdown.materials?.length > 0) ||
-                      (item.actual.breakdown.labor?.length > 0) ||
-                      (item.actual.breakdown.equipment?.length > 0) ||
-                      (item.actual.breakdown.subcontractors?.length > 0)
-                    );
-                    
-                    const isCalculationCorrect = actualQuantity > 0 && 
-                      Math.abs((actualUnitPrice * actualQuantity) - actualTotal) < 1;
-                    
+                    const hasBreakdownData =
+                      item.actual?.breakdown &&
+                      (item.actual.breakdown.materials?.length > 0 ||
+                        item.actual.breakdown.labor?.length > 0 ||
+                        item.actual.breakdown.equipment?.length > 0 ||
+                        item.actual.breakdown.subcontractors?.length > 0)
+
+                    const isCalculationCorrect =
+                      actualQuantity > 0 &&
+                      Math.abs(actualUnitPrice * actualQuantity - actualTotal) < 1
+
                     console.log(`📊 [UI Render] البند ${index + 1} (${item.id}):`, {
                       description: item.description?.substring(0, 40) + '...',
                       actualQuantity,
@@ -1045,20 +1241,33 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                       hasBreakdownData,
                       isCalculationCorrect,
                       calculationCheck: `${actualUnitPrice} × ${actualQuantity} = ${(actualUnitPrice * actualQuantity).toFixed(2)} ${isCalculationCorrect ? '✅' : '❌'}`,
-                      status: isCalculationCorrect ? '✅ صحيح' : '❌ يحتاج إعادة حساب'
-                    });
+                      status: isCalculationCorrect ? '✅ صحيح' : '❌ يحتاج إعادة حساب',
+                    })
                   }
-                  const varianceValue = actualTotal - estimatedTotal;
-                  const variancePct = estimatedTotal ? (varianceValue / estimatedTotal) * 100 : 0;
-                  const varianceClass = varianceValue > 0 ? 'text-destructive' : varianceValue < 0 ? 'text-success' : 'text-muted-foreground';
-                  const varianceBg = varianceValue !== 0 ? (varianceValue > 0 ? 'bg-destructive/10' : 'bg-success/10') : 'bg-muted/20';
-                  const severity = severityMap[item.id];
+                  const varianceValue = actualTotal - estimatedTotal
+                  const variancePct = estimatedTotal ? (varianceValue / estimatedTotal) * 100 : 0
+                  const varianceClass =
+                    varianceValue > 0
+                      ? 'text-destructive'
+                      : varianceValue < 0
+                        ? 'text-success'
+                        : 'text-muted-foreground'
+                  const varianceBg =
+                    varianceValue !== 0
+                      ? varianceValue > 0
+                        ? 'bg-destructive/10'
+                        : 'bg-success/10'
+                      : 'bg-muted/20'
+                  const severity = severityMap[item.id]
                   const severityStyles: Record<string, { label: string; className: string }> = {
-                    critical: { label: 'تجاوز حرج', className: 'bg-destructive/10 text-destructive' },
+                    critical: {
+                      label: 'تجاوز حرج',
+                      className: 'bg-destructive/10 text-destructive',
+                    },
                     warning: { label: 'تنبيه', className: 'bg-warning/10 text-warning' },
-                    info: { label: 'ملاحظة', className: 'bg-info/10 text-info' }
-                  };
-                  const severityBadge = severity ? severityStyles[severity] : null;
+                    info: { label: 'ملاحظة', className: 'bg-info/10 text-info' },
+                  }
+                  const severityBadge = severity ? severityStyles[severity] : null
 
                   return (
                     <React.Fragment key={`${item.id}-${actualUnitPrice}-${actualTotal}`}>
@@ -1066,7 +1275,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                         <td className="border border-border px-2 py-2 text-center align-top min-w-[50px] w-[5%]">
                           <div className="flex items-center justify-center gap-2 flex-wrap">
                             {(() => {
-                              const hasPendingSync = Boolean(item.state?.breakdownDirty);
+                              const hasPendingSync = Boolean(item.state?.breakdownDirty)
                               if (hasPendingSync) {
                                 return (
                                   <SaveConfirmation
@@ -1080,7 +1289,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                                       />
                                     }
                                   />
-                                );
+                                )
                               }
                               return (
                                 <ActionRoundButton
@@ -1090,7 +1299,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                                   tooltip="إعادة حساب سعر البند بناءً على التحليل"
                                   onClick={() => handleRecalculateItemFromBreakdown(item.id)}
                                 />
-                              );
+                              )
                             })()}
 
                             <ActionRoundButton
@@ -1123,10 +1332,14 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                             />
                           </div>
                         </td>
-                        <td className={`border border-border px-2 py-2 text-center font-semibold ${varianceClass} ${varianceBg} min-w-[60px] w-[6%]`}>
+                        <td
+                          className={`border border-border px-2 py-2 text-center font-semibold ${varianceClass} ${varianceBg} min-w-[60px] w-[6%]`}
+                        >
                           {variancePct.toFixed(1)}%
                         </td>
-                        <td className={`border border-border px-2 py-2 text-center font-semibold ${varianceClass} ${varianceBg} min-w-[120px] w-[24%]`}>
+                        <td
+                          className={`border border-border px-2 py-2 text-center font-semibold ${varianceClass} ${varianceBg} min-w-[120px] w-[24%]`}
+                        >
                           {formatCurrency(varianceValue)}
                         </td>
                         <td className="border border-border px-2 py-2 text-center font-medium text-success min-w-[90px] w-[6%]">
@@ -1154,10 +1367,14 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                           <div>
                             <div className="font-medium text-foreground">{item.description}</div>
                             {item.category && (
-                              <div className="mt-1 text-xs text-muted-foreground">{item.category}</div>
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {item.category}
+                              </div>
                             )}
                             {severityBadge && (
-                              <div className={`mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${severityBadge.className}`}>
+                              <div
+                                className={`mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${severityBadge.className}`}
+                              >
                                 <AlertTriangle className="w-3.5 h-3.5" />
                                 {severityBadge.label}
                               </div>
@@ -1174,7 +1391,11 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                             title={isExpanded ? 'إخفاء تحليل التكلفة' : 'عرض تحليل التكلفة'}
                             aria-controls={`analysis-${item.id}`}
                           >
-                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
                           </button>
                         </td>
                       </tr>
@@ -1200,7 +1421,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
                         </tr>
                       )}
                     </React.Fragment>
-                  );
+                  )
                 })}
               </tbody>
             </table>
@@ -1208,7 +1429,7 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SimplifiedProjectCostView;
+export default SimplifiedProjectCostView

@@ -1,18 +1,11 @@
-'use client'
-
 import { useState } from 'react'
-import { useCurrencyFormatter } from '@/hooks/useCurrencyFormatter'
+import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { 
-  Landmark,
-  ArrowRight,
-  Save,
-  CheckCircle
-} from 'lucide-react'
+import { Landmark, ArrowRight, Save, CheckCircle } from 'lucide-react'
 
 interface NewBankAccountProps {
   onSectionChange: (section: string) => void
@@ -20,14 +13,14 @@ interface NewBankAccountProps {
 
 export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
   interface BankAccountFormState {
-    accountName: string;
-    bankName: string;
-    accountNumber: string;
-    iban: string;
-    accountType: string;
-    initialBalance: string;
-    currency: 'SAR' | 'USD' | 'EUR';
-    isActive: boolean;
+    accountName: string
+    bankName: string
+    accountNumber: string
+    iban: string
+    accountType: string
+    initialBalance: string
+    currency: 'SAR' | 'USD' | 'EUR'
+    isActive: boolean
   }
 
   const [formData, setFormData] = useState<BankAccountFormState>({
@@ -38,7 +31,7 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
     accountType: '',
     initialBalance: '',
     currency: 'SAR',
-    isActive: true
+    isActive: true,
   })
 
   const parseInitialBalance = (value: string): number => {
@@ -57,7 +50,7 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
     'بنك الإنماء',
     'البنك العربي الوطني',
     'مصرف الراجحي',
-    'البنك السعودي البريطاني ساب'
+    'البنك السعودي البريطاني ساب',
   ]
 
   // أنواع الحسابات
@@ -65,19 +58,23 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
     { value: 'current', label: 'حساب جاري' },
     { value: 'savings', label: 'حساب توفير' },
     { value: 'investment', label: 'حساب استثماري' },
-    { value: 'project', label: 'حساب مشروع' }
+    { value: 'project', label: 'حساب مشروع' },
   ]
 
   // حفظ الحساب
   const handleSave = () => {
-    if (formData.accountName.trim() === '' || formData.bankName.trim() === '' || formData.accountNumber.trim() === '') {
+    if (
+      formData.accountName.trim() === '' ||
+      formData.bankName.trim() === '' ||
+      formData.accountNumber.trim() === ''
+    ) {
       alert('يرجى ملء جميع الحقول المطلوبة')
       return
     }
 
     const sanitizedData = {
       ...formData,
-      initialBalance: parseInitialBalance(formData.initialBalance)
+      initialBalance: parseInitialBalance(formData.initialBalance),
     }
 
     console.log('حفظ الحساب الجديد:', sanitizedData)
@@ -90,14 +87,14 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
       label: 'العودة للحسابات البنكية',
       icon: ArrowRight,
       onClick: () => onSectionChange('bank-accounts'),
-      variant: 'outline' as const
+      variant: 'outline' as const,
     },
     {
       label: 'حفظ الحساب',
       icon: Save,
       onClick: handleSave,
-      primary: true
-    }
+      primary: true,
+    },
   ]
 
   const NOT_SET_LABEL = 'لم يتم تحديده'
@@ -106,18 +103,19 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
 
   const accountNameDisplay = getDisplayValue(formData.accountName)
   const bankNameDisplay = getDisplayValue(formData.bankName)
-  const accountTypeLabel = accountTypes.find(type => type.value === formData.accountType)?.label ?? NOT_SET_LABEL
-  const formattedAccountNumber = formData.accountNumber.trim() === ''
-    ? NOT_SET_LABEL
-    : formData.accountNumber.replace(/(.{4})/g, '$1 ').trim()
+  const accountTypeLabel =
+    accountTypes.find((type) => type.value === formData.accountType)?.label ?? NOT_SET_LABEL
+  const formattedAccountNumber =
+    formData.accountNumber.trim() === ''
+      ? NOT_SET_LABEL
+      : formData.accountNumber.replace(/(.{4})/g, '$1 ').trim()
   const formattedIban = getDisplayValue(formData.iban)
   const { formatCurrencyValue } = useCurrencyFormatter(formData.currency)
 
   return (
-  <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-primary/5">
-      
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/10 to-primary/5">
       {/* الهيدر */}
-  <div className="bg-card border-b border-border shadow-sm">
+      <div className="bg-card border-b border-border shadow-sm">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -127,12 +125,12 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
                 <p className="text-sm text-muted-foreground">إضافة حساب بنكي جديد للمؤسسة</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               {quickActions.map((action, index) => (
                 <Button
                   key={index}
-                  variant={action.primary ? 'default' : action.variant ?? 'outline'}
+                  variant={action.primary ? 'default' : (action.variant ?? 'outline')}
                   onClick={action.onClick}
                   className="flex items-center gap-2"
                 >
@@ -149,7 +147,6 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
       <div className="p-6">
         <div className="max-w-4xl mx-auto">
           <div className="space-y-6">
-
             {/* المعلومات الأساسية */}
             <Card>
               <CardHeader>
@@ -162,40 +159,64 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
                     <Input
                       id="accountName"
                       value={formData.accountName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, accountName: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, accountName: e.target.value }))
+                      }
                       placeholder="الحساب الرئيسي للشركة"
                       required
                     />
                   </div>
                   <div>
                     <Label htmlFor="bankName">اسم البنك *</Label>
-                    <Select value={formData.bankName} onValueChange={(value: string) => setFormData(prev => ({ ...prev, bankName: value }))}>
+                    <Select
+                      value={formData.bankName}
+                      onValueChange={(value: string) =>
+                        setFormData((prev) => ({ ...prev, bankName: value }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="اختر البنك" />
                       </SelectTrigger>
                       <SelectContent>
                         {saudiBanks.map((bank) => (
-                          <SelectItem key={bank} value={bank}>{bank}</SelectItem>
+                          <SelectItem key={bank} value={bank}>
+                            {bank}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label htmlFor="accountType">نوع الحساب *</Label>
-                    <Select value={formData.accountType} onValueChange={(value: string) => setFormData(prev => ({ ...prev, accountType: value }))}>
+                    <Select
+                      value={formData.accountType}
+                      onValueChange={(value: string) =>
+                        setFormData((prev) => ({ ...prev, accountType: value }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="اختر نوع الحساب" />
                       </SelectTrigger>
                       <SelectContent>
                         {accountTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label htmlFor="currency">العملة</Label>
-                    <Select value={formData.currency} onValueChange={(value: string) => setFormData(prev => ({ ...prev, currency: value as BankAccountFormState['currency'] }))}>
+                    <Select
+                      value={formData.currency}
+                      onValueChange={(value: string) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          currency: value as BankAccountFormState['currency'],
+                        }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -222,7 +243,9 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
                     <Input
                       id="accountNumber"
                       value={formData.accountNumber}
-                      onChange={(e) => setFormData(prev => ({ ...prev, accountNumber: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, accountNumber: e.target.value }))
+                      }
                       placeholder="1234567890123456"
                       required
                     />
@@ -232,7 +255,9 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
                     <Input
                       id="iban"
                       value={formData.iban}
-                      onChange={(e) => setFormData(prev => ({ ...prev, iban: e.target.value.toUpperCase() }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, iban: e.target.value.toUpperCase() }))
+                      }
                       placeholder="SA0340000001234567890123456"
                     />
                   </div>
@@ -244,7 +269,9 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
                       min="0"
                       step="0.01"
                       value={formData.initialBalance}
-                      onChange={(e) => setFormData(prev => ({ ...prev, initialBalance: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, initialBalance: e.target.value }))
+                      }
                       placeholder="0.00"
                     />
                   </div>
@@ -253,7 +280,9 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
                       type="checkbox"
                       id="isActive"
                       checked={formData.isActive}
-                      onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, isActive: e.target.checked }))
+                      }
                       className="rounded border-input"
                       aria-label="حساب نشط"
                     />
@@ -283,15 +312,11 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">نوع الحساب:</span>
-                    <span className="font-medium">
-                      {accountTypeLabel}
-                    </span>
+                    <span className="font-medium">{accountTypeLabel}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">رقم الحساب:</span>
-                    <span className="font-medium font-mono">
-                      {formattedAccountNumber}
-                    </span>
+                    <span className="font-medium font-mono">{formattedAccountNumber}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">الآيبان:</span>
@@ -299,21 +324,24 @@ export function NewBankAccount({ onSectionChange }: NewBankAccountProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">الرصيد الافتتاحي:</span>
-                    <span className="font-medium">{formatCurrencyValue(parseInitialBalance(formData.initialBalance), {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}</span>
+                    <span className="font-medium">
+                      {formatCurrencyValue(parseInitialBalance(formData.initialBalance), {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">حالة الحساب:</span>
-                    <span className={`font-medium ${formData.isActive ? 'text-success' : 'text-muted-foreground'}`}>
+                    <span
+                      className={`font-medium ${formData.isActive ? 'text-success' : 'text-muted-foreground'}`}
+                    >
                       {formData.isActive ? 'نشط' : 'غير نشط'}
                     </span>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
           </div>
         </div>
       </div>

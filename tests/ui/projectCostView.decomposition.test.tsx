@@ -52,34 +52,36 @@ vi.mock('@/application/hooks/useProjectBOQ', () => ({
             quantity: 1,
             unitPrice: 10,
             totalPrice: 10,
-            breakdown: { materials: [], labor: [], equipment: [], subcontractors: [] }
+            breakdown: { materials: [], labor: [], equipment: [], subcontractors: [] },
           },
           actual: {
             quantity: 1,
             unitPrice: 12,
             totalPrice: 12,
             breakdown: {
-              materials: [{ id: 'm1', name: 'مادة', unit: 'م', quantity: 2, unitCost: 3, totalCost: 6 }],
+              materials: [
+                { id: 'm1', name: 'مادة', unit: 'م', quantity: 2, unitCost: 3, totalCost: 6 },
+              ],
               labor: [],
               equipment: [],
-              subcontractors: []
+              subcontractors: [],
             },
-            additionalPercentages: { administrative: 5, operational: 2, profit: 10 }
+            additionalPercentages: { administrative: 5, operational: 2, profit: 10 },
           },
-          variance: { pct: 20 }
-        }
+          variance: { pct: 20 },
+        },
       ],
-      totals: { estimatedTotal: 10, actualTotal: 12, varianceTotal: 2, variancePct: 20 }
+      totals: { estimatedTotal: 10, actualTotal: 12, varianceTotal: 2, variancePct: 20 },
     },
     upsertItem: noop,
     mergeFromTender: asyncNoop,
     promote: asyncNoop,
     refresh: noop,
-  })
+  }),
 }))
 
 vi.mock('@/utils/pricingConstants', () => ({
-  getPricingConfig: () => ({ vatRate: 0.15 })
+  getPricingConfig: () => ({ vatRate: 0.15 }),
 }))
 
 vi.mock('@/application/services/projectCostService', () => ({
@@ -92,22 +94,27 @@ vi.mock('@/application/services/projectCostService', () => ({
     },
     syncEstimatedFromTender: asyncNoop,
     promote: asyncNoop,
-    getEnvelope: (projectId: string) => createEnvelope(projectId)
-  }
+    getEnvelope: (projectId: string) => createEnvelope(projectId),
+  },
 }))
 
-vi.mock('@/hooks/useCurrencyFormatter', () => ({
+vi.mock('@/application/hooks/useCurrencyFormatter', () => ({
   useCurrencyFormatter: () => ({
-    formatCurrencyValue: (value: number | string | null | undefined, options?: Intl.NumberFormatOptions) => {
+    formatCurrencyValue: (
+      value: number | string | null | undefined,
+      options?: Intl.NumberFormatOptions,
+    ) => {
       const amount = typeof value === 'number' ? value : Number(value ?? 0)
       const formatter = new Intl.NumberFormat('ar-SA', {
         minimumFractionDigits: options?.minimumFractionDigits ?? 0,
-        maximumFractionDigits: options?.maximumFractionDigits ?? 0
+        maximumFractionDigits: options?.maximumFractionDigits ?? 0,
       })
       return formatter.format(Number.isFinite(amount) ? amount : 0)
     },
-    baseCurrency: 'SAR'
-  })
+    baseCurrency: 'SAR',
+    rates: { USD: 3.75, EUR: 4.05 },
+    isLoading: false,
+  }),
 }))
 
 import ProjectCostView from '@/components/cost/ProjectCostView'
@@ -137,7 +144,9 @@ describe('ProjectCostView decomposition bar', () => {
     await user.click(toggleButtons[0])
 
     const bar = await screen.findByLabelText('تفكيك تكلفة البند')
-    const labels = Array.from(bar.querySelectorAll('[data-testid="decomposition-label"]')).map((el) => el.textContent?.trim())
+    const labels = Array.from(bar.querySelectorAll('[data-testid="decomposition-label"]')).map(
+      (el) => el.textContent?.trim(),
+    )
     expect(labels.filter(Boolean)).toMatchInlineSnapshot(`
       [
         "الأساس",
