@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { dedupePricingItems } from '@/utils/pricingHelpers'
-import type { EnrichedPricingItem } from '@/services/pricingEngine'
+import type { EnrichedPricingItem } from '@/application/services/pricingEngine'
 
 const baseItem: EnrichedPricingItem = {
   id: 'base',
@@ -27,8 +27,8 @@ const baseItem: EnrichedPricingItem = {
     operational: 0,
     profit: 0,
     subtotal: 0,
-    total: 0
-  }
+    total: 0,
+  },
 }
 
 const makeItem = (overrides: Partial<EnrichedPricingItem> = {}): EnrichedPricingItem => {
@@ -52,7 +52,7 @@ const makeItem = (overrides: Partial<EnrichedPricingItem> = {}): EnrichedPricing
 
   item.breakdown = {
     ...baseItem.breakdown,
-    ...(breakdown ?? {})
+    ...(breakdown ?? {}),
   }
 
   return item
@@ -78,8 +78,8 @@ describe('dedupePricingItems', () => {
           operational: 0,
           profit: 0,
           subtotal: 10,
-          total: 10
-        }
+          total: 10,
+        },
       }),
       makeItem({
         id: 'A',
@@ -96,19 +96,19 @@ describe('dedupePricingItems', () => {
           operational: 0,
           profit: 0,
           subtotal: 5,
-          total: 5
-        }
+          total: 5,
+        },
       }),
       makeItem({
         id: 'B',
         description: 'بند ثان',
         unit: 'م2',
-        quantity: 3
-      })
+        quantity: 3,
+      }),
     ]
     const deduped = dedupePricingItems(items)
     expect(deduped.length).toBe(2)
-    const a = deduped.find(i => i.id === 'A')
+    const a = deduped.find((i) => i.id === 'A')
     expect(a).toBeDefined()
     if (!a) throw new Error('Expected item A to exist')
     expect(a.description).toContain('حفر') // أخذ الوصف الأغنى
