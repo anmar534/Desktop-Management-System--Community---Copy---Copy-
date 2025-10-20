@@ -1,4 +1,4 @@
-import ProjectsView, { type ProjectsViewProps } from '@/components/Projects'
+import ProjectsView, { type ProjectsViewProps } from '@/presentation/components/Projects'
 import { useFinancialState } from '@/application/context'
 
 interface ProjectsContainerProps {
@@ -24,3 +24,4 @@ export function ProjectsContainer({ onSectionChange }: ProjectsContainerProps) {
 }
 
 export default ProjectsContainer
+

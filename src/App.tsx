@@ -7,8 +7,8 @@ import {
   type ComponentType,
   type LazyExoticComponent,
 } from 'react'
-import { Header } from './components/Header'
-import { Sidebar } from './components/Sidebar'
+import { Header } from '@/presentation/components/layout/Header'
+import { Sidebar } from '@/presentation/components/layout/Sidebar'
 import { Toaster } from 'sonner'
 import { syncStorage } from '@/shared/utils/storage/storage'
 import {
@@ -17,7 +17,7 @@ import {
   useNavigation,
   useFinancialState,
 } from '@/application/context'
-import type { FinancialTabValue } from '@/components/Financial'
+import type { FinancialTabValue } from '@/presentation/pages/Financial/FinancialPage'
 import { RepositoryProvider } from '@/application/services/RepositoryProvider'
 import { ThemeProvider } from '@/application/providers/ThemeProvider'
 import { CompanySettingsProvider } from '@/application/providers/CompanySettingsProvider'
@@ -31,7 +31,7 @@ import {
 type ViewModuleLoader = () => Promise<Record<string, unknown>>
 
 const viewModuleLoaders = import.meta.glob(
-  './{components,features,pages,prototypes}/**/*.{ts,tsx}',
+  './{presentation,features,prototypes}/**/*.{ts,tsx}',
 ) as Record<string, ViewModuleLoader>
 
 const SECTIONS_WITH_ON_SECTION_CHANGE: AppSection[] = [
@@ -253,3 +253,4 @@ export default function App() {
     </ThemeProvider>
   )
 }
+

@@ -1,5 +1,5 @@
 import type { Tender } from '@/data/centralData'
-import type { StatusBadgeProps } from '@/components/ui/status-badge'
+import type { StatusBadgeProps } from '@/presentation/components/ui/status-badge'
 import { getDaysRemaining, isTenderExpired } from '@/utils/tenderProgressCalculator'
 
 type StatusTone = StatusBadgeProps['status']
@@ -130,3 +130,4 @@ export function useTenderStatus(tender: Tender) {
     shouldSuggestPromotion,
   }
 }
+

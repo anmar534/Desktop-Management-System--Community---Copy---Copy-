@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFinancialState } from '@/application/context'
 import type { AggregatedFinancialMetrics, FinancialHighlights } from '@/domain/selectors/financialMetrics'
-import type { Activity, Alert } from '@/components/analytics/enhanced'
+import type { Activity, Alert } from '@/presentation/components/analytics/enhanced'
 
 interface UseDashboardAlertsOptions {
   autoRefresh?: boolean
@@ -354,3 +354,4 @@ export function useDashboardAlerts(options: UseDashboardAlertsOptions = {}): Use
     setAutoRefreshEnabled,
   }
 }
+

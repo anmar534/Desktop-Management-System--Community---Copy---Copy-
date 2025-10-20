@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFinancialState } from '@/application/context'
 import type { AggregatedFinancialMetrics } from '@/domain/selectors/financialMetrics'
-import type { EnhancedKPICardProps } from '@/components/analytics/enhanced'
-import { calculateTrend } from '@/components/analytics/enhanced'
+import type { EnhancedKPICardProps } from '@/presentation/components/analytics/enhanced'
+import { calculateTrend } from '@/presentation/components/analytics/enhanced'
 import {
   Activity,
   AlertTriangle,
@@ -475,3 +475,4 @@ export function useEnhancedKPIs(options: UseEnhancedKPIsOptions = {}): UseEnhanc
     setAutoRefreshEnabled,
   }
 }
+

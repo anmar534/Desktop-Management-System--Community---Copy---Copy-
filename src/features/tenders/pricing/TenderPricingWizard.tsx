@@ -5,7 +5,7 @@ import { useFinancialState, useNavigation } from '@/application/context'
 import { STORAGE_KEYS } from '@/config/storageKeys'
 import { loadFromStorage, saveToStorage } from '@/utils/storage'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/presentation/components/ui/button'
 import {
   Card,
   CardContent,
@@ -13,27 +13,27 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { StatusBadge, type StatusBadgeProps } from '@/components/ui/status-badge'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
+} from '@/presentation/components/ui/card'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { Input } from '@/presentation/components/ui/input'
+import { Textarea } from '@/presentation/components/ui/textarea'
+import { Checkbox } from '@/presentation/components/ui/checkbox'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
+} from '@/presentation/components/ui/select'
+import { Separator } from '@/presentation/components/ui/separator'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog'
-import { EmptyState } from '@/components/PageLayout'
+} from '@/presentation/components/ui/dialog'
+import { EmptyState } from '@/presentation/components/layout/PageLayout'
 import {
   AlertTriangle,
   CheckCircle2,
@@ -1617,3 +1617,5 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
 }
 
 export default TenderPricingWizard
+
+
