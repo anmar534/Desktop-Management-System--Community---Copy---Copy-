@@ -3,13 +3,25 @@
  * Sprint 5.5: الأمان والحماية المتقدمة
  */
 
-import type React from 'react';
+import type React from 'react'
 import { useState, useMemo } from 'react'
 import styled from 'styled-components'
-import { Download, Filter, Search, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react'
+import {
+  Download,
+  Filter,
+  Search,
+  AlertCircle,
+  CheckCircle,
+  Info,
+  AlertTriangle,
+} from 'lucide-react'
 import { designTokens } from '@/styles/design-system'
-import type { AuditFilter, AuditSeverity} from '@/services/security/audit.service';
-import { AuditLog, getAuditLogs, exportAuditLogs } from '@/services/security/audit.service'
+import type { AuditFilter, AuditSeverity } from '@/application/services/security/audit.service'
+import {
+  AuditLog,
+  getAuditLogs,
+  exportAuditLogs,
+} from '@/application/services/security/audit.service'
 
 // ============================================================================
 // Types
@@ -18,7 +30,7 @@ import { AuditLog, getAuditLogs, exportAuditLogs } from '@/services/security/aud
 export interface AuditLogViewerProps {
   /** RTL mode / وضع RTL */
   rtl?: boolean
-  
+
   /** Initial filter / التصفية الأولية */
   initialFilter?: AuditFilter
 }
@@ -126,15 +138,21 @@ const LogItem = styled.div<{ severity: AuditSeverity }>`
   gap: ${designTokens.spacing[3]};
   padding: ${designTokens.spacing[3]};
   background-color: ${designTokens.colors.neutral[50]};
-  border-left: 4px solid ${props => {
-    switch (props.severity) {
-      case 'critical': return designTokens.colors.error[500]
-      case 'high': return designTokens.colors.warning[500]
-      case 'medium': return designTokens.colors.info[500]
-      case 'low': return designTokens.colors.success[500]
-      default: return designTokens.colors.neutral[500]
-    }
-  }};
+  border-left: 4px solid
+    ${(props) => {
+      switch (props.severity) {
+        case 'critical':
+          return designTokens.colors.error[500]
+        case 'high':
+          return designTokens.colors.warning[500]
+        case 'medium':
+          return designTokens.colors.info[500]
+        case 'low':
+          return designTokens.colors.success[500]
+        default:
+          return designTokens.colors.neutral[500]
+      }
+    }};
   border-radius: ${designTokens.borderRadius.md};
   transition: ${designTokens.transitions.fast};
 
@@ -151,22 +169,32 @@ const LogIcon = styled.div<{ severity: AuditSeverity }>`
   width: 32px;
   height: 32px;
   border-radius: ${designTokens.borderRadius.full};
-  background-color: ${props => {
+  background-color: ${(props) => {
     switch (props.severity) {
-      case 'critical': return designTokens.colors.error[100]
-      case 'high': return designTokens.colors.warning[100]
-      case 'medium': return designTokens.colors.info[100]
-      case 'low': return designTokens.colors.success[100]
-      default: return designTokens.colors.neutral[100]
+      case 'critical':
+        return designTokens.colors.error[100]
+      case 'high':
+        return designTokens.colors.warning[100]
+      case 'medium':
+        return designTokens.colors.info[100]
+      case 'low':
+        return designTokens.colors.success[100]
+      default:
+        return designTokens.colors.neutral[100]
     }
   }};
-  color: ${props => {
+  color: ${(props) => {
     switch (props.severity) {
-      case 'critical': return designTokens.colors.error[600]
-      case 'high': return designTokens.colors.warning[600]
-      case 'medium': return designTokens.colors.info[600]
-      case 'low': return designTokens.colors.success[600]
-      default: return designTokens.colors.neutral[600]
+      case 'critical':
+        return designTokens.colors.error[600]
+      case 'high':
+        return designTokens.colors.warning[600]
+      case 'medium':
+        return designTokens.colors.info[600]
+      case 'low':
+        return designTokens.colors.success[600]
+      default:
+        return designTokens.colors.neutral[600]
     }
   }};
 `
@@ -222,10 +250,7 @@ const EmptyState = styled.div`
 // Component
 // ============================================================================
 
-export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
-  rtl = false,
-  initialFilter,
-}) => {
+export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ rtl = false, initialFilter }) => {
   const [filter, setFilter] = useState<AuditFilter>(initialFilter || {})
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -303,9 +328,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
         ) : (
           logs.map((log) => (
             <LogItem key={log.id} severity={log.severity}>
-              <LogIcon severity={log.severity}>
-                {getIcon(log.severity)}
-              </LogIcon>
+              <LogIcon severity={log.severity}>{getIcon(log.severity)}</LogIcon>
               <LogContent>
                 <LogHeader>
                   <LogUser>{log.userName}</LogUser>
@@ -325,4 +348,3 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 }
 
 export default AuditLogViewer
-

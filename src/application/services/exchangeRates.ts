@@ -13,7 +13,10 @@ interface FetchExchangeRatesOptions {
   fallbackRates?: Record<string, number>
 }
 
-const sanitizeRates = (candidate: unknown, fallback: Record<string, number>): Record<string, number> => {
+const sanitizeRates = (
+  candidate: unknown,
+  fallback: Record<string, number>,
+): Record<string, number> => {
   if (!candidate || typeof candidate !== 'object') {
     return { ...fallback }
   }
@@ -57,10 +60,11 @@ const resolveTimestamp = (payload: ExchangeRatePayload | null | undefined): stri
 
 export const fetchExchangeRates = async (
   baseCurrency: string = BASE_CURRENCY,
-  options: FetchExchangeRatesOptions = {}
+  options: FetchExchangeRatesOptions = {},
 ): Promise<ExchangeRateResult> => {
   const endpoint = options.endpoint ?? EXCHANGE_RATE_ENDPOINT
-  const fetchImpl = options.fetchImpl ?? (typeof fetch === 'function' ? fetch.bind(globalThis) : undefined)
+  const fetchImpl =
+    options.fetchImpl ?? (typeof fetch === 'function' ? fetch.bind(globalThis) : undefined)
   const fallback = options.fallbackRates ?? DEFAULT_CURRENCY_RATES
 
   if (!fetchImpl) {
@@ -76,9 +80,10 @@ export const fetchExchangeRates = async (
       throw new Error(`فشل جلب أسعار الصرف (${response.status})`)
     }
 
-  const payload = (await response.json()) as ExchangeRatePayload
-  const sanitizedRates = sanitizeRates(payload?.rates, fallback)
-  const resolvedBase: string = typeof payload?.base_code === 'string' ? payload.base_code : baseCurrency
+    const payload = (await response.json()) as ExchangeRatePayload
+    const sanitizedRates = sanitizeRates(payload?.rates, fallback)
+    const resolvedBase: string =
+      typeof payload?.base_code === 'string' ? payload.base_code : baseCurrency
 
     return {
       baseCurrency: resolvedBase,

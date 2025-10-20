@@ -1,14 +1,20 @@
 /**
  * Permission Guard Component - مكون حماية الصلاحيات
  * Sprint 5.5: الأمان والحماية المتقدمة
- * 
+ *
  * Component to conditionally render content based on user permissions
  * مكون لعرض المحتوى بشكل مشروط بناءً على صلاحيات المستخدم
  */
 
 import type React from 'react'
-import type { Permission, Role, User} from '@/services/security/permissions.service';
-import { hasPermission, hasAnyPermission, hasAllPermissions, hasRole, hasAnyRole } from '@/services/security/permissions.service'
+import type { Permission, Role, User } from '@/application/services/security/permissions.service'
+import {
+  hasPermission,
+  hasAnyPermission,
+  hasAllPermissions,
+  hasRole,
+  hasAnyRole,
+} from '@/application/services/security/permissions.service'
 
 // ============================================================================
 // Types
@@ -17,25 +23,25 @@ import { hasPermission, hasAnyPermission, hasAllPermissions, hasRole, hasAnyRole
 export interface PermissionGuardProps {
   /** User object / كائن المستخدم */
   user: User
-  
+
   /** Required permission / الصلاحية المطلوبة */
   permission?: Permission
-  
+
   /** Required permissions (any) / الصلاحيات المطلوبة (أي منها) */
   anyPermissions?: Permission[]
-  
+
   /** Required permissions (all) / الصلاحيات المطلوبة (جميعها) */
   allPermissions?: Permission[]
-  
+
   /** Required role / الدور المطلوب */
   role?: Role
-  
+
   /** Required roles (any) / الأدوار المطلوبة (أي منها) */
   anyRoles?: Role[]
-  
+
   /** Children to render if authorized / العناصر الفرعية للعرض إذا كان مصرحاً */
   children: React.ReactNode
-  
+
   /** Fallback to render if not authorized / البديل للعرض إذا لم يكن مصرحاً */
   fallback?: React.ReactNode
 }
@@ -47,7 +53,7 @@ export interface PermissionGuardProps {
 /**
  * Permission Guard Component
  * مكون حماية الصلاحيات
- * 
+ *
  * Conditionally renders children based on user permissions or roles
  * يعرض العناصر الفرعية بشكل مشروط بناءً على صلاحيات أو أدوار المستخدم
  */
@@ -88,4 +94,3 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
 }
 
 export default PermissionGuard
-

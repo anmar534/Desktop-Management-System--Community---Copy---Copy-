@@ -1,16 +1,13 @@
 /**
  * usePermissions Hook - خطاف الصلاحيات
  * Sprint 5.5: الأمان والحماية المتقدمة
- * 
+ *
  * Hook for checking user permissions
  * خطاف للتحقق من صلاحيات المستخدم
  */
 
 import { useMemo, useCallback } from 'react'
-import type {
-  Permission,
-  Role,
-  User} from '@/services/security/permissions.service';
+import type { Permission, Role, User } from '@/application/services/security/permissions.service'
 import {
   getUserPermissions,
   hasPermission as checkPermission,
@@ -18,7 +15,7 @@ import {
   hasAllPermissions as checkAllPermissions,
   hasRole as checkRole,
   hasAnyRole as checkAnyRole,
-} from '@/services/security/permissions.service'
+} from '@/application/services/security/permissions.service'
 
 // ============================================================================
 // Types
@@ -27,25 +24,25 @@ import {
 export interface UsePermissionsReturn {
   /** All user permissions / جميع صلاحيات المستخدم */
   permissions: Permission[]
-  
+
   /** Check if user has permission / التحقق من امتلاك المستخدم للصلاحية */
   hasPermission: (permission: Permission) => boolean
-  
+
   /** Check if user has any of the permissions / التحقق من امتلاك المستخدم لأي من الصلاحيات */
   hasAnyPermission: (permissions: Permission[]) => boolean
-  
+
   /** Check if user has all permissions / التحقق من امتلاك المستخدم لجميع الصلاحيات */
   hasAllPermissions: (permissions: Permission[]) => boolean
-  
+
   /** Check if user has role / التحقق من امتلاك المستخدم للدور */
   hasRole: (role: Role) => boolean
-  
+
   /** Check if user has any of the roles / التحقق من امتلاك المستخدم لأي من الأدوار */
   hasAnyRole: (roles: Role[]) => boolean
-  
+
   /** Check if user is admin / التحقق من أن المستخدم مدير */
   isAdmin: boolean
-  
+
   /** Check if user is super admin / التحقق من أن المستخدم مدير نظام */
   isSuperAdmin: boolean
 }
@@ -71,7 +68,7 @@ export function usePermissions(user: User | null): UsePermissionsReturn {
       if (!user) return false
       return checkPermission(user, permission)
     },
-    [user]
+    [user],
   )
 
   // Check if user has any of the permissions
@@ -80,7 +77,7 @@ export function usePermissions(user: User | null): UsePermissionsReturn {
       if (!user) return false
       return checkAnyPermission(user, permissions)
     },
-    [user]
+    [user],
   )
 
   // Check if user has all permissions
@@ -89,7 +86,7 @@ export function usePermissions(user: User | null): UsePermissionsReturn {
       if (!user) return false
       return checkAllPermissions(user, permissions)
     },
-    [user]
+    [user],
   )
 
   // Check if user has role
@@ -98,7 +95,7 @@ export function usePermissions(user: User | null): UsePermissionsReturn {
       if (!user) return false
       return checkRole(user, role)
     },
-    [user]
+    [user],
   )
 
   // Check if user has any of the roles
@@ -107,7 +104,7 @@ export function usePermissions(user: User | null): UsePermissionsReturn {
       if (!user) return false
       return checkAnyRole(user, roles)
     },
-    [user]
+    [user],
   )
 
   // Check if user is admin
@@ -135,4 +132,3 @@ export function usePermissions(user: User | null): UsePermissionsReturn {
 }
 
 export default usePermissions
-

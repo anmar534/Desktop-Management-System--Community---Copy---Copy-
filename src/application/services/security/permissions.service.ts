@@ -1,7 +1,7 @@
 /**
  * Permissions Service - خدمة الصلاحيات
  * Sprint 5.5: الأمان والحماية المتقدمة
- * 
+ *
  * Advanced role-based access control (RBAC) system
  * نظام متقدم للتحكم في الوصول بناءً على الأدوار
  */
@@ -18,7 +18,7 @@ export type Permission =
   | 'tenders.delete'
   | 'tenders.approve'
   | 'tenders.export'
-  
+
   // Projects / المشاريع
   | 'projects.view'
   | 'projects.create'
@@ -26,7 +26,7 @@ export type Permission =
   | 'projects.delete'
   | 'projects.approve'
   | 'projects.export'
-  
+
   // Financial / المالية
   | 'financial.view'
   | 'financial.create'
@@ -35,51 +35,51 @@ export type Permission =
   | 'financial.approve'
   | 'financial.export'
   | 'financial.reports'
-  
+
   // Procurement / المشتريات
   | 'procurement.view'
   | 'procurement.create'
   | 'procurement.edit'
   | 'procurement.delete'
   | 'procurement.approve'
-  
+
   // HR / الموارد البشرية
   | 'hr.view'
   | 'hr.create'
   | 'hr.edit'
   | 'hr.delete'
-  
+
   // Users / المستخدمين
   | 'users.view'
   | 'users.create'
   | 'users.edit'
   | 'users.delete'
   | 'users.manage_roles'
-  
+
   // Settings / الإعدادات
   | 'settings.view'
   | 'settings.edit'
   | 'settings.system'
-  
+
   // Reports / التقارير
   | 'reports.view'
   | 'reports.create'
   | 'reports.export'
-  
+
   // Audit / المراجعة
   | 'audit.view'
   | 'audit.export'
 
 export type Role =
-  | 'super_admin'      // مدير النظام
-  | 'admin'            // مدير
-  | 'manager'          // مدير قسم
-  | 'accountant'       // محاسب
-  | 'project_manager'  // مدير مشروع
-  | 'engineer'         // مهندس
-  | 'procurement'      // مشتريات
-  | 'hr'               // موارد بشرية
-  | 'viewer'           // مشاهد فقط
+  | 'super_admin' // مدير النظام
+  | 'admin' // مدير
+  | 'manager' // مدير قسم
+  | 'accountant' // محاسب
+  | 'project_manager' // مدير مشروع
+  | 'engineer' // مهندس
+  | 'procurement' // مشتريات
+  | 'hr' // موارد بشرية
+  | 'viewer' // مشاهد فقط
 
 export interface User {
   id: string
@@ -113,18 +113,50 @@ export const ROLE_DEFINITIONS: Record<Role, RoleDefinition> = {
     descriptionAr: 'وصول كامل للنظام مع جميع الصلاحيات',
     permissions: [
       // All permissions
-      'tenders.view', 'tenders.create', 'tenders.edit', 'tenders.delete', 'tenders.approve', 'tenders.export',
-      'projects.view', 'projects.create', 'projects.edit', 'projects.delete', 'projects.approve', 'projects.export',
-      'financial.view', 'financial.create', 'financial.edit', 'financial.delete', 'financial.approve', 'financial.export', 'financial.reports',
-      'procurement.view', 'procurement.create', 'procurement.edit', 'procurement.delete', 'procurement.approve',
-      'hr.view', 'hr.create', 'hr.edit', 'hr.delete',
-      'users.view', 'users.create', 'users.edit', 'users.delete', 'users.manage_roles',
-      'settings.view', 'settings.edit', 'settings.system',
-      'reports.view', 'reports.create', 'reports.export',
-      'audit.view', 'audit.export',
+      'tenders.view',
+      'tenders.create',
+      'tenders.edit',
+      'tenders.delete',
+      'tenders.approve',
+      'tenders.export',
+      'projects.view',
+      'projects.create',
+      'projects.edit',
+      'projects.delete',
+      'projects.approve',
+      'projects.export',
+      'financial.view',
+      'financial.create',
+      'financial.edit',
+      'financial.delete',
+      'financial.approve',
+      'financial.export',
+      'financial.reports',
+      'procurement.view',
+      'procurement.create',
+      'procurement.edit',
+      'procurement.delete',
+      'procurement.approve',
+      'hr.view',
+      'hr.create',
+      'hr.edit',
+      'hr.delete',
+      'users.view',
+      'users.create',
+      'users.edit',
+      'users.delete',
+      'users.manage_roles',
+      'settings.view',
+      'settings.edit',
+      'settings.system',
+      'reports.view',
+      'reports.create',
+      'reports.export',
+      'audit.view',
+      'audit.export',
     ],
   },
-  
+
   admin: {
     name: 'admin',
     displayName: 'Administrator',
@@ -132,18 +164,43 @@ export const ROLE_DEFINITIONS: Record<Role, RoleDefinition> = {
     description: 'Administrative access with most permissions',
     descriptionAr: 'وصول إداري مع معظم الصلاحيات',
     permissions: [
-      'tenders.view', 'tenders.create', 'tenders.edit', 'tenders.delete', 'tenders.approve', 'tenders.export',
-      'projects.view', 'projects.create', 'projects.edit', 'projects.delete', 'projects.approve', 'projects.export',
-      'financial.view', 'financial.create', 'financial.edit', 'financial.approve', 'financial.export', 'financial.reports',
-      'procurement.view', 'procurement.create', 'procurement.edit', 'procurement.approve',
-      'hr.view', 'hr.create', 'hr.edit',
-      'users.view', 'users.create', 'users.edit',
-      'settings.view', 'settings.edit',
-      'reports.view', 'reports.create', 'reports.export',
+      'tenders.view',
+      'tenders.create',
+      'tenders.edit',
+      'tenders.delete',
+      'tenders.approve',
+      'tenders.export',
+      'projects.view',
+      'projects.create',
+      'projects.edit',
+      'projects.delete',
+      'projects.approve',
+      'projects.export',
+      'financial.view',
+      'financial.create',
+      'financial.edit',
+      'financial.approve',
+      'financial.export',
+      'financial.reports',
+      'procurement.view',
+      'procurement.create',
+      'procurement.edit',
+      'procurement.approve',
+      'hr.view',
+      'hr.create',
+      'hr.edit',
+      'users.view',
+      'users.create',
+      'users.edit',
+      'settings.view',
+      'settings.edit',
+      'reports.view',
+      'reports.create',
+      'reports.export',
       'audit.view',
     ],
   },
-  
+
   manager: {
     name: 'manager',
     displayName: 'Department Manager',
@@ -151,17 +208,27 @@ export const ROLE_DEFINITIONS: Record<Role, RoleDefinition> = {
     description: 'Department-level management access',
     descriptionAr: 'وصول إداري على مستوى القسم',
     permissions: [
-      'tenders.view', 'tenders.create', 'tenders.edit', 'tenders.approve',
-      'projects.view', 'projects.create', 'projects.edit', 'projects.approve',
-      'financial.view', 'financial.reports',
-      'procurement.view', 'procurement.create', 'procurement.edit',
+      'tenders.view',
+      'tenders.create',
+      'tenders.edit',
+      'tenders.approve',
+      'projects.view',
+      'projects.create',
+      'projects.edit',
+      'projects.approve',
+      'financial.view',
+      'financial.reports',
+      'procurement.view',
+      'procurement.create',
+      'procurement.edit',
       'hr.view',
       'users.view',
       'settings.view',
-      'reports.view', 'reports.create',
+      'reports.view',
+      'reports.create',
     ],
   },
-  
+
   accountant: {
     name: 'accountant',
     displayName: 'Accountant',
@@ -171,12 +238,17 @@ export const ROLE_DEFINITIONS: Record<Role, RoleDefinition> = {
     permissions: [
       'tenders.view',
       'projects.view',
-      'financial.view', 'financial.create', 'financial.edit', 'financial.reports',
+      'financial.view',
+      'financial.create',
+      'financial.edit',
+      'financial.reports',
       'procurement.view',
-      'reports.view', 'reports.create', 'reports.export',
+      'reports.view',
+      'reports.create',
+      'reports.export',
     ],
   },
-  
+
   project_manager: {
     name: 'project_manager',
     displayName: 'Project Manager',
@@ -185,14 +257,18 @@ export const ROLE_DEFINITIONS: Record<Role, RoleDefinition> = {
     descriptionAr: 'وصول لإدارة المشاريع',
     permissions: [
       'tenders.view',
-      'projects.view', 'projects.create', 'projects.edit',
+      'projects.view',
+      'projects.create',
+      'projects.edit',
       'financial.view',
-      'procurement.view', 'procurement.create',
+      'procurement.view',
+      'procurement.create',
       'hr.view',
-      'reports.view', 'reports.create',
+      'reports.view',
+      'reports.create',
     ],
   },
-  
+
   engineer: {
     name: 'engineer',
     displayName: 'Engineer',
@@ -201,12 +277,13 @@ export const ROLE_DEFINITIONS: Record<Role, RoleDefinition> = {
     descriptionAr: 'وصول هندسي وتقني',
     permissions: [
       'tenders.view',
-      'projects.view', 'projects.edit',
+      'projects.view',
+      'projects.edit',
       'procurement.view',
       'reports.view',
     ],
   },
-  
+
   procurement: {
     name: 'procurement',
     displayName: 'Procurement Officer',
@@ -216,24 +293,22 @@ export const ROLE_DEFINITIONS: Record<Role, RoleDefinition> = {
     permissions: [
       'tenders.view',
       'projects.view',
-      'procurement.view', 'procurement.create', 'procurement.edit',
+      'procurement.view',
+      'procurement.create',
+      'procurement.edit',
       'reports.view',
     ],
   },
-  
+
   hr: {
     name: 'hr',
     displayName: 'HR Officer',
     displayNameAr: 'موظف موارد بشرية',
     description: 'Human resources management access',
     descriptionAr: 'وصول لإدارة الموارد البشرية',
-    permissions: [
-      'hr.view', 'hr.create', 'hr.edit',
-      'users.view',
-      'reports.view',
-    ],
+    permissions: ['hr.view', 'hr.create', 'hr.edit', 'users.view', 'reports.view'],
   },
-  
+
   viewer: {
     name: 'viewer',
     displayName: 'Viewer',
@@ -266,13 +341,13 @@ export function getUserPermissions(user: User): Permission[] {
   for (const role of user.roles) {
     const roleDefinition = ROLE_DEFINITIONS[role]
     if (roleDefinition) {
-      roleDefinition.permissions.forEach(p => permissions.add(p))
+      roleDefinition.permissions.forEach((p) => permissions.add(p))
     }
   }
 
   // Add custom permissions
   if (user.customPermissions) {
-    user.customPermissions.forEach(p => permissions.add(p))
+    user.customPermissions.forEach((p) => permissions.add(p))
   }
 
   return Array.from(permissions)
@@ -284,7 +359,7 @@ export function getUserPermissions(user: User): Permission[] {
  */
 export function hasPermission(user: User, permission: Permission): boolean {
   if (user.disabled) return false
-  
+
   const permissions = getUserPermissions(user)
   return permissions.includes(permission)
 }
@@ -295,9 +370,9 @@ export function hasPermission(user: User, permission: Permission): boolean {
  */
 export function hasAnyPermission(user: User, permissions: Permission[]): boolean {
   if (user.disabled) return false
-  
+
   const userPermissions = getUserPermissions(user)
-  return permissions.some(p => userPermissions.includes(p))
+  return permissions.some((p) => userPermissions.includes(p))
 }
 
 /**
@@ -306,9 +381,9 @@ export function hasAnyPermission(user: User, permissions: Permission[]): boolean
  */
 export function hasAllPermissions(user: User, permissions: Permission[]): boolean {
   if (user.disabled) return false
-  
+
   const userPermissions = getUserPermissions(user)
-  return permissions.every(p => userPermissions.includes(p))
+  return permissions.every((p) => userPermissions.includes(p))
 }
 
 /**
@@ -317,7 +392,7 @@ export function hasAllPermissions(user: User, permissions: Permission[]): boolea
  */
 export function hasRole(user: User, role: Role): boolean {
   if (user.disabled) return false
-  
+
   return user.roles.includes(role)
 }
 
@@ -327,8 +402,8 @@ export function hasRole(user: User, role: Role): boolean {
  */
 export function hasAnyRole(user: User, roles: Role[]): boolean {
   if (user.disabled) return false
-  
-  return roles.some(r => user.roles.includes(r))
+
+  return roles.some((r) => user.roles.includes(r))
 }
 
 // ============================================================================
@@ -346,4 +421,3 @@ export const PermissionsService = {
 }
 
 export default PermissionsService
-

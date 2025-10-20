@@ -7,8 +7,15 @@ import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { Download, Upload, Trash2, RefreshCw, Database, Lock } from 'lucide-react'
 import { designTokens } from '@/styles/design-system'
-import type { BackupMetadata} from '@/services/security/backup.service';
-import { getBackups, createBackup, deleteBackup, exportBackup, importBackup, restoreBackup } from '@/services/security/backup.service'
+import type { BackupMetadata } from '@/application/services/security/backup.service'
+import {
+  getBackups,
+  createBackup,
+  deleteBackup,
+  exportBackup,
+  importBackup,
+  restoreBackup,
+} from '@/application/services/security/backup.service'
 
 // ============================================================================
 // Types
@@ -17,10 +24,10 @@ import { getBackups, createBackup, deleteBackup, exportBackup, importBackup, res
 export interface BackupManagerProps {
   /** Current user ID / معرف المستخدم الحالي */
   userId: string
-  
+
   /** Current user name / اسم المستخدم الحالي */
   userName: string
-  
+
   /** RTL mode / وضع RTL */
   rtl?: boolean
 }
@@ -63,18 +70,20 @@ const Button = styled.button<{ variant?: 'primary' | 'danger' }>`
   align-items: center;
   gap: ${designTokens.spacing[2]};
   padding: ${designTokens.spacing[2]} ${designTokens.spacing[4]};
-  border: 1px solid ${props => {
-    if (props.variant === 'primary') return designTokens.colors.primary[500]
-    if (props.variant === 'danger') return designTokens.colors.error[500]
-    return designTokens.colors.border.main
-  }};
-  background-color: ${props => {
+  border: 1px solid
+    ${(props) => {
+      if (props.variant === 'primary') return designTokens.colors.primary[500]
+      if (props.variant === 'danger') return designTokens.colors.error[500]
+      return designTokens.colors.border.main
+    }};
+  background-color: ${(props) => {
     if (props.variant === 'primary') return designTokens.colors.primary[500]
     if (props.variant === 'danger') return designTokens.colors.error[500]
     return designTokens.colors.background.paper
   }};
-  color: ${props => {
-    if (props.variant === 'primary' || props.variant === 'danger') return designTokens.colors.neutral[0]
+  color: ${(props) => {
+    if (props.variant === 'primary' || props.variant === 'danger')
+      return designTokens.colors.neutral[0]
     return designTokens.colors.text.primary
   }};
   font-size: ${designTokens.typography.fontSize.sm};
@@ -84,7 +93,7 @@ const Button = styled.button<{ variant?: 'primary' | 'danger' }>`
   transition: ${designTokens.transitions.fast};
 
   &:hover {
-    background-color: ${props => {
+    background-color: ${(props) => {
       if (props.variant === 'primary') return designTokens.colors.primary[600]
       if (props.variant === 'danger') return designTokens.colors.error[600]
       return designTokens.colors.neutral[50]
@@ -141,8 +150,10 @@ const BackupIcon = styled.div<{ encrypted: boolean }>`
   width: 40px;
   height: 40px;
   border-radius: ${designTokens.borderRadius.full};
-  background-color: ${props => props.encrypted ? designTokens.colors.success[100] : designTokens.colors.primary[100]};
-  color: ${props => props.encrypted ? designTokens.colors.success[600] : designTokens.colors.primary[600]};
+  background-color: ${(props) =>
+    props.encrypted ? designTokens.colors.success[100] : designTokens.colors.primary[100]};
+  color: ${(props) =>
+    props.encrypted ? designTokens.colors.success[600] : designTokens.colors.primary[600]};
 `
 
 const BackupInfo = styled.div`
@@ -212,11 +223,7 @@ const HiddenInput = styled.input`
 // Component
 // ============================================================================
 
-export const BackupManager: React.FC<BackupManagerProps> = ({
-  userId,
-  userName,
-  rtl = false,
-}) => {
+export const BackupManager: React.FC<BackupManagerProps> = ({ userId, userName, rtl = false }) => {
   const [backups, setBackups] = useState<BackupMetadata[]>([])
   const [loading, setLoading] = useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
@@ -279,7 +286,13 @@ export const BackupManager: React.FC<BackupManagerProps> = ({
   }
 
   const handleRestoreBackup = async (backupId: string) => {
-    if (!confirm(rtl ? 'هل أنت متأكد من استرداد هذه النسخة الاحتياطية؟' : 'Are you sure you want to restore this backup?')) {
+    if (
+      !confirm(
+        rtl
+          ? 'هل أنت متأكد من استرداد هذه النسخة الاحتياطية؟'
+          : 'Are you sure you want to restore this backup?',
+      )
+    ) {
       return
     }
 
@@ -296,7 +309,13 @@ export const BackupManager: React.FC<BackupManagerProps> = ({
   }
 
   const handleDeleteBackup = (backupId: string) => {
-    if (!confirm(rtl ? 'هل أنت متأكد من حذف هذه النسخة الاحتياطية؟' : 'Are you sure you want to delete this backup?')) {
+    if (
+      !confirm(
+        rtl
+          ? 'هل أنت متأكد من حذف هذه النسخة الاحتياطية؟'
+          : 'Are you sure you want to delete this backup?',
+      )
+    ) {
       return
     }
 
@@ -341,12 +360,7 @@ export const BackupManager: React.FC<BackupManagerProps> = ({
         </Actions>
       </Header>
 
-      <HiddenInput
-        ref={fileInputRef}
-        type="file"
-        accept=".json"
-        onChange={handleFileChange}
-      />
+      <HiddenInput ref={fileInputRef} type="file" accept=".json" onChange={handleFileChange} />
 
       <BackupList>
         {backups.length === 0 ? (
@@ -362,7 +376,14 @@ export const BackupManager: React.FC<BackupManagerProps> = ({
               </BackupIcon>
               <BackupInfo>
                 <BackupName>
-                  {backup.description || (rtl ? 'نسخة احتياطية' : 'Backup')} - {backup.type === 'automatic' ? (rtl ? 'تلقائية' : 'Auto') : (rtl ? 'يدوية' : 'Manual')}
+                  {backup.description || (rtl ? 'نسخة احتياطية' : 'Backup')} -{' '}
+                  {backup.type === 'automatic'
+                    ? rtl
+                      ? 'تلقائية'
+                      : 'Auto'
+                    : rtl
+                      ? 'يدوية'
+                      : 'Manual'}
                 </BackupName>
                 <BackupMeta>
                   <span>{formatDate(backup.timestamp)}</span>
@@ -373,13 +394,22 @@ export const BackupManager: React.FC<BackupManagerProps> = ({
                 </BackupMeta>
               </BackupInfo>
               <BackupActions>
-                <IconButton onClick={() => handleRestoreBackup(backup.id)} title={rtl ? 'استرداد' : 'Restore'}>
+                <IconButton
+                  onClick={() => handleRestoreBackup(backup.id)}
+                  title={rtl ? 'استرداد' : 'Restore'}
+                >
                   <RefreshCw size={16} />
                 </IconButton>
-                <IconButton onClick={() => handleExportBackup(backup.id)} title={rtl ? 'تصدير' : 'Export'}>
+                <IconButton
+                  onClick={() => handleExportBackup(backup.id)}
+                  title={rtl ? 'تصدير' : 'Export'}
+                >
                   <Download size={16} />
                 </IconButton>
-                <IconButton onClick={() => handleDeleteBackup(backup.id)} title={rtl ? 'حذف' : 'Delete'}>
+                <IconButton
+                  onClick={() => handleDeleteBackup(backup.id)}
+                  title={rtl ? 'حذف' : 'Delete'}
+                >
                   <Trash2 size={16} />
                 </IconButton>
               </BackupActions>
@@ -392,4 +422,3 @@ export const BackupManager: React.FC<BackupManagerProps> = ({
 }
 
 export default BackupManager
-
