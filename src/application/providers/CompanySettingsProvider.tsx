@@ -8,8 +8,8 @@
 
 import type React from 'react'
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
-import type { CompanySettings, CompanySettingsContextValue } from '@/types/companySettings'
-import { DEFAULT_COMPANY_SETTINGS } from '@/types/companySettings'
+import type { CompanySettings, CompanySettingsContextValue } from './companySettings.types'
+import { DEFAULT_COMPANY_SETTINGS } from './companySettings.types'
 import { safeLocalStorage } from '@/utils/storage'
 import { STORAGE_KEYS } from '@/config/storageKeys'
 
