@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Project } from '@/data/centralData'
-import { UnifiedCalculationsService } from '@/services/unifiedCalculationsService'
+import { UnifiedCalculationsService } from '@/application/services/unifiedCalculationsService'
 
 const svc = UnifiedCalculationsService.getInstance()
 
@@ -46,7 +46,7 @@ describe('Project analytics (unified)', () => {
         riskLevel: 'low',
         budget: 1_000_000,
         value: 1_000_000,
-        type: 'residential'
+        type: 'residential',
       },
       {
         id: 'p2',
@@ -75,7 +75,7 @@ describe('Project analytics (unified)', () => {
         riskLevel: 'medium',
         budget: 2_000_000,
         value: 2_000_000,
-        type: 'infrastructure'
+        type: 'infrastructure',
       },
       {
         id: 'p3',
@@ -103,8 +103,8 @@ describe('Project analytics (unified)', () => {
         riskLevel: 'high',
         budget: 500_000,
         value: 500_000,
-        type: 'maintenance'
-      }
+        type: 'maintenance',
+      },
     ]
 
     const res = svc.analyzeProjects(projects)

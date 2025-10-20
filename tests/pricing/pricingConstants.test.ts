@@ -1,9 +1,28 @@
 import { describe, it, expect } from 'vitest'
-import { DESCRIPTION_ALIASES, UNIT_ALIASES, QUANTITY_ALIASES, TOTAL_ALIASES, UNIT_PRICE_ALIASES, getPricingConfig } from '../../src/utils/pricingConstants'
-import { DEFAULT_PERCENTAGES } from '../../src/services/pricingEngine'
+import {
+  DESCRIPTION_ALIASES,
+  UNIT_ALIASES,
+  QUANTITY_ALIASES,
+  TOTAL_ALIASES,
+  UNIT_PRICE_ALIASES,
+  getPricingConfig,
+} from '../../src/utils/pricingConstants'
+import { DEFAULT_PERCENTAGES } from '../../src/application/services/pricingEngine'
 
 // Frozen snapshots to catch accidental drift
-const EXPECTED_DESCRIPTION = ['description','itemName','desc','name','title','specifications','details','itemDesc','itemDescription','label','text']
+const EXPECTED_DESCRIPTION = [
+  'description',
+  'itemName',
+  'desc',
+  'name',
+  'title',
+  'specifications',
+  'details',
+  'itemDesc',
+  'itemDescription',
+  'label',
+  'text',
+]
 
 describe('pricingConstants stability', () => {
   it('description aliases stay consistent', () => {

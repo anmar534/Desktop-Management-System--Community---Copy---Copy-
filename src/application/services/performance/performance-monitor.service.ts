@@ -330,4 +330,3 @@ export const performanceMonitor = new PerformanceMonitor()
 if (typeof window !== 'undefined') {
   performanceMonitor.initialize()
 }
-

@@ -4,7 +4,11 @@
  * Sprint 5.6: التحسين النهائي والتجهيز للإنتاج
  */
 
-export { performanceMonitor, type PerformanceMetric, type PerformanceReport } from './performance-monitor.service'
+export {
+  performanceMonitor,
+  type PerformanceMetric,
+  type PerformanceReport,
+} from './performance-monitor.service'
 export {
   memoryCache,
   memoryMonitor,
@@ -16,4 +20,3 @@ export {
   type CacheEntry,
   type MemoryStats,
 } from './optimization.service'
-

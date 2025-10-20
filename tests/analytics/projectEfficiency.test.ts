@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Project } from '@/data/centralData'
-import { UnifiedCalculationsService } from '@/services/unifiedCalculationsService'
+import { UnifiedCalculationsService } from '@/application/services/unifiedCalculationsService'
 
 const svc = UnifiedCalculationsService.getInstance()
 
@@ -32,7 +32,7 @@ describe('Project efficiency', () => {
       riskLevel: 'low',
       budget: 0,
       value: 0,
-      type: ''
+      type: '',
     }
     const eff = svc.calculateProjectEfficiency(project)
     expect(eff.costEfficiency).toBe(100)
@@ -67,7 +67,7 @@ describe('Project efficiency', () => {
       riskLevel: 'low',
       budget: 1_000_000,
       value: 1_000_000,
-      type: ''
+      type: '',
     }
     const eff = svc.calculateProjectEfficiency(project)
     expect(eff.costEfficiency).toBeGreaterThan(0)

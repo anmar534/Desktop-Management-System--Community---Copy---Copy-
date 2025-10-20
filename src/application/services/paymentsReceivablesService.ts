@@ -131,14 +131,16 @@ export class PaymentsReceivablesService {
   private readonly PAYMENT_REPORTS_KEY = 'payment_reports'
 
   // إدارة الفواتير
-  async createInvoice(invoiceData: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt' | 'version'>): Promise<Invoice> {
+  async createInvoice(
+    invoiceData: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt' | 'version'>,
+  ): Promise<Invoice> {
     try {
       const invoice: Invoice = {
         id: `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         ...invoiceData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        version: 1
+        version: 1,
       }
 
       const invoices = await this.getAllInvoices()
@@ -160,8 +162,8 @@ export class PaymentsReceivablesService {
   async updateInvoice(id: string, updates: Partial<Invoice>): Promise<Invoice> {
     try {
       const invoices = await this.getAllInvoices()
-      const index = invoices.findIndex(inv => inv.id === id)
-      
+      const index = invoices.findIndex((inv) => inv.id === id)
+
       if (index === -1) {
         throw new Error('الفاتورة غير موجودة')
       }
@@ -170,7 +172,7 @@ export class PaymentsReceivablesService {
         ...invoices[index],
         ...updates,
         updatedAt: new Date().toISOString(),
-        version: invoices[index].version + 1
+        version: invoices[index].version + 1,
       }
 
       invoices[index] = updatedInvoice
@@ -193,7 +195,7 @@ export class PaymentsReceivablesService {
   async getInvoice(id: string): Promise<Invoice | null> {
     try {
       const invoices = await this.getAllInvoices()
-      return invoices.find(inv => inv.id === id) || null
+      return invoices.find((inv) => inv.id === id) || null
     } catch (error) {
       console.error('Error getting invoice:', error)
       return null
@@ -202,7 +204,7 @@ export class PaymentsReceivablesService {
 
   async getAllInvoices(): Promise<Invoice[]> {
     try {
-      return await asyncStorage.getItem(this.INVOICES_KEY) || []
+      return (await asyncStorage.getItem(this.INVOICES_KEY)) || []
     } catch (error) {
       console.error('Error getting invoices:', error)
       return []
@@ -212,7 +214,7 @@ export class PaymentsReceivablesService {
   async getInvoicesByStatus(status: Invoice['status']): Promise<Invoice[]> {
     try {
       const invoices = await this.getAllInvoices()
-      return invoices.filter(inv => inv.status === status)
+      return invoices.filter((inv) => inv.status === status)
     } catch (error) {
       console.error('Error getting invoices by status:', error)
       return []
@@ -222,7 +224,7 @@ export class PaymentsReceivablesService {
   async getInvoicesByClient(clientId: string): Promise<Invoice[]> {
     try {
       const invoices = await this.getAllInvoices()
-      return invoices.filter(inv => inv.clientId === clientId)
+      return invoices.filter((inv) => inv.clientId === clientId)
     } catch (error) {
       console.error('Error getting invoices by client:', error)
       return []
@@ -230,14 +232,16 @@ export class PaymentsReceivablesService {
   }
 
   // إدارة المدفوعات
-  async recordPayment(paymentData: Omit<Payment, 'id' | 'createdAt' | 'updatedAt' | 'version'>): Promise<Payment> {
+  async recordPayment(
+    paymentData: Omit<Payment, 'id' | 'createdAt' | 'updatedAt' | 'version'>,
+  ): Promise<Payment> {
     try {
       const payment: Payment = {
         id: `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         ...paymentData,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        version: 1
+        version: 1,
       }
 
       const payments = await this.getAllPayments()
@@ -252,7 +256,7 @@ export class PaymentsReceivablesService {
         type: 'payment_received',
         invoiceId: payment.invoiceId,
         invoiceNumber: payment.invoiceNumber,
-        amount: payment.amount
+        amount: payment.amount,
       })
 
       return payment
@@ -264,7 +268,7 @@ export class PaymentsReceivablesService {
 
   async getAllPayments(): Promise<Payment[]> {
     try {
-      return await asyncStorage.getItem(this.PAYMENTS_KEY) || []
+      return (await asyncStorage.getItem(this.PAYMENTS_KEY)) || []
     } catch (error) {
       console.error('Error getting payments:', error)
       return []
@@ -274,7 +278,7 @@ export class PaymentsReceivablesService {
   async getPaymentsByInvoice(invoiceId: string): Promise<Payment[]> {
     try {
       const payments = await this.getAllPayments()
-      return payments.filter(pay => pay.invoiceId === invoiceId)
+      return payments.filter((pay) => pay.invoiceId === invoiceId)
     } catch (error) {
       console.error('Error getting payments by invoice:', error)
       return []
@@ -300,7 +304,7 @@ export class PaymentsReceivablesService {
         agingCategory: this.getAgingCategory(invoice.dueDate),
         agingCategoryEn: this.getAgingCategoryEn(invoice.dueDate),
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       const receivables = await this.getAllReceivables()
@@ -313,7 +317,7 @@ export class PaymentsReceivablesService {
 
   async getAllReceivables(): Promise<Receivable[]> {
     try {
-      return await asyncStorage.getItem(this.RECEIVABLES_KEY) || []
+      return (await asyncStorage.getItem(this.RECEIVABLES_KEY)) || []
     } catch (error) {
       console.error('Error getting receivables:', error)
       return []
@@ -331,7 +335,7 @@ export class PaymentsReceivablesService {
 
   private getAgingStatus(dueDate: string): Receivable['status'] {
     const daysOverdue = this.calculateDaysOverdue(dueDate)
-    
+
     if (daysOverdue <= 0) return 'current'
     if (daysOverdue <= 30) return 'overdue_30'
     if (daysOverdue <= 60) return 'overdue_60'
@@ -342,11 +346,11 @@ export class PaymentsReceivablesService {
   private getAgingCategory(dueDate: string): string {
     const status = this.getAgingStatus(dueDate)
     const categories = {
-      'current': 'جاري',
-      'overdue_30': 'متأخر 1-30 يوم',
-      'overdue_60': 'متأخر 31-60 يوم',
-      'overdue_90': 'متأخر 61-90 يوم',
-      'overdue_120_plus': 'متأخر أكثر من 90 يوم'
+      current: 'جاري',
+      overdue_30: 'متأخر 1-30 يوم',
+      overdue_60: 'متأخر 31-60 يوم',
+      overdue_90: 'متأخر 61-90 يوم',
+      overdue_120_plus: 'متأخر أكثر من 90 يوم',
     }
     return categories[status]
   }
@@ -354,16 +358,19 @@ export class PaymentsReceivablesService {
   private getAgingCategoryEn(dueDate: string): string {
     const status = this.getAgingStatus(dueDate)
     const categories = {
-      'current': 'Current',
-      'overdue_30': '1-30 Days Overdue',
-      'overdue_60': '31-60 Days Overdue',
-      'overdue_90': '61-90 Days Overdue',
-      'overdue_120_plus': '90+ Days Overdue'
+      current: 'Current',
+      overdue_30: '1-30 Days Overdue',
+      overdue_60: '31-60 Days Overdue',
+      overdue_90: '61-90 Days Overdue',
+      overdue_120_plus: '90+ Days Overdue',
     }
     return categories[status]
   }
 
-  private async updateInvoicePaymentStatus(invoiceId: string, paymentAmount: number): Promise<void> {
+  private async updateInvoicePaymentStatus(
+    invoiceId: string,
+    paymentAmount: number,
+  ): Promise<void> {
     try {
       const invoice = await this.getInvoice(invoiceId)
       if (!invoice) return
@@ -382,12 +389,12 @@ export class PaymentsReceivablesService {
   private async updateReceivableFromInvoice(invoice: Invoice): Promise<void> {
     try {
       const receivables = await this.getAllReceivables()
-      const index = receivables.findIndex(rec => rec.invoiceId === invoice.id)
-      
+      const index = receivables.findIndex((rec) => rec.invoiceId === invoice.id)
+
       if (index !== -1) {
         const payments = await this.getPaymentsByInvoice(invoice.id)
         const totalPaid = payments.reduce((sum, pay) => sum + pay.amount, 0)
-        
+
         receivables[index] = {
           ...receivables[index],
           paidAmount: totalPaid,
@@ -396,9 +403,9 @@ export class PaymentsReceivablesService {
           status: this.getAgingStatus(invoice.dueDate),
           agingCategory: this.getAgingCategory(invoice.dueDate),
           agingCategoryEn: this.getAgingCategoryEn(invoice.dueDate),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         }
-        
+
         await asyncStorage.setItem(this.RECEIVABLES_KEY, receivables)
       }
     } catch (error) {
@@ -409,7 +416,7 @@ export class PaymentsReceivablesService {
   private async removeReceivable(invoiceId: string): Promise<void> {
     try {
       const receivables = await this.getAllReceivables()
-      const filtered = receivables.filter(rec => rec.invoiceId !== invoiceId)
+      const filtered = receivables.filter((rec) => rec.invoiceId !== invoiceId)
       await asyncStorage.setItem(this.RECEIVABLES_KEY, filtered)
     } catch (error) {
       console.error('Error removing receivable:', error)
@@ -434,7 +441,7 @@ export class PaymentsReceivablesService {
         message: this.generateAlertMessage(alertData.type!, invoice),
         messageEn: this.generateAlertMessageEn(alertData.type!, invoice),
         isRead: false,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       }
 
       const alerts = await this.getAllPaymentAlerts()
@@ -447,7 +454,7 @@ export class PaymentsReceivablesService {
 
   async getAllPaymentAlerts(): Promise<PaymentAlert[]> {
     try {
-      return await asyncStorage.getItem(this.PAYMENT_ALERTS_KEY) || []
+      return (await asyncStorage.getItem(this.PAYMENT_ALERTS_KEY)) || []
     } catch (error) {
       console.error('Error getting payment alerts:', error)
       return []
@@ -486,11 +493,11 @@ export class PaymentsReceivablesService {
       const receivables = await this.getAllReceivables()
 
       const agingData = {
-        current: receivables.filter(r => r.status === 'current'),
-        overdue30: receivables.filter(r => r.status === 'overdue_30'),
-        overdue60: receivables.filter(r => r.status === 'overdue_60'),
-        overdue90: receivables.filter(r => r.status === 'overdue_90'),
-        overdue120Plus: receivables.filter(r => r.status === 'overdue_120_plus')
+        current: receivables.filter((r) => r.status === 'current'),
+        overdue30: receivables.filter((r) => r.status === 'overdue_30'),
+        overdue60: receivables.filter((r) => r.status === 'overdue_60'),
+        overdue90: receivables.filter((r) => r.status === 'overdue_90'),
+        overdue120Plus: receivables.filter((r) => r.status === 'overdue_120_plus'),
       }
 
       const report: PaymentReport = {
@@ -500,11 +507,11 @@ export class PaymentsReceivablesService {
         titleEn: 'Accounts Receivable Aging Report',
         period: {
           startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
-          endDate: new Date().toISOString()
+          endDate: new Date().toISOString(),
         },
         data: agingData,
         generatedAt: new Date().toISOString(),
-        generatedBy: 'system'
+        generatedBy: 'system',
       }
 
       const reports = await this.getAllReports()
@@ -526,32 +533,35 @@ export class PaymentsReceivablesService {
 
       const totalReceivables = receivables.reduce((sum, r) => sum + r.remainingAmount, 0)
       const currentReceivables = receivables
-        .filter(r => r.status === 'current')
+        .filter((r) => r.status === 'current')
         .reduce((sum, r) => sum + r.remainingAmount, 0)
       const overdueReceivables = totalReceivables - currentReceivables
 
       // حساب متوسط فترة التحصيل
-      const paidInvoices = invoices.filter(inv => inv.status === 'paid')
+      const paidInvoices = invoices.filter((inv) => inv.status === 'paid')
       let totalCollectionDays = 0
       let collectionCount = 0
 
       for (const invoice of paidInvoices) {
-        const invoicePayments = payments.filter(p => p.invoiceId === invoice.id)
+        const invoicePayments = payments.filter((p) => p.invoiceId === invoice.id)
         if (invoicePayments.length > 0) {
-          const lastPayment = invoicePayments.sort((a, b) =>
-            new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
+          const lastPayment = invoicePayments.sort(
+            (a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime(),
           )[0]
 
           const issueDate = new Date(invoice.issueDate)
           const paymentDate = new Date(lastPayment.paymentDate)
-          const collectionDays = Math.ceil((paymentDate.getTime() - issueDate.getTime()) / (1000 * 60 * 60 * 24))
+          const collectionDays = Math.ceil(
+            (paymentDate.getTime() - issueDate.getTime()) / (1000 * 60 * 60 * 24),
+          )
 
           totalCollectionDays += collectionDays
           collectionCount++
         }
       }
 
-      const averageCollectionPeriod = collectionCount > 0 ? totalCollectionDays / collectionCount : 0
+      const averageCollectionPeriod =
+        collectionCount > 0 ? totalCollectionDays / collectionCount : 0
 
       // حساب كفاءة التحصيل
       const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.totalAmount, 0)
@@ -563,11 +573,21 @@ export class PaymentsReceivablesService {
       const daysInAR = dailySales > 0 ? totalReceivables / dailySales : 0
 
       const agingBreakdown = {
-        current: receivables.filter(r => r.status === 'current').reduce((sum, r) => sum + r.remainingAmount, 0),
-        overdue30: receivables.filter(r => r.status === 'overdue_30').reduce((sum, r) => sum + r.remainingAmount, 0),
-        overdue60: receivables.filter(r => r.status === 'overdue_60').reduce((sum, r) => sum + r.remainingAmount, 0),
-        overdue90: receivables.filter(r => r.status === 'overdue_90').reduce((sum, r) => sum + r.remainingAmount, 0),
-        overdue120Plus: receivables.filter(r => r.status === 'overdue_120_plus').reduce((sum, r) => sum + r.remainingAmount, 0)
+        current: receivables
+          .filter((r) => r.status === 'current')
+          .reduce((sum, r) => sum + r.remainingAmount, 0),
+        overdue30: receivables
+          .filter((r) => r.status === 'overdue_30')
+          .reduce((sum, r) => sum + r.remainingAmount, 0),
+        overdue60: receivables
+          .filter((r) => r.status === 'overdue_60')
+          .reduce((sum, r) => sum + r.remainingAmount, 0),
+        overdue90: receivables
+          .filter((r) => r.status === 'overdue_90')
+          .reduce((sum, r) => sum + r.remainingAmount, 0),
+        overdue120Plus: receivables
+          .filter((r) => r.status === 'overdue_120_plus')
+          .reduce((sum, r) => sum + r.remainingAmount, 0),
       }
 
       return {
@@ -577,7 +597,7 @@ export class PaymentsReceivablesService {
         averageCollectionPeriod,
         collectionEfficiency,
         daysInAR,
-        agingBreakdown
+        agingBreakdown,
       }
     } catch (error) {
       console.error('Error calculating collection metrics:', error)
@@ -587,7 +607,7 @@ export class PaymentsReceivablesService {
 
   async getAllReports(): Promise<PaymentReport[]> {
     try {
-      return await asyncStorage.getItem(this.PAYMENT_REPORTS_KEY) || []
+      return (await asyncStorage.getItem(this.PAYMENT_REPORTS_KEY)) || []
     } catch (error) {
       console.error('Error getting reports:', error)
       return []
@@ -603,7 +623,9 @@ export class PaymentsReceivablesService {
       for (const invoice of invoices) {
         if (invoice.status === 'sent') {
           const dueDate = new Date(invoice.dueDate)
-          const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+          const daysUntilDue = Math.ceil(
+            (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+          )
           const daysOverdue = this.calculateDaysOverdue(invoice.dueDate)
 
           // تنبيه قبل الاستحقاق بـ 3 أيام
@@ -611,7 +633,7 @@ export class PaymentsReceivablesService {
             await this.createPaymentAlert({
               type: 'due_soon',
               invoiceId: invoice.id,
-              dueDate: invoice.dueDate
+              dueDate: invoice.dueDate,
             })
           }
 
@@ -621,7 +643,7 @@ export class PaymentsReceivablesService {
             await this.createPaymentAlert({
               type: 'overdue',
               invoiceId: invoice.id,
-              daysOverdue
+              daysOverdue,
             })
           }
         }
@@ -655,13 +677,14 @@ export class PaymentsReceivablesService {
       const invoices = await this.getAllInvoices()
       const searchTerm = query.toLowerCase()
 
-      return invoices.filter(invoice =>
-        invoice.invoiceNumber.toLowerCase().includes(searchTerm) ||
-        invoice.invoiceNumberEn.toLowerCase().includes(searchTerm) ||
-        invoice.clientName.toLowerCase().includes(searchTerm) ||
-        invoice.clientNameEn.toLowerCase().includes(searchTerm) ||
-        invoice.description.toLowerCase().includes(searchTerm) ||
-        invoice.descriptionEn.toLowerCase().includes(searchTerm)
+      return invoices.filter(
+        (invoice) =>
+          invoice.invoiceNumber.toLowerCase().includes(searchTerm) ||
+          invoice.invoiceNumberEn.toLowerCase().includes(searchTerm) ||
+          invoice.clientName.toLowerCase().includes(searchTerm) ||
+          invoice.clientNameEn.toLowerCase().includes(searchTerm) ||
+          invoice.description.toLowerCase().includes(searchTerm) ||
+          invoice.descriptionEn.toLowerCase().includes(searchTerm),
       )
     } catch (error) {
       console.error('Error searching invoices:', error)
@@ -675,7 +698,7 @@ export class PaymentsReceivablesService {
       const start = new Date(startDate)
       const end = new Date(endDate)
 
-      return invoices.filter(invoice => {
+      return invoices.filter((invoice) => {
         const issueDate = new Date(invoice.issueDate)
         return issueDate >= start && issueDate <= end
       })
@@ -701,8 +724,8 @@ export class PaymentsReceivablesService {
       const totalInvoices = invoices.length
       const totalAmount = invoices.reduce((sum, inv) => sum + inv.totalAmount, 0)
       const paidAmount = payments.reduce((sum, pay) => sum + pay.amount, 0)
-      const pendingInvoices = invoices.filter(inv => inv.status === 'sent')
-      const overdueInvoices = invoices.filter(inv => inv.status === 'overdue')
+      const pendingInvoices = invoices.filter((inv) => inv.status === 'sent')
+      const overdueInvoices = invoices.filter((inv) => inv.status === 'overdue')
 
       const pendingAmount = pendingInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0)
       const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + inv.totalAmount, 0)
@@ -714,7 +737,7 @@ export class PaymentsReceivablesService {
         paidAmount,
         pendingAmount,
         overdueAmount,
-        overdueCount
+        overdueCount,
       }
     } catch (error) {
       console.error('Error getting quick stats:', error)
@@ -724,7 +747,7 @@ export class PaymentsReceivablesService {
         paidAmount: 0,
         pendingAmount: 0,
         overdueAmount: 0,
-        overdueCount: 0
+        overdueCount: 0,
       }
     }
   }
