@@ -14,8 +14,8 @@ import {
   waitForStorageReady,
   safeLocalStorage,
   asyncStorage,
-} from '../../src/storage/adapters/LegacyStorageAdapter'
-import { StorageManager } from '../../src/storage/core/StorageManager'
+} from '../../src/infrastructure/storage/adapters/LegacyStorageAdapter'
+import { StorageManager } from '../../src/infrastructure/storage/core/StorageManager'
 
 describe('LegacyStorageAdapter - Backward Compatibility', () => {
   beforeEach(() => {

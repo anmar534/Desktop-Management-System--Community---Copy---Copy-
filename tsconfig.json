@@ -23,7 +23,9 @@
     /* Path Aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@/infrastructure/*": ["src/infrastructure/*"],
+      "@/storage/*": ["src/infrastructure/storage/*"]
     }
   },
   "include": ["src", "tests", "test", "scripts", ".storybook"],

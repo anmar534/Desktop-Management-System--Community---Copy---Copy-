@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { StorageManager } from '@/storage/core/StorageManager'
-import type { IStorageAdapter, StorageCapabilities } from '@/storage/core/types'
+import { StorageManager } from '@/infrastructure/storage/core/StorageManager'
+import type { IStorageAdapter, StorageCapabilities } from '@/infrastructure/storage/core/types'
 
 class MockAdapter implements IStorageAdapter {
   readonly name = 'mock-adapter'

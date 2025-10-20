@@ -5,8 +5,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
-import { StorageManager } from '../../src/storage/core/StorageManager'
-import { LocalStorageAdapter } from '../../src/storage/adapters/LocalStorageAdapter'
+import { StorageManager } from '../../src/infrastructure/storage/core/StorageManager'
+import { LocalStorageAdapter } from '../../src/infrastructure/storage/adapters/LocalStorageAdapter'
 
 interface StorageEvent {
   type: string

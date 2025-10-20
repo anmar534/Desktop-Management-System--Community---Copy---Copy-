@@ -4,9 +4,9 @@ import { LocalBOQRepository } from '@/repository/providers/boq.local'
 import { asyncStorage, whenStorageReady } from '@/utils/storage'
 import { STORAGE_KEYS } from '@/config/storageKeys'
 import { APP_EVENTS } from '@/events/bus'
-import { StorageManager } from '@/storage/core/StorageManager'
-import { LocalStorageAdapter } from '@/storage/adapters/LocalStorageAdapter'
-import { boqStorage } from '@/storage/modules/BOQStorage'
+import { StorageManager } from '@/infrastructure/storage/core/StorageManager'
+import { LocalStorageAdapter } from '@/infrastructure/storage/adapters/LocalStorageAdapter'
+import { boqStorage } from '@/infrastructure/storage/modules/BOQStorage'
 
 const createSampleEntry = (overrides: Partial<BOQData>): BOQData => ({
   id: overrides.id ?? 'boq-sample',

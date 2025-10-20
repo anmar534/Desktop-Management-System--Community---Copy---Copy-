@@ -10,9 +10,9 @@ import {
   type TenderBackupRecord,
   type BackupFailureState,
   type TenderPricingBackupPayload,
-} from '../../src/storage/modules/BackupStorage'
-import { StorageManager } from '../../src/storage/core/StorageManager'
-import { LocalStorageAdapter } from '../../src/storage/adapters/LocalStorageAdapter'
+} from '../../src/infrastructure/storage/modules/BackupStorage'
+import { StorageManager } from '../../src/infrastructure/storage/core/StorageManager'
+import { LocalStorageAdapter } from '../../src/infrastructure/storage/adapters/LocalStorageAdapter'
 
 describe('BackupStorage', () => {
   let backupStorage: BackupStorage

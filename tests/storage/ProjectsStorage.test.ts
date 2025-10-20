@@ -5,9 +5,9 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
-import { ProjectsStorage, type Project } from '../../src/storage/modules/ProjectsStorage'
-import { StorageManager } from '../../src/storage/core/StorageManager'
-import { LocalStorageAdapter } from '../../src/storage/adapters/LocalStorageAdapter'
+import { ProjectsStorage, type Project } from '../../src/infrastructure/storage/modules/ProjectsStorage'
+import { StorageManager } from '../../src/infrastructure/storage/core/StorageManager'
+import { LocalStorageAdapter } from '../../src/infrastructure/storage/adapters/LocalStorageAdapter'
 
 describe('ProjectsStorage', () => {
   let projectsStorage: ProjectsStorage

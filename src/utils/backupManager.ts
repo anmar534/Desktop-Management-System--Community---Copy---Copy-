@@ -3,7 +3,7 @@ import { recordAuditEvent } from './auditLog'
 import { SystemEvents } from './eventManager'
 import { cloneValue } from './storageSchema'
 import type { TenderBackupEntry } from '@/types/pricing'
-import { backupStorage } from '@/storage/modules/BackupStorage'
+import { backupStorage } from '@/infrastructure/storage/modules/BackupStorage'
 
 const BACKUP_STORE_VERSION = '1.0.0'
 const MS_PER_DAY = 86_400_000

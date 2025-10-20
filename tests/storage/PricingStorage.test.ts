@@ -9,9 +9,9 @@ import {
   PricingStorage,
   type TenderPricingPayload,
   type DefaultPercentages,
-} from '../../src/storage/modules/PricingStorage'
-import { StorageManager } from '../../src/storage/core/StorageManager'
-import { LocalStorageAdapter } from '../../src/storage/adapters/LocalStorageAdapter'
+} from '../../src/infrastructure/storage/modules/PricingStorage'
+import { StorageManager } from '../../src/infrastructure/storage/core/StorageManager'
+import { LocalStorageAdapter } from '../../src/infrastructure/storage/adapters/LocalStorageAdapter'
 
 describe('PricingStorage', () => {
   let pricingStorage: PricingStorage

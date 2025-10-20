@@ -2,7 +2,7 @@ import {
   pricingStorage,
   type DefaultPercentages,
   type TenderPricingPayload,
-} from '@/storage/modules/PricingStorage'
+} from '@/infrastructure/storage/modules/PricingStorage'
 
 export type { DefaultPercentages, TenderPricingPayload }
 

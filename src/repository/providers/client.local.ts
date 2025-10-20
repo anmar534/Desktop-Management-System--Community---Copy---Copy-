@@ -1,6 +1,6 @@
 import type { IClientRepository } from '../client.repository'
 import type { Client } from '@/data/centralData'
-import { clientsStorage } from '@/storage/modules/ClientsStorage'
+import { clientsStorage } from '@/infrastructure/storage/modules/ClientsStorage'
 import { APP_EVENTS, emit } from '@/events/bus'
 
 const generateId = () => `client_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`

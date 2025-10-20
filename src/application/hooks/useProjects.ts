@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { Project } from '@/data/centralData'
-import { projectsStorage } from '@/storage/modules/ProjectsStorage'
+import { projectsStorage } from '@/infrastructure/storage/modules/ProjectsStorage'
 import { APP_EVENTS } from '@/events/bus'
 import { getProjectRepository } from '@/application/services/serviceRegistry'
 import { useRepository } from '@/application/services/RepositoryProvider'
