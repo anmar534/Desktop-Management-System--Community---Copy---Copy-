@@ -9,8 +9,8 @@
  * @since Phase 2 Implementation
  */
 
-import { safeLocalStorage } from '../utils/storage'
-import { STORAGE_KEYS } from '../config/storageKeys'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import type {
   MarketOpportunity,
   MarketTrend,
@@ -19,8 +19,8 @@ import type {
   IntelligenceReport,
   CompetitiveAlert,
   CompetitiveDashboard,
-} from '../types/competitive'
-import type { CompetitorData, AnalyticsFilter } from '../types/analytics'
+} from '@/shared/types/competitive'
+import type { CompetitorData, AnalyticsFilter } from '@/shared/types/analytics'
 
 /**
  * Interface for the Competitive Intelligence Service

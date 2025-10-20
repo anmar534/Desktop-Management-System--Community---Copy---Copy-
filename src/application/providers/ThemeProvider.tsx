@@ -11,9 +11,9 @@
 
 import type React from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { ThemeName } from '../../config/design/themes.config';
-import { applyTheme } from '../../config/design/themes.config';
-import { safeLocalStorage } from '../../utils/storage';
+import type { ThemeName } from '@/shared/config/design/themes.config';
+import { applyTheme } from '@/shared/config/design/themes.config';
+import { safeLocalStorage } from '@/shared/utils/storage/storage';
 
 // ============================================
 // Types

@@ -10,7 +10,7 @@ import {
 import { Header } from './components/Header'
 import { Sidebar } from './components/Sidebar'
 import { Toaster } from 'sonner'
-import { syncStorage } from './utils/storage'
+import { syncStorage } from '@/shared/utils/storage/storage'
 import {
   FinancialStateProvider,
   NavigationProvider,

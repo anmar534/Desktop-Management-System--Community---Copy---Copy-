@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { getBackupExportSnapshot } from '../src/utils/backupManager';
+import { getBackupExportSnapshot } from '../src/shared/utils/storage/backupManager';
 
 interface CliOptions {
   outputPath: string;

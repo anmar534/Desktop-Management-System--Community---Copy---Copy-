@@ -30,14 +30,14 @@ import {
   Clock,
   Users
 } from 'lucide-react'
-import { analyticsService } from '../../services/analyticsService'
-import { competitiveService } from '../../services/competitiveService'
+import { analyticsService } from '@/application/services/analyticsService'
+import { competitiveService } from '@/application/services/competitiveService'
 import type { 
   BidPerformance, 
   PerformanceSummary, 
   AnalyticsFilter,
   TimeSeriesPoint 
-} from '../../types/analytics'
+} from '@/shared/types/analytics'
 import { 
   calculateWinRate, 
   calculateAverageMargin, 
@@ -45,7 +45,7 @@ import {
   formatCurrency,
   formatPercentage,
   formatLargeNumber
-} from '../../utils/analyticsUtils'
+} from '@/shared/utils/analytics/analyticsUtils'
 
 /**
  * Props for the Analytics Dashboard component
@@ -535,3 +535,4 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = React.memo(
 })
 
 AnalyticsDashboard.displayName = 'AnalyticsDashboard'
+

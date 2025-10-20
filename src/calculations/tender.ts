@@ -1,6 +1,6 @@
 import type { Tender } from '../data/centralData'
-import { TENDER_CONSTANTS, WinRateCalculations } from '../utils/unifiedCalculations'
-import { getDaysRemaining, isTenderExpired } from '../utils/tenderProgressCalculator'
+import { TENDER_CONSTANTS, WinRateCalculations } from '@/shared/utils/pricing/unifiedCalculations'
+import { getDaysRemaining, isTenderExpired } from '@/shared/utils/tender/tenderProgressCalculator'
 
 export interface TenderStats {
   total: number

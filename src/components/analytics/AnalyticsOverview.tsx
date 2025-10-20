@@ -33,8 +33,8 @@ import { Badge } from '../ui/badge'
 import { Progress } from '../ui/progress'
 
 import type { AnalyticsSection } from './AnalyticsRouter'
-import { analyticsService } from '../../services/analyticsService'
-import { competitiveService } from '../../services/competitiveService'
+import { analyticsService } from '@/application/services/analyticsService'
+import { competitiveService } from '@/application/services/competitiveService'
 
 interface QuickMetric {
   id: string
@@ -383,3 +383,4 @@ export function AnalyticsOverview({ onNavigate, className = '' }: AnalyticsOverv
     </div>
   )
 }
+

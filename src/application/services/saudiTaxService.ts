@@ -6,7 +6,7 @@
  * ونظام الزكاة والضريبة والجمارك
  */
 
-import { asyncStorage } from '../utils/storage'
+import { asyncStorage } from '@/shared/utils/storage/storage'
 
 // أنواع البيانات الضريبية
 export interface VATTransaction {

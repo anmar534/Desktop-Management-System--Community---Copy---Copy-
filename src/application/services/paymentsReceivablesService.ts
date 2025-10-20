@@ -3,7 +3,7 @@
  * Payments and Receivables Management Service
  */
 
-import { asyncStorage } from '../utils/storage'
+import { asyncStorage } from '@/shared/utils/storage/storage'
 
 // أنواع البيانات
 export interface Invoice {

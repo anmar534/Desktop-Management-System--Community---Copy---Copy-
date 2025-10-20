@@ -32,8 +32,8 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
-import type { AnalyticsFilter } from '../../types/analytics'
-import { formatCurrency } from '../../utils/analyticsUtils'
+import type { AnalyticsFilter } from '@/shared/types/analytics'
+import { formatCurrency } from '@/shared/utils/analytics/analyticsUtils'
 
 /**
  * Props for the Analytics Filters component
@@ -518,3 +518,4 @@ export const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = React.memo(({
 })
 
 AnalyticsFilters.displayName = 'AnalyticsFilters'
+

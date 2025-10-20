@@ -32,8 +32,8 @@ import {
   formatPercentage,
   formatLargeNumber,
   formatDuration
-} from '../../utils/analyticsUtils'
-import type { BidPerformance, PerformanceSummary } from '../../types/analytics'
+} from '@/shared/utils/analytics/analyticsUtils'
+import type { BidPerformance, PerformanceSummary } from '@/shared/types/analytics'
 
 /**
  * Props for individual metric card
@@ -413,3 +413,4 @@ export const PerformanceMetricsCards: React.FC<PerformanceMetricsCardsProps> = R
 })
 
 PerformanceMetricsCards.displayName = 'PerformanceMetricsCards'
+

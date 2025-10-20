@@ -5,8 +5,8 @@
  * In Electron dev you can also import & call runBackfillCanonicalDescriptions() from DevTools.
  */
 
-import { safeLocalStorage } from '../src/utils/storage';
-import { STORAGE_KEYS } from '../src/config/storageKeys';
+import { safeLocalStorage } from '../src/shared/utils/storage/storage';
+import { STORAGE_KEYS } from '../src/shared/constants/storageKeys';
 
 type RawBoqItem = Record<string, unknown> & {
   canonicalDescription?: unknown;

@@ -7,7 +7,7 @@
  */
 
 import { EncryptionService } from './encryption.service'
-import { safeLocalStorage } from '../../utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 
 // ============================================================================
 // Types

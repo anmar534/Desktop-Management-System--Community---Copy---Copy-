@@ -319,3 +319,4 @@ export const CompetitiveAnalyticsBoard: FC = () => {
 }
 
 export default CompetitiveAnalyticsBoard
+

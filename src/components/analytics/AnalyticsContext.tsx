@@ -10,10 +10,10 @@
 
 import type React from 'react';
 import { createContext, useContext, useReducer, useCallback, useEffect } from 'react'
-import type { BidPerformance, CompetitorData, AnalyticsFilter } from '../../types/analytics'
-import type { MarketOpportunity, MarketTrend, SWOTAnalysis, CompetitiveBenchmark } from '../../types/competitive'
-import { analyticsService } from '../../services/analyticsService'
-import { competitiveService } from '../../services/competitiveService'
+import type { BidPerformance, CompetitorData, AnalyticsFilter } from '@/shared/types/analytics'
+import type { MarketOpportunity, MarketTrend, SWOTAnalysis, CompetitiveBenchmark } from '@/shared/types/competitive'
+import { analyticsService } from '@/application/services/analyticsService'
+import { competitiveService } from '@/application/services/competitiveService'
 
 // Analytics state interface
 interface AnalyticsState {
@@ -361,3 +361,4 @@ export function useAnalytics() {
 }
 
 export { AnalyticsContext }
+

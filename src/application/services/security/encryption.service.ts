@@ -6,7 +6,7 @@
  * يوفر وظائف التشفير وفك التشفير للبيانات الحساسة
  */
 
-import { safeLocalStorage } from '../../utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 
 // ============================================================================
 // Types

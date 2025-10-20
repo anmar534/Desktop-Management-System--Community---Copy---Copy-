@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './styles/globals.css'
-import { syncStorage, installLegacyStorageGuard, isStorageReady, whenStorageReady } from './utils/storage'
+import { syncStorage, installLegacyStorageGuard, isStorageReady, whenStorageReady } from '@/shared/utils/storage/storage'
 
 // تحديد اللغة والاتجاه العربي
 document.documentElement.setAttribute('dir', 'rtl')
@@ -25,7 +25,7 @@ function Boot() {
 
     const startMonitor = async (): Promise<void> => {
       try {
-        const { PRICING_FLAGS } = await import('./utils/pricingHelpers')
+        const { PRICING_FLAGS } = await import('@/shared/utils/pricing/pricingHelpers')
         const isMonitorEnabled = Boolean(
           (PRICING_FLAGS as Record<string, unknown>).FEATURE_PRICING_MONITOR_LOG
         )

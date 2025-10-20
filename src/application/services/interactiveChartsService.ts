@@ -6,7 +6,7 @@
  * مع دعم التحديث في الوقت الفعلي والتفاعل المتقدم
  */
 
-import { asyncStorage } from '../utils/storage'
+import { asyncStorage } from '@/shared/utils/storage/storage'
 
 // أنواع البيانات للرسوم البيانية
 export interface ChartDataPoint {

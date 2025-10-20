@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useId } from 'react'
-import type { BidPerformance } from '../../types/analytics'
+import type { BidPerformance } from '@/shared/types/analytics'
 import type {
   HistoricalComparison as HistoricalComparisonResult,
   MultiPeriodComparison,
@@ -21,7 +21,7 @@ import {
   historicalComparisonService,
   generateAnnualReport
 } from '../../utils/historicalComparison'
-import { formatPercentage, formatCurrency } from '../../utils/analyticsUtils'
+import { formatPercentage, formatCurrency } from '@/shared/utils/analytics/analyticsUtils'
 
 const CARD_BASE_CLASS = 'rounded-lg border border-border bg-card'
 const MUTED_CARD_CLASS = 'rounded-lg border border-border bg-muted/40'
@@ -558,3 +558,4 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
 HistoricalComparison.displayName = 'HistoricalComparison'
 
 export default HistoricalComparison
+

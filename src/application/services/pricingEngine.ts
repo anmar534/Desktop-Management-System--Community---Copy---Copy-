@@ -7,7 +7,7 @@ import type { DefaultPercentages } from './pricingService'
 import { buildPricingMap } from '@/utils/normalizePricing'
 import type { NormalizedPricingItem } from '@/utils/normalizePricing'
 import type { PricingItemInput, PricingResource, RawPricingInput } from '@/utils/pricingHelpers'
-import { getPricingConfig } from '@/utils/pricingConstants'
+import { getPricingConfig } from '@/shared/constants/pricingConstants'
 
 export interface ItemBreakdown {
   materials: number

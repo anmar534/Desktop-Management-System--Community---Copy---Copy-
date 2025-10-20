@@ -28,13 +28,13 @@ import type {
   ChartData, 
   BidPerformance,
   PerformanceSummary 
-} from '../../types/analytics'
+} from '@/shared/types/analytics'
 import { 
   formatCurrency,
   formatPercentage,
   formatLargeNumber,
   createChartData
-} from '../../utils/analyticsUtils'
+} from '@/shared/utils/analytics/analyticsUtils'
 
 /**
  * Props for trend chart component
@@ -533,3 +533,4 @@ export const PerformanceOverviewChart: React.FC<PerformanceOverviewChartProps> =
 })
 
 PerformanceOverviewChart.displayName = 'PerformanceOverviewChart'
+
