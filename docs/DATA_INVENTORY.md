@@ -17,7 +17,7 @@
 | الموازنات | `financial_budgets` | موازنات الأقسام والفئات | `budgetRepository`, `useBudgets`, `Budgets.tsx` | **مستودع جديد** ضمن المرحلة 0 |
 | التقارير المالية | `financial_reports` | حالة توليد التقارير وإنشاء الملفات | `financialReportRepository`, `useFinancialReports`, `FinancialReports.tsx` | **مستودع جديد** ضمن المرحلة 0 |
 | أوامر الشراء | `app_purchase_orders_data` | أوامر الشراء ومرفقاتها | `purchaseOrderRepository`, خدمات المشتريات | يرتبط بأحداث `PURCHASE_ORDERS_UPDATED` |
-| التكاليف/الـ BOQ | `app_boq_data`, `app_pricing_data`, `app_pricing_snapshots`, `app_pricing_official`, `app_pricing_draft` | بيانات التسعير الرسمية والمسودات واللقطات | خدمات التسعير وواجهة `TenderPricingProcess` | تُدار عبر آليات النسخ الاحتياطي في طبقة التسعير، وتُخزَّن ضمن `secureStore` |
+| التكاليف/الـ BOQ | `app_boq_data`, `app_pricing_data`, `app_pricing_official`, `app_pricing_draft` | بيانات التسعير الرسمية، المسودات، ووحدات الـ BOQ | خدمات التسعير وواجهة `TenderPricingProcess` | تم التخلص من مفاتيح snapshots واستبدالها بالنسخ الاحتياطية الموحدة (`app_tender_backups`) |
 | العلاقات | `app_entity_relations` | ربط الكيانات (مشروع ↔ عميل ↔ منافسة) | `relationRepository` | يُحدَّث تلقائياً عند حذف مشروع أو مناقصة |
 | إعدادات النظام | `app_settings_data` | إعدادات الواجهة والوضع الليلي | `Settings`، `useSettings` | يجري توسيعه لدعم الصلاحيات |
 | النسخ الاحتياطية/الإحصاءات | `app_tender_backups`, `app_tender_stats`, `app_project_cost_envelopes`, `app_cost_variance_config`, `app_cost_variance_cache` | نسخ مؤرشفة، إعدادات انحراف التكاليف، كاش التحليلات | خدمات التسعير والتحليل | تستخدم في خطط المرحلة الثالثة والرابعة، وتستفيد الآن من تشفير `secureStore` |
@@ -31,7 +31,7 @@
 | --- | --- | --- | --- | --- |
 | `financial_bank_accounts` | أرقام الحسابات، التدفقات النقدية | عالي جدًا | خسائر مالية/قانونية | **مشفَّر عبر SecureStore (ساري منذ 4 أكتوبر 2025)** |
 | `app_pricing_data`, `app_pricing_official`, `app_pricing_draft` | أسعار ومخططات التسعير | عالي جدًا | فقد الميزة التنافسية | **مشفَّر عبر SecureStore (ساري منذ 4 أكتوبر 2025)** |
-| `app_pricing_snapshots`, `app_tender_backups` | نسخ أرشيفية للتسعير والـ BOQ | عالي | كشف الاستراتيجية التاريخية | **مشفَّر عبر SecureStore (ساري منذ 4 أكتوبر 2025)** |
+| `app_tender_backups` | نسخ أرشيفية للتسعير والـ BOQ | عالي | كشف الاستراتيجية التاريخية | **مشفَّر عبر SecureStore (ساري منذ 4 أكتوبر 2025)** |
 | `financial_invoices`, `financial_budgets`, `financial_reports` | ذمم مالية، موازنات، تقارير | عالي | انكشاف مالي وتلاعب محتمل | **مشفَّر عبر SecureStore (ساري منذ 4 أكتوبر 2025)** |
 | `app_project_cost_envelopes`, `app_cost_variance_config`, `app_cost_variance_cache` | تحليلات الانحراف والتكلفة | متوسط/عالٍ | قرارات خاطئة أو منافسة غير عادلة | **مشفَّر عبر SecureStore (ساري منذ 4 أكتوبر 2025)** |
 | `app_security_audit_log` | أحداث تدقيق أمنية (أفعال، مفاتيح، نتائج) | عالي | فقد القدرة على التتبع والامتثال | **مشفَّر عبر SecureStore (ساري منذ 6 أكتوبر 2025)** |
@@ -51,6 +51,7 @@
 - تم إدخال طبقة `storageSchema` لضمان توحيد الأظرف (`schemaVersion`) وتصحيح البيانات عند القراءة.
 - جميع نداءات `safeLocalStorage` و`asyncStorage` تستخدم الآن `secureStore` للمفاتيح الحساسة وتُحدِّث النسخ المتقادمة تلقائيًا.
 - تم توثيق الاختبارات الجديدة في `tests/utils/storageSchema.test.ts` و`tests/utils/storageMigration.test.ts` للتحقق من التطبيع والترحيل الجماعي.
+- تم تحديث `StorageManager` لإزالة مفاتيح snapshots القديمة تلقائيًا وإصدار إشعارات تدقيق بشأن عمليات التنظيف.
 
 ## مفاتيح قديمة أو قيد الإزالة
 
@@ -59,6 +60,7 @@
 | `construction_app_projects`, `construction_app_clients`, `construction_app_tenders` | قديمة | يجري تنظيفها في `useProjects` و `useTenders` أثناء التهيئة |
 | `projects`, `tenders`, `clients` | قديمة | يتم حذفها بعد الترحيل التلقائي أثناء التشغيل الأول |
 | `app_tenders`, `app_projects`, `app_clients` (بدون اللاحقة `_data`) | قديمة جدًا | مخفية بواسطة `installLegacyStorageGuard` |
+| `app_pricing_snapshots` | محذوف (19 أكتوبر 2025) | يُزال تلقائيًا عبر `StorageManager` أثناء التهيئة |
 
 ## خطوات المرحلة 0 المنجَزة
 

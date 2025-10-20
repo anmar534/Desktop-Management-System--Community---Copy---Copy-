@@ -1,5 +1,3 @@
-'use client'
-
 import { useState } from 'react'
 import { Card, CardContent } from './ui/card'
 import { InlineAlert } from './ui/inline-alert'

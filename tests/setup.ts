@@ -34,7 +34,7 @@ global.ResizeObserver = class ResizeObserver {
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation((query) => ({
+  value: vi.fn().mockImplementation(query => ({
     matches: false,
     media: query,
     onchange: null,
@@ -160,8 +160,8 @@ console.error = (...args: any[]) => {
   if (
     typeof args[0] === 'string' &&
     (args[0].includes('Warning: ReactDOM.render is deprecated') ||
-      args[0].includes('Warning: validateDOMNesting') ||
-      args[0].includes('Warning: Each child in a list should have a unique "key" prop'))
+     args[0].includes('Warning: validateDOMNesting') ||
+     args[0].includes('Warning: Each child in a list should have a unique "key" prop'))
   ) {
     return
   }
@@ -173,7 +173,7 @@ console.warn = (...args: any[]) => {
   if (
     typeof args[0] === 'string' &&
     (args[0].includes('Warning: componentWillReceiveProps') ||
-      args[0].includes('Warning: componentWillMount'))
+     args[0].includes('Warning: componentWillMount'))
   ) {
     return
   }

@@ -1,5 +1,4 @@
 # تقرير مراجعة الكود وتحسين الأداء والأمان
-
 ## Desktop Management System - Code Quality & Optimization Report
 
 **تاريخ المراجعة:** 2025-10-18  
@@ -11,7 +10,6 @@
 ## 📋 ملخص تنفيذي
 
 تم إجراء مراجعة شاملة للمشروع للكشف عن:
-
 - ✅ الأخطاء المنطقية والبرمجية
 - ✅ الكود غير المستخدم
 - ✅ الأكواد المتكررة
@@ -26,7 +24,6 @@
 ### 1. الأخطاء المنطقية والبرمجية
 
 #### ❌ أخطاء حرجة (23 خطأ)
-
 ```
 tests/setup.ts:185:3 - error: Unexpected var, use let or const instead
 ```
@@ -34,7 +31,6 @@ tests/setup.ts:185:3 - error: Unexpected var, use let or const instead
 #### ⚠️ تحذيرات (4,571 تحذير)
 
 **التوزيع حسب النوع:**
-
 - `@typescript-eslint/no-explicit-any`: ~2,100 تحذير (استخدام `any` بدلاً من أنواع محددة)
 - `@typescript-eslint/no-unused-vars`: ~800 تحذير (متغيرات غير مستخدمة)
 - `@typescript-eslint/no-empty-function`: ~200 تحذير (دوال فارغة)
@@ -48,7 +44,6 @@ tests/setup.ts:185:3 - error: Unexpected var, use let or const instead
 ### 2. الكود غير المستخدم
 
 #### 📁 ملفات غير مستخدمة محتملة:
-
 ```javascript
 // تم تحديدها مسبقاً في:
 scripts/remove-unused-cost-components.js
@@ -57,9 +52,7 @@ scripts/remove-unused-cost-components.js
 ```
 
 #### 🔧 متغيرات ودوال غير مستخدمة:
-
 **أمثلة من التحليل:**
-
 ```typescript
 // tests/_legacy/components/ProjectCreationWizard.test.tsx:79
 'user' is assigned a value but never used
@@ -68,13 +61,12 @@ scripts/remove-unused-cost-components.js
 'userEvent' is defined but never used
 
 // tests/_legacy/services/workflowAutomationService.test.ts:10-15
-'TenderAlert', 'WorkflowTask', 'TaskAssignmentRule',
-'ComplianceCheck', 'ScheduledReport', 'NotificationTemplate'
+'TenderAlert', 'WorkflowTask', 'TaskAssignmentRule', 
+'ComplianceCheck', 'ScheduledReport', 'NotificationTemplate' 
 // جميعها معرفة ولكن غير مستخدمة
 ```
 
 #### 📦 Imports غير مستخدمة:
-
 ```typescript
 // أمثلة متكررة في ملفات الاختبار:
 import React from 'react' // غير مستخدم في ~50 ملف اختبار
@@ -88,7 +80,6 @@ import { fireEvent } from '@testing-library/react' // غير مستخدم في ~
 #### 🔄 أنماط متكررة تم اكتشافها:
 
 **1. دوال التحقق من الأرقام:**
-
 ```typescript
 // تكرار في 5+ ملفات مختلفة:
 // src/utils/numberFormat.ts
@@ -108,7 +99,6 @@ const toFiniteNumber = (value: unknown): number | undefined => {
 **توصية:** دمج في utility function واحدة في `src/utils/numberHelpers.ts`
 
 **2. دوال إزالة التكرار (Deduplication):**
-
 ```typescript
 // تكرار في:
 // src/utils/pricingHelpers.ts - dedupePricingItems()
@@ -120,7 +110,6 @@ const toFiniteNumber = (value: unknown): number | undefined => {
 **توصية:** إنشاء generic deduplication utility
 
 **3. معالجة الأخطاء:**
-
 ```typescript
 // نمط متكرر في 100+ موقع:
 try {
@@ -134,13 +123,10 @@ try {
 **توصية:** توحيد معالجة الأخطاء باستخدام error handler مركزي
 
 **4. Event Listeners Cleanup:**
-
 ```typescript
 // نمط متكرر في 20+ مكون:
 useEffect(() => {
-  const handler = (event) => {
-    /* ... */
-  }
+  const handler = (event) => { /* ... */ }
   window.addEventListener('event-name', handler)
   return () => {
     window.removeEventListener('event-name', handler)
@@ -159,51 +145,43 @@ useEffect(() => {
 **مكتبات محتملة للمراجعة:**
 
 1. **مكتبات مكررة الوظيفة:**
-
 ```json
 {
-  "echarts": "5.5.0", // مكتبة رسوم بيانية
+  "echarts": "5.5.0",           // مكتبة رسوم بيانية
   "echarts-for-react": "3.0.2", // wrapper لـ echarts
-  "recharts": "2.15.2" // مكتبة رسوم بيانية أخرى
+  "recharts": "2.15.2"          // مكتبة رسوم بيانية أخرى
 }
 ```
-
 **توصية:** استخدام مكتبة واحدة فقط (echarts أو recharts)
 
 2. **مكتبات Drag & Drop:**
-
 ```json
 {
-  "react-beautiful-dnd": "13.1.1", // مكتبة قديمة (آخر تحديث 2021)
-  "@dnd-kit/core": "6.1.0", // مكتبة حديثة
+  "react-beautiful-dnd": "13.1.1",  // مكتبة قديمة (آخر تحديث 2021)
+  "@dnd-kit/core": "6.1.0",         // مكتبة حديثة
   "@dnd-kit/sortable": "8.0.0"
 }
 ```
-
 **توصية:** إزالة `react-beautiful-dnd` واستخدام `@dnd-kit` فقط
 
 3. **مكتبات Animation:**
-
 ```json
 {
   "framer-motion": "12.23.12",
   "motion": "10.18.0"
 }
 ```
-
 **توصية:** استخدام واحدة فقط (framer-motion هي الأكثر شيوعاً)
 
 4. **مكتبات غير ضرورية محتملة:**
-
 ```json
 {
-  "path": "0.12.7", // متوفرة built-in في Node.js
-  "styled-components": "5.3.11" // إذا كنت تستخدم Tailwind فقط
+  "path": "0.12.7",  // متوفرة built-in في Node.js
+  "styled-components": "5.3.11"  // إذا كنت تستخدم Tailwind فقط
 }
 ```
 
 #### 📊 إحصائيات التبعيات:
-
 - **Dependencies:** 64 مكتبة
 - **DevDependencies:** 54 مكتبة
 - **إجمالي node_modules:** ~755 مجلد
@@ -217,7 +195,6 @@ useEffect(() => {
 #### ⚠️ مشاكل تم اكتشافها:
 
 **1. Event Listeners غير المنظفة:**
-
 ```typescript
 // src/services/errorRecoveryService.ts:224-245
 // ✅ جيد - يتم التنظيف بشكل صحيح
@@ -227,7 +204,6 @@ window.addEventListener('unhandledrejection', handler)
 ```
 
 **2. Intervals غير المنظفة:**
-
 ```typescript
 // src/services/performance/optimization.service.ts:392-403
 setInterval(() => {
@@ -237,7 +213,6 @@ setInterval(() => {
 ```
 
 **3. Subscriptions غير المنظفة:**
-
 ```typescript
 // src/utils/auditLog.ts:161-176
 export const subscribeToAuditLog = (listener: AuditLogListener): (() => void) => {
@@ -250,14 +225,12 @@ export const subscribeToAuditLog = (listener: AuditLogListener): (() => void) =>
 ```
 
 **4. Memory Cache بدون حدود:**
-
 ```typescript
 // src/services/performance/optimization.service.ts
 // يوجد memory management ولكن يحتاج تحسين
 ```
 
 #### 🔧 التوصيات:
-
 1. إضافة cleanup methods لجميع services
 2. استخدام WeakMap/WeakSet حيث أمكن
 3. تحديد حد أقصى لـ cache sizes
@@ -270,7 +243,6 @@ export const subscribeToAuditLog = (listener: AuditLogListener): (() => void) =>
 #### 🐌 نقاط الضعف المكتشفة:
 
 **1. عدم استخدام React.memo بشكل كافٍ:**
-
 ```typescript
 // src/components/analytics/PredictiveAnalytics.tsx:52
 export const PredictiveAnalytics: React.FC<Props> = React.memo(({ ... }) => {
@@ -281,7 +253,6 @@ export const PredictiveAnalytics: React.FC<Props> = React.memo(({ ... }) => {
 ```
 
 **2. عدم استخدام useMemo/useCallback:**
-
 ```typescript
 // العديد من المكونات تحتوي على:
 const handleChange = (field, value) => { ... }
@@ -289,7 +260,6 @@ const handleChange = (field, value) => { ... }
 ```
 
 **3. Large Lists بدون Virtualization:**
-
 ```typescript
 // src/components/Tenders.tsx
 // src/components/Projects.tsx
@@ -297,7 +267,6 @@ const handleChange = (field, value) => { ... }
 ```
 
 **4. Bundle Size:**
-
 ```
 // من package.json:
 "puppeteer": "24.20.0"  // ~300MB - ضخم جداً!
@@ -312,7 +281,6 @@ const handleChange = (field, value) => { ... }
 #### 🔒 نقاط القوة:
 
 ✅ **تم تطبيقها بشكل جيد:**
-
 1. منع استخدام localStorage مباشرة (ESLint rule)
 2. IPC payload validation في Electron
 3. Input sanitization في معظم الأماكن
@@ -322,7 +290,6 @@ const handleChange = (field, value) => { ... }
 #### ⚠️ **نقاط تحتاج تحسين:**
 
 **1. Validation غير متسقة:**
-
 ```typescript
 // بعض الملفات تستخدم Zod:
 // src/domain/validation/schemas.ts ✅
@@ -332,7 +299,6 @@ const handleChange = (field, value) => { ... }
 ```
 
 **2. Error Messages تكشف معلومات حساسة:**
-
 ```typescript
 // أمثلة:
 console.error('Failed to load data:', error)
@@ -340,7 +306,6 @@ console.error('Failed to load data:', error)
 ```
 
 **3. عدم وجود Rate Limiting:**
-
 ```typescript
 // لا يوجد rate limiting على:
 // - API calls
@@ -349,7 +314,6 @@ console.error('Failed to load data:', error)
 ```
 
 **4. Dependencies Security:**
-
 ```bash
 npm audit
 # يجب تشغيله بانتظام
@@ -359,18 +323,17 @@ npm audit
 
 ## 📊 إحصائيات عامة
 
-| المقياس          | القيمة    | الحالة               |
-| ---------------- | --------- | -------------------- |
-| إجمالي الملفات   | ~500+     | ⚠️ كبير              |
-| أخطاء TypeScript | 2,683     | ❌ حرج - يجب إصلاحها |
-| تحذيرات ESLint   | 4,571     | ⚠️ يحتاج تحسين       |
-| Dependencies     | 118       | ⚠️ يمكن تقليلها      |
-| حجم node_modules | ~755 مجلد | ⚠️ كبير              |
-| Test Coverage    | غير محدد  | ⚠️ يحتاج قياس        |
-| ملفات بها أخطاء  | 272 ملف   | ❌ حرج               |
+| المقياس | القيمة | الحالة |
+|---------|--------|--------|
+| إجمالي الملفات | ~500+ | ⚠️ كبير |
+| أخطاء TypeScript | 2,683 | ❌ حرج - يجب إصلاحها |
+| تحذيرات ESLint | 4,571 | ⚠️ يحتاج تحسين |
+| Dependencies | 118 | ⚠️ يمكن تقليلها |
+| حجم node_modules | ~755 مجلد | ⚠️ كبير |
+| Test Coverage | غير محدد | ⚠️ يحتاج قياس |
+| ملفات بها أخطاء | 272 ملف | ❌ حرج |
 
 ### توزيع الأخطاء حسب النوع:
-
 - **ملفات الاختبار:** ~1,800 خطأ (67%)
 - **ملفات Services:** ~600 خطأ (22%)
 - **ملفات Components:** ~250 خطأ (9%)
@@ -383,12 +346,10 @@ npm audit
 ### 🔴 أولوية عالية (يجب إصلاحها قبل الإنتاج)
 
 1. **إصلاح الأخطاء الحرجة:**
-
    - إصلاح `var` في tests/setup.ts
    - حل مشاكل TypeScript
 
 2. **تنظيف Memory Leaks:**
-
    - إضافة cleanup للـ intervals
    - إضافة destroy methods للـ services
 
@@ -400,13 +361,11 @@ npm audit
 ### 🟡 أولوية متوسطة (تحسينات مهمة)
 
 4. **تقليل التحذيرات:**
-
    - استبدال `any` بأنواع محددة
    - حذف imports غير مستخدمة
    - استخدام `import type` حيث مناسب
 
 5. **تحسين الأداء:**
-
    - إضافة React.memo للمكونات الكبيرة
    - استخدام virtualization للقوائم
    - تقليل bundle size
@@ -418,7 +377,6 @@ npm audit
 ### 🟢 أولوية منخفضة (تحسينات مستقبلية)
 
 7. **Refactoring:**
-
    - دمج الأكواد المتكررة
    - إنشاء utility functions مشتركة
    - تحسين بنية المشروع
@@ -433,7 +391,6 @@ npm audit
 ## 📝 الخطوات التالية
 
 سيتم الآن:
-
 1. ✅ إصلاح الأخطاء الحرجة
 2. ✅ تنظيف Memory Leaks
 3. ✅ تحسين الأمان
@@ -443,3 +400,4 @@ npm audit
 ---
 
 **ملاحظة:** هذا التقرير تم إنشاؤه تلقائياً بواسطة نظام المراجعة الآلي.
+

@@ -1,5 +1,3 @@
-'use client'
-
 // معالج لمصادر Excel وتحويلها إلى عقود النظام الموحدة
 import type { BankTransaction } from './BankStatementProcessor'
 import { BankStatementProcessor } from './BankStatementProcessor'

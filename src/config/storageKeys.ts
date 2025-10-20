@@ -61,7 +61,6 @@ export const STORAGE_KEYS = {
   INVENTORY_LOCATIONS: 'app_inventory_locations',
   INVENTORY_COUNTS: 'app_inventory_counts',
   INVENTORY_REPORTS: 'app_inventory_reports',
-  PRICING_SNAPSHOTS: 'app_pricing_snapshots', // تخزين اللقطات المحسوبة (Snapshot) لكل مناقصة
   // طبقات التسعير الجديدة (فصل الرسمي عن المسودة)
   PRICING_OFFICIAL: 'app_pricing_official',
   PRICING_DRAFT: 'app_pricing_draft',

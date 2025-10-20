@@ -10,7 +10,6 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
   TrendingUp,
   TrendingDown,
@@ -22,9 +21,6 @@ import {
   Filter,
   Search,
   RefreshCw,
-  Eye,
-  Calendar,
-  MapPin,
   Building,
   Zap,
   Target,
@@ -36,7 +32,6 @@ import { Input } from '../ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Badge } from '../ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { 
   marketIntelligenceService,
   type MaterialCost,
@@ -45,7 +40,8 @@ import {
   type IndustryTrend,
   type MarketOpportunity,
   type MarketAnalysisResult,
-  type MarketIntelligenceFilters
+  type MarketIntelligenceFilters,
+  type MarketAlert
 } from '../../services/marketIntelligenceService'
 
 // ===== COMPONENT PROPS =====
@@ -55,6 +51,103 @@ export interface MarketIntelligenceProps {
   onDataUpdate?: () => void
   showAnalytics?: boolean
   compactMode?: boolean
+}
+
+const NEUTRAL_BADGE_CLASS = 'bg-muted/40 text-muted-foreground border-none'
+
+const TREND_BADGE_VARIANTS: Record<'increasing' | 'decreasing' | 'stable', string> = {
+  increasing: 'bg-destructive/10 text-destructive border-none',
+  decreasing: 'bg-success/10 text-success border-none',
+  stable: NEUTRAL_BADGE_CLASS
+}
+
+const SENTIMENT_BADGE_VARIANTS: Record<'positive' | 'negative' | 'neutral', string> = {
+  positive: 'bg-success/10 text-success border-none',
+  negative: 'bg-destructive/10 text-destructive border-none',
+  neutral: NEUTRAL_BADGE_CLASS
+}
+
+const COMPETITION_BADGE_VARIANTS: Record<'low' | 'medium' | 'high', string> = {
+  low: 'bg-success/10 text-success border-none',
+  medium: 'bg-warning/10 text-warning border-none',
+  high: 'bg-destructive/10 text-destructive border-none'
+}
+
+const ALERT_SEVERITY_DOT_VARIANTS: Record<MarketAlert['severity'], string> = {
+  critical: 'bg-destructive',
+  high: 'bg-warning',
+  medium: 'bg-accent',
+  low: 'bg-info'
+}
+
+const MATERIAL_AVAILABILITY_VARIANTS: Record<MaterialCost['availability'], string> = {
+  high: 'bg-success/10 text-success border-none',
+  medium: 'bg-warning/10 text-warning border-none',
+  low: 'bg-destructive/10 text-destructive border-none'
+}
+
+const LABOR_SKILL_LEVEL_VARIANTS: Record<LaborRate['skillLevel'], string> = {
+  expert: 'bg-accent/10 text-accent border-none',
+  senior: 'bg-info/10 text-info border-none',
+  intermediate: 'bg-success/10 text-success border-none',
+  entry: NEUTRAL_BADGE_CLASS
+}
+
+const LABOR_DEMAND_VARIANTS: Record<LaborRate['demand'], string> = {
+  high: 'bg-destructive/10 text-destructive border-none',
+  medium: 'bg-warning/10 text-warning border-none',
+  low: 'bg-success/10 text-success border-none'
+}
+
+const LABOR_AVAILABILITY_VARIANTS: Record<LaborRate['availability'], string> = {
+  abundant: 'bg-success/10 text-success border-none',
+  moderate: 'bg-warning/10 text-warning border-none',
+  scarce: 'bg-destructive/10 text-destructive border-none'
+}
+
+const INDICATOR_IMPACT_VARIANTS: Record<EconomicIndicator['impact'], string> = {
+  positive: 'bg-success/10 text-success border-none',
+  negative: 'bg-destructive/10 text-destructive border-none',
+  neutral: NEUTRAL_BADGE_CLASS
+}
+
+const OPPORTUNITY_STATUS_VARIANTS: Record<MarketOpportunity['status'], string> = {
+  active: 'bg-success/10 text-success border-none',
+  pursuing: 'bg-info/10 text-info border-none',
+  won: 'bg-primary/10 text-primary border-none',
+  lost: 'bg-destructive/10 text-destructive border-none',
+  expired: NEUTRAL_BADGE_CLASS
+}
+
+const OPPORTUNITY_COMPETITION_VARIANTS: Record<MarketOpportunity['competitionLevel'], string> = {
+  low: 'bg-success/10 text-success border-none',
+  medium: 'bg-warning/10 text-warning border-none',
+  high: 'bg-destructive/10 text-destructive border-none'
+}
+
+const TREND_IMPACT_VARIANTS: Record<IndustryTrend['impact'], string> = {
+  high: 'bg-destructive/10 text-destructive border-none',
+  medium: 'bg-warning/10 text-warning border-none',
+  low: 'bg-success/10 text-success border-none'
+}
+
+const TIMEFRAME_LABELS: Record<IndustryTrend['timeframe'], string> = {
+  short: 'قصير المدى',
+  medium: 'متوسط المدى',
+  long: 'طويل المدى'
+}
+
+const getChangeTextClass = (change?: number) => {
+  if (change === undefined) return 'text-muted-foreground'
+  if (change > 0) return 'text-success'
+  if (change < 0) return 'text-destructive'
+  return 'text-muted-foreground'
+}
+
+const getPriceChangeBadgeClass = (value: number) => {
+  if (value > 0) return 'bg-destructive/10 text-destructive border-none'
+  if (value < 0) return 'bg-success/10 text-success border-none'
+  return NEUTRAL_BADGE_CLASS
 }
 
 // ===== MAIN COMPONENT =====
@@ -70,7 +163,7 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filters, setFilters] = useState<MarketIntelligenceFilters>({})
+  const [filters] = useState<MarketIntelligenceFilters>({})
   
   // Data states
   const [marketAnalysis, setMarketAnalysis] = useState<MarketAnalysisResult | null>(null)
@@ -200,9 +293,8 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
   const renderStatCard = (
     title: string,
     value: string | number,
-    change?: number,
     icon: React.ReactNode,
-    trend?: 'up' | 'down' | 'stable'
+    change?: number
   ) => (
     <Card className="relative overflow-hidden">
       <CardContent className="p-6">
@@ -211,12 +303,10 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold">{value}</p>
             {change !== undefined && (
-              <div className={`flex items-center text-sm ${
-                change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-600'
-              }`}>
-                {change > 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : 
-                 change < 0 ? <TrendingDown className="w-4 h-4 mr-1" /> : 
-                 <Activity className="w-4 h-4 mr-1" />}
+              <div className={`flex items-center text-sm ${getChangeTextClass(change)}`}>
+                {change > 0 ? <TrendingUp className="mr-1 h-4 w-4" /> : 
+                 change < 0 ? <TrendingDown className="mr-1 h-4 w-4" /> : 
+                 <Activity className="mr-1 h-4 w-4 text-muted-foreground" />}
                 {change > 0 ? '+' : ''}{change}%
               </div>
             )}
@@ -230,28 +320,20 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
   )
 
   const renderTrendBadge = (trend: string) => {
-    const variants = {
-      increasing: 'bg-red-100 text-red-800',
-      decreasing: 'bg-green-100 text-green-800',
-      stable: 'bg-gray-100 text-gray-800'
-    }
-    
+    const badgeClass = TREND_BADGE_VARIANTS[trend as keyof typeof TREND_BADGE_VARIANTS] || NEUTRAL_BADGE_CLASS
+
     return (
-      <Badge className={variants[trend as keyof typeof variants] || 'bg-gray-100 text-gray-800'}>
+      <Badge variant="outline" className={badgeClass}>
         {trend === 'increasing' ? 'متزايد' : trend === 'decreasing' ? 'متناقص' : 'مستقر'}
       </Badge>
     )
   }
 
   const renderSentimentBadge = (sentiment: string) => {
-    const variants = {
-      positive: 'bg-green-100 text-green-800',
-      negative: 'bg-red-100 text-red-800',
-      neutral: 'bg-gray-100 text-gray-800'
-    }
-    
+    const badgeClass = SENTIMENT_BADGE_VARIANTS[sentiment as keyof typeof SENTIMENT_BADGE_VARIANTS] || NEUTRAL_BADGE_CLASS
+
     return (
-      <Badge className={variants[sentiment as keyof typeof variants] || 'bg-gray-100 text-gray-800'}>
+      <Badge variant="outline" className={badgeClass}>
         {sentiment === 'positive' ? 'إيجابي' : sentiment === 'negative' ? 'سلبي' : 'محايد'}
       </Badge>
     )
@@ -279,8 +361,8 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">ذكاء السوق</h1>
-          <p className="text-gray-600">تتبع وتحليل اتجاهات السوق والفرص التجارية</p>
+          <h1 className="text-2xl font-bold text-foreground">ذكاء السوق</h1>
+          <p className="text-muted-foreground">تتبع وتحليل اتجاهات السوق والفرص التجارية</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -310,7 +392,7 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
       {/* Search and Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 transform text-muted-foreground h-4 w-4" />
           <Input
             placeholder="البحث في بيانات السوق..."
             value={searchTerm}
@@ -331,29 +413,26 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
           {renderStatCard(
             'إجمالي المواد',
             marketAnalysis.summary.totalMaterials,
-            undefined,
-            <Building className="w-8 h-8" />
+            <Building className="h-8 w-8" />
           )}
 
           {renderStatCard(
             'متوسط تغيير الأسعار',
             `${marketAnalysis.summary.avgPriceChange}%`,
-            marketAnalysis.summary.avgPriceChange,
-            <DollarSign className="w-8 h-8" />
+            <DollarSign className="h-8 w-8" />,
+            marketAnalysis.summary.avgPriceChange
           )}
 
           {renderStatCard(
             'فئات العمالة',
             marketAnalysis.summary.totalLaborCategories,
-            undefined,
-            <Users className="w-8 h-8" />
+            <Users className="h-8 w-8" />
           )}
 
           {renderStatCard(
             'الفرص النشطة',
             marketAnalysis.summary.activeOpportunities,
-            undefined,
-            <Target className="w-8 h-8" />
+            <Target className="h-8 w-8" />
           )}
         </div>
       )}
@@ -370,23 +449,23 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">اتجاه تكلفة المواد</p>
+                <p className="text-sm text-muted-foreground">اتجاه تكلفة المواد</p>
                 {renderTrendBadge(marketAnalysis.trends.materialCostTrend)}
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">اتجاه أجور العمالة</p>
+                <p className="text-sm text-muted-foreground">اتجاه أجور العمالة</p>
                 {renderTrendBadge(marketAnalysis.trends.laborRateTrend)}
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">معنويات السوق</p>
+                <p className="text-sm text-muted-foreground">معنويات السوق</p>
                 {renderSentimentBadge(marketAnalysis.trends.marketSentiment)}
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">مستوى المنافسة</p>
-                <Badge className="bg-blue-100 text-blue-800">
+                <p className="text-sm text-muted-foreground">مستوى المنافسة</p>
+                <Badge variant="outline" className={COMPETITION_BADGE_VARIANTS[marketAnalysis.trends.competitionLevel]}>
                   {marketAnalysis.trends.competitionLevel === 'high' ? 'عالي' :
                    marketAnalysis.trends.competitionLevel === 'medium' ? 'متوسط' : 'منخفض'}
                 </Badge>
@@ -420,11 +499,11 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
               <CardContent>
                 <div className="space-y-3">
                   {marketAnalysis.recommendations.map((recommendation, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-sm font-medium mt-0.5">
+                    <div key={index} className="flex items-start gap-3 rounded-lg border border-info/40 bg-info/10 p-3">
+                      <div className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-info/20 text-sm font-medium text-info">
                         {index + 1}
                       </div>
-                      <p className="text-sm text-gray-700">{recommendation}</p>
+                      <p className="text-sm text-muted-foreground">{recommendation}</p>
                     </div>
                   ))}
                 </div>
@@ -445,15 +524,11 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                 <div className="space-y-3">
                   {marketAnalysis.alerts.slice(0, 5).map((alert) => (
                     <div key={alert.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                      <div className={`w-3 h-3 rounded-full mt-2 ${
-                        alert.severity === 'critical' ? 'bg-red-500' :
-                        alert.severity === 'high' ? 'bg-orange-500' :
-                        alert.severity === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
-                      }`} />
+                      <div className={`mt-2 h-3 w-3 rounded-full ${ALERT_SEVERITY_DOT_VARIANTS[alert.severity]}`} />
                       <div className="flex-1">
                         <h4 className="font-medium text-sm">{alert.title}</h4>
-                        <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="mt-1 text-sm text-muted-foreground">{alert.message}</p>
+                        <p className="mt-2 text-xs text-muted-foreground">
                           {new Date(alert.createdAt).toLocaleDateString('ar-SA')}
                         </p>
                       </div>
@@ -498,38 +573,30 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <h4 className="font-medium text-sm">{material.materialName}</h4>
-                      <Badge className={`text-xs ${
-                        material.priceChangePercent > 0 ? 'bg-red-100 text-red-800' :
-                        material.priceChangePercent < 0 ? 'bg-green-100 text-green-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <Badge variant="outline" className={`text-xs ${getPriceChangeBadgeClass(material.priceChangePercent)}`}>
                         {material.priceChangePercent > 0 ? '+' : ''}{material.priceChangePercent}%
                       </Badge>
                     </div>
 
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">السعر الحالي:</span>
+                        <span className="text-muted-foreground">السعر الحالي:</span>
                         <span className="font-medium">{material.currentPrice} {material.currency}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">المورد:</span>
+                        <span className="text-muted-foreground">المورد:</span>
                         <span>{material.supplier}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">المنطقة:</span>
+                        <span className="text-muted-foreground">المنطقة:</span>
                         <span>{material.region}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">التوفر:</span>
-                        <Badge className={`text-xs ${
-                          material.availability === 'high' ? 'bg-green-100 text-green-800' :
-                          material.availability === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
+                        <span className="text-muted-foreground">التوفر:</span>
+                        <Badge variant="outline" className={`text-xs ${MATERIAL_AVAILABILITY_VARIANTS[material.availability]}`}>
                           {material.availability === 'high' ? 'عالي' :
                            material.availability === 'medium' ? 'متوسط' : 'منخفض'}
                         </Badge>
@@ -537,7 +604,7 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                     </div>
 
                     <div className="pt-2 border-t">
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         آخر تحديث: {new Date(material.lastUpdated).toLocaleDateString('ar-SA')}
                       </p>
                     </div>
@@ -581,12 +648,7 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <h4 className="font-medium text-sm">{rate.skillCategory}</h4>
-                      <Badge className={`text-xs ${
-                        rate.skillLevel === 'expert' ? 'bg-purple-100 text-purple-800' :
-                        rate.skillLevel === 'senior' ? 'bg-blue-100 text-blue-800' :
-                        rate.skillLevel === 'intermediate' ? 'bg-green-100 text-green-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <Badge variant="outline" className={`text-xs ${LABOR_SKILL_LEVEL_VARIANTS[rate.skillLevel]}`}>
                         {rate.skillLevel === 'expert' ? 'خبير' :
                          rate.skillLevel === 'senior' ? 'أول' :
                          rate.skillLevel === 'intermediate' ? 'متوسط' : 'مبتدئ'}
@@ -595,39 +657,31 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
 
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">الأجر بالساعة:</span>
+                        <span className="text-muted-foreground">الأجر بالساعة:</span>
                         <span className="font-medium">{rate.hourlyRate} {rate.currency}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">الأجر اليومي:</span>
+                        <span className="text-muted-foreground">الأجر اليومي:</span>
                         <span>{rate.dailyRate} {rate.currency}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">المدينة:</span>
+                        <span className="text-muted-foreground">المدينة:</span>
                         <span>{rate.city}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">الطلب:</span>
-                        <Badge className={`text-xs ${
-                          rate.demand === 'high' ? 'bg-red-100 text-red-800' :
-                          rate.demand === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
+                        <span className="text-muted-foreground">الطلب:</span>
+                        <Badge variant="outline" className={`text-xs ${LABOR_DEMAND_VARIANTS[rate.demand]}`}>
                           {rate.demand === 'high' ? 'عالي' :
                            rate.demand === 'medium' ? 'متوسط' : 'منخفض'}
                         </Badge>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">التوفر:</span>
-                        <Badge className={`text-xs ${
-                          rate.availability === 'abundant' ? 'bg-green-100 text-green-800' :
-                          rate.availability === 'moderate' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
+                        <span className="text-muted-foreground">التوفر:</span>
+                        <Badge variant="outline" className={`text-xs ${LABOR_AVAILABILITY_VARIANTS[rate.availability]}`}>
                           {rate.availability === 'abundant' ? 'وفير' :
                            rate.availability === 'moderate' ? 'متوسط' : 'نادر'}
                         </Badge>
@@ -635,7 +689,7 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                     </div>
 
                     <div className="pt-2 border-t">
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         آخر تحديث: {new Date(rate.lastUpdated).toLocaleDateString('ar-SA')}
                       </p>
                     </div>
@@ -668,11 +722,7 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <h4 className="font-medium text-sm">{indicator.name}</h4>
-                      <Badge className={`text-xs ${
-                        indicator.trend === 'increasing' ? 'bg-green-100 text-green-800' :
-                        indicator.trend === 'decreasing' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <Badge variant="outline" className={`text-xs ${TREND_BADGE_VARIANTS[indicator.trend]}`}>
                         {indicator.trend === 'increasing' ? 'متزايد' :
                          indicator.trend === 'decreasing' ? 'متناقص' : 'مستقر'}
                       </Badge>
@@ -680,40 +730,33 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
 
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">القيمة الحالية:</span>
+                        <span className="text-muted-foreground">القيمة الحالية:</span>
                         <span className="font-medium">{indicator.currentValue} {indicator.unit}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">التغيير:</span>
-                        <span className={`${
-                          indicator.change > 0 ? 'text-green-600' :
-                          indicator.change < 0 ? 'text-red-600' : 'text-gray-600'
-                        }`}>
+                        <span className="text-muted-foreground">التغيير:</span>
+                        <span className={getChangeTextClass(indicator.change)}>
                           {indicator.change > 0 ? '+' : ''}{indicator.changePercent}%
                         </span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">التأثير:</span>
-                        <Badge className={`text-xs ${
-                          indicator.impact === 'positive' ? 'bg-green-100 text-green-800' :
-                          indicator.impact === 'negative' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className="text-muted-foreground">التأثير:</span>
+                        <Badge variant="outline" className={`text-xs ${INDICATOR_IMPACT_VARIANTS[indicator.impact]}`}>
                           {indicator.impact === 'positive' ? 'إيجابي' :
                            indicator.impact === 'negative' ? 'سلبي' : 'محايد'}
                         </Badge>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">المصدر:</span>
+                        <span className="text-muted-foreground">المصدر:</span>
                         <span className="text-xs">{indicator.source}</span>
                       </div>
                     </div>
 
                     <div className="pt-2 border-t">
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         آخر تحديث: {new Date(indicator.lastUpdated).toLocaleDateString('ar-SA')}
                       </p>
                     </div>
@@ -737,13 +780,7 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <h4 className="font-medium text-sm">{opportunity.title}</h4>
-                      <Badge className={`text-xs ${
-                        opportunity.status === 'active' ? 'bg-green-100 text-green-800' :
-                        opportunity.status === 'pursuing' ? 'bg-blue-100 text-blue-800' :
-                        opportunity.status === 'won' ? 'bg-purple-100 text-purple-800' :
-                        opportunity.status === 'lost' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <Badge variant="outline" className={`text-xs ${OPPORTUNITY_STATUS_VARIANTS[opportunity.status]}`}>
                         {opportunity.status === 'active' ? 'نشط' :
                          opportunity.status === 'pursuing' ? 'قيد المتابعة' :
                          opportunity.status === 'won' ? 'تم الفوز' :
@@ -751,36 +788,32 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                       </Badge>
                     </div>
 
-                    <p className="text-sm text-gray-600 line-clamp-2">{opportunity.description}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{opportunity.description}</p>
 
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-600">القيمة المقدرة:</span>
+                        <span className="text-muted-foreground">القيمة المقدرة:</span>
                         <span className="font-medium">{opportunity.estimatedValue.toLocaleString()} ريال</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">الاحتمالية:</span>
+                        <span className="text-muted-foreground">الاحتمالية:</span>
                         <span>{opportunity.probability}%</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">القطاع:</span>
+                        <span className="text-muted-foreground">القطاع:</span>
                         <span>{opportunity.sector}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">المنطقة:</span>
+                        <span className="text-muted-foreground">المنطقة:</span>
                         <span>{opportunity.region}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-gray-600">مستوى المنافسة:</span>
-                        <Badge className={`text-xs ${
-                          opportunity.competitionLevel === 'high' ? 'bg-red-100 text-red-800' :
-                          opportunity.competitionLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
+                        <span className="text-muted-foreground">مستوى المنافسة:</span>
+                        <Badge variant="outline" className={`text-xs ${OPPORTUNITY_COMPETITION_VARIANTS[opportunity.competitionLevel]}`}>
                           {opportunity.competitionLevel === 'high' ? 'عالي' :
                            opportunity.competitionLevel === 'medium' ? 'متوسط' : 'منخفض'}
                         </Badge>
@@ -790,7 +823,7 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                     {/* Requirements */}
                     {opportunity.requirements.length > 0 && (
                       <div className="space-y-1">
-                        <p className="text-xs font-medium text-gray-700">المتطلبات:</p>
+                        <p className="text-xs font-medium text-muted-foreground">المتطلبات:</p>
                         <div className="flex flex-wrap gap-1">
                           {opportunity.requirements.slice(0, 3).map((req, index) => (
                             <Badge key={index} variant="outline" className="text-xs">
@@ -807,7 +840,7 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                     )}
 
                     <div className="pt-2 border-t">
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         تم تحديدها: {new Date(opportunity.identifiedDate).toLocaleDateString('ar-SA')}
                       </p>
                     </div>
@@ -838,21 +871,16 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                   <div className="flex justify-between items-start">
                     <h4 className="font-medium">{trend.title}</h4>
                     <div className="flex gap-2">
-                      <Badge className={`text-xs ${
-                        trend.impact === 'high' ? 'bg-red-100 text-red-800' :
-                        trend.impact === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
+                      <Badge variant="outline" className={`text-xs ${TREND_IMPACT_VARIANTS[trend.impact]}`}>
                         تأثير {trend.impact === 'high' ? 'عالي' : trend.impact === 'medium' ? 'متوسط' : 'منخفض'}
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        {trend.timeframe === 'short' ? 'قصير المدى' :
-                         trend.timeframe === 'medium' ? 'متوسط المدى' : 'طويل المدى'}
+                        {TIMEFRAME_LABELS[trend.timeframe]}
                       </Badge>
                     </div>
                   </div>
 
-                  <p className="text-sm text-gray-600">{trend.description}</p>
+                  <p className="text-sm text-muted-foreground">{trend.description}</p>
 
                   {trend.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
@@ -864,7 +892,7 @@ export const MarketIntelligence: React.FC<MarketIntelligenceProps> = React.memo(
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center text-xs text-gray-500">
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
                     <span>المصدر: {trend.source}</span>
                     <span>{new Date(trend.publishedDate).toLocaleDateString('ar-SA')}</span>
                   </div>

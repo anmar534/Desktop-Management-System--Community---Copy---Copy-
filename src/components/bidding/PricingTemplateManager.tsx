@@ -29,20 +29,19 @@ import {
   AlertCircle
 } from 'lucide-react'
 
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Badge } from '../ui/badge'
-import { recommendationService } from '../../services/recommendationService'
-import { analyticsService } from '../../services/analyticsService'
-import type { BidPerformance } from '../../types/analytics'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { analyticsService } from '@/services/analyticsService'
+import type { BidPerformance } from '@/types/analytics'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select'
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -50,35 +49,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../ui/dialog'
-import { Textarea } from '../ui/textarea'
-import { Label } from '../ui/label'
-
-// Types for pricing templates
-interface PricingTemplate {
-  id: string
-  name: string
-  description: string
-  category: 'residential' | 'commercial' | 'infrastructure' | 'industrial'
-  isStarred: boolean
-  createdAt: string
-  lastUsed?: string
-  usageCount: number
-  averageAccuracy: number
-  estimatedDuration: number // in hours
-  defaultPercentages: {
-    administrative: number
-    operational: number
-    profit: number
-  }
-  costBreakdown: {
-    materials: number
-    labor: number
-    equipment: number
-    subcontractors: number
-  }
-  tags: string[]
-}
+} from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import type { PricingTemplate, TemplateCategory } from '@/types/templates'
 
 interface PricingTemplateManagerProps {
   onSelectTemplate: (template: PricingTemplate) => void
@@ -145,14 +119,14 @@ const mockTemplates: PricingTemplate[] = [
   }
 ]
 
-const categoryIcons = {
+const categoryIcons: Record<TemplateCategory, typeof Home> = {
   residential: Home,
   commercial: Building,
   infrastructure: Zap,
   industrial: Factory
 }
 
-const categoryLabels = {
+const categoryLabels: Record<TemplateCategory, string> = {
   residential: 'سكني',
   commercial: 'تجاري',
   infrastructure: 'بنية تحتية',
@@ -169,7 +143,7 @@ export function PricingTemplateManager({
 }: PricingTemplateManagerProps) {
   const [templates] = useState<PricingTemplate[]>(mockTemplates)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all'>('all')
   const [showStarredOnly, setShowStarredOnly] = useState(false)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
@@ -225,7 +199,10 @@ export function PricingTemplateManager({
   }, [])
 
   // Helper function to analyze template performance
-  const analyzeTemplatePerformance = useCallback((performances: BidPerformance[], templates: PricingTemplate[]) => {
+  const analyzeTemplatePerformance = useCallback((
+    _performances: BidPerformance[],
+    templates: PricingTemplate[],
+  ) => {
     return templates.map(template => {
       // Calculate performance score based on category match, accuracy, and usage
       let score = template.averageAccuracy * 0.4 // 40% weight on accuracy
@@ -334,7 +311,7 @@ export function PricingTemplateManager({
                            template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            template.tags.some(tag => tag.includes(searchQuery))
       
-      const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory
+  const matchesCategory = selectedCategory === 'all' || template.category === selectedCategory
       const matchesStarred = !showStarredOnly || template.isStarred
       
       return matchesSearch && matchesCategory && matchesStarred
@@ -489,7 +466,10 @@ export function PricingTemplateManager({
           />
         </div>
         
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+        <Select
+          value={selectedCategory}
+          onValueChange={value => setSelectedCategory(value as TemplateCategory | 'all')}
+        >
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="جميع الفئات" />
           </SelectTrigger>

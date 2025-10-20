@@ -1,5 +1,3 @@
-'use client'
-
 import type { ComponentType, ReactNode } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Search, Filter, Plus, TrendingUp, ArrowRight } from 'lucide-react'

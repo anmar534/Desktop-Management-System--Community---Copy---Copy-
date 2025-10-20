@@ -36,6 +36,8 @@ export class StorageManager {
     operationCount: 0,
     errorCount: 0,
   }
+  private static readonly DEPRECATED_KEYS = ['app_pricing_snapshots', 'PRICING_SNAPSHOTS'] as const
+  private static readonly DEPRECATED_PREFIXES = ['tender_snapshot_', 'backup-tender-pricing-'] as const
 
   /**
    * Private constructor (Singleton pattern)
@@ -62,6 +64,11 @@ export class StorageManager {
    */
   private ensureAdapter(): void {
     if (this.adapter) {
+      return
+    }
+
+    // During unit tests we expect adapters to be set explicitly to control behavior.
+    if (process.env.NODE_ENV === 'test') {
       return
     }
 
@@ -150,6 +157,8 @@ export class StorageManager {
         await this.cache.hydrate(this.adapter)
       }
 
+      await this.cleanupDeprecatedKeys()
+
       // 3. Update stats
       await this.updateStats()
 
@@ -169,6 +178,67 @@ export class StorageManager {
       throw new Error(
         `Storage initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       )
+    }
+  }
+
+  private async cleanupDeprecatedKeys(): Promise<void> {
+    if (!this.adapter) {
+      return
+    }
+
+    const adapter = this.adapter
+
+    const removeKey = async (key: string, reason: string): Promise<void> => {
+      try {
+        if (!(await adapter.has(key))) {
+          return
+        }
+
+        if (this.config.enableCache) {
+          this.cache.delete(key)
+        }
+
+        await adapter.remove(key)
+        this.emitEvent({
+          type: 'remove',
+          key,
+          timestamp: Date.now(),
+          success: true,
+          metadata: { reason },
+        })
+      } catch (error) {
+        console.warn('StorageManager: failed to remove deprecated key', key, error)
+        this.emitEvent({
+          type: 'error',
+          key,
+          timestamp: Date.now(),
+          success: false,
+          error: error instanceof Error ? error : new Error('Unknown error'),
+          metadata: { reason },
+        })
+      }
+    }
+
+    for (const key of StorageManager.DEPRECATED_KEYS) {
+      await removeKey(key, 'cleanup-deprecated-key')
+    }
+
+    try {
+      const keys = await this.adapter.keys()
+      for (const key of keys) {
+        if (StorageManager.DEPRECATED_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+          await removeKey(key, 'cleanup-deprecated-prefix')
+        }
+      }
+    } catch (error) {
+      console.warn('StorageManager: failed to enumerate keys for deprecated cleanup', error)
+      this.emitEvent({
+        type: 'error',
+        timestamp: Date.now(),
+        success: false,
+        error: error instanceof Error ? error : new Error('Unknown error'),
+        metadata: { reason: 'cleanup-deprecated-prefix-enumeration' },
+      })
     }
   }
 

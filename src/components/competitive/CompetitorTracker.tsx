@@ -11,9 +11,114 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import type { CompetitorData, MarketOpportunity } from '../../types/competitive'
+import type { CompetitorData } from '../../types/competitive'
 import { competitiveService } from '../../services/competitiveService'
 import { formatCurrency, formatPercentage } from '../../utils/analyticsUtils'
+import { Badge } from '../ui/badge'
+
+const STATUS_BADGE_VARIANTS: Record<'active' | 'inactive' | 'monitoring' | 'archived', string> = {
+  active: 'bg-success/10 text-success border-none',
+  inactive: 'bg-muted/40 text-muted-foreground border-none',
+  monitoring: 'bg-warning/10 text-warning border-none',
+  archived: 'bg-muted/40 text-muted-foreground border-none'
+}
+
+const STATUS_LABELS: Record<'active' | 'inactive' | 'monitoring' | 'archived', string> = {
+  active: 'نشط',
+  inactive: 'غير نشط',
+  monitoring: 'تحت المراقبة',
+  archived: 'مؤرشف'
+}
+
+const THREAT_LEVEL_BADGE_VARIANTS: Record<'low' | 'medium' | 'high' | 'critical', string> = {
+  low: 'bg-success/10 text-success border-none',
+  medium: 'bg-warning/10 text-warning border-none',
+  high: 'bg-destructive/10 text-destructive border-none',
+  critical: 'bg-destructive/20 text-destructive border-none'
+}
+
+const THREAT_LEVEL_LABELS: Record<'low' | 'medium' | 'high' | 'critical', string> = {
+  low: 'تهديد منخفض',
+  medium: 'تهديد متوسط',
+  high: 'تهديد عالي',
+  critical: 'تهديد حرج'
+}
+
+const COMPETITOR_TYPE_LABELS: Record<'local' | 'international' | 'government' | 'private', string> = {
+  local: 'محلي',
+  international: 'دولي',
+  government: 'حكومي',
+  private: 'خاص'
+}
+
+const MARKET_POSITION_LABELS: Record<'leader' | 'challenger' | 'follower' | 'unknown', string> = {
+  leader: 'رائد السوق',
+  challenger: 'منافس قوي',
+  follower: 'تابع',
+  unknown: 'غير محدد'
+}
+
+const ACTIVITY_TYPE_LABELS: Record<
+  'tender_win' | 'tender_loss' | 'new_project' | 'partnership' | 'expansion',
+  string
+> = {
+  tender_win: 'فوز بمناقصة',
+  tender_loss: 'خسارة مناقصة',
+  new_project: 'مشروع جديد',
+  partnership: 'شراكة',
+  expansion: 'توسع'
+}
+
+const STAT_CARD_VARIANTS: Record<
+  'total' | 'active' | 'highThreat' | 'avgMarketShare',
+  { container: string; value: string; label: string }
+> = {
+  total: {
+    container: 'border border-primary/20 bg-primary/10',
+    value: 'text-primary',
+    label: 'text-primary'
+  },
+  active: {
+    container: 'border border-success/20 bg-success/10',
+    value: 'text-success',
+    label: 'text-success'
+  },
+  highThreat: {
+    container: 'border border-destructive/20 bg-destructive/10',
+    value: 'text-destructive',
+    label: 'text-destructive'
+  },
+  avgMarketShare: {
+    container: 'border border-accent/20 bg-accent/10',
+    value: 'text-accent',
+    label: 'text-accent'
+  }
+}
+
+const getStatusBadgeClass = (status?: string | null) =>
+  (status && STATUS_BADGE_VARIANTS[status as keyof typeof STATUS_BADGE_VARIANTS]) ||
+  'bg-muted/40 text-muted-foreground border-none'
+
+const getStatusLabel = (status?: string | null) =>
+  (status && STATUS_LABELS[status as keyof typeof STATUS_LABELS]) || 'غير محدد'
+
+const getThreatBadgeClass = (level?: string | null) =>
+  (level && THREAT_LEVEL_BADGE_VARIANTS[level as keyof typeof THREAT_LEVEL_BADGE_VARIANTS]) ||
+  'bg-warning/10 text-warning border-none'
+
+const getThreatLabel = (level?: string | null) =>
+  (level && THREAT_LEVEL_LABELS[level as keyof typeof THREAT_LEVEL_LABELS]) || 'تهديد غير معروف'
+
+const getCompetitorTypeLabel = (type: string) =>
+  COMPETITOR_TYPE_LABELS[type as keyof typeof COMPETITOR_TYPE_LABELS] || type
+
+const getActivityTypeLabel = (type: string) =>
+  ACTIVITY_TYPE_LABELS[type as keyof typeof ACTIVITY_TYPE_LABELS] || type
+
+const getMarketPositionLabel = (position?: string | null) => {
+  if (!position) return MARKET_POSITION_LABELS.unknown
+  return MARKET_POSITION_LABELS[position as keyof typeof MARKET_POSITION_LABELS] || MARKET_POSITION_LABELS.unknown
+}
 
 /**
  * Competitor Tracker Component Props
@@ -223,23 +328,81 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
   const competitorStats = useMemo(() => {
     const total = competitors.length
     const active = competitors.filter(c => c.status === 'active').length
-    const highThreat = competitors.filter(c => c.threatLevel === 'high').length
-    const avgMarketShare = competitors.reduce((sum, c) => 
-      sum + (c.financialInfo?.marketShare || 0), 0) / total
+    const highThreat = competitors.filter(c => ['high', 'critical'].includes((c.threatLevel || '') as string)).length
+    const totalMarketShare = competitors.reduce((sum, c) => sum + (c.financialInfo?.marketShare || 0), 0)
+    const avgMarketShare = total === 0 ? 0 : totalMarketShare / total
 
     return { total, active, highThreat, avgMarketShare }
   }, [competitors])
 
+  const statCards = useMemo(
+    () => [
+      {
+        key: 'total',
+        title: 'إجمالي المنافسين',
+        display: String(competitorStats.total),
+        variant: 'total' as const
+      },
+      {
+        key: 'active',
+        title: 'منافسين نشطين',
+        display: String(competitorStats.active),
+        variant: 'active' as const
+      },
+      {
+        key: 'highThreat',
+        title: 'تهديد عالي',
+        display: String(competitorStats.highThreat),
+        variant: 'highThreat' as const
+      },
+      {
+        key: 'avgMarketShare',
+        title: 'متوسط الحصة السوقية',
+        display: formatPercentage(competitorStats.avgMarketShare),
+        variant: 'avgMarketShare' as const
+      }
+    ],
+    [competitorStats]
+  )
+
+  type TabKey = 'overview' | 'profile' | 'activities' | 'analysis'
+
+  const tabs = useMemo(() => {
+    const tabList: Array<{ key: TabKey; label: string }> = [
+      { key: 'overview', label: 'نظرة عامة' }
+    ]
+
+    if (showDetailedProfiles) {
+      tabList.push({ key: 'profile', label: 'الملف الشخصي' })
+    }
+
+    if (showActivityTimeline) {
+      tabList.push({ key: 'activities', label: 'الأنشطة' })
+    }
+
+    tabList.push({ key: 'analysis', label: 'التحليل' })
+
+    return tabList
+  }, [showDetailedProfiles, showActivityTimeline])
+
+  useEffect(() => {
+    if (!showDetailedProfiles && activeTab === 'profile') {
+      setActiveTab('overview')
+    } else if (!showActivityTimeline && activeTab === 'activities') {
+      setActiveTab('overview')
+    }
+  }, [activeTab, showActivityTimeline, showDetailedProfiles])
+
   // Render loading state
   if (loading && competitors.length === 0) {
     return (
-      <div className={`bg-white rounded-lg shadow-sm border p-6 ${className}`}>
+      <div className={`rounded-lg border border-border bg-card p-6 shadow-sm ${className}`}>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="mb-4 h-6 w-1/3 rounded bg-muted"></div>
           <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+            <div className="h-4 rounded bg-muted"></div>
+            <div className="h-4 w-5/6 rounded bg-muted"></div>
+            <div className="h-4 w-4/6 rounded bg-muted"></div>
           </div>
         </div>
       </div>
@@ -247,83 +410,82 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
+    <div className={`rounded-lg border border-border bg-card shadow-sm ${className}`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="border-b border-border/60 p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">تتبع المنافسين</h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <h2 className="text-xl font-bold text-foreground">تتبع المنافسين</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               إدارة ومراقبة المنافسين وتحليل أنشطتهم في السوق
             </p>
           </div>
-          
+
           <button
+            type="button"
             onClick={() => setShowAddForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
           >
             إضافة منافس جديد
           </button>
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-blue-600">{competitorStats.total}</div>
-            <div className="text-sm text-blue-800">إجمالي المنافسين</div>
-          </div>
-          <div className="bg-green-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-green-600">{competitorStats.active}</div>
-            <div className="text-sm text-green-800">منافسين نشطين</div>
-          </div>
-          <div className="bg-red-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-red-600">{competitorStats.highThreat}</div>
-            <div className="text-sm text-red-800">تهديد عالي</div>
-          </div>
-          <div className="bg-purple-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-purple-600">
-              {formatPercentage(competitorStats.avgMarketShare)}
-            </div>
-            <div className="text-sm text-purple-800">متوسط الحصة السوقية</div>
-          </div>
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+          {statCards.map(card => {
+            const variant = STAT_CARD_VARIANTS[card.variant]
+            return (
+              <div
+                key={card.key}
+                className={`rounded-lg p-4 shadow-sm ${variant.container}`}
+              >
+                <div className={`text-2xl font-bold ${variant.value}`}>{card.display}</div>
+                <div className={`text-sm ${variant.label}`}>{card.title}</div>
+              </div>
+            )
+          })}
         </div>
 
         {/* Search and Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
           <input
             type="text"
             placeholder="البحث في المنافسين..."
+            aria-label="البحث في المنافسين"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="rounded-lg border border-border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
           />
-          
+
           <select
             value={regionFilter}
             onChange={(e) => setRegionFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="تصفية حسب المنطقة"
+            className="rounded-lg border border-border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
           >
             <option value="">جميع المناطق</option>
             {uniqueRegions.map(region => (
               <option key={region} value={region}>{region}</option>
             ))}
           </select>
-          
+
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="تصفية حسب الفئة"
+            className="rounded-lg border border-border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
           >
             <option value="">جميع الفئات</option>
             {uniqueCategories.map(category => (
               <option key={category} value={category}>{category}</option>
             ))}
           </select>
-          
+
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            aria-label="تصفية حسب الحالة"
+            className="rounded-lg border border-border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
           >
             <option value="">جميع الحالات</option>
             <option value="active">نشط</option>
@@ -333,54 +495,30 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 mt-6 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'overview'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            نظرة عامة
-          </button>
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'profile'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            الملف الشخصي
-          </button>
-          <button
-            onClick={() => setActiveTab('activities')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'activities'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            الأنشطة
-          </button>
-          <button
-            onClick={() => setActiveTab('analysis')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'analysis'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            التحليل
-          </button>
+        <div className="mt-6 rounded-lg bg-muted/60 p-1">
+          <div className="flex gap-1">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === tab.key
+                    ? 'bg-card text-primary shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Error Display */}
       {error && (
-        <div className="p-4 bg-red-50 border-l-4 border-red-400">
-          <div className="text-red-700">{error}</div>
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4">
+          <div className="text-sm font-medium text-destructive">{error}</div>
         </div>
       )}
 
@@ -389,29 +527,22 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Competitors List */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
               {filteredCompetitors.map(competitor => (
                 <div
                   key={competitor.id}
                   onClick={() => handleCompetitorSelect(competitor)}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  className="cursor-pointer rounded-lg border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">{competitor.name}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      competitor.status === 'active' ? 'bg-green-100 text-green-800' :
-                      competitor.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {competitor.status === 'active' ? 'نشط' :
-                       competitor.status === 'inactive' ? 'غير نشط' : 'تحت المراقبة'}
-                    </span>
+                  <div className="mb-3 flex items-start justify-between">
+                    <h3 className="font-semibold text-foreground">{competitor.name}</h3>
+                    <Badge variant="outline" className={`text-xs ${getStatusBadgeClass(competitor.status)}`}>
+                      {getStatusLabel(competitor.status)}
+                    </Badge>
                   </div>
                   
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div>النوع: {competitor.type === 'local' ? 'محلي' : 
-                                competitor.type === 'international' ? 'دولي' :
-                                competitor.type === 'government' ? 'حكومي' : 'خاص'}</div>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <div>النوع: {getCompetitorTypeLabel(competitor.type)}</div>
                     <div>المنطقة: {competitor.region}</div>
                     <div>الفئات: {competitor.categories.join(', ')}</div>
                     {competitor.financialInfo?.marketShare && (
@@ -420,16 +551,14 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
                   </div>
                   
                   <div className="mt-3 flex items-center justify-between">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      competitor.threatLevel === 'high' ? 'bg-red-100 text-red-800' :
-                      competitor.threatLevel === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {competitor.threatLevel === 'high' ? 'تهديد عالي' :
-                       competitor.threatLevel === 'medium' ? 'تهديد متوسط' : 'تهديد منخفض'}
-                    </span>
-                    
-                    <div className="text-xs text-gray-500">
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${getThreatBadgeClass(competitor.threatLevel)}`}
+                    >
+                      {getThreatLabel(competitor.threatLevel)}
+                    </Badge>
+
+                    <div className="text-xs text-muted-foreground">
                       آخر تحديث: {new Date(competitor.lastUpdated).toLocaleDateString('ar-SA')}
                     </div>
                   </div>
@@ -438,7 +567,7 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
             </div>
 
             {filteredCompetitors.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="py-8 text-center text-muted-foreground">
                 لا توجد منافسين مطابقين للمعايير المحددة
               </div>
             )}
@@ -446,103 +575,98 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
         )}
 
         {activeTab === 'profile' && selectedCompetitor && (
-          <div className="space-y-6">
-            {/* Competitor Profile Details */}
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                ملف {selectedCompetitor.name}
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">المعلومات الأساسية</h4>
-                  <div className="space-y-2 text-sm">
-                    <div><span className="font-medium">النوع:</span> {selectedCompetitor.type}</div>
-                    <div><span className="font-medium">المنطقة:</span> {selectedCompetitor.region}</div>
-                    <div><span className="font-medium">الفئات:</span> {selectedCompetitor.categories.join(', ')}</div>
-                    <div><span className="font-medium">الحالة:</span> {selectedCompetitor.status}</div>
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">المعلومات المالية</h4>
-                  <div className="space-y-2 text-sm">
-                    {selectedCompetitor.financialInfo?.estimatedRevenue && (
-                      <div><span className="font-medium">الإيرادات المقدرة:</span> {formatCurrency(selectedCompetitor.financialInfo.estimatedRevenue)}</div>
-                    )}
-                    {selectedCompetitor.financialInfo?.marketShare && (
-                      <div><span className="font-medium">الحصة السوقية:</span> {formatPercentage(selectedCompetitor.financialInfo.marketShare)}</div>
-                    )}
-                    {selectedCompetitor.financialInfo?.employeeCount && (
-                      <div><span className="font-medium">عدد الموظفين:</span> {selectedCompetitor.financialInfo.employeeCount}</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div className="space-y-6">
+              {/* Competitor Profile Details */}
+              <div className="rounded-lg border border-border bg-muted/40 p-6">
+                <h3 className="mb-4 text-lg font-semibold text-foreground">
+                  ملف {selectedCompetitor.name}
+                </h3>
 
-            {/* Strengths and Weaknesses */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-green-50 rounded-lg p-4">
-                <h4 className="font-medium text-green-900 mb-3">نقاط القوة</h4>
-                <ul className="space-y-1">
-                  {selectedCompetitor.strengths.map((strength, index) => (
-                    <li key={index} className="text-sm text-green-800 flex items-start">
-                      <span className="text-green-600 mr-2">•</span>
-                      {strength}
-                    </li>
-                  ))}
-                </ul>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div>
+                    <h4 className="mb-2 font-medium text-foreground">المعلومات الأساسية</h4>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <div><span className="font-medium text-foreground">النوع:</span> {getCompetitorTypeLabel(selectedCompetitor.type)}</div>
+                      <div><span className="font-medium text-foreground">المنطقة:</span> {selectedCompetitor.region}</div>
+                      <div><span className="font-medium text-foreground">الفئات:</span> {selectedCompetitor.categories.join(', ')}</div>
+                      <div><span className="font-medium text-foreground">الحالة:</span> {getStatusLabel(selectedCompetitor.status)}</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="mb-2 font-medium text-foreground">المعلومات المالية</h4>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      {selectedCompetitor.financialInfo?.estimatedRevenue && (
+                        <div><span className="font-medium text-foreground">الإيرادات المقدرة:</span> {formatCurrency(selectedCompetitor.financialInfo.estimatedRevenue)}</div>
+                      )}
+                      {selectedCompetitor.financialInfo?.marketShare && (
+                        <div><span className="font-medium text-foreground">الحصة السوقية:</span> {formatPercentage(selectedCompetitor.financialInfo.marketShare)}</div>
+                      )}
+                      {selectedCompetitor.financialInfo?.employeeCount && (
+                        <div><span className="font-medium text-foreground">عدد الموظفين:</span> {selectedCompetitor.financialInfo.employeeCount}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
-              
-              <div className="bg-red-50 rounded-lg p-4">
-                <h4 className="font-medium text-red-900 mb-3">نقاط الضعف</h4>
-                <ul className="space-y-1">
-                  {selectedCompetitor.weaknesses.map((weakness, index) => (
-                    <li key={index} className="text-sm text-red-800 flex items-start">
-                      <span className="text-red-600 mr-2">•</span>
-                      {weakness}
-                    </li>
-                  ))}
-                </ul>
+
+              {/* Strengths and Weaknesses */}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="rounded-lg border border-success/20 bg-success/10 p-4">
+                  <h4 className="mb-3 font-medium text-success">نقاط القوة</h4>
+                  <ul className="space-y-1 text-sm text-success">
+                    {selectedCompetitor.strengths.map((strength, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="mr-2 text-success">•</span>
+                        {strength}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+                  <h4 className="mb-3 font-medium text-destructive">نقاط الضعف</h4>
+                  <ul className="space-y-1 text-sm text-destructive">
+                    {selectedCompetitor.weaknesses.map((weakness, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="mr-2 text-destructive">•</span>
+                        {weakness}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {activeTab === 'activities' && selectedCompetitor && showActivityTimeline && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-foreground">
               الأنشطة الأخيرة - {selectedCompetitor.name}
             </h3>
-            
+
             <div className="space-y-4">
               {selectedCompetitor.recentActivities.map((activity, index) => (
-                <div key={index} className="border-l-4 border-blue-200 pl-4 py-2">
+                <div key={index} className="rounded-lg border border-primary/30 bg-primary/10 p-4">
                   <div className="flex items-start justify-between">
-                    <div>
-                      <div className="font-medium text-gray-900">{activity.description}</div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        {activity.type === 'tender_win' ? 'فوز بمناقصة' :
-                         activity.type === 'tender_loss' ? 'خسارة مناقصة' :
-                         activity.type === 'new_project' ? 'مشروع جديد' :
-                         activity.type === 'partnership' ? 'شراكة' : 'توسع'}
-                      </div>
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <div className="font-medium text-foreground">{activity.description}</div>
+                      <div>{getActivityTypeLabel(activity.type)}</div>
                       {activity.value && (
-                        <div className="text-sm text-gray-600">
+                        <div>
                           القيمة: {formatCurrency(activity.value)}
                         </div>
                       )}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {new Date(activity.date).toLocaleDateString('ar-SA')}
                     </div>
                   </div>
                 </div>
               ))}
-              
+
               {selectedCompetitor.recentActivities.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="py-8 text-center text-muted-foreground">
                   لا توجد أنشطة مسجلة لهذا المنافس
                 </div>
               )}
@@ -552,42 +676,40 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
 
         {activeTab === 'analysis' && selectedCompetitor && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-foreground">
               تحليل المنافس - {selectedCompetitor.name}
             </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-3">الفرص</h4>
-                <ul className="space-y-1">
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="rounded-lg border border-info/30 bg-info/10 p-4">
+                <h4 className="mb-3 font-medium text-info">الفرص</h4>
+                <ul className="space-y-1 text-sm text-info">
                   {selectedCompetitor.opportunities.map((opportunity, index) => (
-                    <li key={index} className="text-sm text-blue-800 flex items-start">
-                      <span className="text-blue-600 mr-2">•</span>
+                    <li key={index} className="flex items-start">
+                      <span className="mr-2 text-info">•</span>
                       {opportunity}
                     </li>
                   ))}
                 </ul>
               </div>
-              
-              <div className="bg-orange-50 rounded-lg p-4">
-                <h4 className="font-medium text-orange-900 mb-3">التهديدات</h4>
-                <ul className="space-y-1">
+
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+                <h4 className="mb-3 font-medium text-warning">التهديدات</h4>
+                <ul className="space-y-1 text-sm text-warning">
                   {selectedCompetitor.threats.map((threat, index) => (
-                    <li key={index} className="text-sm text-orange-800 flex items-start">
-                      <span className="text-orange-600 mr-2">•</span>
+                    <li key={index} className="flex items-start">
+                      <span className="mr-2 text-warning">•</span>
                       {threat}
                     </li>
                   ))}
                 </ul>
               </div>
             </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-3">الموقع في السوق</h4>
-              <div className="text-sm text-gray-700">
-                {selectedCompetitor.marketPosition === 'leader' ? 'رائد السوق' :
-                 selectedCompetitor.marketPosition === 'challenger' ? 'منافس قوي' :
-                 selectedCompetitor.marketPosition === 'follower' ? 'تابع' : 'غير محدد'}
+
+            <div className="rounded-lg border border-border bg-muted/40 p-4">
+              <h4 className="mb-3 font-medium text-foreground">الموقع في السوق</h4>
+              <div className="text-sm text-muted-foreground">
+                {getMarketPositionLabel(selectedCompetitor.marketPosition)}
               </div>
             </div>
           </div>
@@ -596,42 +718,47 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
 
       {/* Add Competitor Modal */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">إضافة منافس جديد</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border bg-card p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground">إضافة منافس جديد</h3>
               <button
+                type="button"
                 onClick={() => setShowAddForm(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
+                aria-label="إغلاق نموذج إضافة المنافس"
               >
                 ✕
               </button>
             </div>
-            
+
             <form onSubmit={handleFormSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="competitor-name" className="mb-1 block text-sm font-medium text-foreground">
                     اسم المنافس *
                   </label>
                   <input
+                    id="competitor-name"
                     type="text"
                     required
+                    placeholder="أدخل اسم المنافس"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="competitor-type" className="mb-1 block text-sm font-medium text-foreground">
                     النوع *
                   </label>
                   <select
+                    id="competitor-type"
                     required
                     value={formData.type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as any }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as CompetitorFormData['type'] }))}
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
                   >
                     <option value="local">محلي</option>
                     <option value="international">دولي</option>
@@ -639,28 +766,31 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
                     <option value="private">خاص</option>
                   </select>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="competitor-region" className="mb-1 block text-sm font-medium text-foreground">
                     المنطقة *
                   </label>
                   <input
+                    id="competitor-region"
                     type="text"
                     required
+                    placeholder="أدخل المنطقة"
                     value={formData.region}
                     onChange={(e) => setFormData(prev => ({ ...prev, region: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
                   />
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="competitor-status" className="mb-1 block text-sm font-medium text-foreground">
                     الحالة
                   </label>
                   <select
+                    id="competitor-status"
                     value={formData.status}
-                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as CompetitorFormData['status'] }))}
+                    className="w-full rounded-lg border border-border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
                   >
                     <option value="active">نشط</option>
                     <option value="inactive">غير نشط</option>
@@ -668,19 +798,19 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
                   </select>
                 </div>
               </div>
-              
-              <div className="flex justify-end space-x-3">
+
+              <div className="flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-1"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:opacity-60"
                 >
                   {loading ? 'جاري الحفظ...' : 'حفظ'}
                 </button>

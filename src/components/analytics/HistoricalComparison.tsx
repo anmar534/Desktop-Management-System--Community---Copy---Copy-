@@ -9,21 +9,81 @@
  * @since Phase 2 Implementation - Historical Data Integration
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useId } from 'react'
 import type { BidPerformance } from '../../types/analytics'
-import type { 
-  HistoricalComparison, 
-  MultiPeriodComparison, 
-  ComparisonPeriod, 
-  ComparisonMetric 
+import type {
+  HistoricalComparison as HistoricalComparisonResult,
+  MultiPeriodComparison,
+  ComparisonPeriod,
+  ComparisonMetric
 } from '../../utils/historicalComparison'
-import { 
+import {
   historicalComparisonService,
-  compareYearOverYear,
-  compareMonthOverMonth,
   generateAnnualReport
 } from '../../utils/historicalComparison'
 import { formatPercentage, formatCurrency } from '../../utils/analyticsUtils'
+
+const CARD_BASE_CLASS = 'rounded-lg border border-border bg-card'
+const MUTED_CARD_CLASS = 'rounded-lg border border-border bg-muted/40'
+const PRIMARY_CARD_CLASS = 'rounded-lg border border-primary/20 bg-primary/10'
+const SUCCESS_CARD_CLASS = 'rounded-lg border border-success/20 bg-success/10'
+const WARNING_CARD_CLASS = 'rounded-lg border border-warning/30 bg-warning/10'
+const INFO_CARD_CLASS = 'rounded-lg border border-info/30 bg-info/10'
+
+const SELECT_BASE_CLASS = 'rounded-lg border border-border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1'
+
+const TAB_CONTAINER_CLASS = 'flex gap-1 rounded-lg bg-muted/40 p-1'
+const TAB_BUTTON_BASE_CLASS = 'flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors'
+const TAB_ACTIVE_CLASS = 'bg-card text-primary shadow-sm'
+const TAB_INACTIVE_CLASS = 'text-muted-foreground hover:text-foreground'
+const SECTION_TITLE_CLASS = 'text-lg font-semibold text-foreground'
+const SECTION_LABEL_CLASS = 'text-sm text-muted-foreground'
+
+const CHANGE_INDICATORS: Record<
+  'increase' | 'decrease' | 'stable',
+  { icon: string; containerClass: string; textClass: string }
+> = {
+  increase: {
+    icon: '↗️',
+    containerClass: 'flex h-16 w-16 items-center justify-center rounded-full bg-success/10 text-success',
+    textClass: 'text-success'
+  },
+  decrease: {
+    icon: '↘️',
+    containerClass: 'flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive',
+    textClass: 'text-destructive'
+  },
+  stable: {
+    icon: '➡️',
+    containerClass: 'flex h-16 w-16 items-center justify-center rounded-full bg-muted/60 text-muted-foreground',
+    textClass: 'text-muted-foreground'
+  }
+}
+
+const TREND_DIRECTION_LABELS: Record<'increasing' | 'decreasing' | 'stable' | 'volatile', string> = {
+  increasing: 'متزايد',
+  decreasing: 'متناقص',
+  stable: 'مستقر',
+  volatile: 'متقلب'
+}
+
+const TREND_DIRECTION_CLASSES: Record<'increasing' | 'decreasing' | 'stable' | 'volatile', string> = {
+  increasing: 'text-success',
+  decreasing: 'text-destructive',
+  stable: 'text-muted-foreground',
+  volatile: 'text-warning'
+}
+
+const TREND_STRENGTH_LABELS: Record<'strong' | 'moderate' | 'weak', string> = {
+  strong: 'قوي',
+  moderate: 'متوسط',
+  weak: 'ضعيف'
+}
+
+const TABLE_HEADER_CELL_CLASS = 'px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground'
+const TABLE_CELL_CLASS = 'px-6 py-4 whitespace-nowrap text-sm text-foreground'
+
+type AnnualReport = Awaited<ReturnType<typeof generateAnnualReport>>
 
 /**
  * Historical Comparison Component Props
@@ -40,7 +100,7 @@ export interface HistoricalComparisonProps {
   /** Whether to show recommendations */
   showRecommendations?: boolean
   /** Callback when comparison data changes */
-  onComparisonChange?: (comparison: HistoricalComparison) => void
+  onComparisonChange?: (comparison: HistoricalComparisonResult) => void
   /** Custom CSS classes */
   className?: string
 }
@@ -60,12 +120,14 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
   // State management
   const [selectedPeriod, setSelectedPeriod] = useState<ComparisonPeriod>(initialPeriod)
   const [selectedMetric, setSelectedMetric] = useState<ComparisonMetric>(initialMetric)
-  const [comparison, setComparison] = useState<HistoricalComparison | null>(null)
+  const [comparison, setComparison] = useState<HistoricalComparisonResult | null>(null)
   const [multiPeriodData, setMultiPeriodData] = useState<MultiPeriodComparison | null>(null)
-  const [annualReport, setAnnualReport] = useState<any>(null)
+  const [annualReport, setAnnualReport] = useState<AnnualReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'comparison' | 'trends' | 'annual'>('comparison')
+  const periodSelectId = useId()
+  const metricSelectId = useId()
 
   // Available options
   const periodOptions: { value: ComparisonPeriod; label: string }[] = [
@@ -148,28 +210,22 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
     }
   }, [])
 
-  // Get change indicator icon and color
-  const getChangeIndicator = useCallback((direction: 'increase' | 'decrease' | 'stable') => {
-    switch (direction) {
-      case 'increase':
-        return { icon: '↗️', color: 'text-green-600', bgColor: 'bg-green-50' }
-      case 'decrease':
-        return { icon: '↘️', color: 'text-red-600', bgColor: 'bg-red-50' }
-      case 'stable':
-        return { icon: '➡️', color: 'text-gray-600', bgColor: 'bg-gray-50' }
-    }
-  }, [])
+  // Get change indicator styling
+  const getChangeIndicator = useCallback(
+    (direction: 'increase' | 'decrease' | 'stable') => CHANGE_INDICATORS[direction],
+    []
+  )
 
   // Render loading state
   if (loading) {
     return (
-      <div className={`bg-white rounded-lg shadow-sm border p-6 ${className}`}>
+      <div className={`${CARD_BASE_CLASS} p-6 ${className}`}>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="mb-4 h-6 w-1/3 rounded bg-muted"></div>
           <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+            <div className="h-4 rounded bg-muted"></div>
+            <div className="h-4 w-5/6 rounded bg-muted"></div>
+            <div className="h-4 w-4/6 rounded bg-muted"></div>
           </div>
         </div>
       </div>
@@ -179,13 +235,13 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
   // Render error state
   if (error) {
     return (
-      <div className={`bg-white rounded-lg shadow-sm border p-6 ${className}`}>
-        <div className="text-center text-red-600">
-          <div className="text-lg font-semibold mb-2">خطأ في تحميل البيانات</div>
-          <div className="text-sm">{error}</div>
+      <div className={`${CARD_BASE_CLASS} p-6 ${className}`}>
+        <div className="text-center">
+          <div className="mb-2 text-lg font-semibold text-destructive">خطأ في تحميل البيانات</div>
+          <div className="text-sm text-muted-foreground">{error}</div>
           <button
             onClick={loadComparisonData}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="mt-4 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
           >
             إعادة المحاولة
           </button>
@@ -195,70 +251,69 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
+    <div className={`${CARD_BASE_CLASS} shadow-sm ${className}`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <h2 className="text-xl font-bold text-gray-900">المقارنة التاريخية</h2>
-          
+      <div className="border-b border-border bg-card px-6 py-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <h2 className="text-xl font-bold text-foreground">المقارنة التاريخية</h2>
+
           {/* Controls */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(e.target.value as ComparisonPeriod)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {periodOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            
-            <select
-              value={selectedMetric}
-              onChange={(e) => setSelectedMetric(e.target.value as ComparisonMetric)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {metricOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <label htmlFor={periodSelectId} className="flex flex-col gap-1 text-sm font-medium text-muted-foreground">
+              <span>الفترة الزمنية</span>
+              <select
+                id={periodSelectId}
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value as ComparisonPeriod)}
+                className={SELECT_BASE_CLASS}
+              >
+                {periodOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label htmlFor={metricSelectId} className="flex flex-col gap-1 text-sm font-medium text-muted-foreground">
+              <span>المؤشر</span>
+              <select
+                id={metricSelectId}
+                value={selectedMetric}
+                onChange={(e) => setSelectedMetric(e.target.value as ComparisonMetric)}
+                className={SELECT_BASE_CLASS}
+              >
+                {metricOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 mt-4 bg-gray-100 p-1 rounded-lg">
+        <div className={`mt-4 ${TAB_CONTAINER_CLASS}`}>
           <button
+            type="button"
             onClick={() => setActiveTab('comparison')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'comparison'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className={`${TAB_BUTTON_BASE_CLASS} ${activeTab === 'comparison' ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
           >
             المقارنة
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('trends')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'trends'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className={`${TAB_BUTTON_BASE_CLASS} ${activeTab === 'trends' ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
           >
             الاتجاهات
           </button>
           {selectedPeriod === 'year-over-year' && (
             <button
+              type="button"
               onClick={() => setActiveTab('annual')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                activeTab === 'annual'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`${TAB_BUTTON_BASE_CLASS} ${activeTab === 'annual' ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
             >
               التقرير السنوي
             </button>
@@ -271,18 +326,16 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
         {activeTab === 'comparison' && comparison && (
           <div className="space-y-6">
             {/* Main Comparison Card */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className={`${PRIMARY_CARD_CLASS} p-6`}>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 {/* Current Period */}
                 <div className="text-center">
-                  <div className="text-sm text-gray-600 mb-1">الفترة الحالية</div>
-                  <div className="text-lg font-semibold text-gray-900">
-                    {comparison.current.period}
-                  </div>
-                  <div className="text-2xl font-bold text-blue-600 mt-2">
+                  <div className={`${SECTION_LABEL_CLASS} mb-1`}>الفترة الحالية</div>
+                  <div className={SECTION_TITLE_CLASS}>{comparison.current.period}</div>
+                  <div className="mt-2 text-2xl font-bold text-primary">
                     {formatMetricValue(comparison.current.value, selectedMetric)}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="mt-1 text-xs text-muted-foreground">
                     {comparison.current.count} مناقصة
                   </div>
                 </div>
@@ -292,27 +345,27 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
                   {(() => {
                     const indicator = getChangeIndicator(comparison.comparison.direction)
                     return (
-                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full ${indicator.bgColor} mb-2`}>
-                        <span className="text-2xl">{indicator.icon}</span>
-                      </div>
+                      <>
+                        <div className={`${indicator.containerClass} mx-auto mb-2`}>
+                          <span className="text-2xl">{indicator.icon}</span>
+                        </div>
+                        <div className={`text-lg font-semibold ${indicator.textClass}`}>
+                          {formatPercentage(Math.abs(comparison.comparison.percentageChange))}
+                        </div>
+                      </>
                     )
                   })()}
-                  <div className={`text-lg font-semibold ${getChangeIndicator(comparison.comparison.direction).color}`}>
-                    {formatPercentage(Math.abs(comparison.comparison.percentageChange))}
-                  </div>
-                  <div className="text-xs text-gray-500">تغيير</div>
+                  <div className="text-xs text-muted-foreground">تغيير</div>
                 </div>
 
                 {/* Previous Period */}
                 <div className="text-center">
-                  <div className="text-sm text-gray-600 mb-1">الفترة السابقة</div>
-                  <div className="text-lg font-semibold text-gray-900">
-                    {comparison.previous.period}
-                  </div>
-                  <div className="text-2xl font-bold text-gray-600 mt-2">
+                  <div className={`${SECTION_LABEL_CLASS} mb-1`}>الفترة السابقة</div>
+                  <div className={SECTION_TITLE_CLASS}>{comparison.previous.period}</div>
+                  <div className="mt-2 text-2xl font-bold text-muted-foreground">
                     {formatMetricValue(comparison.previous.value, selectedMetric)}
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="mt-1 text-xs text-muted-foreground">
                     {comparison.previous.count} مناقصة
                   </div>
                 </div>
@@ -321,20 +374,20 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
 
             {/* Insights */}
             {showDetailedAnalysis && (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">التحليل والرؤى</h3>
+              <div className={`${MUTED_CARD_CLASS} p-4`}>
+                <h3 className="mb-3 font-semibold text-foreground">التحليل والرؤى</h3>
                 <div className="space-y-2">
                   <div className="flex items-start gap-2">
-                    <span className="text-blue-600 mt-1">📊</span>
-                    <span className="text-sm text-gray-700">{comparison.insights.summary}</span>
+                    <span className="mt-1 text-primary">📊</span>
+                    <span className="text-sm text-muted-foreground">{comparison.insights.summary}</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-green-600 mt-1">💡</span>
-                    <span className="text-sm text-gray-700">{comparison.insights.interpretation}</span>
+                    <span className="mt-1 text-success">💡</span>
+                    <span className="text-sm text-muted-foreground">{comparison.insights.interpretation}</span>
                   </div>
                   <div className="flex items-start gap-2">
-                    <span className="text-purple-600 mt-1">🎯</span>
-                    <span className="text-sm text-gray-700">
+                    <span className="mt-1 text-info">🎯</span>
+                    <span className="text-sm text-muted-foreground">
                       مستوى الثقة: {comparison.comparison.confidence.toFixed(0)}%
                     </span>
                   </div>
@@ -344,13 +397,13 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
 
             {/* Recommendations */}
             {showRecommendations && comparison.insights.recommendations.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                <h3 className="font-semibold text-amber-800 mb-3">التوصيات</h3>
+              <div className={`${WARNING_CARD_CLASS} p-4`}>
+                <h3 className="mb-3 font-semibold text-warning">التوصيات</h3>
                 <ul className="space-y-2">
                   {comparison.insights.recommendations.map((recommendation, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <span className="text-amber-600 mt-1">⚡</span>
-                      <span className="text-sm text-amber-700">{recommendation}</span>
+                      <span className="mt-1 text-warning">⚡</span>
+                      <span className="text-sm text-warning">{recommendation}</span>
                     </li>
                   ))}
                 </ul>
@@ -362,33 +415,30 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
         {activeTab === 'trends' && multiPeriodData && (
           <div className="space-y-6">
             {/* Trend Summary */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">تحليل الاتجاه</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className={`${SUCCESS_CARD_CLASS} p-6`}>
+              <h3 className="mb-4 font-semibold text-foreground">تحليل الاتجاه</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                 <div className="text-center">
-                  <div className="text-sm text-gray-600">الاتجاه</div>
-                  <div className="text-lg font-semibold text-gray-900 mt-1">
-                    {multiPeriodData.trend.direction === 'increasing' ? 'متزايد' :
-                     multiPeriodData.trend.direction === 'decreasing' ? 'متناقص' :
-                     multiPeriodData.trend.direction === 'stable' ? 'مستقر' : 'متقلب'}
+                  <div className={SECTION_LABEL_CLASS}>الاتجاه</div>
+                  <div className={`mt-1 text-lg font-semibold ${TREND_DIRECTION_CLASSES[multiPeriodData.trend.direction]}`}>
+                    {TREND_DIRECTION_LABELS[multiPeriodData.trend.direction]}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm text-gray-600">القوة</div>
-                  <div className="text-lg font-semibold text-gray-900 mt-1">
-                    {multiPeriodData.trend.strength === 'strong' ? 'قوي' :
-                     multiPeriodData.trend.strength === 'moderate' ? 'متوسط' : 'ضعيف'}
+                  <div className={SECTION_LABEL_CLASS}>القوة</div>
+                  <div className={`${SECTION_TITLE_CLASS} mt-1`}>
+                    {TREND_STRENGTH_LABELS[multiPeriodData.trend.strength]}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm text-gray-600">الاتساق</div>
-                  <div className="text-lg font-semibold text-gray-900 mt-1">
+                  <div className={SECTION_LABEL_CLASS}>الاتساق</div>
+                  <div className={`${SECTION_TITLE_CLASS} mt-1`}>
                     {formatPercentage(multiPeriodData.trend.consistency)}
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm text-gray-600">التقلب</div>
-                  <div className="text-lg font-semibold text-gray-900 mt-1">
+                  <div className={SECTION_LABEL_CLASS}>التقلب</div>
+                  <div className={`${SECTION_TITLE_CLASS} mt-1`}>
                     {formatPercentage(multiPeriodData.trend.volatility)}
                   </div>
                 </div>
@@ -396,48 +446,50 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
             </div>
 
             {/* Period Changes Table */}
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="font-semibold text-gray-900">التغييرات الفترية</h3>
+            <div className={`${CARD_BASE_CLASS} overflow-hidden`}>
+              <div className="border-b border-border px-6 py-4">
+                <h3 className="font-semibold text-foreground">التغييرات الفترية</h3>
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-border bg-card">
+                  <thead className="bg-muted/40">
                     <tr>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        الفترة
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        القيمة
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        التغيير
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        النسبة
-                      </th>
+                      <th className={TABLE_HEADER_CELL_CLASS}>الفترة</th>
+                      <th className={TABLE_HEADER_CELL_CLASS}>القيمة</th>
+                      <th className={TABLE_HEADER_CELL_CLASS}>التغيير</th>
+                      <th className={TABLE_HEADER_CELL_CLASS}>النسبة</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="divide-y divide-border bg-card">
                     {multiPeriodData.periodChanges.slice(-6).map((change, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {change.period}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <tr key={index} className="transition-colors hover:bg-muted/40">
+                        <td className={TABLE_CELL_CLASS}>{change.period}</td>
+                        <td className={TABLE_CELL_CLASS}>
                           {formatMetricValue(change.value, selectedMetric)}
                         </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                          change.change > 0 ? 'text-green-600' : 
-                          change.change < 0 ? 'text-red-600' : 'text-gray-600'
-                        }`}>
-                          {change.change > 0 ? '+' : ''}{formatMetricValue(change.change, selectedMetric)}
+                        <td
+                          className={`${TABLE_CELL_CLASS} font-medium ${
+                            change.change > 0
+                              ? 'text-success'
+                              : change.change < 0
+                              ? 'text-destructive'
+                              : 'text-muted-foreground'
+                          }`}
+                        >
+                          {change.change > 0 ? '+' : ''}
+                          {formatMetricValue(change.change, selectedMetric)}
                         </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                          change.changePercent > 0 ? 'text-green-600' : 
-                          change.changePercent < 0 ? 'text-red-600' : 'text-gray-600'
-                        }`}>
-                          {change.changePercent > 0 ? '+' : ''}{formatPercentage(change.changePercent)}
+                        <td
+                          className={`${TABLE_CELL_CLASS} font-medium ${
+                            change.changePercent > 0
+                              ? 'text-success'
+                              : change.changePercent < 0
+                              ? 'text-destructive'
+                              : 'text-muted-foreground'
+                          }`}
+                        >
+                          {change.changePercent > 0 ? '+' : ''}
+                          {formatPercentage(change.changePercent)}
                         </td>
                       </tr>
                     ))}
@@ -451,46 +503,47 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
         {activeTab === 'annual' && annualReport && (
           <div className="space-y-6">
             {/* Annual Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {annualReport.overview.map((overview: HistoricalComparison, index: number) => (
-                <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="text-sm text-gray-600 mb-1">
-                    {metricOptions.find(m => m.value === overview.metric)?.label}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {annualReport.overview.map((overview: HistoricalComparisonResult, index: number) => {
+                const indicator = getChangeIndicator(overview.comparison.direction)
+                return (
+                  <div key={index} className={`${CARD_BASE_CLASS} p-4`}>
+                    <div className={`${SECTION_LABEL_CLASS} mb-1`}>
+                      {metricOptions.find(m => m.value === overview.metric)?.label}
+                    </div>
+                    <div className={`text-lg font-semibold ${indicator.textClass}`}>
+                      {formatPercentage(Math.abs(overview.comparison.percentageChange))}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {overview.comparison.direction === 'increase' ? 'زيادة' :
+                       overview.comparison.direction === 'decrease' ? 'نقصان' : 'استقرار'}
+                    </div>
                   </div>
-                  <div className={`text-lg font-semibold ${
-                    getChangeIndicator(overview.comparison.direction).color
-                  }`}>
-                    {formatPercentage(Math.abs(overview.comparison.percentageChange))}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {overview.comparison.direction === 'increase' ? 'زيادة' :
-                     overview.comparison.direction === 'decrease' ? 'نقصان' : 'استقرار'}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {/* Annual Insights */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h3 className="font-semibold text-blue-900 mb-4">رؤى التقرير السنوي</h3>
+            <div className={`${INFO_CARD_CLASS} p-6`}>
+              <h3 className="mb-4 font-semibold text-info">رؤى التقرير السنوي</h3>
               <div className="space-y-3">
                 {annualReport.insights.map((insight: string, index: number) => (
                   <div key={index} className="flex items-start gap-2">
-                    <span className="text-blue-600 mt-1">📈</span>
-                    <span className="text-sm text-blue-800">{insight}</span>
+                    <span className="mt-1 text-info">📈</span>
+                    <span className="text-sm text-info">{insight}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Annual Recommendations */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-              <h3 className="font-semibold text-green-900 mb-4">التوصيات السنوية</h3>
+            <div className={`${SUCCESS_CARD_CLASS} p-6`}>
+              <h3 className="mb-4 font-semibold text-success">التوصيات السنوية</h3>
               <div className="space-y-3">
                 {annualReport.recommendations.map((recommendation: string, index: number) => (
                   <div key={index} className="flex items-start gap-2">
-                    <span className="text-green-600 mt-1">🎯</span>
-                    <span className="text-sm text-green-800">{recommendation}</span>
+                    <span className="mt-1 text-success">🎯</span>
+                    <span className="text-sm text-success">{recommendation}</span>
                   </div>
                 ))}
               </div>

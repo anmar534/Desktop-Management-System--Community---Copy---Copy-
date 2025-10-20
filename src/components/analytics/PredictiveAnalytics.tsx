@@ -42,6 +42,31 @@ interface PredictionScenario {
   deadline: string
 }
 
+type TabKey = 'predictions' | 'optimization' | 'trends' | 'scenarios'
+
+interface PredictionFormState {
+  estimatedValue: number
+  category: string
+  region: string
+  competitorCount: number
+  clientType: 'government' | 'private' | 'semi-government'
+}
+
+const INITIAL_PREDICTION_FORM: PredictionFormState = {
+  estimatedValue: 5000000,
+  category: 'سكني',
+  region: 'الرياض',
+  competitorCount: 3,
+  clientType: 'government'
+}
+
+const PREDICTION_TABS: Array<{ key: TabKey; label: string }> = [
+  { key: 'predictions', label: 'التنبؤات' },
+  { key: 'optimization', label: 'تحسين الأسعار' },
+  { key: 'trends', label: 'اتجاهات السوق' },
+  { key: 'scenarios', label: 'السيناريوهات' }
+]
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -59,7 +84,7 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'predictions' | 'optimization' | 'trends' | 'scenarios'>('predictions')
+  const [activeTab, setActiveTab] = useState<TabKey>('predictions')
 
   // Data state
   const [historicalPerformances, setHistoricalPerformances] = useState<BidPerformance[]>([])
@@ -78,13 +103,7 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
   const [selectedScenario, setSelectedScenario] = useState<PredictionScenario | null>(null)
 
   // Form state for new predictions
-  const [predictionForm, setPredictionForm] = useState({
-    estimatedValue: 5000000,
-    category: 'سكني',
-    region: 'الرياض',
-    competitorCount: 3,
-    clientType: 'government'
-  })
+  const [predictionForm, setPredictionForm] = useState<PredictionFormState>(INITIAL_PREDICTION_FORM)
 
   const [optimizationParams, setOptimizationParams] = useState<OptimizationParameters>({
     minMargin: 10,
@@ -94,6 +113,54 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
     objective: 'balanced',
     marketConditions: 'neutral'
   })
+
+  const generateDefaultScenarios = useCallback((opportunities: MarketOpportunity[]) => {
+    const defaultScenarios: PredictionScenario[] = [
+      {
+        id: 'scenario_1',
+        name: 'مشروع سكني متوسط',
+        estimatedValue: 5000000,
+        category: 'سكني',
+        region: 'الرياض',
+        competitorCount: 3,
+        clientType: 'private',
+        deadline: '2024-03-15'
+      },
+      {
+        id: 'scenario_2',
+        name: 'مشروع بنية تحتية كبير',
+        estimatedValue: 15000000,
+        category: 'بنية تحتية',
+        region: 'جدة',
+        competitorCount: 5,
+        clientType: 'government',
+        deadline: '2024-04-20'
+      },
+      {
+        id: 'scenario_3',
+        name: 'مشروع تجاري صغير',
+        estimatedValue: 2000000,
+        category: 'تجاري',
+        region: 'الدمام',
+        competitorCount: 2,
+        clientType: 'private',
+        deadline: '2024-02-28'
+      }
+    ]
+
+    const recentOpportunities = opportunities.slice(0, 3).map((opp, index) => ({
+      id: `opportunity_${index}`,
+      name: opp.title,
+      estimatedValue: opp.estimatedValue,
+      category: opp.category,
+      region: opp.region,
+      competitorCount: Math.floor(Math.random() * 5) + 2,
+      clientType: opp.clientType || 'government',
+      deadline: opp.deadline
+    }))
+
+    setScenarios([...defaultScenarios, ...recentOpportunities])
+  }, [])
 
   // ============================================================================
   // DATA LOADING
@@ -125,7 +192,7 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
     } finally {
       setLoading(false)
     }
-  }, [filter])
+  }, [filter, generateDefaultScenarios])
 
   useEffect(() => {
     loadData()
@@ -195,65 +262,22 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
     setCurrentTrendPrediction(trendPrediction)
   }, [predictionForm.category, predictionForm.region, marketOpportunities, marketTrends])
 
-  const generateDefaultScenarios = useCallback((opportunities: MarketOpportunity[]) => {
-    const defaultScenarios: PredictionScenario[] = [
-      {
-        id: 'scenario_1',
-        name: 'مشروع سكني متوسط',
-        estimatedValue: 5000000,
-        category: 'سكني',
-        region: 'الرياض',
-        competitorCount: 3,
-        clientType: 'private',
-        deadline: '2024-03-15'
-      },
-      {
-        id: 'scenario_2',
-        name: 'مشروع بنية تحتية كبير',
-        estimatedValue: 15000000,
-        category: 'بنية تحتية',
-        region: 'جدة',
-        competitorCount: 5,
-        clientType: 'government',
-        deadline: '2024-04-20'
-      },
-      {
-        id: 'scenario_3',
-        name: 'مشروع تجاري صغير',
-        estimatedValue: 2000000,
-        category: 'تجاري',
-        region: 'الدمام',
-        competitorCount: 2,
-        clientType: 'private',
-        deadline: '2024-02-28'
-      }
-    ]
-
-    // Add scenarios from recent opportunities
-    const recentOpportunities = opportunities.slice(0, 3).map((opp, index) => ({
-      id: `opportunity_${index}`,
-      name: opp.title,
-      estimatedValue: opp.estimatedValue,
-      category: opp.category,
-      region: opp.region,
-      competitorCount: Math.floor(Math.random() * 5) + 2,
-      clientType: opp.clientType || 'government',
-      deadline: opp.deadline
-    }))
-
-    setScenarios([...defaultScenarios, ...recentOpportunities])
-  }, [])
-
   // ============================================================================
   // EVENT HANDLERS
   // ============================================================================
 
-  const handlePredictionFormChange = useCallback((field: string, value: any) => {
-    setPredictionForm(prev => ({ ...prev, [field]: value }))
+  const handlePredictionFormChange = useCallback(<K extends keyof PredictionFormState>(
+    field: K,
+    value: PredictionFormState[K]
+  ) => {
+    setPredictionForm(prev => ({ ...prev, [field]: value } as PredictionFormState))
   }, [])
 
-  const handleOptimizationParamsChange = useCallback((field: string, value: any) => {
-    setOptimizationParams(prev => ({ ...prev, [field]: value }))
+  const handleOptimizationParamsChange = useCallback(<K extends keyof OptimizationParameters>(
+    field: K,
+    value: OptimizationParameters[K]
+  ) => {
+    setOptimizationParams(prev => ({ ...prev, [field]: value } as OptimizationParameters))
   }, [])
 
   const handleScenarioSelect = useCallback((scenario: PredictionScenario) => {
@@ -295,13 +319,13 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
 
   if (loading) {
     return (
-      <div className={`bg-white rounded-lg shadow-sm border p-6 ${className}`}>
+      <div className={`bg-card rounded-lg shadow-sm border p-6 ${className}`}>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="h-6 bg-muted rounded w-1/3 mb-4"></div>
           <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+            <div className="h-4 bg-muted rounded"></div>
+            <div className="h-4 bg-muted rounded w-5/6"></div>
+            <div className="h-4 bg-muted rounded w-4/6"></div>
           </div>
         </div>
       </div>
@@ -310,13 +334,13 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
 
   if (error) {
     return (
-      <div className={`bg-white rounded-lg shadow-sm border p-6 ${className}`}>
+      <div className={`bg-card rounded-lg shadow-sm border p-6 ${className}`}>
         <div className="text-center py-8">
-          <div className="text-red-500 text-lg font-semibold mb-2">خطأ في التحليل التنبؤي</div>
-          <div className="text-gray-600 mb-4">{error}</div>
+          <div className="text-destructive text-lg font-semibold mb-2">خطأ في التحليل التنبؤي</div>
+          <div className="text-muted-foreground mb-4">{error}</div>
           <button
             onClick={loadData}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             إعادة المحاولة
           </button>
@@ -330,19 +354,19 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
   // ============================================================================
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
+    <div className={`bg-card text-card-foreground rounded-lg shadow-sm border ${className}`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-border">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">التحليل التنبؤي المتقدم</h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <h2 className="text-xl font-bold text-foreground">التحليل التنبؤي المتقدم</h2>
+            <p className="text-sm text-muted-foreground mt-1">
               تنبؤات ذكية لاحتمالية الفوز وتحسين الأسعار والاتجاهات السوقية
             </p>
           </div>
           <button
             onClick={handleRunAllAnalyses}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             تشغيل جميع التحليلات
           </button>
@@ -351,55 +375,50 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
         {/* Summary Cards */}
         {predictionSummary && (
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="text-2xl font-bold text-blue-600">
+            <div className="bg-primary/10 rounded-lg p-4">
+              <div className="text-2xl font-bold text-primary">
                 {predictionSummary.winProbability}%
               </div>
-              <div className="text-sm text-blue-800">احتمالية الفوز</div>
+              <div className="text-sm text-primary">احتمالية الفوز</div>
             </div>
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="text-2xl font-bold text-green-600">
+            <div className="bg-success/10 rounded-lg p-4">
+              <div className="text-2xl font-bold text-success">
                 {(predictionSummary.recommendedBid / 1000000).toFixed(1)}م
               </div>
-              <div className="text-sm text-green-800">العطاء المُوصى به</div>
+              <div className="text-sm text-success">العطاء المُوصى به</div>
             </div>
-            <div className="bg-purple-50 rounded-lg p-4">
-              <div className="text-2xl font-bold text-purple-600">
+            <div className="bg-accent/10 rounded-lg p-4">
+              <div className="text-2xl font-bold text-accent">
                 {predictionSummary.optimalMargin.toFixed(1)}%
               </div>
-              <div className="text-sm text-purple-800">الهامش الأمثل</div>
+              <div className="text-sm text-accent">الهامش الأمثل</div>
             </div>
-            <div className="bg-orange-50 rounded-lg p-4">
-              <div className="text-2xl font-bold text-orange-600">
+            <div className="bg-warning/10 rounded-lg p-4">
+              <div className="text-2xl font-bold text-warning">
                 {predictionSummary.riskLevel === 'low' ? 'منخفض' : 
                  predictionSummary.riskLevel === 'medium' ? 'متوسط' : 'عالي'}
               </div>
-              <div className="text-sm text-orange-800">مستوى المخاطرة</div>
+              <div className="text-sm text-warning">مستوى المخاطرة</div>
             </div>
-            <div className="bg-indigo-50 rounded-lg p-4">
-              <div className="text-2xl font-bold text-indigo-600">
+            <div className="bg-info/10 rounded-lg p-4">
+              <div className="text-2xl font-bold text-info">
                 {predictionSummary.confidence}%
               </div>
-              <div className="text-sm text-indigo-800">مستوى الثقة</div>
+              <div className="text-sm text-info">مستوى الثقة</div>
             </div>
           </div>
         )}
 
         {/* Tab Navigation */}
-        <div className="flex space-x-1 mt-6 bg-gray-100 p-1 rounded-lg">
-          {[
-            { key: 'predictions', label: 'التنبؤات' },
-            { key: 'optimization', label: 'تحسين الأسعار' },
-            { key: 'trends', label: 'اتجاهات السوق' },
-            { key: 'scenarios', label: 'السيناريوهات' }
-          ].map(tab => (
+        <div className="flex space-x-1 mt-6 bg-muted p-1 rounded-lg">
+          {PREDICTION_TABS.map(tab => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
+              onClick={() => setActiveTab(tab.key)}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.key
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-card text-primary shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {tab.label}
@@ -415,24 +434,26 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
             {/* Prediction Form */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="prediction-estimated-value" className="block text-sm font-medium text-muted-foreground mb-2">
                   القيمة المقدرة (ريال)
                 </label>
                 <input
+                  id="prediction-estimated-value"
                   type="number"
                   value={predictionForm.estimatedValue}
                   onChange={(e) => handlePredictionFormChange('estimatedValue', Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="prediction-category" className="block text-sm font-medium text-muted-foreground mb-2">
                   الفئة
                 </label>
                 <select
+                  id="prediction-category"
                   value={predictionForm.category}
                   onChange={(e) => handlePredictionFormChange('category', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="سكني">سكني</option>
                   <option value="تجاري">تجاري</option>
@@ -441,13 +462,14 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="prediction-region" className="block text-sm font-medium text-muted-foreground mb-2">
                   المنطقة
                 </label>
                 <select
+                  id="prediction-region"
                   value={predictionForm.region}
                   onChange={(e) => handlePredictionFormChange('region', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="الرياض">الرياض</option>
                   <option value="جدة">جدة</option>
@@ -459,26 +481,28 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="prediction-competitor-count" className="block text-sm font-medium text-muted-foreground mb-2">
                   عدد المنافسين
                 </label>
                 <input
+                  id="prediction-competitor-count"
                   type="number"
                   min="1"
                   max="10"
                   value={predictionForm.competitorCount}
                   onChange={(e) => handlePredictionFormChange('competitorCount', Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="prediction-client-type" className="block text-sm font-medium text-muted-foreground mb-2">
                   نوع العميل
                 </label>
                 <select
+                  id="prediction-client-type"
                   value={predictionForm.clientType}
                   onChange={(e) => handlePredictionFormChange('clientType', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="government">حكومي</option>
                   <option value="private">خاص</option>
@@ -489,29 +513,29 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
 
             <button
               onClick={generateWinProbabilityPrediction}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
             >
               توليد تنبؤ احتمالية الفوز
             </button>
 
             {/* Prediction Results */}
             {currentPrediction && (
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">نتائج التنبؤ</h3>
+              <div className="bg-muted rounded-lg p-6">
+                <h3 className="font-semibold text-foreground mb-4">نتائج التنبؤ</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <div className="text-3xl font-bold text-blue-600 mb-2">
-                      {currentPrediction.probability}%
+                    <div className="text-3xl font-bold text-primary mb-2">
+                      <span className="text-primary">{currentPrediction.probability}%</span>
                     </div>
-                    <div className="text-sm text-gray-600 mb-4">
+                    <div className="text-sm text-muted-foreground mb-4">
                       احتمالية الفوز (مستوى الثقة: {currentPrediction.confidence}%)
                     </div>
                     <div className="space-y-2">
-                      <h4 className="font-medium text-gray-900">العوامل المؤثرة:</h4>
+                      <h4 className="font-medium text-foreground">العوامل المؤثرة:</h4>
                       {currentPrediction.factors.map((factor, index) => (
                         <div key={index} className="flex justify-between text-sm">
                           <span>{factor.name}</span>
-                          <span className={factor.weight > 0 ? 'text-green-600' : 'text-red-600'}>
+                          <span className={factor.weight > 0 ? 'text-success' : 'text-destructive'}>
                             {factor.weight > 0 ? '+' : ''}{factor.weight.toFixed(1)}
                           </span>
                         </div>
@@ -519,11 +543,11 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">التوصيات:</h4>
-                    <ul className="space-y-2 text-sm text-gray-600">
+                    <h4 className="font-medium text-foreground mb-3">التوصيات:</h4>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
                       {currentPrediction.recommendations.map((rec, index) => (
                         <li key={index} className="flex items-start">
-                          <span className="text-blue-500 mr-2">•</span>
+                          <span className="text-primary mr-2">•</span>
                           {rec}
                         </li>
                       ))}
@@ -540,55 +564,62 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
             {/* Optimization Parameters */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="optimization-min-margin" className="block text-sm font-medium text-muted-foreground mb-2">
                   الحد الأدنى للهامش (%)
                 </label>
                 <input
+                  id="optimization-min-margin"
                   type="number"
                   min="0"
                   max="50"
                   value={optimizationParams.minMargin}
                   onChange={(e) => handleOptimizationParamsChange('minMargin', Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="optimization-max-margin" className="block text-sm font-medium text-muted-foreground mb-2">
                   الحد الأقصى للهامش (%)
                 </label>
                 <input
+                  id="optimization-max-margin"
                   type="number"
                   min="0"
                   max="50"
                   value={optimizationParams.maxMargin}
                   onChange={(e) => handleOptimizationParamsChange('maxMargin', Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="optimization-target-win-probability" className="block text-sm font-medium text-muted-foreground mb-2">
                   احتمالية الفوز المستهدفة (%)
                 </label>
                 <input
+                  id="optimization-target-win-probability"
                   type="number"
                   min="10"
                   max="90"
                   value={optimizationParams.targetWinProbability}
                   onChange={(e) => handleOptimizationParamsChange('targetWinProbability', Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="optimization-risk-tolerance" className="block text-sm font-medium text-muted-foreground mb-2">
                   تحمل المخاطر
                 </label>
                 <select
+                  id="optimization-risk-tolerance"
                   value={optimizationParams.riskTolerance}
-                  onChange={(e) => handleOptimizationParamsChange('riskTolerance', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e) => handleOptimizationParamsChange(
+                    'riskTolerance',
+                    e.target.value as OptimizationParameters['riskTolerance']
+                  )}
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="low">منخفض</option>
                   <option value="medium">متوسط</option>
@@ -596,13 +627,17 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="optimization-objective" className="block text-sm font-medium text-muted-foreground mb-2">
                   هدف التحسين
                 </label>
                 <select
+                  id="optimization-objective"
                   value={optimizationParams.objective}
-                  onChange={(e) => handleOptimizationParamsChange('objective', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e) => handleOptimizationParamsChange(
+                    'objective',
+                    e.target.value as OptimizationParameters['objective']
+                  )}
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="win-probability">تعظيم احتمالية الفوز</option>
                   <option value="profit-margin">تعظيم هامش الربح</option>
@@ -611,13 +646,17 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="optimization-market-conditions" className="block text-sm font-medium text-muted-foreground mb-2">
                   ظروف السوق
                 </label>
                 <select
+                  id="optimization-market-conditions"
                   value={optimizationParams.marketConditions}
-                  onChange={(e) => handleOptimizationParamsChange('marketConditions', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  onChange={(e) => handleOptimizationParamsChange(
+                    'marketConditions',
+                    e.target.value as OptimizationParameters['marketConditions']
+                  )}
+                  className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 >
                   <option value="favorable">مواتية</option>
                   <option value="neutral">محايدة</option>
@@ -628,64 +667,64 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
 
             <button
               onClick={generateOptimization}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="px-4 py-2 bg-success text-success-foreground rounded-lg hover:bg-success/90 transition-colors"
             >
               تحسين السعر
             </button>
 
             {/* Optimization Results */}
             {currentOptimization && (
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">نتائج تحسين السعر</h3>
+              <div className="bg-muted rounded-lg p-6">
+                <h3 className="font-semibold text-foreground mb-4">نتائج تحسين السعر</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <div className="space-y-4">
                       <div>
-                        <div className="text-2xl font-bold text-green-600">
+                        <div className="text-2xl font-bold text-success">
                           {(currentOptimization.recommendedBid / 1000000).toFixed(2)} مليون ريال
                         </div>
-                        <div className="text-sm text-gray-600">العطاء المُوصى به</div>
+                        <div className="text-sm text-muted-foreground">العطاء المُوصى به</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-blue-600">
+                        <div className="text-xl font-bold text-primary">
                           {currentOptimization.optimalMargin.toFixed(1)}%
                         </div>
-                        <div className="text-sm text-gray-600">الهامش الأمثل</div>
+                        <div className="text-sm text-muted-foreground">الهامش الأمثل</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-purple-600">
+                        <div className="text-xl font-bold text-accent">
                           {currentOptimization.expectedWinProbability.toFixed(1)}%
                         </div>
-                        <div className="text-sm text-gray-600">احتمالية الفوز المتوقعة</div>
+                        <div className="text-sm text-muted-foreground">احتمالية الفوز المتوقعة</div>
                       </div>
                       <div>
                         <div className={`text-xl font-bold ${
-                          currentOptimization.riskLevel === 'low' ? 'text-green-600' :
-                          currentOptimization.riskLevel === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                          currentOptimization.riskLevel === 'low' ? 'text-success' :
+                          currentOptimization.riskLevel === 'medium' ? 'text-warning' : 'text-destructive'
                         }`}>
                           {currentOptimization.riskLevel === 'low' ? 'منخفض' :
                            currentOptimization.riskLevel === 'medium' ? 'متوسط' : 'عالي'}
                         </div>
-                        <div className="text-sm text-gray-600">مستوى المخاطرة</div>
+                        <div className="text-sm text-muted-foreground">مستوى المخاطرة</div>
                       </div>
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">التوصيات:</h4>
+                    <h4 className="font-medium text-foreground mb-3">التوصيات:</h4>
                     <div className="space-y-3">
-                      {currentOptimization.recommendations.map((rec, index) => (
-                        <div key={index} className="flex items-start">
+                      {currentOptimization.recommendations.map((rec: BidOptimization['recommendations'][number], index: number) => (
+                        <div key={rec.type + index} className="flex items-start">
                           <span className={`inline-block w-2 h-2 rounded-full mt-2 mr-2 ${
-                            rec.impact === 'high' ? 'bg-red-500' :
-                            rec.impact === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                            rec.impact === 'high' ? 'bg-destructive' :
+                            rec.impact === 'medium' ? 'bg-warning' : 'bg-success'
                           }`}></span>
                           <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-foreground">
                               {rec.type === 'pricing' ? 'تسعير' :
                                rec.type === 'timing' ? 'توقيت' :
                                rec.type === 'strategy' ? 'استراتيجية' : 'مخاطر'}
                             </div>
-                            <div className="text-sm text-gray-600">{rec.recommendation}</div>
+                            <div className="text-sm text-muted-foreground">{rec.recommendation}</div>
                           </div>
                         </div>
                       ))}
@@ -697,29 +736,29 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
 
             {/* Price Sensitivity Chart */}
             {priceSensitivity && (
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">تحليل حساسية السعر</h3>
-                <div className="text-sm text-gray-600 mb-4">
+              <div className="bg-muted rounded-lg p-6">
+                <h3 className="font-semibold text-foreground mb-4">تحليل حساسية السعر</h3>
+                <div className="text-sm text-muted-foreground mb-4">
                   تحليل تأثير تغيير السعر على احتمالية الفوز والربحية
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-green-100 rounded-lg p-4">
-                    <div className="font-medium text-green-800 mb-2">نطاق المخاطر المنخفضة</div>
-                    <div className="text-sm text-green-600">
+                  <div className="bg-success/10 rounded-lg p-4">
+                    <div className="font-medium text-success mb-2">نطاق المخاطر المنخفضة</div>
+                    <div className="text-sm text-success">
                       {(priceSensitivity.riskAnalysis.lowRiskRange.min / 1000000).toFixed(1)} -
                       {(priceSensitivity.riskAnalysis.lowRiskRange.max / 1000000).toFixed(1)} مليون ريال
                     </div>
                   </div>
-                  <div className="bg-yellow-100 rounded-lg p-4">
-                    <div className="font-medium text-yellow-800 mb-2">نطاق المخاطر المتوسطة</div>
-                    <div className="text-sm text-yellow-600">
+                  <div className="bg-warning/10 rounded-lg p-4">
+                    <div className="font-medium text-warning mb-2">نطاق المخاطر المتوسطة</div>
+                    <div className="text-sm text-warning">
                       {(priceSensitivity.riskAnalysis.mediumRiskRange.min / 1000000).toFixed(1)} -
                       {(priceSensitivity.riskAnalysis.mediumRiskRange.max / 1000000).toFixed(1)} مليون ريال
                     </div>
                   </div>
-                  <div className="bg-red-100 rounded-lg p-4">
-                    <div className="font-medium text-red-800 mb-2">نطاق المخاطر العالية</div>
-                    <div className="text-sm text-red-600">
+                  <div className="bg-destructive/10 rounded-lg p-4">
+                    <div className="font-medium text-destructive mb-2">نطاق المخاطر العالية</div>
+                    <div className="text-sm text-destructive">
                       {(priceSensitivity.riskAnalysis.highRiskRange.min / 1000000).toFixed(1)} -
                       {(priceSensitivity.riskAnalysis.highRiskRange.max / 1000000).toFixed(1)} مليون ريال
                     </div>
@@ -734,53 +773,53 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
           <div className="space-y-6">
             <button
               onClick={generateTrendPrediction}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/90 transition-colors"
             >
               توليد تنبؤ اتجاهات السوق
             </button>
 
             {currentTrendPrediction && (
-              <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">تنبؤ اتجاهات السوق</h3>
+              <div className="bg-muted rounded-lg p-6">
+                <h3 className="font-semibold text-foreground mb-4">تنبؤ اتجاهات السوق</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <div className="space-y-4">
                       <div>
                         <div className={`text-3xl font-bold ${
-                          currentTrendPrediction.direction === 'up' ? 'text-green-600' :
-                          currentTrendPrediction.direction === 'down' ? 'text-red-600' : 'text-gray-600'
+                          currentTrendPrediction.direction === 'up' ? 'text-success' :
+                          currentTrendPrediction.direction === 'down' ? 'text-destructive' : 'text-muted-foreground'
                         }`}>
                           {currentTrendPrediction.direction === 'up' ? '↗ صاعد' :
                            currentTrendPrediction.direction === 'down' ? '↘ هابط' : '→ مستقر'}
                         </div>
-                        <div className="text-sm text-gray-600">اتجاه السوق المتوقع</div>
+                        <div className="text-sm text-muted-foreground">اتجاه السوق المتوقع</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-blue-600">
+                        <div className="text-xl font-bold text-primary">
                           {currentTrendPrediction.strength}%
                         </div>
-                        <div className="text-sm text-gray-600">قوة الاتجاه</div>
+                        <div className="text-sm text-muted-foreground">قوة الاتجاه</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-purple-600">
+                        <div className="text-xl font-bold text-accent">
                           {currentTrendPrediction.duration} أشهر
                         </div>
-                        <div className="text-sm text-gray-600">المدة المتوقعة</div>
+                        <div className="text-sm text-muted-foreground">المدة المتوقعة</div>
                       </div>
                       <div>
-                        <div className="text-xl font-bold text-indigo-600">
+                        <div className="text-xl font-bold text-info">
                           {currentTrendPrediction.confidence}%
                         </div>
-                        <div className="text-sm text-gray-600">مستوى الثقة</div>
+                        <div className="text-sm text-muted-foreground">مستوى الثقة</div>
                       </div>
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-3">المحركات الرئيسية:</h4>
-                    <ul className="space-y-2 text-sm text-gray-600">
+                    <h4 className="font-medium text-foreground mb-3">المحركات الرئيسية:</h4>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
                       {currentTrendPrediction.drivers.map((driver, index) => (
                         <li key={index} className="flex items-start">
-                          <span className="text-purple-500 mr-2">•</span>
+                          <span className="text-accent mr-2">•</span>
                           {driver}
                         </li>
                       ))}
@@ -795,7 +834,7 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
         {activeTab === 'scenarios' && (
           <div className="space-y-6">
             <div>
-              <h3 className="font-semibold text-gray-900 mb-4">السيناريوهات المحفوظة</h3>
+              <h3 className="font-semibold text-foreground mb-4">السيناريوهات المحفوظة</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {scenarios.map(scenario => (
                   <div
@@ -803,12 +842,12 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
                     onClick={() => handleScenarioSelect(scenario)}
                     className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                       selectedScenario?.id === scenario.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-muted'
                     }`}
                   >
-                    <h4 className="font-medium text-gray-900 mb-2">{scenario.name}</h4>
-                    <div className="text-sm text-gray-600 space-y-1">
+                    <h4 className="font-medium text-foreground mb-2">{scenario.name}</h4>
+                    <div className="text-sm text-muted-foreground space-y-1">
                       <div>القيمة: {(scenario.estimatedValue / 1000000).toFixed(1)} مليون ريال</div>
                       <div>الفئة: {scenario.category}</div>
                       <div>المنطقة: {scenario.region}</div>

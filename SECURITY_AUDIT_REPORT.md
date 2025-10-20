@@ -1,5 +1,4 @@
 # تقرير الأمان والثغرات
-
 # Security Audit Report - Desktop Management System
 
 **تاريخ المراجعة:** 2025-10-18  
@@ -10,11 +9,11 @@
 
 ## 📊 ملخص الثغرات
 
-| الخطورة      | العدد | الحالة           |
-| ------------ | ----- | ---------------- |
-| 🔴 High      | 1     | يحتاج إصلاح فوري |
-| 🟠 Moderate  | 4     | يحتاج مراجعة     |
-| **الإجمالي** | **5** | ⚠️               |
+| الخطورة | العدد | الحالة |
+|---------|-------|--------|
+| 🔴 High | 1 | يحتاج إصلاح فوري |
+| 🟠 Moderate | 4 | يحتاج مراجعة |
+| **الإجمالي** | **5** | ⚠️ |
 
 ---
 
@@ -25,9 +24,7 @@
 **المكتبة المتأثرة:** `xlsx` (جميع الإصدارات)
 
 **الثغرات:**
-
 1. **Prototype Pollution in sheetJS**
-
    - CVE: GHSA-4r6h-8v6p-xvw6
    - الخطورة: High
    - الوصف: ثغرة Prototype Pollution يمكن أن تسمح بتنفيذ كود ضار
@@ -40,14 +37,12 @@
 **الحالة:** ❌ No fix available
 
 **التأثير:**
-
 - المكتبة مستخدمة في: `node_modules/xlsx`
 - الاستخدام: قراءة وكتابة ملفات Excel
 
 **الحلول المقترحة:**
 
 #### الخيار 1: استخدام بديل آمن (موصى به)
-
 ```bash
 # إزالة xlsx
 npm uninstall xlsx
@@ -59,7 +54,6 @@ npm install @sheet/core
 ```
 
 **مثال على التحويل:**
-
 ```typescript
 // قبل (xlsx)
 import * as XLSX from 'xlsx'
@@ -72,7 +66,6 @@ await workbook.xlsx.load(data)
 ```
 
 #### الخيار 2: تطبيق Input Validation صارم
-
 ```typescript
 // إذا كان يجب الاحتفاظ بـ xlsx
 import * as XLSX from 'xlsx'
@@ -80,24 +73,23 @@ import * as XLSX from 'xlsx'
 // إضافة validation قبل المعالجة
 function safeReadExcel(data: Buffer): XLSX.WorkBook {
   // التحقق من حجم الملف
-  if (data.length > 10 * 1024 * 1024) {
-    // 10MB max
+  if (data.length > 10 * 1024 * 1024) { // 10MB max
     throw new Error('File too large')
   }
-
+  
   // التحقق من نوع الملف
   const signature = data.slice(0, 4).toString('hex')
   if (!['504b0304', 'd0cf11e0'].includes(signature)) {
     throw new Error('Invalid file format')
   }
-
+  
   try {
-    return XLSX.read(data, {
+    return XLSX.read(data, { 
       type: 'buffer',
       // تحديد خيارات آمنة
       cellFormula: false, // منع formulas
-      cellHTML: false, // منع HTML
-      cellStyles: false, // منع styles
+      cellHTML: false,    // منع HTML
+      cellStyles: false   // منع styles
     })
   } catch (error) {
     throw new Error('Failed to parse Excel file')
@@ -106,7 +98,6 @@ function safeReadExcel(data: Buffer): XLSX.WorkBook {
 ```
 
 #### الخيار 3: عزل المعالجة في Worker
-
 ```typescript
 // معالجة ملفات Excel في Web Worker منفصل
 // لتقليل تأثير الثغرات على التطبيق الرئيسي
@@ -140,20 +131,17 @@ worker.onmessage = (e) => {
 **المكتبة المتأثرة:** `@sentry/browser` < 7.119.1
 
 **الثغرة:**
-
 - CVE: GHSA-593m-55hh-j8gv
 - الخطورة: Moderate
 - الوصف: Prototype Pollution gadget في JavaScript SDKs
 
 **المكتبات المتأثرة:**
-
 - `@sentry/browser`
 - `@sentry/electron` (يعتمد على @sentry/browser)
 
 **الحالة:** ✅ Fix available
 
 **الحل:**
-
 ```bash
 # تحديث إلى إصدار آمن
 npm install @sentry/browser@latest @sentry/electron@latest
@@ -165,7 +153,6 @@ npm audit fix --force
 **ملاحظة:** قد يتطلب تحديث `@sentry/electron` إلى v7.2.0 تعديلات في الكود.
 
 **التحقق من التوافق:**
-
 ```typescript
 // قبل التحديث، تحقق من الكود الحالي
 import * as Sentry from '@sentry/electron'
@@ -184,25 +171,21 @@ Sentry.init({
 **المكتبة المتأثرة:** `esbuild` <= 0.24.2
 
 **الثغرة:**
-
 - CVE: GHSA-67mh-4wv8-2f99
 - الخطورة: Moderate
 - الوصف: يمكن لأي موقع إرسال طلبات إلى development server وقراءة الاستجابة
 
 **المكتبات المتأثرة:**
-
 - `esbuild`
 - `vite` (يعتمد على esbuild)
 
 **الحالة:** ✅ Fix available
 
 **التأثير:**
-
 - ⚠️ يؤثر فقط على **development mode**
 - ✅ لا يؤثر على **production build**
 
 **الحل:**
-
 ```bash
 # تحديث vite (سيحدث esbuild تلقائياً)
 npm install vite@latest
@@ -212,7 +195,6 @@ npm install esbuild@latest
 ```
 
 **التخفيف المؤقت (إذا لم يمكن التحديث):**
-
 ```typescript
 // vite.config.ts
 export default defineConfig({
@@ -224,8 +206,8 @@ export default defineConfig({
     // إضافة middleware للتحقق
     proxy: {
       // تكوين proxy آمن
-    },
-  },
+    }
+  }
 })
 ```
 
@@ -262,21 +244,19 @@ npm install --package-lock-only
 ### 3. مراقبة الثغرات الجديدة
 
 **أدوات موصى بها:**
-
 - GitHub Dependabot (مدمج في GitHub)
 - Snyk (مجاني للمشاريع المفتوحة)
 - npm audit (مدمج في npm)
 
 **إعداد GitHub Dependabot:**
-
 ```yaml
 # .github/dependabot.yml
 version: 2
 updates:
-  - package-ecosystem: 'npm'
-    directory: '/'
+  - package-ecosystem: "npm"
+    directory: "/"
     schedule:
-      interval: 'weekly'
+      interval: "weekly"
     open-pull-requests-limit: 10
 ```
 
@@ -295,9 +275,9 @@ app.on('web-contents-created', (event, contents) => {
           "style-src 'self' 'unsafe-inline'",
           "img-src 'self' data: https:",
           "font-src 'self' data:",
-          "connect-src 'self' https://api.example.com",
-        ].join('; '),
-      },
+          "connect-src 'self' https://api.example.com"
+        ].join('; ')
+      }
     })
   })
 })
@@ -312,10 +292,7 @@ import { z } from 'zod'
 const FileUploadSchema = z.object({
   name: z.string().max(255),
   size: z.number().max(10 * 1024 * 1024), // 10MB
-  type: z.enum([
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  ]),
+  type: z.enum(['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])
 })
 
 function validateFile(file: unknown) {
@@ -332,7 +309,7 @@ import DOMPurify from 'dompurify'
 function sanitizeHTML(dirty: string): string {
   return DOMPurify.sanitize(dirty, {
     ALLOWED_TAGS: ['b', 'i', 'em', 'strong'],
-    ALLOWED_ATTR: [],
+    ALLOWED_ATTR: []
   })
 }
 
@@ -360,7 +337,6 @@ function sanitizeSQL(input: string): string {
 ### الأولوية المتوسطة (خلال أسبوع)
 
 - [ ] **2. تحديث Sentry SDK**
-
   - [ ] تحديث @sentry/browser و @sentry/electron
   - [ ] اختبار error tracking
   - [ ] التحقق من التوافق
@@ -382,19 +358,18 @@ function sanitizeSQL(input: string): string {
 
 ## 📊 الجدول الزمني
 
-| المهمة             | المدة المقدرة | الموعد النهائي |
-| ------------------ | ------------- | -------------- |
-| معالجة xlsx        | 4-6 ساعات     | فوري           |
-| تحديث Sentry       | 1-2 ساعة      | خلال 3 أيام    |
-| تحديث vite         | 1 ساعة        | خلال 3 أيام    |
-| Security hardening | 2-3 أيام      | خلال أسبوع     |
+| المهمة | المدة المقدرة | الموعد النهائي |
+|--------|---------------|----------------|
+| معالجة xlsx | 4-6 ساعات | فوري |
+| تحديث Sentry | 1-2 ساعة | خلال 3 أيام |
+| تحديث vite | 1 ساعة | خلال 3 أيام |
+| Security hardening | 2-3 أيام | خلال أسبوع |
 
 ---
 
 ## ✅ Checklist
 
 ### قبل الإنتاج:
-
 - [ ] جميع الثغرات High تم معالجتها
 - [ ] جميع الثغرات Moderate تم مراجعتها
 - [ ] npm audit لا يظهر ثغرات حرجة
@@ -406,3 +381,4 @@ function sanitizeSQL(input: string): string {
 
 **آخر تحديث:** 2025-10-18  
 **المراجع التالي:** بعد أسبوع من تطبيق الإصلاحات
+

@@ -131,6 +131,8 @@ describe('AuthService - خدمة المصادقة', () => {
       expect(authService.isAuthenticated()).toBe(false)
       expect(apiClient.clearToken).toHaveBeenCalled()
     })
+
+
   })
 
   describe('permissions - الصلاحيات', () => {
@@ -295,3 +297,4 @@ describe('AuthService - خدمة المصادقة', () => {
     })
   })
 })
+

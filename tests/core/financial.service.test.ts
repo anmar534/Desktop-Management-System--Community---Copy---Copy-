@@ -42,27 +42,27 @@ class FinancialService {
   }
 
   getTransactionById(id: string): Transaction | null {
-    return this.transactions.find((t) => t.id === id) || null
+    return this.transactions.find(t => t.id === id) || null
   }
 
   deleteTransaction(id: string): boolean {
-    const index = this.transactions.findIndex((t) => t.id === id)
+    const index = this.transactions.findIndex(t => t.id === id)
     if (index === -1) return false
     this.transactions.splice(index, 1)
     return true
   }
 
   calculateSummary(currency = 'SAR'): FinancialSummary {
-    const currencyTransactions = this.transactions.filter((t) => t.currency === currency)
-
+    const currencyTransactions = this.transactions.filter(t => t.currency === currency)
+    
     const totalRevenue = currencyTransactions
-      .filter((t) => t.type === 'income')
+      .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0)
-
+    
     const totalExpenses = currencyTransactions
-      .filter((t) => t.type === 'expense')
+      .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0)
-
+    
     const netProfit = totalRevenue - totalExpenses
     const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0
 
@@ -76,11 +76,11 @@ class FinancialService {
   }
 
   getTransactionsByCategory(category: string): Transaction[] {
-    return this.transactions.filter((t) => t.category === category)
+    return this.transactions.filter(t => t.category === category)
   }
 
   getTransactionsByDateRange(startDate: string, endDate: string): Transaction[] {
-    return this.transactions.filter((t) => {
+    return this.transactions.filter(t => {
       const txnDate = new Date(t.date)
       return txnDate >= new Date(startDate) && txnDate <= new Date(endDate)
     })
@@ -371,7 +371,7 @@ describe('FinancialService - الخدمات المالية', () => {
     it('should return transactions by category', () => {
       const materials = service.getTransactionsByCategory('materials')
       expect(materials).toHaveLength(2)
-      expect(materials.every((t) => t.category === 'materials')).toBe(true)
+      expect(materials.every(t => t.category === 'materials')).toBe(true)
     })
 
     it('should return empty array for non-existent category', () => {
@@ -436,3 +436,4 @@ describe('FinancialService - الخدمات المالية', () => {
     })
   })
 })
+

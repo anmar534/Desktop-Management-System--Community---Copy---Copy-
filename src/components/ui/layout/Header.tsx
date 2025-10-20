@@ -1,5 +1,3 @@
-'use client'
-
 import { Fragment, useCallback } from 'react'
 import {
   Search,

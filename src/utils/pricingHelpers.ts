@@ -6,6 +6,7 @@ import { enrichPricingItems, aggregateTotals, getEffectivePercentages, DEFAULT_P
 import { DESCRIPTION_ALIASES } from './pricingConstants'
 import type { EnrichedPricingItem, ItemBreakdown } from '@/application/services/pricingEngine'
 import type { DefaultPercentages } from '@/application/services/pricingService'
+import type { PricingData } from '@/types/pricing'
 
 interface ImportMetaEnvLike {
   env?: Record<string, unknown>
@@ -42,6 +43,41 @@ interface PricingBreakdownArrays {
   labor: PricingResource[]
   equipment: PricingResource[]
   subcontractors: PricingResource[]
+}
+
+// Type guards centralised to keep components thin and reusable across hooks/services.
+export const isPricingData = (value: unknown): value is PricingData => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const candidate = value as Partial<PricingData>
+  const { additionalPercentages } = candidate
+
+  const hasValidPercentages =
+    additionalPercentages !== null &&
+    typeof additionalPercentages === 'object' &&
+    typeof additionalPercentages?.administrative === 'number' &&
+    typeof additionalPercentages?.operational === 'number' &&
+    typeof additionalPercentages?.profit === 'number'
+
+  return (
+    Array.isArray(candidate.materials) &&
+    Array.isArray(candidate.labor) &&
+    Array.isArray(candidate.equipment) &&
+    Array.isArray(candidate.subcontractors) &&
+    hasValidPercentages &&
+    typeof candidate.technicalNotes === 'string'
+  )
+}
+
+export const isPricingEntry = (entry: unknown): entry is [string, PricingData] => {
+  if (!Array.isArray(entry) || entry.length !== 2) {
+    return false
+  }
+
+  const [key, value] = entry
+  return typeof key === 'string' && isPricingData(value)
 }
 
 const getEnvValue = (key: string): unknown => {

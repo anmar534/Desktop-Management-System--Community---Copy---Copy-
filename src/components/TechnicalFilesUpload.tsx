@@ -1,22 +1,22 @@
 import type React from 'react';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
-import { InlineAlert } from './ui/inline-alert';
-import { StatusBadge } from './ui/status-badge';
-import { DeleteConfirmation } from './ui/confirmation-dialog';
-import { EmptyState } from './PageLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { InlineAlert } from '@/components/ui/inline-alert';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { DeleteConfirmation } from '@/components/ui/confirmation-dialog';
+import { EmptyState } from '@/components/PageLayout';
 import { 
   Upload, 
   Download, 
   FileText, 
   Trash2
 } from 'lucide-react';
-import type { UploadedFile } from '../utils/fileUploadService';
-import { FileUploadService } from '../utils/fileUploadService';
-import { formatDateValue } from '../utils/formatters';
-import { authorizeDragAndDrop } from '../utils/desktopSecurity';
-import type { DragFileDescriptor } from '../utils/desktopSecurity';
+import type { UploadedFile } from '@/utils/fileUploadService';
+import { FileUploadService } from '@/utils/fileUploadService';
+import { formatDateValue } from '@/utils/formatters';
+import { authorizeDragAndDrop } from '@/utils/desktopSecurity';
+import type { DragFileDescriptor } from '@/utils/desktopSecurity';
 import { useFinancialState } from '@/application/context';
 import { toast } from 'sonner';
 import { APP_EVENTS, emit } from '@/events/bus';

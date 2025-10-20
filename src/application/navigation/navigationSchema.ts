@@ -9,7 +9,6 @@ import {
   FileText,
   LayoutDashboard,
   Settings,
-  Sparkles,
   Target,
   Trophy,
 } from 'lucide-react'
@@ -20,7 +19,6 @@ export const NAVIGATION_SECTIONS = [
   'tenders',
   'new-tender',
   'tender-pricing-wizard',
-  'tender-pricing-v2-prototype',
   'analytics',
   'financial',
   'development',
@@ -242,43 +240,6 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     view: {
       module: '@/features/tenders/pricing/TenderPricingWizard',
       exportName: 'TenderPricingWizard',
-    },
-  },
-  {
-    id: 'tender-pricing-v2-prototype',
-    label: 'نموذج التسعير المحسّن',
-    description: 'نموذج أولي تجريبي لنظام التسعير المحسّن مع جميع التحسينات المقترحة',
-    icon: Sparkles,
-    order: 28,
-    category: 'workflow',
-    hideFromMenu: false,
-    requires: ['tenders:write'],
-    breadcrumbs: [
-      { label: 'المنافسات', section: 'tenders' },
-      { label: 'النموذج التجريبي المحسّن v2.0' },
-    ],
-    quickActions: [
-      {
-        id: 'back-to-tenders',
-        label: 'العودة للمنافسات',
-        icon: Trophy,
-        targetSection: 'tenders',
-        requires: ['tenders:read'],
-        tooltip: 'العودة إلى قائمة المنافسات',
-      },
-      {
-        id: 'view-current-pricing',
-        label: 'النظام الحالي',
-        icon: Calculator,
-        targetSection: 'tender-pricing-wizard',
-        requires: ['tenders:write'],
-        tooltip: 'عرض نظام التسعير الحالي للمقارنة',
-      },
-    ],
-    relatedSections: ['tenders', 'tender-pricing-wizard'],
-    view: {
-      module: '@/prototypes/tender-pricing-v2/TenderPricingV2Prototype',
-      exportName: 'TenderPricingV2Prototype',
     },
   },
   {

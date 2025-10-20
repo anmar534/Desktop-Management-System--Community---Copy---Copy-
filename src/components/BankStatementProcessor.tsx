@@ -1,5 +1,3 @@
-'use client'
-
 // معالج متخصص لكشوف الحسابات البنكية وربطها بالمشاريع
 import { projectsData } from '../data/centralData'
 

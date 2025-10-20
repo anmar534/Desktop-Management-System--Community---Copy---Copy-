@@ -2,7 +2,7 @@ import { RefreshCw } from 'lucide-react'
 import { Button } from './button'
 import { useFinancialState } from '@/application/context/FinancialStateContext'
 import { formatDistanceToNow } from 'date-fns'
-import { arSA } from 'date-fns/locale'
+import { ar } from 'date-fns/locale'
 
 interface LastUpdateIndicatorProps {
   compact?: boolean
@@ -25,7 +25,7 @@ export function LastUpdateIndicator({
     try {
       const distance = formatDistanceToNow(new Date(lastRefreshAt), {
         addSuffix: true,
-        locale: arSA,
+        locale: ar,
       })
       return `آخر تحديث ${distance}`
     } catch {

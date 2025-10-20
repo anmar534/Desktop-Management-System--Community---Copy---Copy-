@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useCallback, useMemo } from 'react'
 import type { ChangeEvent } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'

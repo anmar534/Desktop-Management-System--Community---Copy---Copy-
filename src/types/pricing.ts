@@ -66,37 +66,6 @@ export interface PricingData {
   [key: string]: unknown;
 }
 
-export interface PricingSnapshotEntry {
-  id: string;
-  description: string;
-  unit?: string;
-  quantity?: number;
-  unitPrice?: number;
-  totalPrice?: number;
-  breakdown?: PricingBreakdown;
-}
-
-export interface PricingSnapshot {
-  tenderId: string;
-  timestamp: string;
-  items: PricingSnapshotEntry[];
-  totals: {
-    totalValue: number;
-    baseSubtotal: number;
-    vatRate: number;
-    vatAmount: number;
-    totalWithVat: number;
-    profit: number;
-    administrative: number;
-    operational: number;
-    adminOperational: number;
-    profitPercentage: number;
-    adminOperationalPercentage: number;
-    administrativePercentage: number;
-    operationalPercentage: number;
-  };
-}
-
 export interface TenderBackupEntry {
   id: string;
   tenderId: string;

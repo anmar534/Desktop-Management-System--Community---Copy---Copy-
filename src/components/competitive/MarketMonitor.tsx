@@ -1,39 +1,102 @@
-/**
- * Market Monitor Component for Phase 2 Implementation
- * 
- * This component provides real-time market monitoring and analysis
- * capabilities including market trends, opportunity tracking, and
- * competitive landscape analysis for strategic decision making.
- * 
- * @author Desktop Management System Team
- * @version 2.0.0
- * @since Phase 2 Implementation - Competitive Intelligence System
- */
-
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useId } from 'react'
 import type { MarketOpportunity, MarketTrend, CompetitorData } from '../../types/competitive'
 import { competitiveService } from '../../services/competitiveService'
 import { formatCurrency, formatPercentage } from '../../utils/analyticsUtils'
 
-/**
- * Market Monitor Component Props
- */
+const CARD_BASE_CLASS = 'rounded-lg border border-border bg-card'
+const MUTED_CARD_CLASS = 'rounded-lg border border-border bg-muted/40'
+const PRIMARY_CARD_CLASS = 'rounded-lg border border-primary/20 bg-primary/10'
+const SUCCESS_CARD_CLASS = 'rounded-lg border border-success/20 bg-success/10'
+const WARNING_CARD_CLASS = 'rounded-lg border border-warning/30 bg-warning/10'
+const INFO_CARD_CLASS = 'rounded-lg border border-info/30 bg-info/10'
+
+const SELECT_BASE_CLASS = 'rounded-lg border border-border px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1'
+const PRIMARY_BUTTON_CLASS = 'inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-60'
+const DESTRUCTIVE_BUTTON_CLASS = 'inline-flex items-center justify-center rounded-lg bg-destructive px-3 py-1 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-60'
+
+const TAB_CONTAINER_CLASS = 'flex gap-1 rounded-lg bg-muted/40 p-1'
+const TAB_BUTTON_BASE_CLASS = 'flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors'
+const TAB_ACTIVE_CLASS = 'bg-card text-primary shadow-sm'
+const TAB_INACTIVE_CLASS = 'text-muted-foreground hover:text-foreground'
+const SECTION_TITLE_CLASS = 'text-lg font-semibold text-foreground'
+
+const PRIORITY_BADGE_VARIANTS: Record<'high' | 'medium' | 'low', string> = {
+  high: 'rounded-full bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive',
+  medium: 'rounded-full bg-warning/10 px-2 py-1 text-xs font-medium text-warning',
+  low: 'rounded-full bg-success/10 px-2 py-1 text-xs font-medium text-success'
+}
+
+const PRIORITY_LABELS: Record<'high' | 'medium' | 'low', string> = {
+  high: 'عالي',
+  medium: 'متوسط',
+  low: 'منخفض'
+}
+
+const STATUS_BADGE_VARIANTS: Record<'active' | 'closed' | 'review', string> = {
+  active: 'rounded-full bg-success/10 px-2 py-1 text-xs font-medium text-success',
+  closed: 'rounded-full bg-muted/40 px-2 py-1 text-xs font-medium text-muted-foreground',
+  review: 'rounded-full bg-warning/10 px-2 py-1 text-xs font-medium text-warning'
+}
+
+const STATUS_LABELS: Record<'active' | 'closed' | 'review', string> = {
+  active: 'نشط',
+  closed: 'مغلق',
+  review: 'قيد المراجعة'
+}
+
+const TREND_DIRECTION_BADGES: Record<'up' | 'down' | 'stable', string> = {
+  up: 'rounded-full bg-success/10 px-2 py-1 text-xs font-medium text-success',
+  down: 'rounded-full bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive',
+  stable: 'rounded-full bg-muted/40 px-2 py-1 text-xs font-medium text-muted-foreground'
+}
+
+const TREND_DIRECTION_LABELS: Record<'up' | 'down' | 'stable', string> = {
+  up: 'صاعد',
+  down: 'هابط',
+  stable: 'مستقر'
+}
+
+const TREND_STRENGTH_CLASSES: Record<'strong' | 'moderate' | 'weak', string> = {
+  strong: 'font-medium text-success',
+  moderate: 'font-medium text-warning',
+  weak: 'font-medium text-destructive'
+}
+
+const TREND_STRENGTH_LABELS: Record<'strong' | 'moderate' | 'weak', string> = {
+  strong: 'قوي',
+  moderate: 'متوسط',
+  weak: 'ضعيف'
+}
+
+const COMPETITION_LABELS: Record<'low' | 'medium' | 'high', string> = {
+  low: 'منخفض',
+  medium: 'متوسط',
+  high: 'عالي'
+}
+
+const COMPETITION_CLASSES: Record<'low' | 'medium' | 'high', string> = {
+  low: 'text-success',
+  medium: 'text-warning',
+  high: 'text-destructive'
+}
+
+type TimePeriod = 'week' | 'month' | 'quarter' | 'year'
+
+const PERIOD_OPTIONS: { value: TimePeriod; label: string }[] = [
+  { value: 'week', label: 'الأسبوع الماضي' },
+  { value: 'month', label: 'الشهر الماضي' },
+  { value: 'quarter', label: 'الربع الماضي' },
+  { value: 'year', label: 'السنة الماضية' }
+]
+
 export interface MarketMonitorProps {
-  /** Time period for market analysis */
-  timePeriod?: 'week' | 'month' | 'quarter' | 'year'
-  /** Whether to show detailed market trends */
+  timePeriod?: TimePeriod
   showDetailedTrends?: boolean
-  /** Whether to show opportunity alerts */
   showOpportunityAlerts?: boolean
-  /** Callback when opportunity is selected */
   onOpportunitySelect?: (opportunity: MarketOpportunity) => void
-  /** Custom CSS classes */
   className?: string
 }
 
-/**
- * Market metrics interface
- */
 interface MarketMetrics {
   totalOpportunities: number
   totalValue: number
@@ -44,17 +107,13 @@ interface MarketMetrics {
   marketShare: number
 }
 
-/**
- * Market Monitor Component
- */
 export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
-  timePeriod = 'month',
+  timePeriod: initialTimePeriod = 'month',
   showDetailedTrends = true,
   showOpportunityAlerts = true,
   onOpportunitySelect,
   className = ''
 }) => {
-  // State management
   const [opportunities, setOpportunities] = useState<MarketOpportunity[]>([])
   const [trends, setTrends] = useState<MarketTrend[]>([])
   const [competitors, setCompetitors] = useState<CompetitorData[]>([])
@@ -63,8 +122,15 @@ export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
   const [selectedRegion, setSelectedRegion] = useState<string>('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [activeTab, setActiveTab] = useState<'overview' | 'opportunities' | 'trends' | 'alerts'>('overview')
+  const [periodFilter, setPeriodFilter] = useState<TimePeriod>(initialTimePeriod)
+  const periodSelectId = useId()
+  const regionSelectId = useId()
+  const categorySelectId = useId()
 
-  // Load market data
+  useEffect(() => {
+    setPeriodFilter(initialTimePeriod)
+  }, [initialTimePeriod])
+
   const loadMarketData = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -87,12 +153,10 @@ export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
     }
   }, [])
 
-  // Load data on component mount
   useEffect(() => {
     loadMarketData()
   }, [loadMarketData])
 
-  // Filter opportunities based on selected filters
   const filteredOpportunities = useMemo(() => {
     let filtered = opportunities
 
@@ -104,11 +168,10 @@ export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
       filtered = filtered.filter(opp => opp.category === selectedCategory)
     }
 
-    // Filter by time period
     const now = new Date()
     const periodStart = new Date()
-    
-    switch (timePeriod) {
+
+    switch (periodFilter) {
       case 'week':
         periodStart.setDate(now.getDate() - 7)
         break
@@ -123,34 +186,29 @@ export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
         break
     }
 
-    filtered = filtered.filter(opp => 
-      new Date(opp.discoveryDate) >= periodStart
-    )
+    return filtered.filter(opp => new Date(opp.discoveryDate) >= periodStart)
+  }, [opportunities, selectedRegion, selectedCategory, periodFilter])
 
-    return filtered
-  }, [opportunities, selectedRegion, selectedCategory, timePeriod])
-
-  // Calculate market metrics
   const marketMetrics = useMemo((): MarketMetrics => {
     const totalOpportunities = filteredOpportunities.length
     const totalValue = filteredOpportunities.reduce((sum, opp) => sum + opp.estimatedValue, 0)
     const averageValue = totalOpportunities > 0 ? totalValue / totalOpportunities : 0
-    
-    // Calculate win rate based on historical data
+
     const completedOpportunities = filteredOpportunities.filter(opp => opp.status === 'closed')
     const wonOpportunities = completedOpportunities.filter(opp => opp.outcome === 'won')
     const winRate = completedOpportunities.length > 0 ? wonOpportunities.length / completedOpportunities.length : 0
 
-    // Determine competition level
-    const avgCompetitors = filteredOpportunities.reduce((sum, opp) => sum + opp.competitorCount, 0) / totalOpportunities
-    const competitionLevel: 'low' | 'medium' | 'high' = 
-      avgCompetitors < 3 ? 'low' : avgCompetitors < 6 ? 'medium' : 'high'
+    const totalCompetitors = filteredOpportunities.reduce((sum, opp) => sum + opp.competitorCount, 0)
+    const avgCompetitors = totalOpportunities > 0 ? totalCompetitors / totalOpportunities : 0
+    let competitionLevel: 'low' | 'medium' | 'high' = 'low'
+    if (avgCompetitors >= 6) {
+      competitionLevel = 'high'
+    } else if (avgCompetitors >= 3) {
+      competitionLevel = 'medium'
+    }
 
-    // Calculate growth rate (simplified)
-    const growthRate = 0.15 // Placeholder - would be calculated from historical data
-
-    // Calculate market share (simplified)
-    const marketShare = 0.25 // Placeholder - would be calculated from actual data
+    const growthRate = 0.15
+    const marketShare = 0.25
 
     return {
       totalOpportunities,
@@ -163,47 +221,42 @@ export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
     }
   }, [filteredOpportunities])
 
-  // Get unique regions and categories for filters
-  const uniqueRegions = useMemo(() => 
-    [...new Set(opportunities.map(opp => opp.region))].filter(Boolean),
+  const uniqueRegions = useMemo(
+    () => [...new Set(opportunities.map(opp => opp.region))].filter(Boolean),
     [opportunities]
   )
 
-  const uniqueCategories = useMemo(() => 
-    [...new Set(opportunities.map(opp => opp.category))].filter(Boolean),
+  const uniqueCategories = useMemo(
+    () => [...new Set(opportunities.map(opp => opp.category))].filter(Boolean),
     [opportunities]
   )
 
-  // Get high-priority opportunities for alerts
-  const highPriorityOpportunities = useMemo(() => 
-    filteredOpportunities.filter(opp => 
-      opp.priority === 'high' && 
-      opp.status === 'active' &&
-      new Date(opp.deadline) > new Date()
-    ).slice(0, 5),
+  const highPriorityOpportunities = useMemo(
+    () =>
+      filteredOpportunities
+        .filter(opp => opp.priority === 'high' && opp.status === 'active' && new Date(opp.deadline) > new Date())
+        .slice(0, 5),
     [filteredOpportunities]
   )
 
-  // Handle opportunity selection
   const handleOpportunitySelect = useCallback((opportunity: MarketOpportunity) => {
     onOpportunitySelect?.(opportunity)
   }, [onOpportunitySelect])
 
-  // Render loading state
   if (loading && opportunities.length === 0) {
     return (
-      <div className={`bg-white rounded-lg shadow-sm border p-6 ${className}`}>
+      <div className={`${CARD_BASE_CLASS} p-6 shadow-sm ${className}`}>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+          <div className="mb-4 h-6 w-1/3 rounded bg-muted" />
+          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+            {[...Array(4)].map((_, index) => (
+              <div key={index} className="h-20 rounded bg-muted" />
             ))}
           </div>
           <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-            <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+            <div className="h-4 rounded bg-muted" />
+            <div className="h-4 w-5/6 rounded bg-muted" />
+            <div className="h-4 w-4/6 rounded bg-muted" />
           </div>
         </div>
       </div>
@@ -211,221 +264,224 @@ export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div className={`${CARD_BASE_CLASS} shadow-sm ${className}`}>
+      <div className="border-b border-border bg-card px-6 py-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">مراقب السوق</h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <h2 className="text-xl font-bold text-foreground">مراقب السوق</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               تحليل السوق في الوقت الفعلي ومراقبة الفرص والاتجاهات
             </p>
           </div>
-          
-          <div className="flex items-center space-x-4">
-            <select
-              value={timePeriod}
-              onChange={(e) => setTimePeriod(e.target.value as any)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="week">الأسبوع الماضي</option>
-              <option value="month">الشهر الماضي</option>
-              <option value="quarter">الربع الماضي</option>
-              <option value="year">السنة الماضية</option>
-            </select>
-            
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label htmlFor={periodSelectId} className="flex flex-col gap-1 text-sm font-medium text-muted-foreground">
+              <span>الفترة الزمنية</span>
+              <select
+                id={periodSelectId}
+                value={periodFilter}
+                onChange={(event) => setPeriodFilter(event.target.value as TimePeriod)}
+                className={SELECT_BASE_CLASS}
+              >
+                {PERIOD_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
             <button
+              type="button"
               onClick={loadMarketData}
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className={PRIMARY_BUTTON_CLASS}
             >
               {loading ? 'جاري التحديث...' : 'تحديث'}
             </button>
           </div>
         </div>
 
-        {/* Market Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-blue-600">{marketMetrics.totalOpportunities}</div>
-            <div className="text-sm text-blue-800">إجمالي الفرص</div>
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className={`${PRIMARY_CARD_CLASS} p-4`}>
+            <div className="text-2xl font-bold text-primary">{marketMetrics.totalOpportunities}</div>
+            <div className="text-sm text-primary">إجمالي الفرص</div>
           </div>
-          <div className="bg-green-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-green-600">
+          <div className={`${SUCCESS_CARD_CLASS} p-4`}>
+            <div className="text-2xl font-bold text-success">
               {formatCurrency(marketMetrics.totalValue)}
             </div>
-            <div className="text-sm text-green-800">القيمة الإجمالية</div>
+            <div className="text-sm text-success">القيمة الإجمالية</div>
           </div>
-          <div className="bg-purple-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-purple-600">
+          <div className={`${INFO_CARD_CLASS} p-4`}>
+            <div className="text-2xl font-bold text-info">
               {formatPercentage(marketMetrics.winRate)}
             </div>
-            <div className="text-sm text-purple-800">معدل الفوز</div>
+            <div className="text-sm text-info">معدل الفوز</div>
           </div>
-          <div className="bg-orange-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-orange-600">
+          <div className={`${WARNING_CARD_CLASS} p-4`}>
+            <div className="text-2xl font-bold text-warning">
               {formatPercentage(marketMetrics.growthRate)}
             </div>
-            <div className="text-sm text-orange-800">معدل النمو</div>
+            <div className="text-sm text-warning">معدل النمو</div>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          <select
-            value={selectedRegion}
-            onChange={(e) => setSelectedRegion(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">جميع المناطق</option>
-            {uniqueRegions.map(region => (
-              <option key={region} value={region}>{region}</option>
-            ))}
-          </select>
-          
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">جميع الفئات</option>
-            {uniqueCategories.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label htmlFor={regionSelectId} className="flex flex-col gap-1 text-sm font-medium text-muted-foreground">
+            <span>المنطقة</span>
+            <select
+              id={regionSelectId}
+              value={selectedRegion}
+              onChange={(event) => setSelectedRegion(event.target.value)}
+              className={SELECT_BASE_CLASS}
+            >
+              <option value="">جميع المناطق</option>
+              {uniqueRegions.map(region => (
+                <option key={region} value={region}>
+                  {region}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label htmlFor={categorySelectId} className="flex flex-col gap-1 text-sm font-medium text-muted-foreground">
+            <span>الفئة</span>
+            <select
+              id={categorySelectId}
+              value={selectedCategory}
+              onChange={(event) => setSelectedCategory(event.target.value)}
+              className={SELECT_BASE_CLASS}
+            >
+              <option value="">جميع الفئات</option>
+              {uniqueCategories.map(category => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
-        {/* Tabs */}
-        <div className="flex space-x-1 mt-6 bg-gray-100 p-1 rounded-lg">
+        <div className={`mt-6 ${TAB_CONTAINER_CLASS}`}>
           <button
+            type="button"
             onClick={() => setActiveTab('overview')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'overview'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className={`${TAB_BUTTON_BASE_CLASS} ${activeTab === 'overview' ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
           >
             نظرة عامة
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('opportunities')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'opportunities'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className={`${TAB_BUTTON_BASE_CLASS} ${activeTab === 'opportunities' ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
           >
             الفرص
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('trends')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'trends'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className={`${TAB_BUTTON_BASE_CLASS} ${activeTab === 'trends' ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
           >
             الاتجاهات
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('alerts')}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'alerts'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
+            className={`${TAB_BUTTON_BASE_CLASS} ${activeTab === 'alerts' ? TAB_ACTIVE_CLASS : TAB_INACTIVE_CLASS}`}
           >
             التنبيهات
           </button>
         </div>
       </div>
 
-      {/* Error Display */}
       {error && (
-        <div className="p-4 bg-red-50 border-l-4 border-red-400">
-          <div className="text-red-700">{error}</div>
+        <div className="border-l-4 border-destructive bg-destructive/10 px-6 py-4 text-sm text-destructive">
+          {error}
         </div>
       )}
 
-      {/* Content */}
       <div className="p-6">
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Market Summary */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">ملخص السوق</h3>
-                <div className="space-y-2 text-sm">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <div className={`${MUTED_CARD_CLASS} p-4`}>
+                <h3 className={`${SECTION_TITLE_CLASS} mb-3`}>ملخص السوق</h3>
+                <div className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex justify-between">
                     <span>متوسط قيمة الفرصة:</span>
-                    <span className="font-medium">{formatCurrency(marketMetrics.averageValue)}</span>
+                    <span className="font-medium text-foreground">{formatCurrency(marketMetrics.averageValue)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>مستوى المنافسة:</span>
-                    <span className={`font-medium ${
-                      marketMetrics.competitionLevel === 'high' ? 'text-red-600' :
-                      marketMetrics.competitionLevel === 'medium' ? 'text-yellow-600' :
-                      'text-green-600'
-                    }`}>
-                      {marketMetrics.competitionLevel === 'high' ? 'عالي' :
-                       marketMetrics.competitionLevel === 'medium' ? 'متوسط' : 'منخفض'}
+                    <span className={`font-medium ${COMPETITION_CLASSES[marketMetrics.competitionLevel]}`}>
+                      {COMPETITION_LABELS[marketMetrics.competitionLevel]}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>الحصة السوقية:</span>
-                    <span className="font-medium">{formatPercentage(marketMetrics.marketShare)}</span>
+                    <span className="font-medium text-foreground">{formatPercentage(marketMetrics.marketShare)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>عدد المنافسين المتابعين:</span>
+                    <span className="font-medium text-foreground">{competitors.length}</span>
                   </div>
                 </div>
               </div>
-              
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">أهم المناطق</h3>
-                <div className="space-y-2">
+
+              <div className={`${MUTED_CARD_CLASS} p-4`}>
+                <h3 className={`${SECTION_TITLE_CLASS} mb-3`}>أهم المناطق</h3>
+                <div className="space-y-2 text-sm text-muted-foreground">
                   {uniqueRegions.slice(0, 5).map(region => {
-                    const regionOpps = filteredOpportunities.filter(opp => opp.region === region)
-                    const regionValue = regionOpps.reduce((sum, opp) => sum + opp.estimatedValue, 0)
+                    const regionOpportunities = filteredOpportunities.filter(opp => opp.region === region)
+                    const regionValue = regionOpportunities.reduce((sum, opp) => sum + opp.estimatedValue, 0)
                     return (
-                      <div key={region} className="flex justify-between text-sm">
+                      <div key={region} className="flex justify-between">
                         <span>{region}</span>
-                        <span className="font-medium">{formatCurrency(regionValue)}</span>
+                        <span className="font-medium text-foreground">{formatCurrency(regionValue)}</span>
                       </div>
                     )
                   })}
+                  {uniqueRegions.length === 0 && (
+                    <div className="text-center text-xs text-muted-foreground">لا توجد بيانات مناطق متاحة</div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Recent Opportunities */}
             <div>
-              <h3 className="font-semibold text-gray-900 mb-3">أحدث الفرص</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredOpportunities.slice(0, 6).map(opportunity => (
-                  <div
-                    key={opportunity.id}
-                    onClick={() => handleOpportunitySelect(opportunity)}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-gray-900 text-sm">{opportunity.title}</h4>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        opportunity.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        opportunity.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {opportunity.priority === 'high' ? 'عالي' :
-                         opportunity.priority === 'medium' ? 'متوسط' : 'منخفض'}
-                      </span>
+              <h3 className={`${SECTION_TITLE_CLASS} mb-3`}>أحدث الفرص</h3>
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                {filteredOpportunities.slice(0, 6).map(opportunity => {
+                  const priorityBadge = PRIORITY_BADGE_VARIANTS[opportunity.priority]
+                  const priorityLabel = PRIORITY_LABELS[opportunity.priority]
+
+                  return (
+                    <div
+                      key={opportunity.id}
+                      onClick={() => handleOpportunitySelect(opportunity)}
+                      className={`${CARD_BASE_CLASS} cursor-pointer p-4 transition-shadow hover:shadow-md`}
+                    >
+                      <div className="mb-2 flex items-start justify-between">
+                        <h4 className="text-sm font-medium text-foreground">{opportunity.title}</h4>
+                        <span className={priorityBadge}>{priorityLabel}</span>
+                      </div>
+
+                      <div className="space-y-1 text-xs text-muted-foreground">
+                        <div>القيمة: {formatCurrency(opportunity.estimatedValue)}</div>
+                        <div>المنطقة: {opportunity.region}</div>
+                        <div>الفئة: {opportunity.category}</div>
+                        <div>المنافسون: {opportunity.competitorCount}</div>
+                        <div>الموعد النهائي: {new Date(opportunity.deadline).toLocaleDateString('ar-SA')}</div>
+                      </div>
                     </div>
-                    
-                    <div className="space-y-1 text-xs text-gray-600">
-                      <div>القيمة: {formatCurrency(opportunity.estimatedValue)}</div>
-                      <div>المنطقة: {opportunity.region}</div>
-                      <div>الفئة: {opportunity.category}</div>
-                      <div>المنافسين: {opportunity.competitorCount}</div>
-                      <div>الموعد النهائي: {new Date(opportunity.deadline).toLocaleDateString('ar-SA')}</div>
-                    </div>
+                  )
+                })}
+                {filteredOpportunities.length === 0 && (
+                  <div className={`${CARD_BASE_CLASS} p-6 text-center text-sm text-muted-foreground`}>
+                    لا توجد فرص خلال الفترة المحددة
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -433,66 +489,56 @@ export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
 
         {activeTab === 'opportunities' && (
           <div className="space-y-4">
-            <h3 className="font-semibold text-gray-900">جميع الفرص المتاحة</h3>
-            
+            <h3 className={SECTION_TITLE_CLASS}>جميع الفرص المتاحة</h3>
+
             <div className="space-y-3">
-              {filteredOpportunities.map(opportunity => (
-                <div
-                  key={opportunity.id}
-                  onClick={() => handleOpportunitySelect(opportunity)}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h4 className="font-medium text-gray-900">{opportunity.title}</h4>
-                      <p className="text-sm text-gray-600 mt-1">{opportunity.description}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-green-600">
-                        {formatCurrency(opportunity.estimatedValue)}
+              {filteredOpportunities.map(opportunity => {
+                const priorityBadge = PRIORITY_BADGE_VARIANTS[opportunity.priority]
+                const priorityLabel = PRIORITY_LABELS[opportunity.priority]
+                const statusKey = (opportunity.status === 'closed' ? 'closed' : opportunity.status === 'active' ? 'active' : 'review') as 'active' | 'closed' | 'review'
+                const statusBadge = STATUS_BADGE_VARIANTS[statusKey]
+
+                return (
+                  <div
+                    key={opportunity.id}
+                    onClick={() => handleOpportunitySelect(opportunity)}
+                    className={`${CARD_BASE_CLASS} cursor-pointer p-4 transition-shadow hover:shadow-md`}
+                  >
+                    <div className="mb-3 flex items-start justify-between">
+                      <div>
+                        <h4 className="text-base font-medium text-foreground">{opportunity.title}</h4>
+                        <p className="mt-1 text-sm text-muted-foreground">{opportunity.description}</p>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {new Date(opportunity.deadline).toLocaleDateString('ar-SA')}
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-success">
+                          {formatCurrency(opportunity.estimatedValue)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(opportunity.deadline).toLocaleDateString('ar-SA')}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                        <span>
+                          {opportunity.region} • {opportunity.category}
+                        </span>
+                        <span>{opportunity.competitorCount} منافس</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={statusBadge}>{STATUS_LABELS[statusKey]}</span>
+                        <span className={priorityBadge}>{priorityLabel}</span>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-600">
-                        {opportunity.region} • {opportunity.category}
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        {opportunity.competitorCount} منافس
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        opportunity.status === 'active' ? 'bg-green-100 text-green-800' :
-                        opportunity.status === 'closed' ? 'bg-gray-100 text-gray-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {opportunity.status === 'active' ? 'نشط' :
-                         opportunity.status === 'closed' ? 'مغلق' : 'قيد المراجعة'}
-                      </span>
-                      
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        opportunity.priority === 'high' ? 'bg-red-100 text-red-800' :
-                        opportunity.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {opportunity.priority === 'high' ? 'عالي' :
-                         opportunity.priority === 'medium' ? 'متوسط' : 'منخفض'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {filteredOpportunities.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="py-8 text-center text-muted-foreground">
                 لا توجد فرص مطابقة للمعايير المحددة
               </div>
             )}
@@ -501,66 +547,59 @@ export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
 
         {activeTab === 'trends' && showDetailedTrends && (
           <div className="space-y-6">
-            <h3 className="font-semibold text-gray-900">اتجاهات السوق</h3>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {trends.map(trend => (
-                <div key={trend.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">{trend.title}</h4>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      trend.direction === 'up' ? 'bg-green-100 text-green-800' :
-                      trend.direction === 'down' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {trend.direction === 'up' ? 'صاعد' :
-                       trend.direction === 'down' ? 'هابط' : 'مستقر'}
-                    </span>
+            <h3 className={SECTION_TITLE_CLASS}>اتجاهات السوق</h3>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {trends.map(trend => {
+                const directionBadge = TREND_DIRECTION_BADGES[trend.direction]
+                const directionLabel = TREND_DIRECTION_LABELS[trend.direction]
+                const strengthClass = TREND_STRENGTH_CLASSES[trend.strength]
+                const strengthLabel = TREND_STRENGTH_LABELS[trend.strength]
+
+                return (
+                  <div key={trend.id} className={`${CARD_BASE_CLASS} p-4`}>
+                    <div className="mb-3 flex items-start justify-between">
+                      <h4 className="text-base font-medium text-foreground">{trend.title}</h4>
+                      <span className={directionBadge}>{directionLabel}</span>
+                    </div>
+
+                    <p className="mb-3 text-sm text-muted-foreground">{trend.description}</p>
+
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <div className="flex justify-between">
+                        <span>الفترة:</span>
+                        <span className="font-medium text-foreground">{trend.period}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>القوة:</span>
+                        <span className={strengthClass}>{strengthLabel}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>الثقة:</span>
+                        <span className="font-medium text-foreground">{formatPercentage(trend.confidence)}</span>
+                      </div>
+                    </div>
+
+                    {trend.insights.length > 0 && (
+                      <div className="mt-3 border-t border-border pt-3">
+                        <h5 className="mb-2 text-sm font-medium text-foreground">الرؤى:</h5>
+                        <ul className="space-y-1 text-xs text-muted-foreground">
+                          {trend.insights.slice(0, 3).map((insight, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              {insight}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
-                  
-                  <p className="text-sm text-gray-600 mb-3">{trend.description}</p>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>الفترة:</span>
-                      <span className="font-medium">{trend.period}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>القوة:</span>
-                      <span className={`font-medium ${
-                        trend.strength === 'strong' ? 'text-green-600' :
-                        trend.strength === 'moderate' ? 'text-yellow-600' :
-                        'text-red-600'
-                      }`}>
-                        {trend.strength === 'strong' ? 'قوي' :
-                         trend.strength === 'moderate' ? 'متوسط' : 'ضعيف'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>الثقة:</span>
-                      <span className="font-medium">{formatPercentage(trend.confidence)}</span>
-                    </div>
-                  </div>
-                  
-                  {trend.insights.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <h5 className="text-sm font-medium text-gray-900 mb-2">الرؤى:</h5>
-                      <ul className="space-y-1">
-                        {trend.insights.slice(0, 3).map((insight, index) => (
-                          <li key={index} className="text-xs text-gray-600 flex items-start">
-                            <span className="text-blue-600 mr-2">•</span>
-                            {insight}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {trends.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="py-8 text-center text-muted-foreground">
                 لا توجد اتجاهات متاحة للفترة المحددة
               </div>
             )}
@@ -569,36 +608,45 @@ export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
 
         {activeTab === 'alerts' && showOpportunityAlerts && (
           <div className="space-y-6">
-            <h3 className="font-semibold text-gray-900">تنبيهات الفرص عالية الأولوية</h3>
-            
+            <h3 className={SECTION_TITLE_CLASS}>تنبيهات الفرص عالية الأولوية</h3>
+
             <div className="space-y-4">
-              {highPriorityOpportunities.map(opportunity => (
-                <div
-                  key={opportunity.id}
-                  className="border-l-4 border-red-400 bg-red-50 p-4 rounded-r-lg"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-medium text-red-900">{opportunity.title}</h4>
-                      <p className="text-sm text-red-700 mt-1">{opportunity.description}</p>
-                      <div className="mt-2 text-sm text-red-600">
-                        القيمة: {formatCurrency(opportunity.estimatedValue)} • 
-                        الموعد النهائي: {new Date(opportunity.deadline).toLocaleDateString('ar-SA')}
+              {highPriorityOpportunities.map(opportunity => {
+                const priorityBadge = PRIORITY_BADGE_VARIANTS[opportunity.priority]
+                const priorityLabel = PRIORITY_LABELS[opportunity.priority]
+
+                return (
+                  <div
+                    key={opportunity.id}
+                    className="rounded-lg border border-destructive/40 bg-destructive/10 p-4"
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="text-base font-medium text-destructive">{opportunity.title}</h4>
+                          <span className={priorityBadge}>{priorityLabel}</span>
+                        </div>
+                        <p className="text-sm text-destructive/80">{opportunity.description}</p>
+                        <div className="text-sm text-destructive/70">
+                          القيمة: {formatCurrency(opportunity.estimatedValue)} • الموعد النهائي: {new Date(opportunity.deadline).toLocaleDateString('ar-SA')}
+                        </div>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpportunitySelect(opportunity)}
+                        className={DESTRUCTIVE_BUTTON_CLASS}
+                      >
+                        عرض التفاصيل
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleOpportunitySelect(opportunity)}
-                      className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-                    >
-                      عرض التفاصيل
-                    </button>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {highPriorityOpportunities.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="py-8 text-center text-muted-foreground">
                 لا توجد تنبيهات عالية الأولوية حالياً
               </div>
             )}

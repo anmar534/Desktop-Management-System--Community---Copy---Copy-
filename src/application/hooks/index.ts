@@ -18,6 +18,8 @@ export { useDashboardMetrics } from './useDashboardMetrics'
 export { useFinancialMetrics } from './useFinancialMetrics'
 export { useCurrencyRates } from './useCurrencyRates'
 export { useCurrencyFormatter } from './useCurrencyFormatter'
+export { useEnhancedKPIs } from './useEnhancedKPIs'
+export { useDashboardAlerts } from './useDashboardAlerts'
 
 // Hook لإدارة LocalStorage مع React state
 export const useLocalStorage = <T>(

@@ -1,5 +1,3 @@
-'use client'
-
 import { Card, CardContent } from './ui/card'
 import { Progress } from './ui/progress'
 import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
