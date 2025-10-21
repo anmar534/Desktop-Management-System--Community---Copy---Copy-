@@ -8,6 +8,9 @@ import type { EnrichedPricingItem, ItemBreakdown } from '@/application/services/
 import type { DefaultPercentages } from '@/application/services/pricingService'
 import type { PricingData } from '@/shared/types/pricing'
 
+// Re-export types and functions for backward compatibility
+export type { EnrichedPricingItem, ItemBreakdown } from '@/application/services/pricingEngine'
+
 interface ImportMetaEnvLike {
   env?: Record<string, unknown>
 }

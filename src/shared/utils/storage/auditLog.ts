@@ -1,5 +1,5 @@
-import { STORAGE_KEYS } from '@/shared/config/storageKeys';
-import { secureStore } from './secureStore';
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys';
+import { secureStore } from './security/secureStore';
 import { cloneValue, decodeStoredValue, encodeValueForStorage } from './storage/storageSchema';
 
 const AUDIT_LOG_KEY = STORAGE_KEYS.SECURITY_AUDIT_LOG;
