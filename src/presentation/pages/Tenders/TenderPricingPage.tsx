@@ -5,7 +5,7 @@ import {
   restoreTenderBackup,
   noteBackupFailure,
   type TenderPricingBackupPayload,
-} from '@/utils/backupManager'
+} from '@/shared/utils/storage/backupManager'
 import { pricingService } from '@/application/services/pricingService'
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type {
@@ -31,7 +31,7 @@ import { useEditableTenderPricing } from '@/application/hooks/useEditableTenderP
 // Phase 2 authoring engine adoption helpers (flag-guarded)
 import { PRICING_FLAGS, isPricingEntry } from '@/shared/utils/pricing/pricingHelpers'
 import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
-import { applyDefaultsToPricingMap } from '@/utils/defaultPercentagesPropagation'
+import { applyDefaultsToPricingMap } from '@/shared/utils/defaultPercentagesPropagation'
 import { formatDateValue } from '@/shared/utils/formatters/formatters'
 import { Button } from '@/presentation/components/ui/button'
 import { EmptyState } from '@/presentation/components/layout/PageLayout'

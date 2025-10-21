@@ -11,7 +11,7 @@ import {
   AlertDialogTrigger,
 } from './alert-dialog'
 import { Trash2, Save, Edit3, Check, AlertTriangle } from 'lucide-react'
-import { cn } from '@/utils/cn'
+import { cn } from '@/shared/utils/cn'
 
 interface ConfirmationDialogProps {
   title: string

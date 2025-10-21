@@ -15,7 +15,7 @@ import type { CompetitorData } from '@/shared/types/competitive'
 import type { BidPerformance } from '@/shared/types/analytics'
 import { competitiveService } from '@/application/services/competitiveService'
 import { analyticsService } from '@/application/services/analyticsService'
-import { formatCurrency, formatPercentage } from '@/utils/analyticsUtils'
+import { formatCurrency, formatPercentage } from '@/shared/utils/analytics/analyticsUtils'
 
 /**
  * Competitive Benchmark Component Props

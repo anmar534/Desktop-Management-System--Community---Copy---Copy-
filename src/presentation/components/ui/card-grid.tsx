@@ -9,7 +9,7 @@
  */
 
 import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
-import { cn } from '@/utils/cn';
+import { cn } from '@/shared/utils/cn';
 
 export type GridVariant = 'auto' | 'dashboard' | 'financial' | 'projects' | 'custom';
 

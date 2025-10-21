@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useId } from 'react'
 import type { MarketOpportunity, MarketTrend, CompetitorData } from '@/shared/types/competitive'
 import { competitiveService } from '@/application/services/competitiveService'
-import { formatCurrency, formatPercentage } from '@/utils/analyticsUtils'
+import { formatCurrency, formatPercentage } from '@/shared/utils/analytics/analyticsUtils'
 
 const CARD_BASE_CLASS = 'rounded-lg border border-border bg-card'
 const MUTED_CARD_CLASS = 'rounded-lg border border-border bg-muted/40'

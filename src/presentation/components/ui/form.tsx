@@ -4,7 +4,7 @@
  */
 
 import React from 'react'
-import { cn } from '@/utils/cn'
+import { cn } from '@/shared/utils/cn'
 
 // Form Context
 const FormContext = React.createContext<any>({})

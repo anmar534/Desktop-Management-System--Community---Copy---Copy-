@@ -23,7 +23,7 @@ import {
 
 import { APP_EVENTS } from '@/events/bus'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
-import { getDaysRemaining, isTenderExpired } from '@/utils/tenderProgressCalculator'
+import { getDaysRemaining, isTenderExpired } from '@/shared/utils/tender/tenderProgressCalculator'
 import type { Tender } from '@/data/centralData'
 
 import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'

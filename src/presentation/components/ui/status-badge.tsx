@@ -10,7 +10,7 @@
 
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/utils/cn';
+import { cn } from '@/shared/utils/cn';
 import { Badge } from './badge';
 import type { LucideIcon } from 'lucide-react';
 import {

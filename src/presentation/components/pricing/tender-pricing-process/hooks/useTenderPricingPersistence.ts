@@ -18,7 +18,7 @@ import { PRICING_FLAGS, type PricingItemInput, type PricingResource, enrichPrici
 import { safeLocalStorage } from '@/shared/utils/storage/storage';
 import type { CurrencyOptions } from '@/shared/utils/formatters/formatters';
 import { toast } from 'sonner';
-import { debounce } from '@/utils/helpers';
+import { debounce } from '@/shared/utils/helpers';
 import { recordAuditEvent, type AuditEventLevel, type AuditEventStatus } from '@/shared/utils/storage/auditLog';
 import type {
   QuantityItem,

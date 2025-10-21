@@ -46,8 +46,8 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Checkbox } from '../ui/checkbox';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { cn } from '@/utils/cn';
-import { exportToCsv, exportToJson, exportToXlsx } from '@/utils/exporters';
+import { cn } from '@/shared/utils/cn';
+import { exportToCsv, exportToJson, exportToXlsx } from '@/shared/utils/exporters';
 
 const DEFAULT_CONTAINER_HEIGHT = 520;
 

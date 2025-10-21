@@ -11,7 +11,7 @@
 import * as React from 'react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/utils/cn';
+import { cn } from '@/shared/utils/cn';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 
