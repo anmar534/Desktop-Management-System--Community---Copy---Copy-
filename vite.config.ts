@@ -22,6 +22,13 @@ export default defineConfig({
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
     alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@/shared': path.resolve(__dirname, './src/shared'),
+      '@/application': path.resolve(__dirname, './src/application'),
+      '@/domain': path.resolve(__dirname, './src/domain'),
+      '@/presentation': path.resolve(__dirname, './src/presentation'),
+      '@/infrastructure': path.resolve(__dirname, './src/infrastructure'),
+      '@/repository': path.resolve(__dirname, './src/repository'),
       'vaul@1.1.2': 'vaul',
       'sonner@2.0.3': 'sonner',
       'recharts@2.15.2': 'recharts',
@@ -53,9 +60,6 @@ export default defineConfig({
       '@radix-ui/react-checkbox@1.1.4': '@radix-ui/react-checkbox',
       '@radix-ui/react-alert-dialog@1.1.6': '@radix-ui/react-alert-dialog',
       '@radix-ui/react-accordion@1.2.3': '@radix-ui/react-accordion',
-      // Utilities alias (points to src/utils which re-exports from src/shared/utils)
-      '@/utils': path.resolve(__dirname, './src/utils'),
-      '@/': path.resolve(__dirname, './src'),
     },
   },
   css: {
