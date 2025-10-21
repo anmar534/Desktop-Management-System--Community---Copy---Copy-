@@ -15,8 +15,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import type { BidPerformance, CompetitorData, AnalyticsFilter } from '@/shared/types/analytics'
 import type { MarketOpportunity, MarketTrend } from '@/shared/types/competitive'
-import { predictWinProbability, predictMarketTrend, type WinProbabilityPrediction, type MarketTrendPrediction } from '../../utils/predictionModels'
-import { optimizeBidAmount, analyzePriceSensitivity, type BidOptimization, type PriceSensitivityAnalysis, type OptimizationParameters } from '../../utils/priceOptimization'
+import { predictWinProbability, predictMarketTrend, type WinProbabilityPrediction, type MarketTrendPrediction } from '@/shared/utils/ml/predictionModels'
+import { optimizeBidAmount, analyzePriceSensitivity, type BidOptimization, type PriceSensitivityAnalysis, type OptimizationParameters } from '@/shared/utils/pricing/priceOptimization'
 import { analyticsService } from '@/application/services/analyticsService'
 import { competitiveService } from '@/application/services/competitiveService'
 
@@ -867,5 +867,7 @@ export const PredictiveAnalytics: React.FC<PredictiveAnalyticsProps> = React.mem
 PredictiveAnalytics.displayName = 'PredictiveAnalytics'
 
 export default PredictiveAnalytics
+
+
 
 

@@ -33,7 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/compone
 import { Button } from '@/presentation/components/ui/button'
 import { Input } from '@/presentation/components/ui/input'
 import { Badge } from '@/presentation/components/ui/badge'
-import { analyticsService } from '@/services/analyticsService'
+import { analyticsService } from '@/application/services/analyticsService'
 import type { BidPerformance } from '@/types/analytics'
 import {
   Select,
@@ -661,4 +661,5 @@ export function PricingTemplateManager({
     </div>
   )
 }
+
 

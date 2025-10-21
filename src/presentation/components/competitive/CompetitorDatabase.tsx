@@ -71,7 +71,7 @@ import type {
   MarketSegment,
   CompetitorSearchFilters,
   CompetitiveAnalysisResult
-} from '../../types/competitive'
+} from '@/shared/types/competitive'
 
 // ===== COMPONENT INTERFACES =====
 
@@ -861,4 +861,5 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     </div>
   )
 }
+
 

@@ -11,10 +11,10 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import type { CompetitorData, MarketOpportunity } from '../../types/competitive'
-import type { BidPerformance } from '../../types/analytics'
-import { competitiveService } from '../../services/competitiveService'
-import { analyticsService } from '../../services/analyticsService'
+import type { CompetitorData, MarketOpportunity } from '@/shared/types/competitive'
+import type { BidPerformance } from '@/shared/types/analytics'
+import { competitiveService } from '@/application/services/competitiveService'
+import { analyticsService } from '@/application/services/analyticsService'
 
 /**
  * SWOT Analysis Component Props
@@ -745,4 +745,5 @@ export const SWOTAnalysis: React.FC<SWOTAnalysisProps> = React.memo(({
 SWOTAnalysis.displayName = 'SWOTAnalysis'
 
 export default SWOTAnalysis
+
 

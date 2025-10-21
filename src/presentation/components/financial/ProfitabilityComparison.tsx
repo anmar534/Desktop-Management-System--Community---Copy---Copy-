@@ -381,3 +381,4 @@ export const ProfitabilityComparisonComponent: React.FC<ProfitabilityComparisonP
   )
 }
 
+

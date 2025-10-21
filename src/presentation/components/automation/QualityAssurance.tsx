@@ -24,7 +24,7 @@ import {
   Clock,
   Target
 } from 'lucide-react'
-import { qualityAssuranceService } from '../../services/qualityAssuranceService'
+import { qualityAssuranceService } from '@/application/services/qualityAssuranceService'
 import type { 
   QualityMetrics, 
   PricingValidationResult, 
@@ -37,7 +37,7 @@ import type {
   DocumentData,
   QualityCheckData,
   DocumentSet
-} from '../../types/qualityAssurance'
+} from '@/shared/types/qualityAssurance'
 
 interface QualityAssuranceProps {
   className?: string
@@ -467,4 +467,5 @@ const QualityAssurance: React.FC<QualityAssuranceProps> = React.memo(({ classNam
 QualityAssurance.displayName = 'QualityAssurance'
 
 export default QualityAssurance
+
 

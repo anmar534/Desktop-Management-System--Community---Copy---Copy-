@@ -533,3 +533,4 @@ export const ProfitabilityAnalysis: React.FC<ProfitabilityAnalysisProps> = ({ cl
   )
 }
 
+

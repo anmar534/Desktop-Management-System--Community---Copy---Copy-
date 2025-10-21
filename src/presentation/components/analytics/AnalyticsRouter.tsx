@@ -54,7 +54,7 @@ import { CompetitiveBenchmark } from '../competitive/CompetitiveBenchmark'
 
 // Import context and utilities
 import { AnalyticsProvider, useAnalytics } from './AnalyticsContext'
-import { exportAnalyticsData, type ExportFormat } from '../../utils/analyticsExport'
+import { exportAnalyticsData, type ExportFormat } from '@/shared/utils/analytics/analyticsExport'
 
 // Analytics section definitions
 export type AnalyticsSection =
@@ -410,5 +410,6 @@ export function AnalyticsRouter(props: AnalyticsRouterProps) {
     </AnalyticsProvider>
   )
 }
+
 
 

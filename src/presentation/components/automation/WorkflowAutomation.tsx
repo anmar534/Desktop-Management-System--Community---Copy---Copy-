@@ -34,7 +34,7 @@ import {
   Activity
 } from 'lucide-react'
 
-import workflowAutomationService from '../../services/workflowAutomationService'
+import workflowAutomationService from '@/application/services/workflowAutomationService'
 import type {
   TenderAlert,
   WorkflowTask,
@@ -51,7 +51,7 @@ import type {
   TaskType,
   NotificationChannel,
   NotificationType
-} from '../../types/workflowAutomation'
+} from '@/shared/types/workflowAutomation'
 
 interface WorkflowAutomationProps {
   className?: string
@@ -1207,4 +1207,5 @@ const WorkflowAutomation: React.FC<WorkflowAutomationProps> = React.memo(({
 WorkflowAutomation.displayName = 'WorkflowAutomation'
 
 export default WorkflowAutomation
+
 

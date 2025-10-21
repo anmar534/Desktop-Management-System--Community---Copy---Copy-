@@ -46,11 +46,11 @@ import {
 } from '../ui/tooltip'
 
 // Import predictive analytics services
-import { predictWinProbability } from '../../utils/predictionModels'
-import { optimizeBidAmount } from '../../utils/priceOptimization'
-import { analyticsService } from '../../services/analyticsService'
-import { competitiveService } from '../../services/competitiveService'
-import type { Tender } from '../../data/centralData'
+import { predictWinProbability } from '@/shared/utils/ml/predictionModels'
+import { optimizeBidAmount } from '@/shared/utils/pricing/priceOptimization'
+import { analyticsService } from '@/application/services/analyticsService'
+import { competitiveService } from '@/application/services/competitiveService'
+import type { Tender } from '@/data/centralData'
 
 // Risk factor types
 interface RiskFactor {
@@ -842,4 +842,6 @@ export function RiskAssessmentMatrix({
     </div>
   )
 }
+
+
 

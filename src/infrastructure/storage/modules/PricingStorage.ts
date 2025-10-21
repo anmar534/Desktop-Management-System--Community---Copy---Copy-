@@ -7,7 +7,7 @@
 
 import { StorageManager } from '../core/StorageManager'
 import type { IStorageModule } from '../core/types'
-import { STORAGE_KEYS } from '../../config/storageKeys'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 
 /**
  * Default percentages for pricing calculations
@@ -270,3 +270,4 @@ export class PricingStorage implements IStorageModule {
 
 // Export singleton instance
 export const pricingStorage = new PricingStorage()
+

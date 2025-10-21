@@ -7,8 +7,8 @@
 
 import { StorageManager } from '../core/StorageManager'
 import type { IStorageModule } from '../core/types'
-import { STORAGE_KEYS } from '../../config/storageKeys'
-import type { Project } from '../../data/centralData'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
+import type { Project } from '@/data/centralData'
 
 /**
  * Projects storage module
@@ -260,3 +260,4 @@ export class ProjectsStorage implements IStorageModule {
 
 // Export singleton instance
 export const projectsStorage = new ProjectsStorage()
+

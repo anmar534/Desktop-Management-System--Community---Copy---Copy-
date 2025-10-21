@@ -12,7 +12,7 @@ import { useEffect, useRef } from 'react';
 import * as echarts from 'echarts/core';
 import type { EChartsOption } from 'echarts';
 import type { EChartsType } from 'echarts/core';
-import { useTheme } from '../../application/providers/ThemeProvider';
+import { useTheme } from '@/application/providers/ThemeProvider';
 import { getDesignTokenColor } from '@/utils/designTokens';
 
 // استيراد المكونات المطلوبة فقط (tree-shaking)
@@ -165,4 +165,6 @@ export const EChart: React.FC<EChartProps> = ({
 };
 
 export default EChart;
+
+
 

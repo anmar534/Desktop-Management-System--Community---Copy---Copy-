@@ -400,3 +400,4 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   )
 }
 
+

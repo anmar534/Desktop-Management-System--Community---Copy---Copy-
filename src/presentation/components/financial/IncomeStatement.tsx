@@ -416,3 +416,4 @@ export const IncomeStatement: React.FC<IncomeStatementProps> = ({
 
 export default IncomeStatement
 
+

@@ -13,7 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend
 } from 'recharts'
-import { qualityAssuranceService } from '../../services/qualityAssuranceService'
+import { qualityAssuranceService } from '@/application/services/qualityAssuranceService'
 import type { QualityDashboard, QualityMetrics, QualityAlert } from '../../types/quality'
 
 interface QualityControlDashboardProps {
@@ -408,4 +408,5 @@ export function QualityControlDashboard({ projectId, className }: QualityControl
     </div>
   )
 }
+
 

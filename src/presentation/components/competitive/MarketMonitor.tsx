@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useId } from 'react'
-import type { MarketOpportunity, MarketTrend, CompetitorData } from '../../types/competitive'
-import { competitiveService } from '../../services/competitiveService'
+import type { MarketOpportunity, MarketTrend, CompetitorData } from '@/shared/types/competitive'
+import { competitiveService } from '@/application/services/competitiveService'
 import { formatCurrency, formatPercentage } from '../../utils/analyticsUtils'
 
 const CARD_BASE_CLASS = 'rounded-lg border border-border bg-card'
@@ -660,4 +660,5 @@ export const MarketMonitor: React.FC<MarketMonitorProps> = React.memo(({
 MarketMonitor.displayName = 'MarketMonitor'
 
 export default MarketMonitor
+
 

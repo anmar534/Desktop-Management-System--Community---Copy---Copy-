@@ -11,10 +11,10 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import type { CompetitorData } from '../../types/competitive'
-import type { BidPerformance } from '../../types/analytics'
-import { competitiveService } from '../../services/competitiveService'
-import { analyticsService } from '../../services/analyticsService'
+import type { CompetitorData } from '@/shared/types/competitive'
+import type { BidPerformance } from '@/shared/types/analytics'
+import { competitiveService } from '@/application/services/competitiveService'
+import { analyticsService } from '@/application/services/analyticsService'
 import { formatCurrency, formatPercentage } from '../../utils/analyticsUtils'
 
 /**
@@ -592,4 +592,5 @@ export const CompetitiveBenchmark: React.FC<CompetitiveBenchmarkProps> = React.m
 CompetitiveBenchmark.displayName = 'CompetitiveBenchmark'
 
 export default CompetitiveBenchmark
+
 

@@ -57,7 +57,7 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { purchaseOrderService } from '../../application/services/purchaseOrderService'
 import type { PurchaseOrder, PurchaseOrderItem } from '../../types/contracts'
-import type { Project } from '../../data/centralData'
+import type { Project } from '@/data/centralData'
 import { formatCurrency } from '../../utils/formatters'
 import { useProjects } from '../../application/hooks'
 
@@ -637,4 +637,5 @@ const PurchaseOrderManagement: React.FC = () => {
 }
 
 export default PurchaseOrderManagement
+
 

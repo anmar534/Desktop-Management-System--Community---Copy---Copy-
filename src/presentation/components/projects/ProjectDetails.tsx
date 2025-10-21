@@ -590,3 +590,4 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
 
 export default ProjectDetails
 
+

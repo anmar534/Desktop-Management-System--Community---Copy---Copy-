@@ -16,11 +16,11 @@ import type {
   MultiPeriodComparison,
   ComparisonPeriod,
   ComparisonMetric
-} from '../../utils/historicalComparison'
+} from '@/shared/utils/analytics/historicalComparison'
 import {
   historicalComparisonService,
   generateAnnualReport
-} from '../../utils/historicalComparison'
+} from '@/shared/utils/analytics/historicalComparison'
 import { formatPercentage, formatCurrency } from '@/shared/utils/analytics/analyticsUtils'
 
 const CARD_BASE_CLASS = 'rounded-lg border border-border bg-card'
@@ -558,5 +558,6 @@ export const HistoricalComparison: React.FC<HistoricalComparisonProps> = React.m
 HistoricalComparison.displayName = 'HistoricalComparison'
 
 export default HistoricalComparison
+
 
 

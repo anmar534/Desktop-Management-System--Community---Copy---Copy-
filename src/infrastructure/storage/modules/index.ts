@@ -10,7 +10,7 @@ export { PricingStorage, pricingStorage } from './PricingStorage'
 export { BackupStorage, backupStorage } from './BackupStorage'
 export { ClientsStorage, clientsStorage } from './ClientsStorage'
 export { BOQStorage, boqStorage } from './BOQStorage'
-export type { Project } from '../../data/centralData'
+export type { Project } from '@/data/centralData'
 export type { DefaultPercentages, TenderPricingPayload } from './PricingStorage'
 export type {
   TenderPricingBackupPayload,
@@ -23,3 +23,4 @@ export type {
   RetentionRule,
   BackupDataset,
 } from './BackupStorage'
+

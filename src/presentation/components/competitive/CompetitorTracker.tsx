@@ -11,8 +11,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import type { CompetitorData } from '../../types/competitive'
-import { competitiveService } from '../../services/competitiveService'
+import type { CompetitorData } from '@/shared/types/competitive'
+import { competitiveService } from '@/application/services/competitiveService'
 import { formatCurrency, formatPercentage } from '../../utils/analyticsUtils'
 import { Badge } from '../ui/badge'
 
@@ -826,4 +826,5 @@ export const CompetitorTracker: React.FC<CompetitorTrackerProps> = React.memo(({
 CompetitorTracker.displayName = 'CompetitorTracker'
 
 export default CompetitorTracker
+
 

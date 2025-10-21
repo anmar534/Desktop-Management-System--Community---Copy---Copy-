@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { pricingStorageAdapter, type PricingSnapshotItem, type PricingSnapshotTotals } from '@/services/pricingStorageAdapter'
+import { pricingStorageAdapter, type PricingSnapshotItem, type PricingSnapshotTotals } from '@/application/services/pricingStorageAdapter'
 import type { Tender } from '@/data/centralData'
 
 /**

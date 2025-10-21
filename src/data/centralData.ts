@@ -12,13 +12,13 @@
  * جميع البيانات محفوظة محلياً باستخدام electron-store في التطبيق
  */
 
-import { safeLocalStorage } from '../utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import { BASE_CURRENCY } from '@/config/currency'
 import {
   formatCurrency as formatUnifiedCurrency,
   type CurrencyOptions,
   formatDateValue,
-} from '../utils/formatters'
+} from '@/shared/utils/formatters/formatters'
 
 // تعريف أنواع البيانات
 export interface Project {
@@ -392,7 +392,7 @@ export const calculateDaysLeft = (deadline: string): number => {
 
 // تمت إزالة المنطق المحلي للّون الصحي لصالح المصدر الموحد statusColors
 // @deprecated استبدل كل الاستدعاءات بـ getHealthColor من utils/statusColors مباشرة
-export { getHealthColor } from '../utils/statusColors'
+export { getHealthColor } from '@/shared/utils/ui/statusColors'
 
 // دالة للحصول على العناصر العاجلة (محدودة للبيانات المتوفرة فقط)
 export const getUrgentItems = (): UrgentItem[] => {
@@ -621,3 +621,4 @@ export const allData = {
   // equipment: equipmentData,
   // purchases: purchasesData,
 }
+

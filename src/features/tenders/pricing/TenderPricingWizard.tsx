@@ -49,8 +49,8 @@ import {
 } from 'lucide-react'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { formatDateValue } from '@/utils/formatters'
-import { RiskAssessmentMatrix } from '../../../components/bidding/RiskAssessmentMatrix'
-import type { RiskAssessment } from '../../../types/templates'
+import { RiskAssessmentMatrix } from '@/presentation/components/bidding/RiskAssessmentMatrix'
+import type { RiskAssessment } from '@/shared/types/templates'
 
 type WizardStepId = 'registration' | 'technical' | 'financial' | 'review' | 'submit'
 
@@ -1617,5 +1617,6 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
 }
 
 export default TenderPricingWizard
+
 
 
