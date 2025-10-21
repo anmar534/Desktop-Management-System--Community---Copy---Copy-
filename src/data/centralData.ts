@@ -13,7 +13,7 @@
  */
 
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
-import { BASE_CURRENCY } from '@/config/currency'
+import { BASE_CURRENCY } from '@/shared/config/currency'
 import {
   formatCurrency as formatUnifiedCurrency,
   type CurrencyOptions,

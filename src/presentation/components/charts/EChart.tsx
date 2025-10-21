@@ -13,7 +13,7 @@ import * as echarts from 'echarts/core';
 import type { EChartsOption } from 'echarts';
 import type { EChartsType } from 'echarts/core';
 import { useTheme } from '@/application/providers/ThemeProvider';
-import { getDesignTokenColor } from '@/utils/designTokens';
+import { getDesignTokenColor } from '@/shared/utils/ui/designTokens';
 
 // استيراد المكونات المطلوبة فقط (tree-shaking)
 import {

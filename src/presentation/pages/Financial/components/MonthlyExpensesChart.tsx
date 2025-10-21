@@ -1,6 +1,6 @@
 import { Card, CardContent } from './ui/card'
 import { Button } from './ui/button'
-import { getDesignTokenExpression } from '@/utils/designTokens'
+import { getDesignTokenExpression } from '@/shared/utils/ui/designTokens'
 import {
   DollarSign,
   BarChart3,

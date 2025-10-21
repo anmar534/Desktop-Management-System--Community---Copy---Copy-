@@ -1,4 +1,4 @@
-import { asyncStorage } from '@/utils/storage'
+import { asyncStorage } from '@/shared/utils/storage/storage'
 import type { Project, Tender } from '@/data/centralData'
 
 // أنواع البيانات للتحليلات التنبؤية

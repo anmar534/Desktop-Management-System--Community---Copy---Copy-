@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PricingEngine } from '@/domain/services/pricingEngine';
-import { PRICING_FLAGS } from '@/utils/pricingHelpers';
+import { PRICING_FLAGS } from '@/shared/utils/pricing/pricingHelpers';
 import { pricingRuntime } from '@/domain/monitoring/pricingRuntimeMonitor';
 import type { BoQBaseItem } from '@/domain/model';
 

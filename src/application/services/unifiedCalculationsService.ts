@@ -12,10 +12,10 @@
 
 import type { Tender, Project } from '@/data/centralData'
 import { getProjectRepository, getTenderRepository } from '@/application/services/serviceRegistry'
-import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS } from '@/events/bus'
-import { formatDateValue, formatPercentage as formatPercentageLocalized } from '@/utils/formatters'
+import { formatDateValue, formatPercentage as formatPercentageLocalized } from '@/shared/utils/formatters/formatters'
 
 // Types for calculation results
 export interface TenderAnalytics {

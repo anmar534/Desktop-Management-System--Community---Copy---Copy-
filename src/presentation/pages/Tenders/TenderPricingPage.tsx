@@ -78,7 +78,7 @@ import { PricingTemplateManager } from './bidding/PricingTemplateManager'
 import { useTenderPricingPersistence } from './pricing/tender-pricing-process/hooks/useTenderPricingPersistence'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { TenderPricingTabs } from './pricing/tender-pricing-process/views/TenderPricingTabs'
-import { recordAuditEvent, type AuditEventLevel, type AuditEventStatus } from '@/utils/auditLog'
+import { recordAuditEvent, type AuditEventLevel, type AuditEventStatus } from '@/shared/utils/storage/auditLog'
 
 export type { TenderWithPricingSources } from './pricing/tender-pricing-process/types'
 

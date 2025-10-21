@@ -4,9 +4,9 @@
  * واستخدامه في كل من TenderPricingProcess و TenderDetails لضمان مصدر واحد للحقيقة.
  */
 import type { DefaultPercentages } from './pricingService'
-import { buildPricingMap } from '@/utils/normalizePricing'
-import type { NormalizedPricingItem } from '@/utils/normalizePricing'
-import type { PricingItemInput, PricingResource, RawPricingInput } from '@/utils/pricingHelpers'
+import { buildPricingMap } from '@/shared/utils/pricing/normalizePricing'
+import type { NormalizedPricingItem } from '@/shared/utils/pricing/normalizePricing'
+import type { PricingItemInput, PricingResource, RawPricingInput } from '@/shared/utils/pricing/pricingHelpers'
 import { getPricingConfig } from '@/shared/constants/pricingConstants'
 
 export interface ItemBreakdown {

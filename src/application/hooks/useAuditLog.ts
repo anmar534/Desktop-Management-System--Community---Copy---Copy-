@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { AuditEvent } from '@/utils/auditLog';
-import { subscribeToAuditLog } from '@/utils/auditLog';
+import type { AuditEvent } from '@/shared/utils/storage/auditLog';
+import { subscribeToAuditLog } from '@/shared/utils/storage/auditLog';
 
 export interface UseAuditLogOptions {
   limit?: number;

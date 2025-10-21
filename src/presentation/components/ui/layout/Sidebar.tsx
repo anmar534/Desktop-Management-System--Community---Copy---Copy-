@@ -6,7 +6,7 @@ import { Badge } from '../badge'
 import { useFinancialState, useNavigation } from '@/application/context'
 import type { Tender } from '@/data/centralData'
 import type { AppSection } from '@/application/navigation/navigationSchema'
-import { formatInteger } from '@/utils/formatters'
+import { formatInteger } from '@/shared/utils/formatters/formatters'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 

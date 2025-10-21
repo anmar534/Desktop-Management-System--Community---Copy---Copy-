@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { safeLocalStorage } from '@/utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 
 export interface DevelopmentGoal {
   id: string

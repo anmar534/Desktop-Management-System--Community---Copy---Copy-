@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, ReactNode } from 'react'
 import type { Tender } from '@/data/centralData'
 import { useFinancialState, useNavigation } from '@/application/context'
-import { STORAGE_KEYS } from '@/config/storageKeys'
-import { loadFromStorage, saveToStorage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
+import { loadFromStorage, saveToStorage } from '@/shared/utils/storage/storage'
 import { toast } from 'sonner'
 import { Button } from '@/presentation/components/ui/button'
 import {
@@ -48,7 +48,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
-import { formatDateValue } from '@/utils/formatters'
+import { formatDateValue } from '@/shared/utils/formatters/formatters'
 import { RiskAssessmentMatrix } from '@/presentation/components/bidding/RiskAssessmentMatrix'
 import type { RiskAssessment } from '@/shared/types/templates'
 

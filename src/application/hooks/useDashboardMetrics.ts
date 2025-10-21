@@ -6,7 +6,7 @@ import {
   selectDashboardMetrics,
   type DashboardMetricsResult
 } from '@/domain/selectors/financialMetrics'
-import { BASE_CURRENCY, DEFAULT_CURRENCY_RATES } from '@/config/currency'
+import { BASE_CURRENCY, DEFAULT_CURRENCY_RATES } from '@/shared/config/currency'
 
 interface UseDashboardMetricsResult {
   data: DashboardMetricsResult

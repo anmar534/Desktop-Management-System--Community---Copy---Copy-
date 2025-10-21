@@ -1,13 +1,13 @@
-ï»¿/**
+/**
  * Enhanced Project Auto-Creation Service
  */
 
 import type { Tender, Project } from '@/data/centralData';
 import { getBOQRepository, getProjectRepository, getRelationRepository } from '@/application/services/serviceRegistry';
-import { buildPricingMap } from '@/utils/normalizePricing';
-import type { NormalizedPricingItem } from '@/utils/normalizePricing';
-import { safeLocalStorage } from '@/utils/storage';
-import { STORAGE_KEYS } from '@/config/storageKeys';
+import { buildPricingMap } from '@/shared/utils/pricing/normalizePricing';
+import type { NormalizedPricingItem } from '@/shared/utils/pricing/normalizePricing';
+import { safeLocalStorage } from '@/shared/utils/storage/storage';
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys';
 import type { EntityRelationSnapshot } from '@/repository/relations.repository';
 import type { BOQData } from '@/types/boq';
 
@@ -168,16 +168,16 @@ export class EnhancedProjectAutoCreationService {
 
   private static async copyPricingData(tenderId: string, projectId: string): Promise<void> {
     try {
-      console.log(`ğŸ” Ø§Ù„Ø¨Ø­Ø« Ø¹Ù† Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØ³Ø¹ÙŠØ± Ù„Ù„Ù…Ù†Ø§ÙØ³Ø©: ${tenderId}`);
+      console.log(`?? ÇáÈÍË Úä ÈíÇäÇÊ ÇáÊÓÚíÑ ááãäÇİÓÉ: ${tenderId}`);
 
       const boqRepository = getBOQRepository();
 
-      // Ø§Ù„Ø­ØµÙˆÙ„ Ø¹Ù„Ù‰ BOQ Ù…ÙˆØ¬ÙˆØ¯ Ø¥Ù† ÙˆØ¬Ø¯
+      // ÇáÍÕæá Úáì BOQ ãæÌæÏ Åä æÌÏ
       let boqData = await boqRepository.getByTenderId(tenderId);
-      console.log(`ğŸ“Š BOQ Ù…Ù† Ø§Ù„Ù†Ø¸Ø§Ù… Ø§Ù„Ù…Ø±ÙƒØ²ÙŠ: ${boqData ? 'Ù…ÙˆØ¬ÙˆØ¯' : 'ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯'}`);
+      console.log(`?? BOQ ãä ÇáäÙÇã ÇáãÑßÒí: ${boqData ? 'ãæÌæÏ' : 'ÛíÑ ãæÌæÏ'}`);
 
       if (!boqData) {
-        console.log('ğŸ”„ Ù…Ø­Ø§ÙˆÙ„Ø© Ù‚Ø±Ø§Ø¡Ø© Ù…Ù† pricingService (ØªØ·Ø¨ÙŠØ¹ Ù…Ø±ÙƒØ²ÙŠ)...');
+        console.log('?? ãÍÇæáÉ ŞÑÇÁÉ ãä pricingService (ÊØÈíÚ ãÑßÒí)...');
         const { pricingService } = await import('@/application/services/pricingService');
         const pricingData = await pricingService.loadTenderPricing(tenderId);
         const pricingArray = pricingData?.pricing;
@@ -201,7 +201,7 @@ export class EnhancedProjectAutoCreationService {
             };
             await boqRepository.createOrUpdate(newBoqData);
             boqData = newBoqData;
-            console.log('âœ… ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ BOQ Ù…Ù† Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØ³Ø¹ÙŠØ± (Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù… normalizePricing)');
+            console.log('? Êã ÅäÔÇÁ BOQ ãä ÈíÇäÇÊ ÇáÊÓÚíÑ (ÈÇÓÊÎÏÇã normalizePricing)');
           }
         }
       }
@@ -230,7 +230,7 @@ export class EnhancedProjectAutoCreationService {
                 rawItem.label,
                 rawItem.text
               ],
-              `Ø¨Ù†Ø¯ Ø±Ù‚Ù… ${item.id}`
+              `ÈäÏ ÑŞã ${item.id}`
             );
 
             const materials = item.materials ?? [];
@@ -256,7 +256,7 @@ export class EnhancedProjectAutoCreationService {
               id: `proj_${item.id}`,
               originalId: item.id, // Keep reference to original tender item
               description,
-              unit: this.coalesceString(item.unit, 'ÙˆØ­Ø¯Ø©'),
+              unit: this.coalesceString(item.unit, 'æÍÏÉ'),
               category: this.coalesceString(rawItem.category as string | undefined, 'BOQ'),
               
               // Store all tender data as estimated values
@@ -295,9 +295,9 @@ export class EnhancedProjectAutoCreationService {
           })
         };
         await boqRepository.createOrUpdate(projectBOQ);
-        console.log('âœ… ØªÙ… Ù†Ø³Ø® Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØ³Ø¹ÙŠØ± Ø¥Ù„Ù‰ Ø§Ù„Ù…Ø´Ø±ÙˆØ¹ Ù…Ø¹ Ø§Ù„Ù‡ÙŠÙƒÙ„ Ø§Ù„Ù…Ø­Ø³Ù† (estimated/actual)');
+        console.log('? Êã äÓÎ ÈíÇäÇÊ ÇáÊÓÚíÑ Åáì ÇáãÔÑæÚ ãÚ Çáåíßá ÇáãÍÓä (estimated/actual)');
       } else {
-        console.warn('âš ï¸ Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª ØªØ³Ø¹ÙŠØ± Ù„Ù†Ø³Ø®Ù‡Ø§');
+        console.warn('?? áÇ ÊæÌÏ ÈíÇäÇÊ ÊÓÚíÑ áäÓÎåÇ');
       }
     } catch (error) {
       console.warn('Error copying pricing data:', error);

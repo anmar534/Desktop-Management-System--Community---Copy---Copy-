@@ -1,4 +1,4 @@
-import { BASE_CURRENCY, DEFAULT_CURRENCY_RATES, EXCHANGE_RATE_ENDPOINT } from '@/config/currency'
+import { BASE_CURRENCY, DEFAULT_CURRENCY_RATES, EXCHANGE_RATE_ENDPOINT } from '@/shared/config/currency'
 
 export interface ExchangeRateResult {
   baseCurrency: string

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { BASE_CURRENCY, DEFAULT_CURRENCY_RATES } from '@/config/currency'
+import { BASE_CURRENCY, DEFAULT_CURRENCY_RATES } from '@/shared/config/currency'
 import { fetchExchangeRates, type ExchangeRateResult } from '@/application/services/exchangeRates'
 
 export interface UseCurrencyRatesOptions {

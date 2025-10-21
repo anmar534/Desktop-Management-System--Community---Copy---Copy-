@@ -1,4 +1,4 @@
-import { STORAGE_KEYS, type StorageKey } from '@/config/storageKeys';
+import { STORAGE_KEYS, type StorageKey } from '@/shared/constants/storageKeys';
 
 export type SchemaVersion = number;
 

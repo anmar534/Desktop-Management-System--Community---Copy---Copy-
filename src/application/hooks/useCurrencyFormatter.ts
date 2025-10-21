@@ -19,7 +19,7 @@
 
 import { useCallback, useMemo } from 'react'
 import { useCurrencyRates } from './useCurrencyRates'
-import { BASE_CURRENCY } from '@/config/currency'
+import { BASE_CURRENCY } from '@/shared/config/currency'
 
 export interface UseCurrencyFormatterOptions {
   /**

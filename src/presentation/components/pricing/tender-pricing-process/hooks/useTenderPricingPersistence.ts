@@ -14,12 +14,12 @@ import type { BOQTotals, BOQData } from '@/types/boq';
 import { pricingDataSyncService } from '@/application/services/pricingDataSyncService';
 import { pricingService } from '@/application/services/pricingService';
 import { getBOQRepository } from '@/application/services/serviceRegistry';
-import { PRICING_FLAGS, type PricingItemInput, type PricingResource, enrichPricingItems, isPricingEntry } from '@/utils/pricingHelpers';
-import { safeLocalStorage } from '@/utils/storage';
-import type { CurrencyOptions } from '@/utils/formatters';
+import { PRICING_FLAGS, type PricingItemInput, type PricingResource, enrichPricingItems, isPricingEntry } from '@/shared/utils/pricing/pricingHelpers';
+import { safeLocalStorage } from '@/shared/utils/storage/storage';
+import type { CurrencyOptions } from '@/shared/utils/formatters/formatters';
 import { toast } from 'sonner';
 import { debounce } from '@/utils/helpers';
-import { recordAuditEvent, type AuditEventLevel, type AuditEventStatus } from '@/utils/auditLog';
+import { recordAuditEvent, type AuditEventLevel, type AuditEventStatus } from '@/shared/utils/storage/auditLog';
 import type {
   QuantityItem,
   PricingProgressStatus,

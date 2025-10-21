@@ -2,8 +2,8 @@
  * Adapter مبسط لإدارة طبقتي التسعير: الرسمي (official) والمسودة (draft)
  * MVP: لا أحداث، لا hash متقدم. مقارنة بالتسلسل الكامل JSON فقط.
  */
-import { STORAGE_KEYS } from '@/config/storageKeys'
-import { loadFromStorage, saveToStorage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
+import { loadFromStorage, saveToStorage } from '@/shared/utils/storage/storage'
 
 interface PricingSnapshotItem {
   id?: string

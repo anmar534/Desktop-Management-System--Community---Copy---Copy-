@@ -1,5 +1,5 @@
-import { STORAGE_KEYS } from '../config/storageKeys';
-import { secureStore } from './secureStore';
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys';
+import { secureStore } from '../security/secureStore';
 import {
   decodeStoredValue,
   encodeValueForStorage,
@@ -9,7 +9,7 @@ import {
 } from './storageSchema';
 import { recordAuditEvent } from './auditLog';
 
-export { STORAGE_KEYS } from '../config/storageKeys';
+export { STORAGE_KEYS } from '@/shared/constants/storageKeys';
 
 // Analytics-specific storage utilities
 export interface AnalyticsStorageOptions {

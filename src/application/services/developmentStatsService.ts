@@ -1,7 +1,7 @@
 import type { Tender } from '@/data/centralData'
-import { UnifiedCalculations } from '@/utils/unifiedCalculations'
-import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { UnifiedCalculations } from '@/shared/utils/data/unifiedCalculations'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 

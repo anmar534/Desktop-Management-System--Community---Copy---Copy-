@@ -4,7 +4,7 @@
  * Sprint 5.6: التحسين النهائي والتجهيز للإنتاج
  */
 
-import { PERFORMANCE_THRESHOLDS, getPerformanceRating } from '@/config/performance.config'
+import { PERFORMANCE_THRESHOLDS, getPerformanceRating } from '@/shared/config/performance.config'
 
 // ============================================================================
 // Types

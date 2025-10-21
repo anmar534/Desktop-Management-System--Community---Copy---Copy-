@@ -6,9 +6,9 @@ import { getBOQRepository, getTenderRepository } from '@/application/services/se
 import { useRepository } from '@/application/services/RepositoryProvider'
 import { APP_EVENTS } from '@/events/bus'
 import type { BOQData, BOQItem } from '@/types/boq'
-import { aggregateTotals, buildPOIndex, computeActual, computeDiff, computePlanned } from '@/utils/boqCalculations'
-import { buildPricingMap, repairBOQ } from '@/utils/normalizePricing'
-import { safeLocalStorage } from '@/utils/storage'
+import { aggregateTotals, buildPOIndex, computeActual, computeDiff, computePlanned } from '@/shared/utils/boq/boqCalculations'
+import { buildPricingMap, repairBOQ } from '@/shared/utils/pricing/normalizePricing'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 
 interface UseBOQOptions {
   projectId: string

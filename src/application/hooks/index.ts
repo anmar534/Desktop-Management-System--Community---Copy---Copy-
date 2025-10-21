@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef, type FormEvent } from 'react'
-import { safeLocalStorage } from '@/utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 
 // إعادة تصدير الهوكز الرئيسية
 export { useExpenses } from './useExpenses'

@@ -15,7 +15,7 @@
 import { pricingService } from './pricingService'
 import { APP_EVENTS, emit } from '@/events/bus'
 import { getTenderRepository, getBOQRepository } from '@/application/services/serviceRegistry'
-import { safeLocalStorage } from '@/utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import type { BreakdownRow, PercentagesSet } from './projectCostService'
 import type { PricingBreakdown, PricingData, PricingRow, PricingPercentages } from '@/types/pricing'
 

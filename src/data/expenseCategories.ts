@@ -3,7 +3,7 @@
  * Integrated Expense Management System for Construction Companies
  */
 
-import { getDesignTokenExpression, type DesignTokenKey } from '@/utils/designTokens';
+import { getDesignTokenExpression, type DesignTokenKey } from '@/shared/utils/ui/designTokens';
 
 const tokenColor = (token: DesignTokenKey): string => getDesignTokenExpression(token);
 

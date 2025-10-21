@@ -7,7 +7,7 @@
 
 import type { Tender } from '@/data/centralData'
 import type { BOQData } from '@/types/boq'
-import type { PricingResource, PricingItemInput } from '@/utils/pricingHelpers'
+import type { PricingResource, PricingItemInput } from '@/shared/utils/pricing/pricingHelpers'
 import { getBOQRepository, getRelationRepository, getTenderRepository } from '@/application/services/serviceRegistry'
 import { pricingService } from './pricingService'
 

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { recordAuditEvent } from '@/utils/auditLog'
+import { recordAuditEvent } from '@/shared/utils/storage/auditLog'
 
 import type { EditableTenderPricingResult } from '@/application/hooks/useEditableTenderPricing'
 import type { PricingViewName } from '../types'

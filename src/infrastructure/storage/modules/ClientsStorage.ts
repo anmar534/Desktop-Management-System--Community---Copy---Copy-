@@ -7,7 +7,7 @@
  * @module storage/modules/ClientsStorage
  */
 
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import type { IStorageModule } from '../core/types'
 import { StorageManager } from '../core/StorageManager'
 import type { Client } from '@/data/centralData'

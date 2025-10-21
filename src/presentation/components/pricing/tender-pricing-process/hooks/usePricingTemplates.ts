@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { toast } from 'sonner';
 import type { PricingTemplate } from '@/types/templates';
 import type { PricingData } from '@/types/pricing';
-import { recordAuditEvent } from '@/utils/auditLog';
+import { recordAuditEvent } from '@/shared/utils/storage/auditLog';
 
 interface DefaultPercentages {
   administrative: number;

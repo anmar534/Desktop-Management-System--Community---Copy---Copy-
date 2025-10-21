@@ -27,7 +27,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import type { ProjectCostItem } from '@/application/services/projectCostService'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { DeleteConfirmation } from '../ui/confirmation-dialog'
-import { formatTime } from '@/utils/formatters'
+import { formatTime } from '@/shared/utils/formatters/formatters'
 import { EmptyState } from '@/presentation/components/layout/PageLayout'
 
 export interface ProjectCostViewProps {

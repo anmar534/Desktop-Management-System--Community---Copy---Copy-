@@ -7,7 +7,7 @@
  * @module storage/modules/BOQStorage
  */
 
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import type { IStorageModule } from '../core/types'
 import { StorageManager } from '../core/StorageManager'
 import type { BOQData } from '@/types/boq'

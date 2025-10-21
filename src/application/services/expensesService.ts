@@ -5,8 +5,8 @@
  * - Provides simple CRUD helpers used by hooks/components
  */
 
-import { STORAGE_KEYS } from '@/config/storageKeys'
-import { safeLocalStorage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import type { Expense } from '@/data/expenseCategories'
 import { APP_EVENTS, emit } from '@/events/bus'
 

@@ -1,5 +1,5 @@
-import { STORAGE_KEYS } from '@/config/storageKeys';
-import { safeLocalStorage } from '@/utils/storage';
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys';
+import { safeLocalStorage } from '@/shared/utils/storage/storage';
 import { projectCostService } from './projectCostService';
 import { APP_EVENTS, bus } from '@/events/bus';
 

@@ -10,10 +10,10 @@
  * ✅ DRY Principle
  */
 
-import { safeLocalStorage, isStorageReady, whenStorageReady } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { safeLocalStorage, isStorageReady, whenStorageReady } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import type { Tender, Project, Client } from '@/data/centralData'
-import { migrateTenderStatus, needsMigration } from '@/utils/tenderStatusMigration'
+import { migrateTenderStatus, needsMigration } from '@/shared/utils/tender/tenderStatusMigration'
 import type { PurchaseOrder } from '@/types/contracts'
 import { APP_EVENTS, emit } from '@/events/bus'
 import type { BOQData } from '@/types/boq'

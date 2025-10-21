@@ -4,7 +4,7 @@
  * Sprint 5.6: التحسين النهائي والتجهيز للإنتاج
  */
 
-import { MEMORY_MANAGEMENT, RENDERING_OPTIMIZATION } from '@/config/performance.config'
+import { MEMORY_MANAGEMENT, RENDERING_OPTIMIZATION } from '@/shared/config/performance.config'
 
 // ============================================================================
 // Types

@@ -1,6 +1,6 @@
 import type { Tender } from '@/data/centralData'
 import type { StatusBadgeProps } from '@/presentation/components/ui/status-badge'
-import { getDaysRemaining, isTenderExpired } from '@/utils/tenderProgressCalculator'
+import { getDaysRemaining, isTenderExpired } from '@/shared/utils/tender/tenderProgressCalculator'
 
 type StatusTone = StatusBadgeProps['status']
 
