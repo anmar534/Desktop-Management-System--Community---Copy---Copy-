@@ -142,7 +142,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['projects', 'tenders', 'financial', 'analytics'],
     view: {
-      module: '@/components/Dashboard',
+      module: '@/presentation/pages/Dashboard/DashboardPage',
     },
   },
 
@@ -198,7 +198,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['financial', 'reports'],
     view: {
-      module: '@/components/Tenders',
+      module: '@/presentation/pages/Tenders/TendersPage',
       exportName: 'Tenders',
     },
   },
@@ -213,7 +213,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     requires: ['tenders:write'],
     breadcrumbs: [{ label: 'المنافسات', section: 'tenders' }, { label: 'منافسة جديدة' }],
     view: {
-      module: '@/components/NewTenderForm',
+      module: '@/presentation/pages/Tenders/components/NewTenderForm',
       exportName: 'NewTenderForm',
     },
   },
@@ -274,7 +274,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['tenders', 'projects', 'financial'],
     view: {
-      module: '@/components/analytics/AnalyticsRouter',
+      module: '@/presentation/components/analytics/AnalyticsRouter',
       exportName: 'AnalyticsRouter',
     },
   },
@@ -298,7 +298,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['invoices', 'bank-accounts'],
     view: {
-      module: '@/components/Financial',
+      module: '@/presentation/pages/Financial/FinancialPage',
       exportName: 'Financial',
     },
   },
@@ -313,7 +313,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     breadcrumbs: [{ label: 'لوحة التحكم', section: 'dashboard' }, { label: 'التطوير' }],
     relatedSections: ['projects', 'reports'],
     view: {
-      module: '@/components/Development',
+      module: '@/presentation/pages/Development/DevelopmentPage',
       exportName: 'Development',
     },
   },
@@ -338,7 +338,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['financial', 'projects'],
     view: {
-      module: '@/components/Financial',
+      module: '@/presentation/pages/Financial/FinancialPage',
       exportName: 'Financial',
     },
   },
@@ -363,7 +363,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['financial'],
     view: {
-      module: '@/components/Financial',
+      module: '@/presentation/pages/Financial/FinancialPage',
       exportName: 'Financial',
     },
   },
@@ -388,7 +388,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['projects'],
     view: {
-      module: '@/components/Financial',
+      module: '@/presentation/pages/Financial/FinancialPage',
       exportName: 'Financial',
     },
   },
@@ -403,7 +403,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     requires: ['reports:read'],
     breadcrumbs: [{ label: 'المالية', section: 'financial' }, { label: 'التقارير المالية' }],
     view: {
-      module: '@/components/Financial',
+      module: '@/presentation/pages/Financial/FinancialPage',
       exportName: 'Financial',
     },
   },
@@ -418,7 +418,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     requires: ['financial:write'],
     breadcrumbs: [{ label: 'الفواتير', section: 'invoices' }, { label: 'فاتورة جديدة' }],
     view: {
-      module: '@/components/NewInvoice',
+      module: '@/presentation/pages/Financial/components/NewInvoice',
       exportName: 'NewInvoice',
     },
   },
@@ -433,7 +433,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     requires: ['financial:write'],
     breadcrumbs: [{ label: 'الحسابات البنكية', section: 'bank-accounts' }, { label: 'حساب جديد' }],
     view: {
-      module: '@/components/NewBankAccount',
+      module: '@/presentation/pages/Financial/components/NewBankAccount',
       exportName: 'NewBankAccount',
     },
   },
@@ -448,7 +448,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     requires: ['financial:write'],
     breadcrumbs: [{ label: 'الموازنات', section: 'budgets' }, { label: 'ميزانية جديدة' }],
     view: {
-      module: '@/components/NewBudget',
+      module: '@/presentation/pages/Financial/components/NewBudget',
       exportName: 'NewBudget',
     },
   },
@@ -463,7 +463,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     requires: ['reports:write'],
     breadcrumbs: [{ label: 'التقارير', section: 'reports' }, { label: 'تقرير جديد' }],
     view: {
-      module: '@/components/NewReport',
+      module: '@/presentation/pages/Reports/components/NewReport',
       exportName: 'NewReport',
     },
   },
@@ -477,7 +477,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     requires: ['financial:read'],
     breadcrumbs: [{ label: 'لوحة التحكم', section: 'dashboard' }, { label: 'المشتريات' }],
     view: {
-      module: '@/components/ExpenseManagement',
+      module: '@/presentation/pages/Financial/components/ExpenseManagement',
     },
   },
   {
@@ -500,7 +500,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['financial-reports'],
     view: {
-      module: '@/components/Reports',
+      module: '@/presentation/pages/Reports/ReportsPage',
     },
   },
   {
@@ -524,7 +524,7 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     ],
     relatedSections: ['financial', 'reports'],
     view: {
-      module: '@/components/Settings',
+      module: '@/presentation/pages/Settings/SettingsPage',
       exportName: 'Settings',
     },
   },

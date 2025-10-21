@@ -23,7 +23,7 @@ import { Label } from '@/presentation/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select'
 import { Alert, AlertDescription } from '@/presentation/components/ui/alert'
 import type { EnhancedProject, CreateProjectRequest, UpdateProjectRequest } from '../../types/projects'
-import { enhancedProjectService } from '../../services/enhancedProjectService'
+import { enhancedProjectService } from '@/services/enhancedProjectService'
 
 interface ProjectFormProps {
   project?: EnhancedProject | null

@@ -56,11 +56,11 @@ import {
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import type { 
-  Supplier} from '../../services/supplierManagementService';
+  Supplier} from '@/services/supplierManagementService';
 import { 
   SupplierEvaluation,
   supplierManagementService 
-} from '../../services/supplierManagementService'
+} from '@/services/supplierManagementService'
 
 // ===========================
 // 📊 Types & Interfaces

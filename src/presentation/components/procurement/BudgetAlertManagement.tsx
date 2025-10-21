@@ -46,9 +46,9 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { procurementCostIntegrationService } from '../../services/procurementCostIntegrationService'
-import type { BudgetAlert, BudgetCategory } from '../../services/procurementCostIntegrationService'
-import { formatCurrency } from '../../utils/formatters'
+import { procurementCostIntegrationService } from '@/services/procurementCostIntegrationService'
+import type { BudgetAlert, BudgetCategory } from '@/services/procurementCostIntegrationService'
+import { formatCurrency } from '@/shared/utils/formatters/formatters'
 
 interface BudgetAlertManagementProps {
   projectId?: string

@@ -34,7 +34,7 @@ import { Button } from '@/presentation/components/ui/button'
 import { Input } from '@/presentation/components/ui/input'
 import { Badge } from '@/presentation/components/ui/badge'
 import { analyticsService } from '@/application/services/analyticsService'
-import type { BidPerformance } from '@/types/analytics'
+import type { BidPerformance } from '@/shared/types/analytics'
 import {
   Select,
   SelectContent,
@@ -52,7 +52,7 @@ import {
 } from '@/presentation/components/ui/dialog'
 import { Textarea } from '@/presentation/components/ui/textarea'
 import { Label } from '@/presentation/components/ui/label'
-import type { PricingTemplate, TemplateCategory } from '@/types/templates'
+import type { PricingTemplate, TemplateCategory } from '@/shared/types/templates'
 
 interface PricingTemplateManagerProps {
   onSelectTemplate: (template: PricingTemplate) => void

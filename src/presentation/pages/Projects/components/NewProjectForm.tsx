@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Textarea } from './ui/textarea'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Input } from '@/presentation/components/ui/input'
+import { Label } from '@/presentation/components/ui/label'
+import { Textarea } from '@/presentation/components/ui/textarea'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,14 +15,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from './ui/alert-dialog'
-import { PageLayout } from './PageLayout'
+} from '@/presentation/components/ui/alert-dialog'
+import { PageLayout } from '@/presentation/components/layout/PageLayout'
 import { NewClientDialog } from './NewClientDialog'
 import { Building2, Save, Calendar, FileText, Target, ArrowRight, Plus, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFinancialState } from '@/application/context'
-import { saveToStorage, STORAGE_KEYS } from '../utils/storage'
-import type { Project } from '../data/centralData'
+import { saveToStorage, STORAGE_KEYS } from '@/shared/utils/storage/storage'
+import type { Project } from '@/data/centralData'
 
 const CLIENT_TYPE_STATUS: Record<string, StatusBadgeProps['status']> = {
   government: 'info',

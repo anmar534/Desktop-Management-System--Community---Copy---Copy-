@@ -1,4 +1,4 @@
-import type { Tender } from '../data/centralData'
+import type { Tender } from '@/data/centralData'
 import { TENDER_CONSTANTS, WinRateCalculations } from '@/shared/utils/pricing/unifiedCalculations'
 import { getDaysRemaining, isTenderExpired } from '@/shared/utils/tender/tenderProgressCalculator'
 

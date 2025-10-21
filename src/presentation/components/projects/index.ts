@@ -8,6 +8,9 @@ export { default as ProjectsList } from './ProjectsList'
 export { default as ProjectDetails } from './ProjectDetails'
 export { default as ProjectForm } from './ProjectForm'
 
+// Default export
+export { default } from './ProjectsManager'
+
 // Re-export types for convenience
 export type {
   EnhancedProject,

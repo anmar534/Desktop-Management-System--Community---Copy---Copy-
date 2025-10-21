@@ -1,5 +1,5 @@
-import { Card, CardContent } from './ui/card'
-import { Button } from './ui/button'
+import { Card, CardContent } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
 import { getDesignTokenExpression } from '@/shared/utils/ui/designTokens'
 import {
   DollarSign,
@@ -8,7 +8,7 @@ import {
   ArrowDownRight
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from 'recharts'
-import { formatCurrency } from '../data/centralData'
+import { formatCurrency } from '@/data/centralData'
 
 interface MonthlyExpensesChartProps {
   onSectionChange: (section: string) => void

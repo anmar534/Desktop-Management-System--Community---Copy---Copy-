@@ -30,10 +30,10 @@ import type {
   IntegrationSummary,
   ConflictResolution,
   RealTimeUpdate
-} from '../../services/unifiedSystemIntegrationService';
+} from '@/services/unifiedSystemIntegrationService';
 import { 
   unifiedSystemIntegrationService
-} from '../../services/unifiedSystemIntegrationService'
+} from '@/services/unifiedSystemIntegrationService'
 
 const UnifiedSystemIntegration: React.FC = () => {
   const [modules, setModules] = useState<SystemModule[]>([])

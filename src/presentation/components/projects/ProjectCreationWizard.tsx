@@ -32,7 +32,7 @@ import {
 import { useForm } from 'react-hook-form'
 // import { zodResolver } from '@hookform/resolvers/zod'
 // import { z } from 'zod'
-import { enhancedProjectService } from '../../services/enhancedProjectService'
+import { enhancedProjectService } from '@/services/enhancedProjectService'
 import type { CreateProjectRequest } from '../../types/projects'
 import { toast } from 'sonner'
 

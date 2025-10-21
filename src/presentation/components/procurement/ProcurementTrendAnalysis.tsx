@@ -18,7 +18,7 @@ import {
   RefreshCw,
   DollarSign
 } from 'lucide-react'
-import { procurementReportingService, type TrendAnalysisData } from '../../services/procurementReportingService'
+import { procurementReportingService, type TrendAnalysisData } from '@/services/procurementReportingService'
 import { toast } from 'sonner'
 
 interface ProcurementTrendAnalysisProps {

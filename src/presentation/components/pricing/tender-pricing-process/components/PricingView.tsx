@@ -30,7 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/presentation/components/ui/scroll-area'
 import { Textarea } from '@/presentation/components/ui/textarea'
 import { cn } from '@/presentation/components/ui/utils'
-import { confirmationMessages } from '@/config/confirmationMessages'
+import { confirmationMessages } from '@/shared/config/confirmationMessages'
 import type {
   ExecutionMethod,
   PricingData,
@@ -39,7 +39,7 @@ import type {
   LaborRow,
   EquipmentRow,
   SubcontractorRow,
-} from '@/types/pricing'
+} from '@/shared/types/pricing'
 
 const SECTION_ORDER = ['materials', 'labor', 'equipment', 'subcontractors'] as const
 

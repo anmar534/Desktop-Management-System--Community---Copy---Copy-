@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Textarea } from './ui/textarea'
+import { Button } from '@/presentation/components/ui/button'
+import { Input } from '@/presentation/components/ui/input'
+import { Label } from '@/presentation/components/ui/label'
+import { Textarea } from '@/presentation/components/ui/textarea'
 import { 
   Dialog,
   DialogContent,
@@ -10,14 +10,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog'
+} from '@/presentation/components/ui/dialog'
 import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select'
+} from '@/presentation/components/ui/select'
 import { Building2, Phone, Mail, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import { useFinancialState } from '@/application/context'

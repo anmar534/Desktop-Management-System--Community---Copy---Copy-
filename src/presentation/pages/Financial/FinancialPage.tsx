@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Progress } from './ui/progress'
-import { Input } from './ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
-import { PageLayout, DetailCard, EmptyState } from './PageLayout'
-import { ProjectCostAnalyzer } from './ProjectCostAnalyzer'
-import { Invoices } from './Invoices'
-import { Budgets } from './Budgets'
-import { BankAccounts } from './BankAccounts'
-import { FinancialReports } from './FinancialReports'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Progress } from '@/presentation/components/ui/progress'
+import { Input } from '@/presentation/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs'
+import { PageLayout, DetailCard, EmptyState } from '@/presentation/components/layout/PageLayout'
+import { ProjectCostAnalyzer } from './components/ProjectCostAnalyzer'
+import { Invoices } from './components/Invoices'
+import { Budgets } from './components/Budgets'
+import { BankAccounts } from './components/BankAccounts'
+import { FinancialReports } from './components/FinancialReports'
 import {
   formatCurrency,
   formatDateValue,
@@ -20,7 +20,7 @@ import {
   formatTime,
   type CurrencyOptions,
   type NumberFormatOptionsWithLocale,
-} from '../utils/formatters' // استخدام المنسق الموحد
+} from '@/shared/utils/formatters/formatters' // استخدام المنسق الموحد
 import {
   type LucideIcon,
   DollarSign,
@@ -46,8 +46,8 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useFinancialState } from '@/application/context'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
-import { InlineAlert, type InlineAlertVariant } from './ui/inline-alert'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { InlineAlert, type InlineAlertVariant } from '@/presentation/components/ui/inline-alert'
 
 const FINANCIAL_TABS = [
   'overview',

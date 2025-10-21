@@ -13,16 +13,13 @@ import {
   DollarSign,
   Users,
   MapPin,
-  Tag,
   FileText,
   TrendingUp,
   AlertTriangle,
   CheckCircle,
   Clock,
   Pause,
-  Target,
-  BarChart3,
-  Settings
+  Target
 } from 'lucide-react'
 import { Button } from '@/presentation/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
@@ -30,13 +27,13 @@ import { Badge } from '@/presentation/components/ui/badge'
 import { Progress } from '@/presentation/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs'
 import { Separator } from '@/presentation/components/ui/separator'
-import type { EnhancedProject } from '../../types/projects'
-import { enhancedProjectService } from '../../services/enhancedProjectService'
+import type { Project } from '@/data/centralData'
+import { useFinancialState } from '@/application/context'
 
 interface ProjectDetailsProps {
   projectId: string
   onBack?: () => void
-  onEdit?: (project: EnhancedProject) => void
+  onEdit?: (project: Project) => void
   onDelete?: (projectId: string) => void
   className?: string
 }
@@ -48,19 +45,22 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
   onDelete,
   className = ''
 }) => {
-  const [project, setProject] = useState<EnhancedProject | null>(null)
+  const financialState = useFinancialState()
+  const { projects: projectsData, deleteProject } = financialState.projects
+  const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
 
   useEffect(() => {
     loadProject()
-  }, [projectId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, projectsData])
 
-  const loadProject = async () => {
+  const loadProject = () => {
     try {
       setLoading(true)
-      const projectData = await enhancedProjectService.getProjectById(projectId)
-      setProject(projectData)
+      const projectData = projectsData.find(p => p.id === projectId)
+      setProject(projectData || null)
     } catch (error) {
       console.error('Error loading project:', error)
       // TODO: Show error notification
@@ -77,7 +77,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
     if (!confirmed) return
 
     try {
-      await enhancedProjectService.deleteProject(project.id)
+      await deleteProject(project.id)
       onDelete?.(project.id)
     } catch (error) {
       console.error('Error deleting project:', error)
@@ -209,7 +209,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-            <p className="text-gray-600">{project.code}</p>
+            <p className="text-gray-600">{project.id}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -312,13 +312,6 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-600">الوصف</label>
-                  <p className="text-gray-900 mt-1">{project.description}</p>
-                </div>
-                
-                <Separator />
-                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-600">الفئة</label>
@@ -350,19 +343,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                   </div>
                 </div>
 
-                {project.tags.length > 0 && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">العلامات</label>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {project.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline">
-                          <Tag className="h-3 w-3 ml-1" />
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Tags section removed - not available in base Project type */}
               </CardContent>
             </Card>
 
@@ -484,39 +465,21 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                   <h4 className="font-medium text-gray-900 mb-2">مدير المشروع</h4>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
-                      {project.team.projectManager.name.charAt(0)}
+                      {project.manager.charAt(0)}
                     </div>
                     <div>
-                      <p className="font-medium">{project.team.projectManager.name}</p>
-                      <p className="text-sm text-gray-600">{project.team.projectManager.role}</p>
+                      <p className="font-medium">{project.manager}</p>
                     </div>
                   </div>
                 </div>
 
-                {project.team.members.length > 0 && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">أعضاء الفريق</h4>
-                    <div className="space-y-2">
-                      {project.team.members.map((member) => (
-                        <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                          <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white text-sm">
-                            {member.name.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-medium">{member.name}</p>
-                            <p className="text-sm text-gray-600">{member.role}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">الفريق</h4>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Users className="h-5 w-5 text-gray-400" />
+                    <p className="text-gray-600">{project.team}</p>
                   </div>
-                )}
-
-                {project.team.members.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    لم يتم تعيين أعضاء فريق بعد
-                  </div>
-                )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -525,28 +488,11 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
         <TabsContent value="timeline">
           <Card>
             <CardHeader>
-              <CardTitle>الجدول الزمني والمراحل</CardTitle>
+              <CardTitle>الجدول الزمني</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {project.phases.map((phase, index) => (
-                  <div key={phase.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                    <div className="flex-shrink-0">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm ${
-                        index === 0 ? 'bg-blue-500' : 'bg-gray-400'
-                      }`}>
-                        {phase.order}
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{phase.name}</h4>
-                      <p className="text-sm text-gray-600">{phase.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        المدة المقدرة: {phase.estimatedDuration} يوم
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <div className="text-center py-8 text-gray-500">
+                عرض تفصيلي للمراحل سيكون متاحًا قريبًا
               </div>
             </CardContent>
           </Card>
@@ -558,28 +504,9 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
               <CardTitle>المستندات والمرفقات</CardTitle>
             </CardHeader>
             <CardContent>
-              {project.attachments.length > 0 ? (
-                <div className="space-y-2">
-                  {project.attachments.map((attachment) => (
-                    <div key={attachment.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                      <FileText className="h-5 w-5 text-gray-400" />
-                      <div className="flex-1">
-                        <p className="font-medium">{attachment.name}</p>
-                        <p className="text-sm text-gray-600">
-                          {(attachment.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        تحميل
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  لا توجد مستندات مرفقة
-                </div>
-              )}
+              <div className="text-center py-8 text-gray-500">
+                المستندات والمرفقات ستكون متاحة قريبًا
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

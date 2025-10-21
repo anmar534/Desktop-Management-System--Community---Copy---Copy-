@@ -26,7 +26,7 @@ import {
   Zap,
   RotateCw
 } from 'lucide-react';
-import { BUTTON_STYLES, BUTTON_TEXTS } from '../../utils/buttonStyles';
+import { BUTTON_STYLES, BUTTON_TEXTS } from '@/utils/buttonStyles';
 
 const iconMap = {
   Eye,

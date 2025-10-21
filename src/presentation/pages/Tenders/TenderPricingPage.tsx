@@ -1,4 +1,4 @@
-import { saveToStorage, loadFromStorage, STORAGE_KEYS } from '../utils/storage'
+import { saveToStorage, loadFromStorage, STORAGE_KEYS } from '@/shared/utils/storage/storage'
 import {
   createTenderPricingBackup,
   listTenderBackupEntries,
@@ -18,7 +18,7 @@ import type {
   PricingPercentages,
   TenderBackupEntry,
   ExecutionMethod,
-} from '@/types/pricing'
+} from '@/shared/types/pricing'
 import type {
   QuantityItem,
   TenderStatsPayload,
@@ -29,13 +29,13 @@ import type {
 // (Phase MVP Official/Draft) استيراد الهوك الجديد لإدارة المسودة والنسخة الرسمية
 import { useEditableTenderPricing } from '@/application/hooks/useEditableTenderPricing'
 // Phase 2 authoring engine adoption helpers (flag-guarded)
-import { PRICING_FLAGS, isPricingEntry } from '../utils/pricingHelpers'
+import { PRICING_FLAGS, isPricingEntry } from '@/utils/pricingHelpers'
 import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
 import { applyDefaultsToPricingMap } from '@/utils/defaultPercentagesPropagation'
-import { formatDateValue } from '@/utils/formatters'
-import { Button } from './ui/button'
-import { EmptyState } from './PageLayout'
-import { Badge } from './ui/badge'
+import { formatDateValue } from '@/shared/utils/formatters/formatters'
+import { Button } from '@/presentation/components/ui/button'
+import { EmptyState } from '@/presentation/components/layout/PageLayout'
+import { Badge } from '@/presentation/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -43,9 +43,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-} from './ui/dropdown-menu'
-import { ConfirmationDialog } from './ui/confirmation-dialog'
-import { confirmationMessages } from '@/config/confirmationMessages'
+} from '@/presentation/components/ui/dropdown-menu'
+import { ConfirmationDialog } from '@/presentation/components/ui/confirmation-dialog'
+import { confirmationMessages } from '@/shared/config/confirmationMessages'
 /**
  * Phase 2 Authoring Engine Integration Notes:
  * - الحساب legacy معزول في legacyAuthoringCompute().
@@ -59,7 +59,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogClose,
-} from './ui/dialog'
+} from '@/presentation/components/ui/dialog'
 import { toast } from 'sonner'
 import { useTenderPricingState } from './pricing/tender-pricing-process/hooks/useTenderPricingState'
 import { useTenderPricingCalculations } from './pricing/tender-pricing-process/hooks/useTenderPricingCalculations'

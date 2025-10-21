@@ -9,8 +9,8 @@ export interface UploadedFile {
   tenderId: string;
 }
 
-import { authorizeExport } from './desktopSecurity'
-import type { ExportAuthorizationRequest } from './desktopSecurity'
+import { authorizeExport } from './security/desktopSecurity'
+import type { ExportAuthorizationRequest } from './security/desktopSecurity'
 import { safeLocalStorage } from './storage'
 
 export class FileUploadService {

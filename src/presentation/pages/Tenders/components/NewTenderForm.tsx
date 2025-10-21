@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Textarea } from './ui/textarea'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
-import { InlineAlert, type InlineAlertVariant } from './ui/inline-alert'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Input } from '@/presentation/components/ui/input'
+import { Label } from '@/presentation/components/ui/label'
+import { Textarea } from '@/presentation/components/ui/textarea'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { InlineAlert, type InlineAlertVariant } from '@/presentation/components/ui/inline-alert'
 import {
   Building2,
   MapPin,
@@ -23,7 +23,7 @@ import {
   CheckCircle,
   ArrowRight
 } from 'lucide-react'
-import { PageLayout } from './PageLayout'
+import { PageLayout } from '@/presentation/components/layout/PageLayout'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,8 +34,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from './ui/alert-dialog'
-import { ExcelProcessor } from '../utils/excelProcessor'
+} from '@/presentation/components/ui/alert-dialog'
+import { ExcelProcessor } from '@/shared/utils/data/excelProcessor'
 import type { QuantityItem } from '../types/contracts'
 import type { Tender as DataTender } from '@/data/centralData'
 

@@ -2,7 +2,7 @@ import type { Tender } from '@/data/centralData'
 import { getTenderRepository } from './serviceRegistry'
 import { purchaseOrderService, type BookletExpense } from './purchaseOrderService'
 import { developmentStatsService } from './developmentStatsService'
-import type { PurchaseOrder } from '@/types/contracts'
+import type { PurchaseOrder } from '@/shared/types/contracts'
 import type { Project } from '@/data/centralData'
 import type { DevelopmentStats } from './developmentStatsService'
 

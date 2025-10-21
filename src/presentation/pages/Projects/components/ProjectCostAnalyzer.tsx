@@ -4,8 +4,8 @@
  */
 
 import type React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card';
+import { Badge } from '@/presentation/components/ui/badge';
 import { useFinancialState } from '@/application/context';
 import { useExpenses } from '@/application/hooks/useExpenses';
 import { 

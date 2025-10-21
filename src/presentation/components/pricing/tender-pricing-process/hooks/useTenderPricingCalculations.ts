@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { recordAuditEvent } from '@/shared/utils/storage/auditLog';
 import type { UseDomainPricingEngineResult } from '@/application/hooks/useDomainPricingEngine';
-import type { PricingData, PricingPercentages, PricingViewItem } from '@/types/pricing';
+import type { PricingData, PricingPercentages, PricingViewItem } from '@/shared/types/pricing';
 import { PRICING_FLAGS } from '@/shared/utils/pricing/pricingHelpers';
 import type { DraftPricingItem, QuantityItem } from '../types';
 

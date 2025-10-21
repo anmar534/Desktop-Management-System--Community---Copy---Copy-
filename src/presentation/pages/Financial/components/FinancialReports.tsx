@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Card, CardContent } from './ui/card'
-import { Button } from './ui/button'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
-import { PageLayout, EmptyState, DetailCard } from './PageLayout'
-import { DeleteConfirmation } from './ui/confirmation-dialog'
-import { InlineAlert } from './ui/inline-alert'
+import { Card, CardContent } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'
+import { DeleteConfirmation } from '@/presentation/components/ui/confirmation-dialog'
+import { InlineAlert } from '@/presentation/components/ui/inline-alert'
 import {
   FileBarChart,
   Plus,
@@ -28,7 +28,7 @@ import {
 import { motion } from 'framer-motion'
 import { useFinancialReports } from '@/application/hooks/useFinancialReports'
 import type { FinancialReport } from '@/data/centralData'
-import { formatDateValue } from '@/utils/formatters'
+import { formatDateValue } from '@/shared/utils/formatters/formatters'
 
 interface FinancialReportStatusInfo {
   label: string

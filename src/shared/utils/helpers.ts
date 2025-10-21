@@ -6,7 +6,7 @@
 // تنسيق العملة (موقوف - استخدم formatters.ts)
 // Deprecated: use functions from formatters.ts instead. Left as wrapper for backward compatibility.
 import { formatCurrency as _formatCurrency, formatDate as _formatDate, formatShortDate as _formatShortDate } from './formatters';
-import { authorizeExport } from './desktopSecurity';
+import { authorizeExport } from './security/desktopSecurity';
 export const formatCurrency = (amount: number, currency = 'SAR'): string => _formatCurrency(amount, { currency });
 export const formatDate = (date: string | Date, locale = 'ar-SA'): string => _formatDate(date, { locale });
 export const formatShortDate = (date: string | Date, locale = 'ar-SA'): string => _formatShortDate(date, locale);
@@ -25,7 +25,7 @@ export const formatLargeNumber = (num: number): string => _formatLargeNumber(num
 
 // ألوان الحالة / الأولوية / الصحة / التقدم (موقوفة – تفويض للوحدة الجديدة)
 // Deprecated color helpers: delegate to unified statusColors to avoid divergence.
-import { getStatusColor as _getStatusColor, getPriorityColor as _getPriorityColor, getHealthColor as _getHealthColor, getProgressColor as _getProgressColor } from './statusColors';
+import { getStatusColor as _getStatusColor, getPriorityColor as _getPriorityColor, getHealthColor as _getHealthColor, getProgressColor as _getProgressColor } from './ui/statusColors';
 /**
  * @deprecated استخدم getStatusColor من statusColors.ts مباشرة
  */
@@ -232,7 +232,7 @@ export const paginate = <T>(array: T[], page: number, limit: number): {
 // تحديث التخزين المحلي بشكل آمن
 // تم نقل safeLocalStorage إلى storage.ts للتوافق مع electron-store
 // Safe storage interface moved to storage.ts for electron-store compatibility
-// استخدم: import { safeLocalStorage } from '../utils/storage';
+// استخدم: import { safeLocalStorage } from '@/utils/storage';
 export { safeLocalStorage } from './storage';
 
 // معاينة التقدم كنسبة مئوية

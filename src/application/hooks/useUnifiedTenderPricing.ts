@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { getBOQRepository } from '@/application/services/serviceRegistry'
 import { useRepository } from '@/application/services/RepositoryProvider'
 import { APP_EVENTS } from '@/events/bus'
-import type { BOQData } from '@/types/boq'
+import type { BOQData } from '@/shared/types/boq'
 // DESCRIPTION_ALIASES لم تعد مطلوبة بعد توحيد مصدر الوصف (يُحتفظ بالتعليق للرجوع التاريخي)
 // (Legacy snapshot + hook fallback removed 2025-09) لم يعد يتم قراءة snapshot؛ الاعتماد فقط على BOQ المركزي.
 

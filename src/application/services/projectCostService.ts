@@ -2,7 +2,7 @@ import { STORAGE_KEYS } from '@/shared/constants/storageKeys';
 import { safeLocalStorage, whenStorageReady } from '@/shared/utils/storage/storage';
 import { getBOQRepository, getProjectRepository } from '@/application/services/serviceRegistry';
 import type { Project } from '@/data/centralData';
-import type { BOQItem } from '@/types/boq';
+import type { BOQItem } from '@/shared/types/boq';
 import { APP_EVENTS, bus } from '@/events/bus';
 
 /**

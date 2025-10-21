@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Card, CardContent } from './ui/card'
-import { InlineAlert } from './ui/inline-alert'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
+import { Card, CardContent } from '@/presentation/components/ui/card'
+import { InlineAlert } from '@/presentation/components/ui/inline-alert'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -11,8 +11,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle
-} from './ui/alert-dialog'
-import { PageLayout, EmptyState } from './PageLayout'
+} from '@/presentation/components/ui/alert-dialog'
+import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
 import { 
   Users,
   Building2,
@@ -26,9 +26,9 @@ import {
   BarChart3,
   AlertCircle
 } from 'lucide-react'
-import { EntityActions } from './ui/ActionButtons'
+import { EntityActions } from '@/presentation/components/ui/ActionButtons'
 import { motion } from 'framer-motion'
-import { formatCurrency, type Client, type Project } from '../data/centralData'
+import { formatCurrency, type Client, type Project } from '@/data/centralData'
 import { useFinancialState } from '@/application/context'
 
 interface ClientsProps {

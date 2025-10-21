@@ -1,4 +1,4 @@
-import type { StorageKey } from '@/config/storageKeys';
+import type { StorageKey } from '@/shared/config/storageKeys';
 
 interface SecureStoreBridge {
   get: (key: string) => Promise<unknown | null>;

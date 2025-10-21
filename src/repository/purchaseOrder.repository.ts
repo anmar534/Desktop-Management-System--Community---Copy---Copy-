@@ -1,4 +1,4 @@
-import type { PurchaseOrder } from '@/types/contracts'
+import type { PurchaseOrder } from '@/shared/types/contracts'
 
 export interface IPurchaseOrderRepository {
   getAll(): Promise<PurchaseOrder[]>

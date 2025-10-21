@@ -1,7 +1,7 @@
 import type { IProjectRepository } from '../project.repository';
 import type { Project } from '@/data/centralData';
 import { safeLocalStorage } from '@/utils/storage';
-import { STORAGE_KEYS } from '@/config/storageKeys';
+import { STORAGE_KEYS } from '@/shared/config/storageKeys';
 import { APP_EVENTS, emit } from '@/events/bus';
 import { getRelationRepository } from '@/application/services/serviceRegistry';
 import {

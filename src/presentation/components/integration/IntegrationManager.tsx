@@ -30,7 +30,7 @@ import {
   Server
 } from 'lucide-react'
 
-import { integrationService } from '../../services/integrationService'
+import { integrationService } from '@/services/integrationService'
 import type { 
   IntegrationConfig, 
   SyncOperation, 

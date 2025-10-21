@@ -7,7 +7,7 @@ import type {
   LaborRow,
   EquipmentRow,
   SubcontractorRow,
-} from '@/types/pricing';
+} from '@/shared/types/pricing';
 
 export type PricingViewName = 'summary' | 'pricing' | 'technical';
 

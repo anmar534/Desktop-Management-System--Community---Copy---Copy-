@@ -37,7 +37,7 @@ import {
 } from 'recharts'
 import type { EVMMetrics, EVMDashboardData} from '../../types/evm';
 import { EVMAlert } from '../../types/evm'
-import { earnedValueCalculator } from '../../services/earnedValueCalculator'
+import { earnedValueCalculator } from '@/services/earnedValueCalculator'
 import { toast } from 'sonner'
 
 interface EVMDashboardProps {

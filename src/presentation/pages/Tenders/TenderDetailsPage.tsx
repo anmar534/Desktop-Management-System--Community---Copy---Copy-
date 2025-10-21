@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Badge } from './ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
-import { EmptyState } from './PageLayout'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Badge } from '@/presentation/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs'
+import { EmptyState } from '@/presentation/components/layout/PageLayout'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,9 +13,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from './ui/alert-dialog'
-import { TenderResultsManager } from './TenderResultsManager'
-import { TenderQuickResults } from './TenderQuickResults'
+} from '@/presentation/components/ui/alert-dialog'
+import { TenderResultsManager } from './components/TenderResultsManager'
+import { TenderQuickResults } from './components/TenderQuickResults'
 import {
   Calendar,
   DollarSign,
@@ -37,19 +37,19 @@ import {
   ChevronUp,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { TenderStatusManager } from './TenderStatusManager'
+import { TenderStatusManager } from './components/TenderStatusManager'
 import { APP_EVENTS } from '@/events/bus'
-import { FileUploadService } from '../utils/fileUploadService'
-import type { UploadedFile } from '../utils/fileUploadService'
+import { FileUploadService } from '@/shared/utils/fileUploadService'
+import type { UploadedFile } from '@/shared/utils/fileUploadService'
 // (legacy pricingService import removed – unified hook supplies data)
 // Removed pricingDataSyncService (legacy dual-write path)
 // Removed normalizeAndEnrich / dedupePricingItems legacy enrichment utilities – unified hook supplies final items
-import { safeLocalStorage } from '../utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 // Removed direct snapshot utilities & metrics – unified hook manages snapshot reading
 // Removed useTenderPricing (legacy hook) – unified hook is now sole source of truth here
 import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
 import type { UnifiedTenderPricingResult } from '@/application/hooks/useUnifiedTenderPricing'
-import { getStatusColor } from '../utils/statusColors'
+import { getStatusColor } from '@/shared/utils/ui/statusColors'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import type { Tender } from '@/data/centralData'
@@ -2327,7 +2327,7 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
                   tender={localTender}
                   onUpdate={() => {
                     // تحديث البيانات باستخدام نظام الأحداث
-                    void import('../events/bus').then(({ APP_EVENTS, emit }) =>
+                    void import('@/events/bus').then(({ APP_EVENTS, emit }) =>
                       emit(APP_EVENTS.TENDER_UPDATED),
                     )
                   }}
@@ -2338,7 +2338,7 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
                   tender={localTender}
                   onUpdate={() => {
                     // تحديث البيانات باستخدام نظام الأحداث
-                    void import('../events/bus').then(({ APP_EVENTS, emit }) =>
+                    void import('@/events/bus').then(({ APP_EVENTS, emit }) =>
                       emit(APP_EVENTS.TENDER_UPDATED),
                     )
                   }}

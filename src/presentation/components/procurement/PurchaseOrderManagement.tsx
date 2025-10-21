@@ -55,11 +55,11 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { purchaseOrderService } from '../../application/services/purchaseOrderService'
+import { purchaseOrderService } from '@/application/services/purchaseOrderService'
 import type { PurchaseOrder, PurchaseOrderItem } from '../../types/contracts'
 import type { Project } from '@/data/centralData'
-import { formatCurrency } from '../../utils/formatters'
-import { useProjects } from '../../application/hooks'
+import { formatCurrency } from '@/shared/utils/formatters/formatters'
+import { useProjects } from '@/application/hooks'
 
 // أنواع البيانات المحلية
 interface PurchaseOrderFormData {

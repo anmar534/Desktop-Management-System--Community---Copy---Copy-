@@ -1,9 +1,9 @@
 // utils/tenderProgressCalculator.ts
 // دوال حساب نسبة التقدم في المنافسات
 
-import type { Tender } from '../data/centralData'
-import { FileUploadService } from './fileUploadService'
-import { safeLocalStorage, STORAGE_KEYS } from '../utils/storage'
+import type { Tender } from '@/data/centralData'
+import { FileUploadService } from '../fileUploadService'
+import { safeLocalStorage, STORAGE_KEYS } from '@/utils/storage'
 
 type TenderStatus = Tender['status'];
 

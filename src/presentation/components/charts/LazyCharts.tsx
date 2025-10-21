@@ -50,8 +50,8 @@ export const EVMDashboard = lazy(() =>
 /**
  * Lazy load MonthlyExpensesChart component
  */
-export const MonthlyExpensesChart = lazy(() => 
-  import('../MonthlyExpensesChart').then(module => ({
+export const MonthlyExpensesChart = lazy(() =>
+  import('../../pages/Financial/components/MonthlyExpensesChart').then(module => ({
     default: module.default || module.MonthlyExpensesChart
   }))
 );

@@ -19,9 +19,9 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { PageLayout, DetailCard, EmptyState } from './PageLayout'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
-import { InlineAlert } from './ui/inline-alert'
+import { PageLayout, DetailCard, EmptyState } from '@/presentation/components/layout/PageLayout'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { InlineAlert } from '@/presentation/components/ui/inline-alert'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,20 +31,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from './ui/alert-dialog'
-import { Button } from './ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
-import { Textarea } from './ui/textarea'
+} from '@/presentation/components/ui/alert-dialog'
+import { Button } from '@/presentation/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/presentation/components/ui/dialog'
+import { Input } from '@/presentation/components/ui/input'
+import { Label } from '@/presentation/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs'
+import { Textarea } from '@/presentation/components/ui/textarea'
 
 import { useFinancialState } from '@/application/context'
 import { useExpenses } from '@/application/hooks/useExpenses'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
-import { formatDateValue } from '@/utils/formatters'
+import { formatDateValue } from '@/shared/utils/formatters/formatters'
 import type { Expense, ExpenseCategory } from '@/data/expenseCategories'
 import {
   EXPENSE_FREQUENCIES,

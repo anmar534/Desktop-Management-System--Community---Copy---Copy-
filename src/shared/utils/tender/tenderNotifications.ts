@@ -1,7 +1,7 @@
 // نظام إشعارات المنافسات - لتنبيه المستخدمين بالمهام المطلوبة
 import { toast } from 'sonner';
 import { getTenderStatusInfo, getNextAction } from './tenderStatusHelpers';
-import { safeLocalStorage, STORAGE_KEYS } from '../utils/storage';
+import { safeLocalStorage, STORAGE_KEYS } from '@/utils/storage';
 import { authorizeDesktopNotification } from './desktopSecurity';
 import type { NotificationRequest, NotificationSeverity } from './desktopSecurity';
 import type { Tender } from '@/data/centralData';

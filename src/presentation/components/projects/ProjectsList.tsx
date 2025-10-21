@@ -8,7 +8,6 @@ import { useState, useEffect } from 'react'
 import { 
   Search, 
   Plus, 
-  Filter, 
   Download, 
   RefreshCw,
   Calendar,
@@ -25,13 +24,13 @@ import { Input } from '@/presentation/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Badge } from '@/presentation/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select'
-import type { EnhancedProject, ProjectFilters, ProjectSortOptions } from '../../types/projects'
-import { enhancedProjectService } from '../../services/enhancedProjectService'
+import type { Project } from '@/data/centralData'
+import { useFinancialState } from '@/application/context'
 
 interface ProjectsListProps {
-  onProjectSelect?: (project: EnhancedProject) => void
+  onProjectSelect?: (project: Project) => void
   onCreateProject?: () => void
-  onEditProject?: (project: EnhancedProject) => void
+  onEditProject?: (project: Project) => void
   className?: string
 }
 
@@ -41,56 +40,85 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({
   onEditProject,
   className = ''
 }) => {
-  const [projects, setProjects] = useState<EnhancedProject[]>([])
-  const [filteredProjects, setFilteredProjects] = useState<EnhancedProject[]>([])
-  const [loading, setLoading] = useState(true)
+  const financialState = useFinancialState()
+  const allProjects = financialState.projects.projects || []
+  const isLoading = financialState.projects.isLoading || false
+  const refreshProjects = financialState.projects.refreshProjects
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<string>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
-  // Load projects on component mount
-  useEffect(() => {
-    loadProjects()
-  }, [])
-
   // Apply filters and search when dependencies change
   useEffect(() => {
     applyFiltersAndSearch()
-  }, [projects, searchTerm, statusFilter, priorityFilter, sortBy, sortDirection])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allProjects, searchTerm, statusFilter, priorityFilter, sortBy, sortDirection])
 
-  const loadProjects = async () => {
+  const applyFiltersAndSearch = () => {
     try {
-      setLoading(true)
-      const projectsData = await enhancedProjectService.getAllProjects()
-      setProjects(projectsData)
-    } catch (error) {
-      console.error('Error loading projects:', error)
-      // TODO: Show error notification
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const applyFiltersAndSearch = async () => {
-    try {
-      const filters: ProjectFilters = {
-        searchTerm: searchTerm || undefined,
-        status: statusFilter !== 'all' ? [statusFilter as any] : undefined,
-        priority: priorityFilter !== 'all' ? [priorityFilter as any] : undefined
+      if (!Array.isArray(allProjects) || allProjects.length === 0) {
+        setFilteredProjects([])
+        return
       }
 
-      const sortOptions: ProjectSortOptions = {
-        field: sortBy as any,
-        direction: sortDirection
+      let filtered = [...allProjects]
+
+      // Apply search
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase()
+        filtered = filtered.filter(project => 
+          project.name?.toLowerCase().includes(term) ||
+          project.client?.toLowerCase().includes(term)
+        )
       }
 
-      const filtered = await enhancedProjectService.searchProjects(filters, sortOptions)
+      // Apply status filter
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(project => project.status === statusFilter)
+      }
+
+      // Apply priority filter
+      if (priorityFilter !== 'all') {
+        filtered = filtered.filter(project => project.priority === priorityFilter)
+      }
+
+      // Apply sorting
+      filtered.sort((a, b) => {
+        const aValue = a[sortBy as keyof Project]
+        const bValue = b[sortBy as keyof Project]
+
+        // Handle undefined values
+        if (aValue === undefined && bValue === undefined) return 0
+        if (aValue === undefined) return 1
+        if (bValue === undefined) return -1
+
+        // Handle string comparison
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const aStr = aValue.toLowerCase()
+          const bStr = bValue.toLowerCase()
+          if (aStr < bStr) return sortDirection === 'asc' ? -1 : 1
+          if (aStr > bStr) return sortDirection === 'asc' ? 1 : -1
+          return 0
+        }
+
+        // Handle number comparison
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortDirection === 'asc' ? aValue - bValue : bValue - aValue
+        }
+
+        // Default comparison
+        if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+        if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+        return 0
+      })
+
       setFilteredProjects(filtered)
     } catch (error) {
       console.error('Error filtering projects:', error)
-      setFilteredProjects(projects)
+      setFilteredProjects([])
     }
   }
 
@@ -172,7 +200,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({
     }).format(new Date(dateString))
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className={`flex items-center justify-center h-64 ${className}`} dir="rtl">
         <div className="text-center">
@@ -190,17 +218,17 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({
         <div>
           <h2 className="text-2xl font-bold text-gray-900">إدارة المشاريع</h2>
           <p className="text-gray-600 mt-1">
-            عرض وإدارة جميع المشاريع ({filteredProjects.length} من {projects.length})
+            عرض وإدارة جميع المشاريع ({filteredProjects.length} من {allProjects.length})
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={loadProjects}
-            disabled={loading}
+            onClick={() => refreshProjects && refreshProjects()}
+            disabled={isLoading}
           >
-            <RefreshCw className={`h-4 w-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ml-2 ${isLoading ? 'animate-spin' : ''}`} />
             تحديث
           </Button>
           <Button

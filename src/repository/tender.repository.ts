@@ -1,4 +1,4 @@
-import type { Tender } from '../data/centralData';
+import type { Tender } from '@/data/centralData';
 
 export interface ITenderRepository {
   getAll(): Promise<Tender[]>;

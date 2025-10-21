@@ -1,9 +1,9 @@
 import type { ComponentType } from 'react'
-import { Card, CardContent } from './ui/card'
-import { Button } from './ui/button'
-import { Progress } from './ui/progress'
-import { InlineAlert } from './ui/inline-alert'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
+import { Card, CardContent } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Progress } from '@/presentation/components/ui/progress'
+import { InlineAlert } from '@/presentation/components/ui/inline-alert'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
 import {
   DollarSign,
   TrendingUp,
@@ -16,7 +16,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { formatCurrency } from '@/utils/formatters'
+import { formatCurrency } from '@/shared/utils/formatters/formatters'
 import { useDashboardMetrics } from '@/application/hooks/useDashboardMetrics'
 
 interface FinancialSummaryCardProps {

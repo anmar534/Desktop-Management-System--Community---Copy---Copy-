@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Card, CardContent } from './ui/card'
-import { Button } from './ui/button'
-import { InlineAlert, type InlineAlertVariant } from './ui/inline-alert'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
-import { Progress } from './ui/progress'
-import { PageLayout, DetailCard, EmptyState } from './PageLayout'
-import { DeleteConfirmation } from './ui/confirmation-dialog'
+import { Card, CardContent } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { InlineAlert, type InlineAlertVariant } from '@/presentation/components/ui/inline-alert'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { Progress } from '@/presentation/components/ui/progress'
+import { PageLayout, DetailCard, EmptyState } from '@/presentation/components/layout/PageLayout'
+import { DeleteConfirmation } from '@/presentation/components/ui/confirmation-dialog'
 import {
   Target,
   Plus,
@@ -19,9 +19,9 @@ import {
   Trash2
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { formatCurrency } from '../data/centralData'
-import { formatDateValue } from '@/utils/formatters'
-import { getProgressColor } from '../utils/statusColors'
+import { formatCurrency } from '@/data/centralData'
+import { formatDateValue } from '@/shared/utils/formatters/formatters'
+import { getProgressColor } from '@/shared/utils/ui/statusColors'
 import { useBudgets } from '@/application/hooks/useBudgets'
 
 interface BudgetStatusSummary {

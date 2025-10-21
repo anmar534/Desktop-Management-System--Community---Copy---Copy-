@@ -17,7 +17,7 @@ import { APP_EVENTS, emit } from '@/events/bus'
 import { getTenderRepository, getBOQRepository } from '@/application/services/serviceRegistry'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import type { BreakdownRow, PercentagesSet } from './projectCostService'
-import type { PricingBreakdown, PricingData, PricingRow, PricingPercentages } from '@/types/pricing'
+import type { PricingBreakdown, PricingData, PricingRow, PricingPercentages } from '@/shared/types/pricing'
 
 type BreakdownRowInput = Partial<BreakdownRow> & { id?: string }
 

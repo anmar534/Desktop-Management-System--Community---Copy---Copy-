@@ -1,5 +1,5 @@
 import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { STORAGE_KEYS } from '@/shared/config/storageKeys'
 import type { EntityRelationSnapshot, IRelationRepository, LinkTenderOptions } from '../relations.repository'
 import type { ProjectPurchaseRelation, TenderProjectRelation } from '../types'
 

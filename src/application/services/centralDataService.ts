@@ -14,10 +14,10 @@ import { safeLocalStorage, isStorageReady, whenStorageReady } from '@/shared/uti
 import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import type { Tender, Project, Client } from '@/data/centralData'
 import { migrateTenderStatus, needsMigration } from '@/shared/utils/tender/tenderStatusMigration'
-import type { PurchaseOrder } from '@/types/contracts'
+import type { PurchaseOrder } from '@/shared/types/contracts'
 import { APP_EVENTS, emit } from '@/events/bus'
-import type { BOQData } from '@/types/boq'
-export type { BOQBreakdown, BOQItemValues, BOQItem, BOQData } from '@/types/boq'
+import type { BOQData } from '@/shared/types/boq'
+export type { BOQBreakdown, BOQItemValues, BOQItem, BOQData } from '@/shared/types/boq'
 
 // NOTE: يتم الآن استيراد المفاتيح من مصدر موحد ../config/storageKeys
 

@@ -9,8 +9,8 @@ import type {
   PricingViewItem,
   PricingBreakdown,
   PricingPercentages
-} from '@/types/pricing';
-import type { BOQTotals, BOQData } from '@/types/boq';
+} from '@/shared/types/pricing';
+import type { BOQTotals, BOQData } from '@/shared/types/boq';
 import { pricingDataSyncService } from '@/application/services/pricingDataSyncService';
 import { pricingService } from '@/application/services/pricingService';
 import { getBOQRepository } from '@/application/services/serviceRegistry';

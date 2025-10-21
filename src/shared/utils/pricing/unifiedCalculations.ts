@@ -1,4 +1,4 @@
-import type { Tender } from '../data/centralData'
+import type { Tender } from '@/data/centralData'
 import { developmentStatsService, type DevelopmentStats } from '@/application/services/developmentStatsService'
 import { purchaseOrderService } from '@/application/services/purchaseOrderService'
 

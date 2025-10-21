@@ -23,8 +23,8 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { financialStatementsService, type IncomeStatement as IncomeStatementType } from '../../services/financialStatementsService'
-import { formatCurrency } from '../../utils/formatters'
+import { financialStatementsService, type IncomeStatement as IncomeStatementType } from '@/services/financialStatementsService'
+import { formatCurrency } from '@/shared/utils/formatters/formatters'
 
 // ===========================
 // 📊 Types & Interfaces

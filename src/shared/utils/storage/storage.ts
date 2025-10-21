@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-globals */
+// This file is the safe wrapper for localStorage, so direct usage is required here
 import { STORAGE_KEYS } from '@/shared/constants/storageKeys';
 import { secureStore } from '../security/secureStore';
 import {
@@ -7,7 +9,7 @@ import {
   getSchemaVersionForKey,
   isPersistedEnvelope
 } from './storageSchema';
-import { recordAuditEvent } from './auditLog';
+import { recordAuditEvent } from '../auditLog';
 
 export { STORAGE_KEYS } from '@/shared/constants/storageKeys';
 

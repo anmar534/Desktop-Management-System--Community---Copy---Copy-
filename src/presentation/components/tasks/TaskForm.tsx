@@ -22,7 +22,7 @@ import { CalendarIcon, X, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
 import type { Task, CreateTaskRequest, UpdateTaskRequest, TaskPriority, TaskType } from '../../types/tasks'
-import { taskManagementService } from '../../services/taskManagementService'
+import { taskManagementService } from '@/services/taskManagementService'
 import { toast } from 'sonner'
 
 // مخطط التحقق من صحة البيانات

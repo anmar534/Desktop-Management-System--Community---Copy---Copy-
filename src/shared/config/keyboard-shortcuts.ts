@@ -3,7 +3,7 @@
  * Sprint 5.4.4: اختصارات لوحة المفاتيح
  */
 
-import type { KeyboardShortcut } from '@/hooks/useKeyboardShortcuts'
+import type { KeyboardShortcut } from '@/application/hooks/useKeyboardShortcuts'
 
 // ============================================================================
 // Global Shortcuts

@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/compone
 import { Badge } from '@/presentation/components/ui/badge';
 import { Button } from '@/presentation/components/ui/button';
 import { ScrollArea } from '@/presentation/components/ui/scroll-area';
-import type { PricingData } from '@/types/pricing';
+import type { PricingData } from '@/shared/types/pricing';
 import { CostSectionCard } from './CostSectionCard';
 
 type PricingSection = 'materials' | 'labor' | 'equipment' | 'subcontractors';

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Badge } from './ui/badge'
-import { PageLayout, DetailCard, EmptyState } from './PageLayout'
-import { DeleteConfirmation } from './ui/confirmation-dialog'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Badge } from '@/presentation/components/ui/badge'
+import { PageLayout, DetailCard, EmptyState } from '@/presentation/components/layout/PageLayout'
+import { DeleteConfirmation } from '@/presentation/components/ui/confirmation-dialog'
 import { 
   Landmark,
   Plus,
@@ -24,7 +24,7 @@ import { motion } from 'framer-motion'
 import { useBankAccounts } from '@/application/hooks/useBankAccounts'
 import { formatCurrency } from '@/data/centralData'
 import type { BankAccount } from '@/data/centralData'
-import { formatDateValue } from '@/utils/formatters'
+import { formatDateValue } from '@/shared/utils/formatters/formatters'
 
 interface BankAccountsProps {
   onSectionChange: (section: string) => void

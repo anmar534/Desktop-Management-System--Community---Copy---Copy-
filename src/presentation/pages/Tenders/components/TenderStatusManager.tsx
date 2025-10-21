@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Textarea } from './ui/textarea'
-import { Badge } from './ui/badge'
+import { Button } from '@/presentation/components/ui/button'
+import { Input } from '@/presentation/components/ui/input'
+import { Label } from '@/presentation/components/ui/label'
+import { Textarea } from '@/presentation/components/ui/textarea'
+import { Badge } from '@/presentation/components/ui/badge'
 import {
   Dialog,
   DialogContent,
@@ -13,15 +13,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from './ui/dialog'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
+} from '@/presentation/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select'
 import { Trophy, XCircle, X, DollarSign, FileText, AlertTriangle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useSystemData } from '@/application/hooks/useSystemData'
 import { toast } from 'sonner'
 import type { Tender } from '@/data/centralData'
-import { APP_EVENTS, emit } from '../events/bus'
-import { TenderNotificationService } from '../utils/tenderNotifications'
+import { APP_EVENTS, emit } from '@/events/bus'
+import { TenderNotificationService } from '@/shared/utils/tender/tenderNotifications'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 
 type AllowedStatus = 'cancelled' | 'won' | 'lost' | 'submitted'

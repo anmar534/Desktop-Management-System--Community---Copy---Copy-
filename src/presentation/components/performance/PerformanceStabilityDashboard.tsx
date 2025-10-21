@@ -36,10 +36,10 @@ import type {
   SystemHealth,
   PerformanceMetrics,
   OptimizationRule
-} from '../../services/performanceOptimizationService';
+} from '@/services/performanceOptimizationService';
 import { 
   performanceOptimizationService
-} from '../../services/performanceOptimizationService'
+} from '@/services/performanceOptimizationService'
 
 interface PerformanceStabilityDashboardProps {
   className?: string

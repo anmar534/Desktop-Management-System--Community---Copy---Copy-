@@ -16,10 +16,10 @@ import type {
   SeasonalityAnalysis,
   EarlyWarningIndicator,
   FinancialKPI
-} from '../../services/financialAnalyticsService';
+} from '@/services/financialAnalyticsService';
 import { 
   FinancialAnalyticsService
-} from '../../services/financialAnalyticsService';
+} from '@/services/financialAnalyticsService';
 import { 
   LineChart, 
   Line, 

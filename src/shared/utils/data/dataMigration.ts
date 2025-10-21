@@ -10,8 +10,8 @@
  */
 
 import { safeLocalStorage } from './storage'
-import { analyticsService } from '../services/analyticsService'
-import { lessonsLearnedService } from '../services/lessonsLearnedService'
+import { analyticsService } from '@/services/analyticsService'
+import { lessonsLearnedService } from '@/services/lessonsLearnedService'
 import { dataImportService } from './dataImport'
 import type { BidPerformance } from '../types/analytics'
 import type { Tender } from '../types/contracts'

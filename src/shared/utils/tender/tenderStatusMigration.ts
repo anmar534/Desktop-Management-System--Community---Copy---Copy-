@@ -1,7 +1,7 @@
 // utils/tenderStatusMigration.ts
 // دوال لترقية حالات المنافسات من النظام القديم إلى الجديد
 
-import type { Tender } from '../data/centralData'
+import type { Tender } from '@/data/centralData'
 
 type TenderStatus = Tender['status'];
 

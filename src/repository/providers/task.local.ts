@@ -18,7 +18,7 @@ import type {
   TaskPriority
 } from '../../types/tasks'
 import type { TaskRepository } from '../task.repository'
-import { safeLocalStorage } from '../../utils/storage'
+import { safeLocalStorage } from '@/utils/storage'
 
 class LocalTaskRepository implements TaskRepository {
   private readonly STORAGE_KEY = 'tasks'

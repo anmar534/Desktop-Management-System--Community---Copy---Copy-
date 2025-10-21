@@ -21,8 +21,8 @@ import {
   TrendingUp, TrendingDown, DollarSign, Users, Building2, 
   Target, Award, AlertTriangle, RefreshCw, Download, Filter
 } from 'lucide-react'
-import type { ProjectProfitability, ClientProfitability } from '../../services/profitabilityAnalysisService';
-import { ProfitabilityAnalysisService } from '../../services/profitabilityAnalysisService'
+import type { ProjectProfitability, ClientProfitability } from '@/services/profitabilityAnalysisService';
+import { ProfitabilityAnalysisService } from '@/services/profitabilityAnalysisService'
 
 interface ProfitabilityAnalysisProps {
   className?: string

@@ -1,10 +1,10 @@
 // مدير نتائج المنافسات - واجهة سهلة لتحديث نتائج المنافسات
 import { useState } from 'react'
-import { Button } from './ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Badge } from './ui/badge'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
+import { Button } from '@/presentation/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Badge } from '@/presentation/components/ui/badge'
+import { Input } from '@/presentation/components/ui/input'
+import { Label } from '@/presentation/components/ui/label'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +14,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from './ui/alert-dialog'
+} from '@/presentation/components/ui/alert-dialog'
 import {
   Dialog,
   DialogContent,
@@ -22,13 +22,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog'
+} from '@/presentation/components/ui/dialog'
 import { Trophy, XCircle, Clock, DollarSign, FileText, AlertCircle } from 'lucide-react'
 import { useSystemData } from '@/application/hooks/useSystemData'
 import { toast } from 'sonner'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
-import { formatDateValue } from '@/utils/formatters'
-import { TenderNotificationService } from '../utils/tenderNotifications'
+import { formatDateValue } from '@/shared/utils/formatters/formatters'
+import { TenderNotificationService } from '@/shared/utils/tender/tenderNotifications'
 import { ProjectAutoCreationService } from '@/application/services/projectAutoCreation'
 import type { Tender } from '@/data/centralData'
 
@@ -131,7 +131,7 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
         onUpdate()
       } else {
         // تحديث الصفحة الحالية دون إعادة توجيه
-        const { APP_EVENTS, emit } = await import('../events/bus')
+        const { APP_EVENTS, emit } = await import('@/events/bus')
         emit(APP_EVENTS.TENDER_UPDATED)
       }
     } catch (error) {
@@ -182,7 +182,7 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
         onUpdate()
       } else {
         // تحديث الصفحة الحالية دون إعادة توجيه
-        const { APP_EVENTS, emit } = await import('../events/bus')
+        const { APP_EVENTS, emit } = await import('@/events/bus')
         emit(APP_EVENTS.TENDER_UPDATED)
       }
     } catch (error) {

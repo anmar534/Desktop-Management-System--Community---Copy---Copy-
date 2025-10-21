@@ -30,7 +30,7 @@ import {
   Lightbulb
 } from 'lucide-react'
 
-import { decisionSupportService } from '../../services/decisionSupportService'
+import { decisionSupportService } from '@/services/decisionSupportService'
 import type { 
   DecisionScenario, 
   BidNoBidFramework, 

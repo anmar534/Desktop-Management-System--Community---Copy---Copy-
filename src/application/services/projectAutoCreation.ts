@@ -9,7 +9,7 @@ import type { NormalizedPricingItem } from '@/shared/utils/pricing/normalizePric
 import { safeLocalStorage } from '@/shared/utils/storage/storage';
 import { STORAGE_KEYS } from '@/shared/constants/storageKeys';
 import type { EntityRelationSnapshot } from '@/repository/relations.repository';
-import type { BOQData } from '@/types/boq';
+import type { BOQData } from '@/shared/types/boq';
 
 export interface ProjectCreationOptions {
   copyPricingData?: boolean;

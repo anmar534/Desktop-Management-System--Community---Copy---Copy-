@@ -3,10 +3,10 @@
 
 import { buildPricingMap } from './normalizePricing'
 import { enrichPricingItems, aggregateTotals, getEffectivePercentages, DEFAULT_PERCENTAGES } from '@/application/services/pricingEngine'
-import { DESCRIPTION_ALIASES } from './pricingConstants'
+import { DESCRIPTION_ALIASES } from '@/shared/constants/pricingConstants'
 import type { EnrichedPricingItem, ItemBreakdown } from '@/application/services/pricingEngine'
 import type { DefaultPercentages } from '@/application/services/pricingService'
-import type { PricingData } from '@/types/pricing'
+import type { PricingData } from '@/shared/types/pricing'
 
 interface ImportMetaEnvLike {
   env?: Record<string, unknown>

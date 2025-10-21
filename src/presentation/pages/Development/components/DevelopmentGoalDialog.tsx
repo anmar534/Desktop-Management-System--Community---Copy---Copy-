@@ -16,18 +16,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
+} from '@/presentation/components/ui/dialog';
+import { Button } from '@/presentation/components/ui/button';
+import { Input } from '@/presentation/components/ui/input';
+import { Label } from '@/presentation/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select';
-import { Textarea } from './ui/textarea';
+} from '@/presentation/components/ui/select';
+import { Textarea } from '@/presentation/components/ui/textarea';
 import type { DevelopmentGoal } from '@/application/hooks/useDevelopment';
 import { toast } from 'sonner';
 import {

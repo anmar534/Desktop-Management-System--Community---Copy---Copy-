@@ -2,7 +2,7 @@ import { loadFromStorage, removeFromStorage } from './storage'
 import { recordAuditEvent } from './auditLog'
 import { SystemEvents } from './eventManager'
 import { cloneValue } from './storageSchema'
-import type { TenderBackupEntry } from '@/types/pricing'
+import type { TenderBackupEntry } from '@/shared/types/pricing'
 import { backupStorage } from '@/infrastructure/storage/modules/BackupStorage'
 
 const BACKUP_STORE_VERSION = '1.0.0'

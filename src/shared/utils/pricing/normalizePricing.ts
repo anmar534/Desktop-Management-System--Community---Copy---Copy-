@@ -1,10 +1,10 @@
 // ✅ أداة مركزية لتطبيع بيانات التسعير وإصلاح BOQ
 // سيتم لاحقاً إزالة console.debug بعد التحقق
 
-import type { BOQData, BOQItem } from '@/types/boq'
+import type { BOQData, BOQItem } from '@/shared/types/boq'
 import type { PurchaseOrder } from '@/application/services/purchaseOrderService'
 import type { Expense } from '@/data/expenseCategories'
-import { DESCRIPTION_ALIASES, UNIT_ALIASES, QUANTITY_ALIASES, TOTAL_ALIASES, UNIT_PRICE_ALIASES } from './pricingConstants'
+import { DESCRIPTION_ALIASES, UNIT_ALIASES, QUANTITY_ALIASES, TOTAL_ALIASES, UNIT_PRICE_ALIASES } from '@/shared/constants/pricingConstants'
 
 type UnknownRecord = Record<string, unknown>
 

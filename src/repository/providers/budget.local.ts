@@ -1,7 +1,7 @@
 import type { IBudgetRepository } from '@/repository/budget.repository'
 import type { Budget, BudgetCategory } from '@/data/centralData'
 import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { STORAGE_KEYS } from '@/shared/config/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 
 const generateId = () => `budget_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`

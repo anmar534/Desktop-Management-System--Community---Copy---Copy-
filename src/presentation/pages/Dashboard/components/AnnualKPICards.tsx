@@ -1,6 +1,6 @@
-import { Card, CardContent } from './ui/card'
-import { Progress } from './ui/progress'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
+import { Card, CardContent } from '@/presentation/components/ui/card'
+import { Progress } from '@/presentation/components/ui/progress'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
 import { 
   Trophy,
   Building2,
@@ -15,11 +15,11 @@ import {
   Zap
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { getProgressColor } from '../utils/statusColors'
+import { getProgressColor } from '@/shared/utils/ui/statusColors'
 import { useFinancialState } from '@/application/context'
 import type { Tender, Project } from '@/data/centralData'
 // Removed unused imports of systemStats and formatCurrency
-import { calculateTenderStats } from '../calculations/tender'
+import { calculateTenderStats } from '@/calculations/tender'
 
 interface AnnualKPICardsProps {
   onSectionChange: (

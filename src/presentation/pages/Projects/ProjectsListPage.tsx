@@ -5,7 +5,7 @@
  */
 
 import type React from 'react'
-import { ProjectsManager } from '../components/projects/ProjectsManager'
+import { ProjectsManager } from '@/presentation/components/projects/ProjectsManager'
 
 export const ProjectsPage: React.FC = () => {
   return (

@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Card, CardContent } from './ui/card'
-import { Button } from './ui/button'
-import { InlineAlert } from './ui/inline-alert'
-import { Progress } from './ui/progress'
-import { Input } from './ui/input'
+import { Card, CardContent } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { InlineAlert } from '@/presentation/components/ui/inline-alert'
+import { Progress } from '@/presentation/components/ui/progress'
+import { Input } from '@/presentation/components/ui/input'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,11 +13,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from './ui/alert-dialog'
-import { PageLayout, EmptyState, DetailCard } from './PageLayout'
-import { NewProjectForm } from './NewProjectForm'
-import { EnhancedProjectDetails } from './EnhancedProjectDetails'
-import { Clients } from './Clients'
+} from '@/presentation/components/ui/alert-dialog'
+import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'
+import { NewProjectForm } from './components/NewProjectForm'
+import { EnhancedProjectDetails } from './components/EnhancedProjectDetails'
+import { Clients } from './components/Clients'
 import {
   Building2,
   Users,
@@ -35,12 +35,12 @@ import {
   ArrowRight,
   ListChecks,
 } from 'lucide-react'
-import { EntityActions } from './ui/ActionButtons'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
+import { EntityActions } from '@/presentation/components/ui/ActionButtons'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
 import { motion } from 'framer-motion'
-import { formatCurrency, type CurrencyOptions } from '../utils/formatters'
+import { formatCurrency, type CurrencyOptions } from '@/shared/utils/formatters/formatters'
 import type { Project } from '@/data/centralData'
-import { getHealthColor } from '../utils/statusColors'
+import { getHealthColor } from '@/shared/utils/ui/statusColors'
 import { toast } from 'sonner'
 import { useFinancialState } from '@/application/context'
 

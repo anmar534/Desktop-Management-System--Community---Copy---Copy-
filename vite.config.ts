@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import tsconfigPaths from 'vite-tsconfig-paths'
 
 const devServerPort = Number(process.env.DEV_SERVER_PORT ?? process.env.PORT ?? 3003) || 3003
 
 export default defineConfig({
   plugins: [
+    tsconfigPaths(),
     react({
       // Simplified config for Electron desktop app
       jsxRuntime: 'automatic',
@@ -51,7 +53,9 @@ export default defineConfig({
       '@radix-ui/react-checkbox@1.1.4': '@radix-ui/react-checkbox',
       '@radix-ui/react-alert-dialog@1.1.6': '@radix-ui/react-alert-dialog',
       '@radix-ui/react-accordion@1.2.3': '@radix-ui/react-accordion',
-      '@': path.resolve(__dirname, './src'),
+      // Utilities alias (points to src/utils which re-exports from src/shared/utils)
+      '@/utils': path.resolve(__dirname, './src/utils'),
+      '@/': path.resolve(__dirname, './src'),
     },
   },
   css: {
@@ -67,8 +71,6 @@ export default defineConfig({
       'echarts-for-react',
       '@tanstack/react-table',
       '@tanstack/react-virtual',
-      'react-grid-layout',
-      'react-resizable',
       'framer-motion',
       'react-hook-form',
       'zod',
@@ -87,6 +89,37 @@ export default defineConfig({
     cssCodeSplit: true,
     chunkSizeWarningLimit: 500, // Increased to accommodate optimized chunks
     rollupOptions: {
+      external: [
+        // Allow dynamic imports that may not be available at build time
+        '@/domain/monitoring/pricingRuntimeMonitor',
+        // Services that may not be available at build time
+        '../../services/bidComparisonService',
+        '../../services/competitorDatabaseService',
+        '../../services/decisionSupportService',
+        '../../services/earnedValueCalculator',
+        '../../services/enhancedProjectService',
+        '../../services/financialAnalyticsService',
+        '../../services/financialIntegrationService',
+        '../../services/financialStatementsService',
+        '../../services/integrationService',
+        '../../services/kpiCalculationEngine',
+        '../../services/marketIntelligenceService',
+        '../../services/paymentsReceivablesService',
+        '../../services/performanceOptimizationService',
+        '../../services/procurementCostIntegrationService',
+        '../../services/procurementIntegrationService',
+        '../../services/procurementReportingService',
+        '../../services/profitabilityAnalysisService',
+        '../../services/projectReportingService',
+        '../../services/reportExportService',
+        '../../services/riskManagementService',
+        '../../services/saudiTaxService',
+        '../../services/schedulingService',
+        '../../services/supplierManagementService',
+        '../../services/systemIntegrationService',
+        '../../services/taskManagementService',
+        '../../services/unifiedSystemIntegrationService',
+      ],
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {

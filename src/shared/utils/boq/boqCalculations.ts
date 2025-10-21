@@ -1,4 +1,4 @@
-import type { BOQItem } from '@/types/boq'
+import type { BOQItem } from '@/shared/types/boq'
 
 export interface BOQPlannedActual {
   planned: number

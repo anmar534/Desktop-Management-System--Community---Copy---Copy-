@@ -26,8 +26,8 @@ import {
   Zap,
   BarChart3
 } from 'lucide-react';
-import type { IntegrationSettings, SyncResult } from '../../services/financialIntegrationService';
-import { FinancialIntegrationService } from '../../services/financialIntegrationService';
+import type { IntegrationSettings, SyncResult } from '@/services/financialIntegrationService';
+import { FinancialIntegrationService } from '@/services/financialIntegrationService';
 
 export const FinancialIntegration: React.FC = () => {
   const [service] = useState(() => new FinancialIntegrationService());

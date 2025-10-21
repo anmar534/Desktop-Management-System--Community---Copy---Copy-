@@ -1,18 +1,18 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Textarea } from './ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { Checkbox } from './ui/checkbox'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Input } from '@/presentation/components/ui/input'
+import { Label } from '@/presentation/components/ui/label'
+import { Textarea } from '@/presentation/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/presentation/components/ui/select'
+import { Checkbox } from '@/presentation/components/ui/checkbox'
 import { 
   FileBarChart,
   ArrowRight,
   Save,
   Play
 } from 'lucide-react'
-import { formatDateValue } from '../utils/formatters'
+import { formatDateValue } from '@/shared/utils/formatters/formatters'
 
 interface NewReportProps {
   onSectionChange: (section: string) => void

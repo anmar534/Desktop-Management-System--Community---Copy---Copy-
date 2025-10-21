@@ -42,7 +42,7 @@ import {
   type MarketAnalysisResult,
   type MarketIntelligenceFilters,
   type MarketAlert
-} from '../../services/marketIntelligenceService'
+} from '@/services/marketIntelligenceService'
 
 // ===== COMPONENT PROPS =====
 

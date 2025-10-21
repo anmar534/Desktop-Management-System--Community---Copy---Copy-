@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { safeLocalStorage } from '../../utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 
 // ============================================================================
 // Types

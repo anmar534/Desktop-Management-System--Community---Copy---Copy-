@@ -1,7 +1,7 @@
 import type { ITenderRepository } from '../tender.repository';
 import type { Tender } from '@/data/centralData';
 import { safeLocalStorage } from '@/utils/storage';
-import { STORAGE_KEYS } from '@/config/storageKeys';
+import { STORAGE_KEYS } from '@/shared/config/storageKeys';
 import { migrateTenderStatus, needsMigration } from '@/shared/utils/tender/tenderStatusMigration';
 import { getRelationRepository } from '@/application/services/serviceRegistry';
 import { bus, APP_EVENTS, emit } from '@/events/bus';

@@ -1,1 +1,1 @@
-export { PageLayout, EmptyState, DetailStats, DetailCard } from './ui/layout/PageLayout'
+export { PageLayout, EmptyState, DetailStats, DetailCard } from '../ui/layout/PageLayout'

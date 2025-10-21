@@ -12,7 +12,7 @@
  * جميع البيانات محفوظة محلياً باستخدام electron-store في التطبيق
  */
 
-import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { safeLocalStorage } from '@/utils/storage'
 import { BASE_CURRENCY } from '@/shared/config/currency'
 import {
   formatCurrency as formatUnifiedCurrency,

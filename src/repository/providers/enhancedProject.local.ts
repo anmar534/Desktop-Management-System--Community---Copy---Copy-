@@ -21,9 +21,9 @@ import type {
   ProjectMilestone
 } from '../../types/projects'
 import type { Status, Priority, Health } from '../../types/contracts'
-import { safeLocalStorage } from '../../utils/storage'
+import { safeLocalStorage } from '@/utils/storage'
 import { STORAGE_KEYS } from '../../config/storageKeys'
-import { APP_EVENTS, emit } from '../../events/bus'
+import { APP_EVENTS, emit } from '@/events/bus'
 
 const ENHANCED_PROJECTS_KEY = 'enhanced_projects'
 const PROJECT_LINKS_KEY = 'project_tender_links'

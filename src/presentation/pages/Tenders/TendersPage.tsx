@@ -21,13 +21,13 @@ import {
   ListChecks,
 } from 'lucide-react'
 
-import { APP_EVENTS } from '../events/bus'
-import { safeLocalStorage } from '../utils/storage'
-import { getDaysRemaining, isTenderExpired } from '../utils/tenderProgressCalculator'
-import type { Tender } from '../data/centralData'
+import { APP_EVENTS } from '@/events/bus'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { getDaysRemaining, isTenderExpired } from '@/utils/tenderProgressCalculator'
+import type { Tender } from '@/data/centralData'
 
-import { PageLayout, EmptyState, DetailCard } from './PageLayout'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
+import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,10 +37,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from './ui/alert-dialog'
-import { TenderPricingProcess, type TenderWithPricingSources } from './TenderPricingProcess'
-import { TenderDetails } from './TenderDetails'
-import { TenderResultsManager } from './TenderResultsManager'
+} from '@/presentation/components/ui/alert-dialog'
+import { TenderPricingProcess, type TenderWithPricingSources } from './components/TenderPricingProcess'
+import { TenderDetails } from './components/TenderDetails'
+import { TenderResultsManager } from './components/TenderResultsManager'
 import { EnhancedTenderCard } from './bidding/EnhancedTenderCard'
 
 import { useFinancialState } from '@/application/context'

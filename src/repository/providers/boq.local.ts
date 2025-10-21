@@ -1,5 +1,5 @@
 import type { IBOQRepository } from '../boq.repository'
-import type { BOQData } from '@/types/boq'
+import type { BOQData } from '@/shared/types/boq'
 import { boqStorage } from '@/infrastructure/storage/modules/BOQStorage'
 import { APP_EVENTS, emit } from '@/events/bus'
 

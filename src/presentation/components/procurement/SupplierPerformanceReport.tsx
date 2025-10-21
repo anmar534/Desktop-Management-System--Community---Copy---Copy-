@@ -20,8 +20,8 @@ import {
   BarChart3,
   PieChart
 } from 'lucide-react'
-import type { SupplierPerformanceMetrics, ProcurementKPI } from '../../services/procurementReportingService';
-import { procurementReportingService } from '../../services/procurementReportingService'
+import type { SupplierPerformanceMetrics, ProcurementKPI } from '@/services/procurementReportingService';
+import { procurementReportingService } from '@/services/procurementReportingService'
 
 interface SupplierPerformanceReportProps {
   className?: string

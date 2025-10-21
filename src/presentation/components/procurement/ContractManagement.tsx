@@ -55,11 +55,11 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import type { 
   SupplierContract, 
-  Supplier} from '../../services/supplierManagementService';
+  Supplier} from '@/services/supplierManagementService';
 import {
   supplierManagementService 
-} from '../../services/supplierManagementService'
-import { useCurrencyFormatter } from '../../hooks/useCurrencyFormatter'
+} from '@/services/supplierManagementService'
+import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 
 // ===========================
 // 📊 Types & Interfaces

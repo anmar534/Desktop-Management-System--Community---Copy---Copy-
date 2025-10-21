@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Card, CardContent } from './ui/card'
-import { Button } from './ui/button'
-import { Progress } from './ui/progress'
-import { PageLayout, DetailCard, EmptyState } from './PageLayout'
+import { Card, CardContent } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Progress } from '@/presentation/components/ui/progress'
+import { PageLayout, DetailCard, EmptyState } from '@/presentation/components/layout/PageLayout'
 import { 
   FileText,
   Plus,
@@ -13,15 +13,15 @@ import {
   Calendar,
   ArrowRight
 } from 'lucide-react'
-import { EntityActions, ActionButton } from './ui/ActionButtons'
+import { EntityActions, ActionButton } from '@/presentation/components/ui/ActionButtons'
 import { motion } from 'framer-motion'
-import { formatCurrency } from '../data/centralData'
-import { formatDateValue } from '@/utils/formatters'
+import { formatCurrency } from '@/data/centralData'
+import { formatDateValue } from '@/shared/utils/formatters/formatters'
 import { toast } from 'sonner'
 import { useInvoices } from '@/application/hooks/useInvoices'
-import { DeleteConfirmation } from './ui/confirmation-dialog'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
-import { InlineAlert } from './ui/inline-alert'
+import { DeleteConfirmation } from '@/presentation/components/ui/confirmation-dialog'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { InlineAlert } from '@/presentation/components/ui/inline-alert'
 
 interface InvoiceStatusInfo {
   text: string;

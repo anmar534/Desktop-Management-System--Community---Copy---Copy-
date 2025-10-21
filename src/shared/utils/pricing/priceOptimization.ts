@@ -13,7 +13,7 @@
  */
 
 import type { BidPerformance, CompetitorData } from '../types/analytics'
-import { predictWinProbability, type BidOptimization } from './predictionModels'
+import { predictWinProbability, type BidOptimization } from '../ml/predictionModels'
 
 // ============================================================================
 // OPTIMIZATION INTERFACES

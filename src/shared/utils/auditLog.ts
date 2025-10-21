@@ -1,6 +1,6 @@
-import { STORAGE_KEYS } from '@/config/storageKeys';
+import { STORAGE_KEYS } from '@/shared/config/storageKeys';
 import { secureStore } from './secureStore';
-import { cloneValue, decodeStoredValue, encodeValueForStorage } from './storageSchema';
+import { cloneValue, decodeStoredValue, encodeValueForStorage } from './storage/storageSchema';
 
 const AUDIT_LOG_KEY = STORAGE_KEYS.SECURITY_AUDIT_LOG;
 const MAX_EVENTS = 500;
@@ -97,7 +97,7 @@ const normalizeMetadata = (metadata: Record<string, unknown> | undefined): Recor
 };
 
 const loadEvents = async (): Promise<AuditEvent[]> => {
-  const stored = await secureStore.get<unknown>(AUDIT_LOG_KEY);
+  const stored = await secureStore.get(AUDIT_LOG_KEY);
   if (stored === undefined) {
     return [];
   }

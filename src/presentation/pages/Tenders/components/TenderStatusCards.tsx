@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { EmptyState } from './PageLayout'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { EmptyState } from '@/presentation/components/layout/PageLayout'
 import {
   Trophy,
   Clock,
@@ -14,14 +14,14 @@ import {
   Zap
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { formatCurrency } from '../utils/formatters'
+import { formatCurrency } from '@/shared/utils/formatters/formatters'
 import { useMemo } from 'react'
 import { useFinancialState } from '@/application/context'
-import { calculateTenderStats } from '../calculations/tender'
-import type { Tender } from '../data/centralData'
-import { InlineAlert } from './ui/inline-alert'
-import { StatusBadge } from './ui/status-badge'
-import { cn } from './ui/utils'
+import { calculateTenderStats } from '@/calculations/tender'
+import type { Tender } from '@/data/centralData'
+import { InlineAlert } from '@/presentation/components/ui/inline-alert'
+import { StatusBadge } from '@/presentation/components/ui/status-badge'
+import { cn } from '@/presentation/components/ui/utils'
 
 interface TenderStatusCardsProps {
   onSectionChange: (

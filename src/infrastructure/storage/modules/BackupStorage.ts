@@ -10,7 +10,7 @@
 import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import type { IStorageModule } from '../core/types'
 import { StorageManager } from '../core/StorageManager'
-import type { TenderBackupEntry } from '@/types/pricing'
+import type { TenderBackupEntry } from '@/shared/types/pricing'
 
 // ============================================================================
 // Tender Pricing Backup Types (from backupManager.ts)

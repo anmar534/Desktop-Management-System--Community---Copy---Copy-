@@ -13,7 +13,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import type { CompetitorData } from '@/shared/types/competitive'
 import { competitiveService } from '@/application/services/competitiveService'
-import { formatCurrency, formatPercentage } from '../../utils/analyticsUtils'
+import { formatCurrency, formatPercentage } from '@/utils/analyticsUtils'
 import { Badge } from '../ui/badge'
 
 const STATUS_BADGE_VARIANTS: Record<'active' | 'inactive' | 'monitoring' | 'archived', string> = {

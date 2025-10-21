@@ -221,3 +221,107 @@ export interface CompetitiveIntelligenceReport {
   updatedAt: Date
 }
 
+/**
+ * Alias for CompetitiveIntelligenceReport
+ * @deprecated Use CompetitiveIntelligenceReport instead
+ */
+export type IntelligenceReport = CompetitiveIntelligenceReport
+
+/**
+ * Competitive alert configuration
+ */
+export interface CompetitiveAlert {
+  /** Alert identifier */
+  id: string
+  /** Alert name */
+  name: string
+  /** Alert description */
+  description: string
+  /** Alert type */
+  type: 'competitor_activity' | 'market_change' | 'trend_shift' | 'opportunity' | 'threat'
+  /** Alert severity */
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  /** Monitoring criteria */
+  criteria: {
+    metric: string
+    condition: 'above' | 'below' | 'equals' | 'changes'
+    threshold: number | string
+  }[]
+  /** Alert recipients */
+  recipients: string[]
+  /** Alert frequency */
+  frequency: 'realtime' | 'daily' | 'weekly' | 'monthly'
+  /** Is alert active */
+  isActive: boolean
+  /** Last triggered */
+  lastTriggered?: Date
+  /** Created date */
+  createdAt: Date
+  /** Last updated */
+  updatedAt: Date
+}
+
+/**
+ * Competitor data
+ */
+export interface CompetitorData {
+  /** Competitor identifier */
+  id: string
+  /** Company name */
+  name: string
+  /** Market position */
+  marketPosition: number
+  /** Market share percentage */
+  marketShare: number
+  /** Strengths */
+  strengths: string[]
+  /** Weaknesses */
+  weaknesses: string[]
+  /** Key products/services */
+  products: string[]
+  /** Pricing strategy */
+  pricingStrategy: string
+  /** Target markets */
+  targetMarkets: string[]
+  /** Recent activities */
+  recentActivities: {
+    date: Date
+    activity: string
+    impact: 'low' | 'medium' | 'high'
+  }[]
+}
+
+/**
+ * Competitive dashboard data
+ */
+export interface CompetitiveDashboard {
+  /** Dashboard identifier */
+  id: string
+  /** Dashboard name */
+  name: string
+  /** Market overview */
+  marketOverview: {
+    marketSize: number
+    growthRate: number
+    topCompetitors: CompetitorData[]
+    marketTrends: MarketTrend[]
+  }
+  /** Performance metrics */
+  performanceMetrics: {
+    marketShare: number
+    marketPosition: number
+    brandStrength: number
+    customerSatisfaction: number
+  }
+  /** Opportunities */
+  opportunities: MarketOpportunity[]
+  /** Active alerts */
+  activeAlerts: CompetitiveAlert[]
+  /** Recent reports */
+  recentReports: CompetitiveIntelligenceReport[]
+  /** Key insights */
+  keyInsights: string[]
+  /** Last updated */
+  lastUpdated: Date
+}
+

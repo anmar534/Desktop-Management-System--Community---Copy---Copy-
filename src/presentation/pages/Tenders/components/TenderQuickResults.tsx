@@ -4,11 +4,11 @@
  */
 
 import { useState } from 'react'
-import { Button } from './ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Textarea } from './ui/textarea'
+import { Button } from '@/presentation/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Input } from '@/presentation/components/ui/input'
+import { Label } from '@/presentation/components/ui/label'
+import { Textarea } from '@/presentation/components/ui/textarea'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,12 +18,12 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from './ui/alert-dialog'
+} from '@/presentation/components/ui/alert-dialog'
 import { Trophy, XCircle, AlertCircle, Zap } from 'lucide-react'
 import { useFinancialState } from '@/application/context'
-import { APP_EVENTS, emit } from '../events/bus'
+import { APP_EVENTS, emit } from '@/events/bus'
 import { toast } from 'sonner'
-import { TenderNotificationService } from '../utils/tenderNotifications'
+import { TenderNotificationService } from '@/shared/utils/tender/tenderNotifications'
 import { ProjectAutoCreationService } from '@/application/services/projectAutoCreation'
 import type { Tender } from '@/data/centralData'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'

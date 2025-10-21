@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Badge } from './ui/badge'
-import { Progress } from './ui/progress'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Badge } from '@/presentation/components/ui/badge'
+import { Progress } from '@/presentation/components/ui/progress'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs'
 import { BankStatementProcessor } from './BankStatementProcessor'
 import type { BankTransaction } from './BankStatementProcessor'
 import {
@@ -20,7 +20,7 @@ import {
   Building2,
   Tag
 } from 'lucide-react'
-import { formatCurrency } from '../data/centralData'
+import { formatCurrency } from '@/data/centralData'
 import { motion } from 'framer-motion'
 
 interface BankStatementAnalyzerProps {

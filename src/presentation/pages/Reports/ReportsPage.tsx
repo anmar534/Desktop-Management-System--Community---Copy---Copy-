@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { StatusBadge, type StatusBadgeProps } from './ui/status-badge'
-import { PageLayout, DetailCard, EmptyState } from './PageLayout'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { PageLayout, DetailCard, EmptyState } from '@/presentation/components/layout/PageLayout'
 import type { LucideIcon } from 'lucide-react'
 import {
   FileText,
@@ -27,8 +27,8 @@ import {
   HardDrive,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { formatCurrency, calculateDaysLeft } from '../data/centralData'
-import { calculateTenderStats } from '../calculations/tender'
+import { formatCurrency, calculateDaysLeft } from '@/data/centralData'
+import { calculateTenderStats } from '@/calculations/tender'
 import { useFinancialState } from '@/application/context'
 
 type ReportType = 'projects' | 'financial' | 'tenders' | 'clients' | 'kpi' | 'risk' | 'unknown'

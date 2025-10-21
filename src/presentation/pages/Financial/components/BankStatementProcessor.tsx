@@ -1,5 +1,5 @@
 // معالج متخصص لكشوف الحسابات البنكية وربطها بالمشاريع
-import { projectsData } from '../data/centralData'
+import { projectsData } from '@/data/centralData'
 
 export interface BankTransaction {
   id: string

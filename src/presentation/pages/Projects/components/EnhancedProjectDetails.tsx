@@ -13,22 +13,22 @@
 /* eslint-disable no-console */
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
-import { Button } from './ui/button'
-import { Badge } from './ui/badge'
-import { Progress } from './ui/progress'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Textarea } from './ui/textarea'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Badge } from '@/presentation/components/ui/badge'
+import { Progress } from '@/presentation/components/ui/progress'
+import { Input } from '@/presentation/components/ui/input'
+import { Label } from '@/presentation/components/ui/label'
+import { Textarea } from '@/presentation/components/ui/textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/presentation/components/ui/table'
 import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from './ui/select'
+} from '@/presentation/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -36,9 +36,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from './ui/dialog'
+} from '@/presentation/components/ui/dialog'
 // (Tooltip components removed with legacy CostsTable cleanup)
-import { PageLayout, EmptyState } from './PageLayout'
+import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
 import { 
   Building2,
   Calendar,
@@ -56,15 +56,15 @@ import {
 import { useFinancialState } from '@/application/context'
 import { SimplifiedProjectCostView } from './cost/SimplifiedProjectCostView'
 import { useExpenses } from '@/application/hooks/useExpenses'
-import { formatCurrency } from '../data/centralData'
+import { formatCurrency } from '@/data/centralData'
 import { toast } from 'sonner'
 import type { Tender } from '@/data/centralData'
-import type { PurchaseOrder } from '@/types/contracts'
+import type { PurchaseOrder } from '@/shared/types/contracts'
 import { getBOQRepository, getPurchaseOrderRepository, getTenderRepository } from '@/application/services/serviceRegistry'
 import { useBOQ } from '@/application/hooks/useBOQ'
 import { APP_EVENTS, emit } from '@/events/bus'
-import { buildPricingMap } from '../utils/normalizePricing'
-import { safeLocalStorage, whenStorageReady } from '../utils/storage'
+import { buildPricingMap } from '@/shared/utils/pricing/normalizePricing'
+import { safeLocalStorage, whenStorageReady } from '@/shared/utils/storage/storage'
 import { projectBudgetService } from '@/application/services/projectBudgetService'
 import type { ProjectBudgetComparison } from '@/application/services/projectBudgetService'
 // Removed unused Expense type (legacy cost table eliminated)
@@ -418,7 +418,7 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
       console.log('🔄 خريطة التسعير:', pricingMap)
 
       // تطبيق الإصلاح على جميع البنود
-      const { repairBOQ } = await import('../utils/normalizePricing')
+      const { repairBOQ } = await import('@/utils/normalizePricing')
       const result = repairBOQ(projectBOQ, pricingMap)
 
       if (result.updated && result.repairedItems > 0) {
@@ -431,7 +431,7 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
         await boqRepository.createOrUpdate(updatedBOQ as any)
         
         // حذف مفتاح الإصلاح لإعادة تطبيقه
-        const { safeLocalStorage } = await import('../utils/storage')
+        const { safeLocalStorage } = await import('@/utils/storage')
         safeLocalStorage.removeItem(`boq_repair_applied_${projectBOQ.id}`)
         
         setBoqRefreshTick(v => v + 1)

@@ -10,7 +10,7 @@
 import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import type { IStorageModule } from '../core/types'
 import { StorageManager } from '../core/StorageManager'
-import type { BOQData } from '@/types/boq'
+import type { BOQData } from '@/shared/types/boq'
 
 // ============================================================================
 // BOQ Storage Module

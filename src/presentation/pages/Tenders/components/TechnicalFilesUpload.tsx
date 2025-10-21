@@ -12,11 +12,11 @@ import {
   FileText, 
   Trash2
 } from 'lucide-react';
-import type { UploadedFile } from '@/utils/fileUploadService';
-import { FileUploadService } from '@/utils/fileUploadService';
-import { formatDateValue } from '@/utils/formatters';
-import { authorizeDragAndDrop } from '@/utils/desktopSecurity';
-import type { DragFileDescriptor } from '@/utils/desktopSecurity';
+import type { UploadedFile } from '@/shared/utils/fileUploadService';
+import { FileUploadService } from '@/shared/utils/fileUploadService';
+import { formatDateValue } from '@/shared/utils/formatters/formatters';
+import { authorizeDragAndDrop } from '@/shared/utils/security/desktopSecurity';
+import type { DragFileDescriptor } from '@/shared/utils/security/desktopSecurity';
 import { useFinancialState } from '@/application/context';
 import { toast } from 'sonner';
 import { APP_EVENTS, emit } from '@/events/bus';

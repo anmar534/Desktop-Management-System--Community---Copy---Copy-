@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { Card, CardContent } from './ui/card'
-import { Progress } from './ui/progress'
-import { Badge } from './ui/badge'
+import { Card, CardContent } from '@/presentation/components/ui/card'
+import { Progress } from '@/presentation/components/ui/progress'
+import { Badge } from '@/presentation/components/ui/badge'
 import {
   TrendingUp,
   TrendingDown,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { useDevelopment } from '@/application/hooks/useDevelopment'
 import { useFinancialState } from '@/application/context'
-import { formatCurrency } from '@/utils/formatters'
+import { formatCurrency } from '@/shared/utils/formatters/formatters'
 
 interface DashboardKPICardsProps {
   onSectionChange: (section: string) => void

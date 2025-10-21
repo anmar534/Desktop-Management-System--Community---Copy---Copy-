@@ -5,7 +5,7 @@
 import { expensesService } from './expensesService'
 import { APP_EVENTS, emit } from '@/events/bus'
 import type { AppEventName } from '@/events/bus'
-import type { PurchaseOrder, PurchaseOrderItem } from '@/types/contracts'
+import type { PurchaseOrder, PurchaseOrderItem } from '@/shared/types/contracts'
 import type { Expense } from '@/data/expenseCategories'
 import type { Project } from '@/data/centralData'
 import { getProjectRepository, getPurchaseOrderRepository, getRelationRepository } from '@/application/services/serviceRegistry'
