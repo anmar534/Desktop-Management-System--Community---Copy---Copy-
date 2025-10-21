@@ -1,6 +1,6 @@
 import type { IFinancialReportRepository } from '@/repository/financialReport.repository'
 import type { FinancialReport } from '@/data/centralData'
-import { safeLocalStorage } from '@/utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import { STORAGE_KEYS } from '@/shared/config/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 

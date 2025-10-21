@@ -13,7 +13,7 @@ import { tokens } from './tokens.config';
 
 // ===== Theme Type Definitions =====
 
-import { safeLocalStorage } from '@/utils/storage';
+import { safeLocalStorage } from '@/shared/utils/storage/storage';
 
 /**
  * أنواع الـ Themes المتاحة

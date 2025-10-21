@@ -3,7 +3,7 @@
 
 import type { Tender } from '@/data/centralData'
 import { FileUploadService } from '../fileUploadService'
-import { safeLocalStorage, STORAGE_KEYS } from '@/utils/storage'
+import { safeLocalStorage, STORAGE_KEYS } from '@/shared/utils/storage/storage'
 
 type TenderStatus = Tender['status'];
 

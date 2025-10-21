@@ -232,7 +232,7 @@ export const paginate = <T>(array: T[], page: number, limit: number): {
 // تحديث التخزين المحلي بشكل آمن
 // تم نقل safeLocalStorage إلى storage.ts للتوافق مع electron-store
 // Safe storage interface moved to storage.ts for electron-store compatibility
-// استخدم: import { safeLocalStorage } from '@/utils/storage';
+// استخدم: import { safeLocalStorage } from '@/shared/utils/storage/storage';
 export { safeLocalStorage } from './storage';
 
 // معاينة التقدم كنسبة مئوية

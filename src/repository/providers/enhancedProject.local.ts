@@ -21,7 +21,7 @@ import type {
   ProjectMilestone
 } from '../../types/projects'
 import type { Status, Priority, Health } from '../../types/contracts'
-import { safeLocalStorage } from '@/utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import { STORAGE_KEYS } from '../../config/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 

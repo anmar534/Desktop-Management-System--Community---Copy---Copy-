@@ -29,7 +29,7 @@ import type {
 // (Phase MVP Official/Draft) استيراد الهوك الجديد لإدارة المسودة والنسخة الرسمية
 import { useEditableTenderPricing } from '@/application/hooks/useEditableTenderPricing'
 // Phase 2 authoring engine adoption helpers (flag-guarded)
-import { PRICING_FLAGS, isPricingEntry } from '@/utils/pricingHelpers'
+import { PRICING_FLAGS, isPricingEntry } from '@/shared/utils/pricing/pricingHelpers'
 import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
 import { applyDefaultsToPricingMap } from '@/utils/defaultPercentagesPropagation'
 import { formatDateValue } from '@/shared/utils/formatters/formatters'

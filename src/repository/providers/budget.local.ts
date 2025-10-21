@@ -1,6 +1,6 @@
 import type { IBudgetRepository } from '@/repository/budget.repository'
 import type { Budget, BudgetCategory } from '@/data/centralData'
-import { safeLocalStorage } from '@/utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import { STORAGE_KEYS } from '@/shared/config/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 

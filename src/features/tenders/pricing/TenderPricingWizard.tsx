@@ -3,7 +3,7 @@ import type { ChangeEvent, ReactNode } from 'react'
 import type { Tender } from '@/data/centralData'
 import { useFinancialState, useNavigation } from '@/application/context'
 import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
-import { loadFromStorage, saveToStorage } from '@/utils/storage'
+import { loadFromStorage, saveToStorage } from '@/shared/utils/storage/storage'
 import { toast } from 'sonner'
 import { Button } from '@/presentation/components/ui/button'
 import {

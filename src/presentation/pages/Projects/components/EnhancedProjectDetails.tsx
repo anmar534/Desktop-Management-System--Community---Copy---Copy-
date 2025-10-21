@@ -418,7 +418,7 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
       console.log('🔄 خريطة التسعير:', pricingMap)
 
       // تطبيق الإصلاح على جميع البنود
-      const { repairBOQ } = await import('@/utils/normalizePricing')
+      const { repairBOQ } = await import('@/shared/utils/pricing/normalizePricing')
       const result = repairBOQ(projectBOQ, pricingMap)
 
       if (result.updated && result.repairedItems > 0) {
@@ -431,7 +431,7 @@ export function EnhancedProjectDetails({ projectId, onBack, onSectionChange }: P
         await boqRepository.createOrUpdate(updatedBOQ as any)
         
         // حذف مفتاح الإصلاح لإعادة تطبيقه
-        const { safeLocalStorage } = await import('@/utils/storage')
+        const { safeLocalStorage } = await import('@/shared/utils/storage/storage')
         safeLocalStorage.removeItem(`boq_repair_applied_${projectBOQ.id}`)
         
         setBoqRefreshTick(v => v + 1)

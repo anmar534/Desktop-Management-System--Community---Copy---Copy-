@@ -1,6 +1,6 @@
 import type { IInvoiceRepository } from '@/repository/invoice.repository'
 import type { Invoice, InvoiceItem } from '@/data/centralData'
-import { safeLocalStorage } from '@/utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import { STORAGE_KEYS } from '@/shared/config/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 
