@@ -187,7 +187,7 @@ git mv src/services/interactiveChartsService.ts src/application/services/interac
 ### استيرادات predictiveAnalyticsService
 
 - `src/components/analytics/PredictiveAnalytics.tsx`
-- `src/components/bidding/RiskAssessmentMatrix.tsx`
+- `src/components/tenders/RiskAssessmentMatrix.tsx`
 
 ---
 

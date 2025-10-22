@@ -63,7 +63,7 @@ import { Checkbox } from '../ui/checkbox'
 import { Separator } from '../ui/separator'
 import { Progress } from '../ui/progress'
 
-import { competitorDatabaseService } from '@/services/competitorDatabaseService'
+import { competitorDatabaseService } from '@/application/services/competitorDatabaseService'
 import type {
   Competitor,
   CompetitorType,

@@ -1,3 +1,4 @@
+// TechnicalFilesUpload manages tender document uploads and validation states.
 import type React from 'react';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/presentation/components/ui/button';

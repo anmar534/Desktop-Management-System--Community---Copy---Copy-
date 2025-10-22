@@ -1,7 +1,17 @@
-import type { ITenderRepository } from '../tender.repository';
 import type { Tender } from '@/data/centralData';
+
+// ITenderRepository interface (moved from tender.repository.ts)
+export interface ITenderRepository {
+  getAll(): Promise<Tender[]>;
+  getById(id: string): Promise<Tender | null>;
+  getByProjectId?(projectId: string): Promise<Tender | null>;
+  create(data: Omit<Tender, 'id'>): Promise<Tender>;
+  update(id: string, updates: Partial<Tender>): Promise<Tender | null>;
+  delete(id: string): Promise<boolean>;
+  search(query: string): Promise<Tender[]>;
+}
 import { safeLocalStorage } from '@/shared/utils/storage/storage';
-import { STORAGE_KEYS } from '@/shared/config/storageKeys';
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys';
 import { migrateTenderStatus, needsMigration } from '@/shared/utils/tender/tenderStatusMigration';
 import { getRelationRepository } from '@/application/services/serviceRegistry';
 import { bus, APP_EVENTS, emit } from '@/events/bus';
@@ -35,7 +45,25 @@ const normalizeTender = (tender: Tender): Tender => {
   if (!allowedStatuses.includes(status)) {
     status = 'new';
   }
-  return { ...tender, status };
+
+  // Normalize quantities field to quantityTable for pricing compatibility
+  const normalized = { ...tender, status };
+
+  // If quantities exists but quantityTable doesn't, copy quantities to quantityTable
+  if (Array.isArray((normalized as any).quantities) && (normalized as any).quantities.length > 0) {
+    if (!Array.isArray((normalized as any).quantityTable) || (normalized as any).quantityTable.length === 0) {
+      (normalized as any).quantityTable = (normalized as any).quantities;
+    }
+  }
+
+  // Also ensure quantityItems is populated for backward compatibility
+  if (Array.isArray((normalized as any).quantityTable) && (normalized as any).quantityTable.length > 0) {
+    if (!Array.isArray((normalized as any).quantityItems) || (normalized as any).quantityItems.length === 0) {
+      (normalized as any).quantityItems = (normalized as any).quantityTable;
+    }
+  }
+
+  return normalized;
 };
 
 const persist = (tenders: Tender[]): void => {

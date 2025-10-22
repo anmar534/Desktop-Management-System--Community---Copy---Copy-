@@ -1,3 +1,4 @@
+// TenderStatusCards visualizes tender KPIs and actionable status widgets.
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Button } from '@/presentation/components/ui/button'
 import { EmptyState } from '@/presentation/components/layout/PageLayout'

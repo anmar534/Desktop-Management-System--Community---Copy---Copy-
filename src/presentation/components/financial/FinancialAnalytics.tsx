@@ -6,20 +6,20 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Progress } from '../ui/progress';
-import type { 
-  LiquidityRatios, 
-  ProfitabilityRatios, 
-  ActivityRatios, 
+import type {
+  LiquidityRatios,
+  ProfitabilityRatios,
+  ActivityRatios,
   LeverageRatios,
   TrendAnalysis,
   CashFlowForecast,
   SeasonalityAnalysis,
   EarlyWarningIndicator,
   FinancialKPI
-} from '@/services/financialAnalyticsService';
-import { 
+} from '@/application/services/financialAnalyticsService';
+import {
   FinancialAnalyticsService
-} from '@/services/financialAnalyticsService';
+} from '@/application/services/financialAnalyticsService';
 import { 
   LineChart, 
   Line, 

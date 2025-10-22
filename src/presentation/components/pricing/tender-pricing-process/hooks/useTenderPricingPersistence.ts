@@ -242,6 +242,9 @@ export function useTenderPricingPersistence({
     const isMeaningfulDescription = (value: string): boolean =>
       value.length > 0 && !/^البند\s*\d+$/i.test(value) && !/^بند\s*\d+$/i.test(value) && !/غير\s*محدد/.test(value);
 
+    const serializeForComparison = (value: unknown): string =>
+      JSON.stringify(value, (key, val) => (key === 'lastUpdated' ? undefined : val));
+
     try {
       const items = quantityItems
         .map<PersistedBOQItem | null>((quantityItem) => {
@@ -418,6 +421,18 @@ export function useTenderPricingPersistence({
         totals,
         lastUpdated: new Date().toISOString()
       } satisfies Omit<BOQData, 'id'> & { id?: string };
+
+      const existingShape = existing ? serializeForComparison(existing) : null;
+      const nextShape = serializeForComparison(payload);
+
+      if (existingShape === nextShape) {
+        recordPersistenceAudit('info', 'persist-boq-skipped-no-change', {
+          tenderId: tender.id,
+          itemsCount: items.length,
+          totalValue: formatCurrencyValue(totalValue)
+        });
+        return;
+      }
 
       await boqRepository.createOrUpdate(payload);
 

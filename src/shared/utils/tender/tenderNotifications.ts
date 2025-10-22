@@ -2,8 +2,8 @@
 import { toast } from 'sonner';
 import { getTenderStatusInfo, getNextAction } from './tenderStatusHelpers';
 import { safeLocalStorage, STORAGE_KEYS } from '@/shared/utils/storage/storage';
-import { authorizeDesktopNotification } from './desktopSecurity';
-import type { NotificationRequest, NotificationSeverity } from './desktopSecurity';
+import { authorizeDesktopNotification } from '../security/desktopSecurity';
+import type { NotificationRequest, NotificationSeverity } from '../security/desktopSecurity';
 import type { Tender } from '@/data/centralData';
 
 export interface TenderNotification {

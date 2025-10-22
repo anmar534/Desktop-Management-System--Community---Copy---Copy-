@@ -9,9 +9,9 @@
  * @since Phase 2 Implementation - Historical Data Integration
  */
 
-import { safeLocalStorage } from './storage'
-import { analyticsService } from '@/services/analyticsService'
-import { lessonsLearnedService } from '@/services/lessonsLearnedService'
+import { safeLocalStorage } from '../storage/storage'
+import { analyticsService } from '@/application/services/analyticsService'
+import { lessonsLearnedService } from '@/application/services/lessonsLearnedService'
 import { dataImportService } from './dataImport'
 import type { BidPerformance } from '../types/analytics'
 import type { Tender } from '../types/contracts'

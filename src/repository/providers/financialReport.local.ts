@@ -1,7 +1,7 @@
 import type { IFinancialReportRepository } from '@/repository/financialReport.repository'
 import type { FinancialReport } from '@/data/centralData'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
-import { STORAGE_KEYS } from '@/shared/config/storageKeys'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 
 const generateId = () => `financial_report_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`

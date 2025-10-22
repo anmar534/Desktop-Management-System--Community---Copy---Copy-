@@ -359,7 +359,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({
                       {project.name}
                     </CardTitle>
                     <p className="text-sm text-gray-600 line-clamp-2">
-                      {project.description}
+                      {project.client} - {project.location}
                     </p>
                   </div>
                   <div className={`w-3 h-3 rounded-full ${getHealthColor(project.health)}`} />
@@ -374,7 +374,6 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({
                       {project.status === 'delayed' && 'متأخر'}
                       {project.status === 'paused' && 'متوقف'}
                       {project.status === 'planning' && 'تخطيط'}
-                      {project.status === 'cancelled' && 'ملغي'}
                     </span>
                   </Badge>
                   <Badge variant="outline" className={getPriorityColor(project.priority)}>
@@ -409,7 +408,7 @@ export const ProjectsList: React.FC<ProjectsListProps> = ({
                       الميزانية
                     </div>
                     <span className="font-medium">
-                      {formatCurrency(project.budget.totalBudget)}
+                      {formatCurrency(project.budget || project.contractValue)}
                     </span>
                   </div>
 

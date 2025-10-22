@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { PricingEngine } from '@/domain/services/pricingEngine';
 import { PRICING_FLAGS } from '@/shared/utils/pricing/pricingHelpers';
 import { pricingRuntime } from '@/domain/monitoring/pricingRuntimeMonitor';
@@ -155,20 +155,27 @@ export function useDomainPricingEngine<TEntry extends RawAuthoringEntry>(params:
 
   const engineReady = enabled && tenderId; // simple flag; pure function builds engine internally
 
-  useEffect(() => {
-    if (!enabled) return;
-    if (!engineReady) return;
-    const { items: adapted, totalValue } = transformAuthoringToDomainUIItems({
+  // Memoize the transformation to avoid infinite loops
+  const transformedData = useMemo(() => {
+    if (!enabled || !engineReady) return null;
+    return transformAuthoringToDomainUIItems({
       tenderId: tenderId!,
       quantityItems,
       pricingMap,
       defaults
     });
-    setItems(adapted);
-    setTotals({ totalValue });
+  }, [enabled, engineReady, tenderId, quantityItems, pricingMap, defaults.administrative, defaults.operational, defaults.profit]);
+
+  useEffect(() => {
+    if (!transformedData) {
+      setStatus('idle');
+      return;
+    }
+    setItems(transformedData.items);
+    setTotals({ totalValue: transformedData.totalValue });
     setStatus('ready');
     pricingRuntime.incDomain();
-  }, [engineReady, enabled, tenderId, quantityItems, pricingMap, defaults]);
+  }, [transformedData]);
 
   return { enabled, items, totals, status };
 }

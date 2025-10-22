@@ -239,7 +239,6 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                     {project.status === 'delayed' && 'متأخر'}
                     {project.status === 'paused' && 'متوقف'}
                     {project.status === 'planning' && 'تخطيط'}
-                    {project.status === 'cancelled' && 'ملغي'}
                   </span>
                 </Badge>
               </div>
@@ -266,7 +265,7 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">الميزانية</p>
-                <p className="text-lg font-bold">{formatCurrency(project.budget.totalBudget)}</p>
+                <p className="text-lg font-bold">{formatCurrency(project.budget || project.contractValue)}</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-500" />
             </div>
@@ -379,34 +378,9 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                   </div>
                 </div>
 
-                {project.actualStartDate && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">تاريخ البدء الفعلي</label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Calendar className="h-4 w-4 text-green-400" />
-                      <p className="text-gray-900">{formatDate(project.actualStartDate)}</p>
-                    </div>
-                  </div>
-                )}
-
-                {project.actualEndDate && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">تاريخ الانتهاء الفعلي</label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Calendar className="h-4 w-4 text-green-400" />
-                      <p className="text-gray-900">{formatDate(project.actualEndDate)}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-sm font-medium text-gray-600">تاريخ الإنشاء</label>
-                  <p className="text-sm text-gray-500 mt-1">{formatDate(project.createdAt)}</p>
-                </div>
-
                 <div>
                   <label className="text-sm font-medium text-gray-600">آخر تحديث</label>
-                  <p className="text-sm text-gray-500 mt-1">{formatDate(project.updatedAt)}</p>
+                  <p className="text-sm text-gray-500 mt-1">{formatDate(project.lastUpdate)}</p>
                 </div>
               </CardContent>
             </Card>
@@ -423,19 +397,19 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
                 <div className="text-center">
                   <p className="text-sm text-gray-600">إجمالي الميزانية</p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(project.budget.totalBudget)}
+                    {formatCurrency(project.contractValue || project.budget)}
                   </p>
                 </div>
                 <div className="text-center">
                   <p className="text-sm text-gray-600">المبلغ المنفق</p>
                   <p className="text-2xl font-bold text-red-600">
-                    {formatCurrency(project.budget.spentBudget)}
+                    {formatCurrency(project.actualCost || 0)}
                   </p>
                 </div>
                 <div className="text-center">
                   <p className="text-sm text-gray-600">المبلغ المتبقي</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(project.budget.remainingBudget)}
+                    {formatCurrency(project.remaining || 0)}
                   </p>
                 </div>
               </div>
@@ -443,10 +417,10 @@ export const ProjectDetails: React.FC<ProjectDetailsProps> = ({
               <div className="mt-6">
                 <div className="flex justify-between text-sm mb-2">
                   <span>استخدام الميزانية</span>
-                  <span>{((project.budget.spentBudget / project.budget.totalBudget) * 100).toFixed(1)}%</span>
+                  <span>{project.progress}%</span>
                 </div>
                 <Progress 
-                  value={(project.budget.spentBudget / project.budget.totalBudget) * 100} 
+                  value={project.progress} 
                   className="h-3"
                 />
               </div>

@@ -9,7 +9,7 @@ import {
   getSchemaVersionForKey,
   isPersistedEnvelope
 } from './storageSchema';
-import { recordAuditEvent } from '../auditLog';
+import { recordAuditEvent } from './auditLog';
 
 export { STORAGE_KEYS } from '@/shared/constants/storageKeys';
 

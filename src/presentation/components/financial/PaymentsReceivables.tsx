@@ -22,10 +22,10 @@ import type {
   Receivable,
   PaymentAlert,
   CollectionMetrics
-} from '@/services/paymentsReceivablesService';
+} from '@/application/services/paymentsReceivablesService';
 import {
   PaymentsReceivablesService
-} from '@/services/paymentsReceivablesService'
+} from '@/application/services/paymentsReceivablesService'
 
 const INVOICE_STATUS_VARIANTS: Record<Invoice['status'], { label: string; labelEn: string; badgeClass: string }> = {
   draft: { label: 'مسودة', labelEn: 'Draft', badgeClass: 'bg-muted text-muted-foreground border-none' },

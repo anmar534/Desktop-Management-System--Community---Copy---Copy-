@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
-import { PricingTemplateManager } from '../../src/components/bidding/PricingTemplateManager'
+import { PricingTemplateManager } from '../../src/components/tenders/PricingTemplateManager'
 
 // Mock the recommendation service
 vi.mock('../../src/services/recommendationService', () => ({

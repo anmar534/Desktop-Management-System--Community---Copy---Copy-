@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   AlertCircle,
   Target,
@@ -97,9 +97,16 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   updateRowFromSummary,
   deleteRowFromSummary
 }) => {
-  const projectTotal = calculateProjectTotal();
-  const completedCount = Array.from(pricingData.values()).filter(value => value?.completed).length;
-  const completionPercentage = (completedCount / quantityItems.length) * 100;
+  // استخدام useMemo للحسابات المكلفة
+  const projectTotal = useMemo(() => calculateProjectTotal(), [calculateProjectTotal]);
+  const completedCount = useMemo(
+    () => Array.from(pricingData.values()).filter(value => value?.completed).length,
+    [pricingData]
+  );
+  const completionPercentage = useMemo(
+    () => (completedCount / quantityItems.length) * 100,
+    [completedCount, quantityItems.length]
+  );
 
   return (
     <ScrollArea className="h-[calc(100vh-100px)] overflow-auto">
@@ -242,61 +249,61 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           </div>
 
           {/* administrative cost card */}
-          <Card className="hover:shadow-sm transition-shadow border-warning/30 h-full">
+          <Card className="hover:shadow-sm transition-shadow border-destructive/30 h-full">
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div className="text-right">
-                  <p className="text-xs font-medium text-warning">
+                  <p className="text-xs font-semibold text-destructive">
                     التكاليف الإدارية ({calculateAveragePercentages().administrative.toFixed(1)}%)
                   </p>
-                  <p className="text-lg font-bold text-warning">
+                  <p className="text-xl font-bold text-destructive">
                     {formatCurrencyValue(calculateTotalAdministrative(), {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0
                     })}
                   </p>
                 </div>
-                <Settings className="h-6 w-6 text-warning" />
+                <Settings className="h-6 w-6 text-destructive" />
               </div>
             </CardContent>
           </Card>
 
           {/* operational cost card */}
-          <Card className="hover:shadow-sm transition-shadow border-accent/30 h-full">
+          <Card className="hover:shadow-sm transition-shadow border-warning/30 h-full">
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div className="text-right">
-                  <p className="text-xs font-medium text-accent">
+                  <p className="text-xs font-semibold text-warning">
                     التكاليف التشغيلية ({calculateAveragePercentages().operational.toFixed(1)}%)
                   </p>
-                  <p className="text-lg font-bold text-accent">
+                  <p className="text-xl font-bold text-warning">
                     {formatCurrencyValue(calculateTotalOperational(), {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0
                     })}
                   </p>
                 </div>
-                <Building className="h-6 w-6 text-accent" />
+                <Building className="h-6 w-6 text-warning" />
               </div>
             </CardContent>
           </Card>
 
           {/* profit card */}
-          <Card className="hover:shadow-sm transition-shadow border-warning/30 h-full">
+          <Card className="hover:shadow-sm transition-shadow border-success/30 h-full">
             <CardContent className="p-3">
               <div className="flex items-center justify-between">
                 <div className="text-right">
-                  <p className="text-xs font-medium text-warning">
+                  <p className="text-xs font-semibold text-success">
                     إجمالي الأرباح ({calculateAveragePercentages().profit.toFixed(1)}%)
                   </p>
-                  <p className="text-lg font-bold text-warning">
+                  <p className="text-xl font-bold text-success">
                     {formatCurrencyValue(calculateTotalProfit(), {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0
                     })}
                   </p>
                 </div>
-                <TrendingUp className="h-6 w-6 text-warning" />
+                <TrendingUp className="h-6 w-6 text-success" />
               </div>
             </CardContent>
           </Card>
@@ -354,7 +361,16 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   {quantityItems.map((item, index) => {
                     const itemPricing = pricingData.get(item.id);
                     const isCompleted = !!itemPricing?.completed;
-                    const materialsTotal = itemPricing?.materials?.reduce((sum, m) => sum + (m.total ?? 0), 0) ?? 0;
+                    
+                    // حساب الإجماليات مع مراعاة الهدر للمواد
+                    const materialsTotal = itemPricing?.materials?.reduce((sum, m) => {
+                      if (m.hasWaste && m.wastePercentage) {
+                        const wastageMultiplier = 1 + (m.wastePercentage / 100);
+                        return sum + ((m.quantity ?? 0) * (m.price ?? 0) * wastageMultiplier);
+                      }
+                      return sum + (m.total ?? 0);
+                    }, 0) ?? 0;
+                    
                     const laborTotal = itemPricing?.labor?.reduce((sum, l) => sum + (l.total ?? 0), 0) ?? 0;
                     const equipmentTotal = itemPricing?.equipment?.reduce((sum, e) => sum + (e.total ?? 0), 0) ?? 0;
                     const subcontractorsTotal = itemPricing?.subcontractors?.reduce((sum, s) => sum + (s.total ?? 0), 0) ?? 0;

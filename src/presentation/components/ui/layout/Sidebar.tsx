@@ -117,9 +117,9 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`${isCollapsed ? 'w-20' : 'w-72'} max-h-[calc(100vh-10rem)] transition-all duration-300 ease-in-out`}
+      className={`fixed top-0 right-0 z-40 h-screen ${isCollapsed ? 'w-20' : 'w-64 lg:w-72'} transition-all duration-300 ease-in-out`}
     >
-      <div className="relative h-full">
+      <div className="relative h-full p-4">
         <div
           className="pointer-events-none absolute inset-0 rounded-3xl border border-border/25 bg-gradient-to-b from-background/50 via-background/28 to-background/50 shadow-xl backdrop-blur-xl"
           aria-hidden

@@ -5,7 +5,7 @@
 
 // تنسيق العملة (موقوف - استخدم formatters.ts)
 // Deprecated: use functions from formatters.ts instead. Left as wrapper for backward compatibility.
-import { formatCurrency as _formatCurrency, formatDate as _formatDate, formatShortDate as _formatShortDate } from './formatters';
+import { formatCurrency as _formatCurrency, formatDate as _formatDate, formatShortDate as _formatShortDate } from './formatters/formatters';
 import { authorizeExport } from './security/desktopSecurity';
 export const formatCurrency = (amount: number, currency = 'SAR'): string => _formatCurrency(amount, { currency });
 export const formatDate = (date: string | Date, locale = 'ar-SA'): string => _formatDate(date, { locale });
@@ -20,7 +20,7 @@ export const daysBetween = (date1: string | Date, date2: string | Date): number 
 };
 
 // تنسيق الأرقام الكبيرة (موقوف) - استبدل بـ formatLargeNumber في formatters.ts
-import { formatLargeNumber as _formatLargeNumber } from './formatters';
+import { formatLargeNumber as _formatLargeNumber } from './formatters/formatters';
 export const formatLargeNumber = (num: number): string => _formatLargeNumber(num);
 
 // ألوان الحالة / الأولوية / الصحة / التقدم (موقوفة – تفويض للوحدة الجديدة)
@@ -233,7 +233,7 @@ export const paginate = <T>(array: T[], page: number, limit: number): {
 // تم نقل safeLocalStorage إلى storage.ts للتوافق مع electron-store
 // Safe storage interface moved to storage.ts for electron-store compatibility
 // استخدم: import { safeLocalStorage } from '@/shared/utils/storage/storage';
-export { safeLocalStorage } from './storage';
+export { safeLocalStorage } from './storage/storage';
 
 // معاينة التقدم كنسبة مئوية
 export const calculateProgress = (current: number, total: number): number => {

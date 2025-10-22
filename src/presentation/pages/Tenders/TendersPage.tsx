@@ -1,3 +1,4 @@
+// TendersPage shows the tenders dashboard, filters, and quick actions.
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import type { LucideIcon } from 'lucide-react'
@@ -38,10 +39,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/presentation/components/ui/alert-dialog'
-import { TenderPricingProcess, type TenderWithPricingSources } from './components/TenderPricingProcess'
-import { TenderDetails } from './components/TenderDetails'
+import { TenderPricingPage, type TenderWithPricingSources } from './TenderPricingPage'
+import { TenderDetails } from '@/presentation/components/tenders/TenderDetails'
 import { TenderResultsManager } from './components/TenderResultsManager'
-import { EnhancedTenderCard } from './bidding/EnhancedTenderCard'
+import { EnhancedTenderCard } from '@/presentation/components/tenders/EnhancedTenderCard'
 
 import { useFinancialState } from '@/application/context'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
@@ -81,7 +82,7 @@ interface TenderSummary {
   active: number
   submitted: number
   averageWinChance: number
-  averageCycleDays: number
+  averageCycleDays: number | null
   submittedValue: number
   wonValue: number
   lostValue: number
@@ -600,6 +601,11 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
   const handleEditTender = useCallback(
     (tender: Tender) => {
+      console.log('[TendersPage][handleEditTender] Editing tender:', tender)
+      console.log('[TendersPage][handleEditTender] tender.id:', tender.id)
+      console.log('[TendersPage][handleEditTender] tender.quantities:', (tender as unknown as Record<string, unknown>).quantities)
+      console.log('[TendersPage][handleEditTender] tender.quantityTable:', (tender as unknown as Record<string, unknown>).quantityTable)
+      
       setSelectedTender(tender)
       onSectionChange('new-tender', tender)
     },
@@ -644,7 +650,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
   if (currentView === 'pricing' && selectedTender) {
     const tenderForPricing: TenderWithPricingSources = { ...selectedTender }
-    return <TenderPricingProcess tender={tenderForPricing} onBack={handleBackToList} />
+    return <TenderPricingPage tender={tenderForPricing} onBack={handleBackToList} />
   }
 
   if (currentView === 'results' && selectedTender) {

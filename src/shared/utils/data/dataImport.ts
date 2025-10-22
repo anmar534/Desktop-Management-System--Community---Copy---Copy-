@@ -9,7 +9,7 @@
  * @since Phase 2 Implementation - Historical Data Integration
  */
 
-import { analyticsService } from '@/services/analyticsService'
+import { analyticsService } from '@/application/services/analyticsService'
 import type { BidPerformance } from '../types/analytics'
 
 /**

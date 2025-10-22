@@ -1,4 +1,4 @@
-import { recordAuditEvent, type AuditEventLevel } from './auditLog';
+import { recordAuditEvent, type AuditEventLevel } from './storage/auditLog';
 
 /**
  * 🚀 نظام إدارة الأحداث الموحد - EventManager

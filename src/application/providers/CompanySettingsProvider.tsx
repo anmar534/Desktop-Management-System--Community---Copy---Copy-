@@ -77,7 +77,6 @@ export const CompanySettingsProvider: React.FC<CompanySettingsProviderProps> = (
   children,
   defaultSettings,
 }) => {
-  const [isLoading, setIsLoading] = useState(true)
   const mergedDefaults = useMemo(
     () => ({
       ...DEFAULT_COMPANY_SETTINGS,
@@ -110,8 +109,6 @@ export const CompanySettingsProvider: React.FC<CompanySettingsProviderProps> = (
         }
       } catch (error) {
         console.error('Failed to initialize company settings:', error)
-      } finally {
-        setIsLoading(false)
       }
     }
 
@@ -127,7 +124,6 @@ export const CompanySettingsProvider: React.FC<CompanySettingsProviderProps> = (
       const newSettings: CompanySettings = {
         ...prev,
         ...updates,
-        lastUpdated: new Date().toISOString(),
       }
       storeSettings(newSettings)
       return newSettings
@@ -135,47 +131,29 @@ export const CompanySettingsProvider: React.FC<CompanySettingsProviderProps> = (
   }, [])
 
   /**
-   * Update company logo
-   * تحديث شعار الشركة
+   * Reset settings to defaults
+   * إعادة تعيين الإعدادات إلى القيم الافتراضية
    */
-  const updateLogo = useCallback(
-    (logo: string | null) => {
-      updateSettings({ companyLogo: logo })
-    },
-    [updateSettings],
-  )
-
-  /**
-   * Update company name
-   * تحديث اسم الشركة
-   */
-  const updateCompanyName = useCallback(
-    (name: string) => {
-      updateSettings({ companyName: name })
-    },
-    [updateSettings],
-  )
-
-  /**
-   * Reset to default settings
-   * إعادة تعيين إلى الإعدادات الافتراضية
-   */
-  const resetToDefaults = useCallback(() => {
-    const resetSettings: CompanySettings = {
-      ...mergedDefaults,
-      lastUpdated: new Date().toISOString(),
+  const resetSettings = useCallback(() => {
+    const defaults: CompanySettings = {
+      companyName: '',
+      companyNameEn: '',
+      primaryColor: '#1a73e8',
+      secondaryColor: '#34a853',
+      address: '',
+      phone: '',
+      email: '',
+      website: '',
+      taxNumber: '',
+      commercialRegister: '',
     }
-    setSettingsState(resetSettings)
-    storeSettings(resetSettings)
-  }, [mergedDefaults])
+    updateSettings(defaults)
+  }, [updateSettings])
 
   const value: CompanySettingsContextValue = {
     settings,
     updateSettings,
-    updateLogo,
-    updateCompanyName,
-    resetToDefaults,
-    isLoading,
+    resetSettings,
   }
 
   return <CompanySettingsContext.Provider value={value}>{children}</CompanySettingsContext.Provider>

@@ -49,7 +49,7 @@ import {
 } from 'lucide-react'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { formatDateValue } from '@/shared/utils/formatters/formatters'
-import { RiskAssessmentMatrix } from '@/presentation/components/bidding/RiskAssessmentMatrix'
+import { RiskAssessmentMatrix } from '@/presentation/components/tenders/RiskAssessmentMatrix'
 import type { RiskAssessment } from '@/shared/types/templates'
 
 type WizardStepId = 'registration' | 'technical' | 'financial' | 'review' | 'submit'
@@ -1261,8 +1261,8 @@ export function TenderPricingWizard({ tender, onExit }: TenderPricingWizardProps
                                       : draft.financial.riskAssessment.overallRiskLevel === 'medium'
                                         ? 'warning'
                                         : draft.financial.riskAssessment.overallRiskLevel === 'high'
-                                          ? 'destructive'
-                                          : 'destructive'
+                                          ? 'error'
+                                          : 'error'
                                   }
                                   label={
                                     draft.financial.riskAssessment.overallRiskLevel === 'low'

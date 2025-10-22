@@ -1,8 +1,4 @@
-/**
- * 🎯 مكون إدخال النتائج السريع للمناقصات
- * طريقة أسهل وأسرع لإدخال نتائج المناقصات
- */
-
+// TenderQuickResults captures quick outcome data once a tender closes.
 import { useState } from 'react'
 import { Button } from '@/presentation/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'

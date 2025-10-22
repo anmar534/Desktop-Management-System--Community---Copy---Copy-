@@ -182,7 +182,7 @@ export const useFinancialData = (): UseFinancialDataReturn => {
 
     // 🔗 حساب إجمالي التكاليف الفعلية من جميع المصروفات المرتبطة بالمشاريع
     console.log('📊 حساب التكاليف الفعلية من المشتريات والمصروفات...');
-  const projectsCostAnalysis = getProjectsWithActualCosts();
+    const projectsCostAnalysis = getProjectsWithActualCosts();
     console.log('📈 تحليل تكاليف المشاريع:', projectsCostAnalysis);
 
     // حساب إجمالي المصروفات (تضمين المصروفات المرتبطة بالمشاريع والإدارية)

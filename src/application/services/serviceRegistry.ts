@@ -1,5 +1,5 @@
 import type { IProjectRepository } from '@/repository/project.repository';
-import type { ITenderRepository } from '@/repository/tender.repository';
+import type { ITenderRepository } from '@/repository/providers/tender.local';
 import type { IClientRepository } from '@/repository/client.repository';
 import type { IBOQRepository } from '@/repository/boq.repository';
 import type { IPurchaseOrderRepository } from '@/repository/purchaseOrder.repository';

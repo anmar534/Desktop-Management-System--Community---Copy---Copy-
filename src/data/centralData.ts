@@ -55,16 +55,18 @@ export interface Project {
 }
 
 export interface Tender {
-  id: string
-  name: string
-  title: string
-  client: string
-  value: number
-  totalValue?: number // القيمة المحسوبة من التسعير
-  documentPrice?: number | string | null // سعر كراسة المنافسة (قد يُحفظ كنص في النماذج القديمة)
-  bookletPrice?: number | string | null // حقل إضافي للكراسة للتوافق مع البيانات القديمة
+  id: string;
+  name: string;
+  title: string;
+  client: string;
+  value: number;
+  totalValue?: number; // القيمة المحسوبة من التسعير
+  documentPrice?: number | string | null; // سعر كراسة المنافسة (قد يُحفظ كنص في النماذج القديمة)
+  bookletPrice?: number | string | null; // حقل إضافي للكراسة للتوافق مع البيانات القديمة
+  projectDuration?: string; // مدة المشروع المتوقعة
+  description?: string; // وصف المشروع
   status:
-    | 'new' // جديدة - تم إدخال المنافسة ولم يتم القيام بأي إجراء عليها
+    | "new" // جديدة - تم إدخال المنافسة ولم يتم القيام بأي إجراء عليها
     | 'under_action' // تحت الإجراء - بدأ اتخاذ إجراءات ولكن لم يتم الانتهاء منها
     | 'ready_to_submit' // جاهزة للتقديم - تم الانتهاء من جميع الإجراءات
     | 'submitted' // بانتظار النتائج - تم تقديمها وبانتظار ظهور النتائج

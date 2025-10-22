@@ -18,7 +18,7 @@ import {
   Trash2,
 } from 'lucide-react'
 
-import { UNIT_OPTIONS } from '@/presentation/components/pricing/constants'
+import { UNIT_OPTIONS } from '../constants'
 import { ActionBar } from '@/presentation/components/ui/layout/ActionBar'
 import { Badge } from '@/presentation/components/ui/badge'
 import { Button } from '@/presentation/components/ui/button'
@@ -331,7 +331,7 @@ export const PricingView: React.FC<PricingViewProps> = ({
                           </td>
                           <td className="border border-border p-2">
                             <Select
-                              value={row.unit ?? ''}
+                              value={row.unit || undefined}
                               onValueChange={(value) =>
                                 onUpdateRow(section, row.id, 'unit', value as SectionRowMap[PricingSection]['unit'])
                               }
@@ -340,8 +340,7 @@ export const PricingView: React.FC<PricingViewProps> = ({
                                 <SelectValue placeholder="اختر وحدة" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">بدون تحديد</SelectItem>
-                                {hasCustomUnit && row.unit ? (
+                                {hasCustomUnit && row.unit && !rowUnitOptions.some(opt => opt.value === row.unit) ? (
                                   <SelectItem value={row.unit}>{row.unit}</SelectItem>
                                 ) : null}
                                 {rowUnitOptions.map((option) => (

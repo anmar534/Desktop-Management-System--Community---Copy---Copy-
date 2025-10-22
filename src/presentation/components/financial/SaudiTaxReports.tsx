@@ -25,8 +25,8 @@ import {
   Receipt,
   Building
 } from 'lucide-react'
-import type { VATReturn, VATTransaction, ZakatCalculation, TaxSettings } from '@/services/saudiTaxService';
-import { SaudiTaxService } from '@/services/saudiTaxService'
+import type { VATReturn, VATTransaction, ZakatCalculation, TaxSettings } from '@/application/services/saudiTaxService';
+import { SaudiTaxService } from '@/application/services/saudiTaxService'
 
 export const SaudiTaxReports: React.FC = () => {
   const [service] = useState(() => new SaudiTaxService())

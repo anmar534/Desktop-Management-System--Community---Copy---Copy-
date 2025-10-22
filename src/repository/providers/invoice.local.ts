@@ -1,7 +1,7 @@
 import type { IInvoiceRepository } from '@/repository/invoice.repository'
 import type { Invoice, InvoiceItem } from '@/data/centralData'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
-import { STORAGE_KEYS } from '@/shared/config/storageKeys'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 
 const generateId = () => `invoice_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`

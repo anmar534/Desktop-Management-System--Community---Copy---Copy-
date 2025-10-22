@@ -118,10 +118,16 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
       itemsWithZeroTotals: centralItems.filter(i => (i.totalPrice || i.estimated?.totalPrice || 0) === 0).length
     }
 
+    // التحقق من البيانات القديمة (legacy)
+    const legacy = tender.quantityTable || tender.quantities || tender.items || tender.boqItems || tender.quantityItems || []
+    const legacyCount = Array.isArray(legacy) ? legacy.length : 0
+
     let chosen: any[] = []
     let source: UnifiedTenderPricingResult['source'] = 'none'
 
-    if (central && centralQualityCheck.hasItems) {
+    // تفضيل البيانات الأكثر اكتمالاً
+    // إذا كان central BOQ أقل من legacy، نستخدم legacy
+    if (central && centralQualityCheck.hasItems && centralItems.length >= legacyCount) {
       chosen = centralItems.map((it, idx) => {
         const clean = (s: any) => (s == null ? '' : String(s).trim())
         const fallback = `البند ${idx + 1}`
@@ -138,12 +144,12 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
         }
       })
       source = 'central-boq'
-      console.log('[useUnifiedTenderPricing] Using central BOQ:', centralQualityCheck)
+      console.log('[useUnifiedTenderPricing] Using central BOQ:', centralQualityCheck, 'central count:', centralItems.length, 'legacy count:', legacyCount)
     } else {
-      const legacy = tender.quantityTable || tender.quantities || tender.items || tender.boqItems || tender.quantityItems || []
       if (Array.isArray(legacy) && legacy.length > 0) {
         chosen = legacy
         source = 'legacy'
+        console.log('[useUnifiedTenderPricing] Using legacy data (more complete):', 'legacy count:', legacyCount, 'central count:', centralItems.length)
       }
     }
 

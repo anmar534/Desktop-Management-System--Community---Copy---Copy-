@@ -23,8 +23,8 @@ import {
   BarChart3, TrendingUp, TrendingDown, Award, AlertTriangle,
   Download, Filter, Search, Plus, Minus
 } from 'lucide-react'
-import type { ProfitabilityComparison } from '@/services/profitabilityAnalysisService';
-import { ProfitabilityAnalysisService } from '@/services/profitabilityAnalysisService'
+import type { ProfitabilityComparison } from '@/application/services/profitabilityAnalysisService';
+import { ProfitabilityAnalysisService } from '@/application/services/profitabilityAnalysisService'
 
 interface ProfitabilityComparisonProps {
   className?: string

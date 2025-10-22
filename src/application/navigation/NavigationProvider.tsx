@@ -180,11 +180,16 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   }, [routeState.params.tenderId, tenderRepository, tenderToEdit])
 
   const navigate = useCallback((section: AppSection, options?: NavigationOptions) => {
+    console.log('[NavigationProvider][navigate] section:', section)
+    console.log('[NavigationProvider][navigate] options:', options)
+    console.log('[NavigationProvider][navigate] options.tender:', options?.tender)
+    
     const normalizedSection = normalizeSection(section, accessibleSectionSet, firstAccessibleSection)
     const tenderCandidate = options?.tender ?? null
     const explicitTenderId = options?.tenderId ?? tenderCandidate?.id ?? null
     const paramsOverride = options?.params ?? {}
 
+    console.log('[NavigationProvider][navigate] Setting tenderToEdit to:', tenderCandidate)
     setTenderToEdit(tenderCandidate)
 
     setRouteState(prev => {

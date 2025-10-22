@@ -1,13 +1,4 @@
-/**
- * @fileoverview Risk Assessment Matrix Component
- * @description Advanced risk assessment tool for the bidding system that provides systematic
- * risk evaluation, factor analysis, margin calculation, and risk mitigation planning.
- *
- * @author Desktop Management System Team
- * @version 1.0.0
- * @since Phase 1 Implementation
- */
-
+// RiskAssessmentMatrix scores tender risks and highlights mitigation actions.
 import type React from 'react';
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
@@ -221,6 +212,7 @@ export function RiskAssessmentMatrix({
     marketTrend: 'up' | 'down' | 'stable' | null
     threatLevel: 'low' | 'medium' | 'high' | null
     opportunities: string[]
+    optimizedMargin: number | null
     loading: boolean
   }>({
     winProbability: null,
@@ -232,6 +224,7 @@ export function RiskAssessmentMatrix({
     marketTrend: null,
     threatLevel: null,
     opportunities: [],
+    optimizedMargin: null,
     loading: false
   })
 
@@ -250,15 +243,20 @@ export function RiskAssessmentMatrix({
         const competitors = await competitiveService.getAllCompetitors()
         const marketOpportunities = await competitiveService.getMarketOpportunities()
 
-        // Predict win probability
-        const winPrediction = predictWinProbability({
-          tenderValue: tender.value,
-          category: tender.category,
-          client: tender.client,
-          location: tender.location,
-          competition: tender.competition,
-          deadline: tender.deadline
-        }, bidPerformances)
+        const competitorCount = tender.competitors?.length ?? competitors.length
+        const clientType = tender.client.includes('حكوم') || tender.client.includes('وزارة') ? 'government' : 'private'
+        const tenderValue = typeof tender.value === 'number' ? tender.value : Number(tender.value ?? 0)
+
+        const winPrediction = predictWinProbability(
+          tenderValue,
+          tenderValue,
+          competitorCount,
+          tender.category,
+          tender.location,
+          clientType,
+          bidPerformances,
+          competitors
+        )
 
         // Calculate competitive and market risks
         const competitiveRisk = Math.min(100, competitors.length * 15) // Higher competitor count = higher risk
@@ -274,6 +272,24 @@ export function RiskAssessmentMatrix({
           competitors.length <= 3 ? 'low' :
           competitors.length <= 6 ? 'medium' : 'high'
 
+        const priceOptimization = optimizeBidAmount(
+          tenderValue,
+          tender.category,
+          tender.location,
+          competitorCount,
+          clientType,
+          bidPerformances,
+          competitors,
+          {
+            minMargin: 10,
+            maxMargin: 30,
+            targetWinProbability: 60,
+            riskTolerance: threatLevel === 'high' ? 'high' : threatLevel === 'medium' ? 'medium' : 'low',
+            objective: 'balanced',
+            marketConditions: marketTrend === 'up' ? 'favorable' : marketTrend === 'down' ? 'challenging' : 'neutral'
+          }
+        )
+
         setPredictiveData({
           winProbability: winPrediction.probability,
           confidence: winPrediction.confidence,
@@ -284,11 +300,12 @@ export function RiskAssessmentMatrix({
           marketTrend,
           threatLevel,
           opportunities: marketOpportunities.slice(0, 3).map(opp => opp.title),
+          optimizedMargin: Math.round(priceOptimization.optimalMargin),
           loading: false
         })
       } catch (error) {
         console.error('Error loading predictive data:', error)
-        setPredictiveData(prev => ({ ...prev, loading: false }))
+  setPredictiveData(prev => ({ ...prev, loading: false, optimizedMargin: null }))
       }
     }
 
@@ -313,8 +330,8 @@ export function RiskAssessmentMatrix({
       normalizedScore = Math.min(100, normalizedScore + aiRiskAdjustment + competitiveRiskAdjustment + marketRiskAdjustment)
     }
 
-    let overallRiskLevel: RiskAssessment['overallRiskLevel']
-    let recommendedMargin: number
+  let overallRiskLevel: RiskAssessment['overallRiskLevel']
+  let recommendedMargin: number
 
     if (normalizedScore <= 25) {
       overallRiskLevel = 'low'
@@ -331,21 +348,9 @@ export function RiskAssessmentMatrix({
     }
 
     // AI-enhanced margin optimization
-    if (enablePredictiveAnalytics && tender && predictiveData.winProbability !== null) {
-      try {
-        const optimization = optimizeBidAmount(tender.value, {
-          winProbability: predictiveData.winProbability / 100,
-          competitorCount: predictiveData.competitorCount,
-          marketConditions: predictiveData.marketTrend || 'stable',
-          riskLevel: overallRiskLevel
-        })
-
-        // Use AI-optimized margin if confidence is high
-        if (predictiveData.confidence && predictiveData.confidence > 70) {
-          recommendedMargin = Math.round(optimization.recommendedMargin * 100)
-        }
-      } catch (error) {
-        console.error('Error in margin optimization:', error)
+    if (enablePredictiveAnalytics && predictiveData.optimizedMargin !== null) {
+      if ((predictiveData.confidence ?? 0) > 70) {
+        recommendedMargin = predictiveData.optimizedMargin
       }
     }
 

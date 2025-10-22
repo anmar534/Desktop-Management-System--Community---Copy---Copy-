@@ -1,7 +1,7 @@
 import type { IPurchaseOrderRepository } from '../purchaseOrder.repository'
 import type { PurchaseOrder } from '@/shared/types/contracts'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
-import { STORAGE_KEYS } from '@/shared/config/storageKeys'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 
 type PurchaseOrderItem = NonNullable<PurchaseOrder['items']>[number]

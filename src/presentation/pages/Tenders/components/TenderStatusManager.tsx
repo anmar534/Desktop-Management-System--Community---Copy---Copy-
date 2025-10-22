@@ -1,3 +1,4 @@
+// TenderStatusManager coordinates workflow milestones and submission readiness.
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from '@/presentation/components/ui/button'

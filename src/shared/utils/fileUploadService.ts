@@ -11,7 +11,7 @@ export interface UploadedFile {
 
 import { authorizeExport } from './security/desktopSecurity'
 import type { ExportAuthorizationRequest } from './security/desktopSecurity'
-import { safeLocalStorage } from './storage'
+import { safeLocalStorage } from './storage/storage'
 
 export class FileUploadService {
   private static readonly STORAGE_KEY = 'tender_technical_files';

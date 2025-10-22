@@ -10,9 +10,10 @@
  * - قوائم منسدلة للوحدات
  * - حقل الهدر للمواد
  * - حساب تلقائي للإجماليات
+ * - تحسينات الأداء مع debouncing
  */
 
-import React from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Plus, ChevronDown, ChevronUp, Package, Users, Truck, Briefcase, Trash2 } from 'lucide-react';
 import { Button } from '@/presentation/components/ui/button';
 import { Input } from '@/presentation/components/ui/input';
@@ -91,6 +92,63 @@ const RESOURCE_CONFIG = {
   },
 };
 
+// مكون Input محسّن مع debouncing لتحسين الأداء
+const DebouncedInput: React.FC<{
+  value: string | number;
+  onChange: (value: string) => void;
+  type?: string;
+  placeholder?: string;
+  className?: string;
+  step?: string;
+  min?: string;
+  max?: string;
+}> = ({ value, onChange, type = 'text', placeholder, className, step, min, max }) => {
+  const [localValue, setLocalValue] = useState(String(value));
+  const timeoutRef = useRef<NodeJS.Timeout>();
+
+  // تحديث القيمة المحلية عند تغيير القيمة الخارجية
+  useEffect(() => {
+    setLocalValue(String(value));
+  }, [value]);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+
+    // إلغاء التايمر السابق
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // تأخير التحديث 300ms
+    timeoutRef.current = setTimeout(() => {
+      onChange(newValue);
+    }, 300);
+  }, [onChange]);
+
+  // تنظيف التايمر عند إلغاء المكون
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <Input
+      type={type}
+      value={localValue}
+      onChange={handleChange}
+      placeholder={placeholder}
+      className={className}
+      step={step}
+      min={min}
+      max={max}
+    />
+  );
+};
+
 export const CostSectionCard: React.FC<CostSectionCardProps> = ({
   title,
   type,
@@ -131,8 +189,7 @@ export const CostSectionCard: React.FC<CostSectionCardProps> = ({
   return (
     <div className="space-y-2">
       {/* الهيدر - قابل للنقر */}
-      <button
-        onClick={onToggle}
+      <div
         className={cn(
           'w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all',
           config.borderColor,
@@ -181,18 +238,22 @@ export const CostSectionCard: React.FC<CostSectionCardProps> = ({
             </p>
           </div>
 
-          {/* أيقونة التوسع */}
+          {/* أيقونة التوسع - قابلة للنقر */}
           {hasItems && (
-            <>
+            <button
+              onClick={onToggle}
+              className="p-1 rounded hover:bg-white/20 transition-colors"
+              type="button"
+            >
               {isCollapsed ? (
                 <ChevronDown className={cn('h-5 w-5', config.textColor, 'group-hover:scale-110 transition-transform')} />
               ) : (
                 <ChevronUp className={cn('h-5 w-5', config.textColor, 'group-hover:scale-110 transition-transform')} />
               )}
-            </>
+            </button>
           )}
         </div>
-      </button>
+      </div>
 
       {/* الجدول - يظهر عند التوسع */}
       {hasItems && !isCollapsed && (
@@ -233,9 +294,9 @@ export const CostSectionCard: React.FC<CostSectionCardProps> = ({
                       >
                         {/* الوصف - قابل للتعديل */}
                         <td className="p-2">
-                          <Input
+                          <DebouncedInput
                             value={item.name || item.description || ''}
-                            onChange={(e) => onUpdateRow(item.id, 'name', e.target.value)}
+                            onChange={(value) => onUpdateRow(item.id, 'name', value)}
                             placeholder="أدخل الوصف..."
                             className="h-9 text-sm border-muted-foreground/20 focus:border-primary"
                           />
@@ -262,10 +323,10 @@ export const CostSectionCard: React.FC<CostSectionCardProps> = ({
 
                         {/* الكمية - قابل للتعديل */}
                         <td className="p-2">
-                          <Input
+                          <DebouncedInput
                             type="number"
                             value={item.quantity || ''}
-                            onChange={(e) => onUpdateRow(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                            onChange={(value) => onUpdateRow(item.id, 'quantity', parseFloat(value) || 0)}
                             placeholder="0"
                             className="h-9 text-sm text-center tabular-nums"
                             step="0.01"
@@ -275,10 +336,10 @@ export const CostSectionCard: React.FC<CostSectionCardProps> = ({
                         {/* الهدر - فقط للمواد */}
                         {type === 'materials' && (
                           <td className="p-2">
-                            <Input
+                            <DebouncedInput
                               type="number"
                               value={item.wastePercentage || ''}
-                              onChange={(e) => onUpdateRow(item.id, 'wastePercentage', parseFloat(e.target.value) || 0)}
+                              onChange={(value) => onUpdateRow(item.id, 'wastePercentage', parseFloat(value) || 0)}
                               placeholder="0"
                               className="h-9 text-sm text-center tabular-nums"
                               step="0.1"
@@ -290,10 +351,10 @@ export const CostSectionCard: React.FC<CostSectionCardProps> = ({
 
                         {/* السعر - قابل للتعديل */}
                         <td className="p-2">
-                          <Input
+                          <DebouncedInput
                             type="number"
                             value={item.price || ''}
-                            onChange={(e) => onUpdateRow(item.id, 'price', parseFloat(e.target.value) || 0)}
+                            onChange={(value) => onUpdateRow(item.id, 'price', parseFloat(value) || 0)}
                             placeholder="0.00"
                             className="h-9 text-sm text-center tabular-nums"
                             step="0.01"

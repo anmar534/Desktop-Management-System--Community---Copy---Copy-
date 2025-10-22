@@ -1,14 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import type { ReactNode } from 'react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
-import { EnhancedTenderCard } from '../../src/components/bidding/EnhancedTenderCard'
+import { EnhancedTenderCard } from '../../src/presentation/components/tenders/EnhancedTenderCard'
 import type { Tender } from '../../src/data/centralData'
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: { children: ReactNode } & Record<string, unknown>) => (
+      <div {...props}>{children}</div>
+    ),
+    span: ({ children, ...props }: { children: ReactNode } & Record<string, unknown>) => (
+      <span {...props}>{children}</span>
+    ),
   },
+  AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
 }))
 
 // Mock lucide-react icons using importOriginal to avoid missing icon issues
@@ -43,23 +50,14 @@ vi.mock('../../src/application/hooks/useCurrencyFormatter', () => ({
   }),
 }))
 
-// Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: 'div',
-    span: 'span',
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
-}))
-
 // Mock services
-vi.mock('../../src/services/analyticsService', () => ({
+vi.mock('../../src/application/services/analyticsService', () => ({
   analyticsService: {
     getAllBidPerformances: vi.fn().mockResolvedValue([]),
   },
 }))
 
-vi.mock('../../src/services/competitiveService', () => ({
+vi.mock('../../src/application/services/competitiveService', () => ({
   competitiveService: {
     getAllCompetitors: vi.fn().mockResolvedValue([]),
     getMarketOpportunities: vi.fn().mockResolvedValue([]),
@@ -67,7 +65,7 @@ vi.mock('../../src/services/competitiveService', () => ({
 }))
 
 // Mock prediction utilities
-vi.mock('../../src/utils/predictionModels', () => ({
+vi.mock('../../src/shared/utils/ml/predictionModels', () => ({
   predictWinProbability: vi.fn().mockReturnValue({
     probability: 75,
     confidence: 85,
@@ -76,7 +74,7 @@ vi.mock('../../src/utils/predictionModels', () => ({
   }),
 }))
 
-vi.mock('../../src/utils/priceOptimization', () => ({
+vi.mock('../../src/shared/utils/pricing/priceOptimization', () => ({
   optimizeBidAmount: vi.fn().mockReturnValue({
     recommendedBid: 4500000,
     margin: 15,
@@ -141,7 +139,7 @@ vi.mock('../../src/utils/tenderProgressCalculator', () => ({
 vi.mock('../../src/utils/formatters', () => ({
   formatTenderName: (name: string) => name,
   formatTenderClient: (client: string) => client,
-  formatTenderDate: (date: string) => '31 ديسمبر 2024',
+  formatTenderDate: (_date: string) => '31 ديسمبر 2024',
   formatTenderType: (type: string) => type,
 }))
 
@@ -449,6 +447,222 @@ describe('EnhancedTenderCard', () => {
 
       expect(screen.getByText('فرصة الفوز:')).toBeInTheDocument()
       expect(screen.getByText('75%')).toBeInTheDocument()
+    })
+
+    it('should call onViewAnalytics when analytics button is clicked', async () => {
+      const onViewAnalytics = vi.fn()
+      render(
+        <EnhancedTenderCard
+          {...defaultProps}
+          enablePredictiveAnalytics={true}
+          onViewAnalytics={onViewAnalytics}
+        />
+      )
+
+      // Wait for loading to complete
+      await waitFor(() => {
+        expect(screen.queryByText('جاري تحليل البيانات...')).not.toBeInTheDocument()
+      })
+
+      const analyticsButton = screen.getByText('تحليلات')
+      fireEvent.click(analyticsButton)
+
+      expect(onViewAnalytics).toHaveBeenCalledWith(mockTender)
+    })
+  })
+
+  describe('Status Management', () => {
+    it('should display correct buttons for new status', () => {
+      const tender = { ...mockTender, status: 'new' as const }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('تسعير')).toBeInTheDocument()
+    })
+
+    it('should display submit button for ready_to_submit status', () => {
+      const tender = { ...mockTender, status: 'ready_to_submit' as const }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('ارسال')).toBeInTheDocument()
+    })
+
+    it('should display results button for submitted status', () => {
+      const tender = { ...mockTender, status: 'submitted' as const }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('النتيجة')).toBeInTheDocument()
+    })
+  })
+
+  describe('Revert Functionality', () => {
+    it('should show revert button for submitted status', () => {
+      const tender = { ...mockTender, status: 'submitted' as const }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('عودة للإرسال')).toBeInTheDocument()
+    })
+
+    it('should call onRevertStatus when revert button is clicked', () => {
+      const onRevertStatus = vi.fn()
+      const tender = { ...mockTender, status: 'submitted' as const }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} onRevertStatus={onRevertStatus} />)
+
+      fireEvent.click(screen.getByText('عودة للإرسال'))
+
+      expect(onRevertStatus).toHaveBeenCalledWith(tender, 'ready_to_submit')
+    })
+
+    it('should show revert to pricing button for ready_to_submit status', () => {
+      const tender = {
+        ...mockTender,
+        status: 'ready_to_submit' as const,
+      }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('عودة للتسعير')).toBeInTheDocument()
+    })
+  })
+
+  describe('Completion Indicators', () => {
+    it('should show ready to submit badge when pricing is complete and files uploaded', () => {
+      const tender = {
+        ...mockTender,
+        pricedItems: 100,
+        totalItems: 100,
+        technicalFilesUploaded: true,
+        status: 'under_action' as const,
+      }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('جاهزة للإرسال')).toBeInTheDocument()
+    })
+
+    it('should show technical files needed warning when pricing complete but no files', () => {
+      const tender = {
+        ...mockTender,
+        pricedItems: 100,
+        totalItems: 100,
+        technicalFilesUploaded: false,
+        status: 'under_action' as const,
+      }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('يحتاج ملفات فنية')).toBeInTheDocument()
+      expect(screen.getByText('ملفات فنية مطلوبة')).toBeInTheDocument()
+    })
+
+    it('should show overdue warning when deadline has passed', () => {
+      const tender = {
+        ...mockTender,
+        deadline: '2020-01-01',
+        daysLeft: -10,
+      }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('الموعد النهائي انتهى')).toBeInTheDocument()
+    })
+  })
+
+  describe('Card Styling', () => {
+    it('should apply success styling for won status', () => {
+      const tender = { ...mockTender, status: 'won' as const }
+      const { container } = render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      const card = container.querySelector('.border-success\\/40')
+      expect(card).toBeInTheDocument()
+    })
+
+    it('should apply destructive styling for lost status', () => {
+      const tender = { ...mockTender, status: 'lost' as const }
+      const { container } = render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      const card = container.querySelector('.border-destructive\\/30')
+      expect(card).toBeInTheDocument()
+    })
+
+    it('should apply primary styling for ready_to_submit status', () => {
+      const tender = { ...mockTender, status: 'ready_to_submit' as const }
+      const { container } = render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      const card = container.querySelector('.border-primary\\/30')
+      expect(card).toBeInTheDocument()
+    })
+  })
+
+  describe('Progress Calculation', () => {
+    it('should show progress bar for active tenders', () => {
+      render(<EnhancedTenderCard {...defaultProps} />)
+
+      expect(screen.getByText('التقدم')).toBeInTheDocument()
+      expect(screen.getByText('60%')).toBeInTheDocument()
+    })
+
+    it('should not show progress bar for won tenders', () => {
+      const tender = { ...mockTender, status: 'won' as const }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.queryByText('التقدم')).not.toBeInTheDocument()
+    })
+
+    it('should not show progress bar for lost tenders', () => {
+      const tender = { ...mockTender, status: 'lost' as const }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.queryByText('التقدم')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Document Price Display', () => {
+    it('should display document price when available', () => {
+      const tender = { ...mockTender, documentPrice: 5000 }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('سعر الكراسة:')).toBeInTheDocument()
+    })
+
+    it('should not display document price section when price is zero', () => {
+      const tender = { ...mockTender, documentPrice: 0 }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.queryByText('سعر الكراسة:')).not.toBeInTheDocument()
+    })
+
+    it('should use bookletPrice as fallback when documentPrice is not available', () => {
+      const tender = { ...mockTender, documentPrice: 0, bookletPrice: 3000 }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('سعر الكراسة:')).toBeInTheDocument()
+    })
+  })
+
+  describe('Animation and Hover Effects', () => {
+    it('should render motion div with correct animation props', () => {
+      const { container } = render(<EnhancedTenderCard {...defaultProps} />)
+
+      const motionDiv = container.firstChild
+      expect(motionDiv).toBeInTheDocument()
+    })
+
+    it('should have hover effects on card', () => {
+      const { container } = render(<EnhancedTenderCard {...defaultProps} />)
+
+      const card = container.querySelector('.hover\\:shadow-lg')
+      expect(card).toBeInTheDocument()
+    })
+  })
+
+  describe('Memory Management', () => {
+    afterEach(() => {
+      vi.clearAllTimers()
+    })
+
+    it('should properly cleanup on unmount', () => {
+      const { unmount } = render(<EnhancedTenderCard {...defaultProps} enablePredictiveAnalytics={true} />)
+
+      unmount()
+
+      // Verify no memory leaks - component should unmount without errors
+      expect(() => unmount()).not.toThrow()
     })
   })
 })

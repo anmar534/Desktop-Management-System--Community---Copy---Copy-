@@ -1,13 +1,4 @@
-/**
- * @fileoverview Pricing Template Manager Component
- * @description Comprehensive template management system for the bidding process.
- * Provides template creation, editing, categorization, search, and application functionality.
- *
- * @author Desktop Management System Team
- * @version 1.0.0
- * @since Phase 1 Implementation
- */
-
+// PricingTemplateManager manages reusable tender pricing templates and workflows.
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {

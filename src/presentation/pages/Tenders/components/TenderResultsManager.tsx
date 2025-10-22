@@ -1,4 +1,4 @@
-// مدير نتائج المنافسات - واجهة سهلة لتحديث نتائج المنافسات
+// TenderResultsManager provides a guided flow for updating tender results.
 import { useState } from 'react'
 import { Button } from '@/presentation/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'

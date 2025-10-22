@@ -17,7 +17,7 @@ import {
 import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'
 import { NewProjectForm } from './components/NewProjectForm'
 import { EnhancedProjectDetails } from './components/EnhancedProjectDetails'
-import { Clients } from './components/Clients'
+import { Clients } from './components/Clients.tsx'
 import {
   Building2,
   Users,

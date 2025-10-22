@@ -1,3 +1,4 @@
+// NewTenderForm captures all fields required to register a new tender opportunity.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
@@ -36,7 +37,7 @@ import {
   AlertDialogTrigger,
 } from '@/presentation/components/ui/alert-dialog'
 import { ExcelProcessor } from '@/shared/utils/data/excelProcessor'
-import type { QuantityItem } from '../types/contracts'
+import type { QuantityItem } from '@/shared/types/contracts'
 import type { Tender as DataTender } from '@/data/centralData'
 
 interface AttachmentMetadata {
@@ -54,6 +55,10 @@ type TenderDraft = Omit<DataTender, 'id'> & {
   projectDuration?: string
   description?: string
   quantities: QuantityItem[]
+  quantityTable?: QuantityItem[]
+  items?: QuantityItem[]
+  boqItems?: QuantityItem[]
+  quantityItems?: QuantityItem[]
   attachments?: AttachmentLike[]
   createdAt?: string
 }
@@ -115,21 +120,46 @@ const toInputString = (value: string | number | null | undefined): string => {
   return String(value)
 }
 
+// Convert ISO date string to yyyy-MM-dd format for HTML input
+const formatDateForInput = (dateString?: string | null): string => {
+  if (!dateString) return ''
+  try {
+    // Handle ISO format: 2025-10-31T00:00:00.000Z -> 2025-10-31
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return ''
+    
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  } catch {
+    return ''
+  }
+}
+
 const buildFormData = (tender?: ExistingTender | null): TenderFormData => ({
   name: tender?.name ?? tender?.title ?? '',
   ownerEntity: tender?.client ?? '',
   location: tender?.location ?? '',
   projectDuration: tender?.projectDuration ?? '',
   bookletPrice: toInputString(tender?.bookletPrice ?? tender?.documentPrice ?? ''),
-  deadline: tender?.deadline ?? '',
+  deadline: formatDateForInput(tender?.deadline),
   type: tender?.type ?? '',
   estimatedValue: toInputString(tender?.totalValue ?? tender?.value ?? ''),
   description: tender?.description ?? ''
 })
 
 const createQuantitiesState = (tender?: ExistingTender | null): QuantityItem[] => {
-  if (tender?.quantities && tender.quantities.length > 0) {
-    return tender.quantities.map((row, index) => ({
+  // Try multiple possible sources for quantity data
+  const sourceData = tender?.quantities || 
+                     tender?.quantityTable || 
+                     tender?.items || 
+                     tender?.boqItems || 
+                     tender?.quantityItems ||
+                     (tender as any)?.scope?.items
+  
+  if (sourceData && Array.isArray(sourceData) && sourceData.length > 0) {
+    return sourceData.map((row, index) => ({
       id: typeof row.id === 'number' ? row.id : generateRowId() + index,
       serialNumber: row.serialNumber ?? '',
       unit: row.unit ?? '',
@@ -206,7 +236,9 @@ const computeCompetitionInfo = (estimatedValue: number | null): LevelInfo => {
   return { label: 'منافسة قليلة', status: 'success' }
 }
 
-const STATUS_SEVERITY: Partial<Record<StatusBadgeProps['status'], number>> = {
+type StatusKey = Exclude<StatusBadgeProps['status'], null | undefined>
+
+const STATUS_SEVERITY: Partial<Record<StatusKey, number>> = {
   overdue: 5,
   error: 5,
   overBudget: 5,
@@ -223,7 +255,7 @@ const STATUS_SEVERITY: Partial<Record<StatusBadgeProps['status'], number>> = {
   underBudget: 1,
 }
 
-const STATUS_TO_ALERT_VARIANT: Partial<Record<StatusBadgeProps['status'], InlineAlertVariant>> = {
+const STATUS_TO_ALERT_VARIANT: Partial<Record<StatusKey, InlineAlertVariant>> = {
   overdue: 'destructive',
   error: 'destructive',
   overBudget: 'destructive',
@@ -263,6 +295,11 @@ export function NewTenderForm({ onSave, onBack, existingTender }: NewTenderFormP
   const attachmentInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
+    console.log('[NewTenderForm] existingTender changed:', existingTender)
+    console.log('[NewTenderForm] existingTender.id:', existingTender?.id)
+    console.log('[NewTenderForm] existingTender.quantities:', existingTender?.quantities)
+    console.log('[NewTenderForm] existingTender.quantityTable:', existingTender?.quantityTable)
+    
     setFormData(buildFormData(existingTender))
     setQuantities(createQuantitiesState(existingTender))
     setAttachments(createInitialAttachments(existingTender))
@@ -504,6 +541,10 @@ export function NewTenderForm({ onSave, onBack, existingTender }: NewTenderFormP
   }, [formData])
 
   const handleSave = useCallback(async () => {
+    console.log('[NewTenderForm][handleSave] Starting save process')
+    console.log('[NewTenderForm][handleSave] existingTender:', existingTender)
+    console.log('[NewTenderForm][handleSave] existingTender.id:', existingTender?.id)
+    
     setIsLoading(true)
 
     try {
@@ -557,7 +598,7 @@ export function NewTenderForm({ onSave, onBack, existingTender }: NewTenderFormP
       })
 
       const tenderData: TenderDraft = {
-        ...(existingTender?.id ? { id: existingTender.id } : { id: `TND-${Date.now()}` }),
+        id: existingTender?.id ?? `TND-${Date.now()}`,
         name: trimmedName,
         title: trimmedName,
         client: ownerEntity,
@@ -585,6 +626,9 @@ export function NewTenderForm({ onSave, onBack, existingTender }: NewTenderFormP
         description: resolvedDescription,
         createdAt: existingTender?.createdAt ?? new Date().toISOString(),
         quantities: normalizedQuantities,
+        quantityTable: normalizedQuantities,
+        items: normalizedQuantities,
+        boqItems: normalizedQuantities,
         attachments,
         totalItems: existingTender?.totalItems ?? normalizedQuantities.length,
         itemsPriced: existingTender?.itemsPriced,
@@ -599,6 +643,10 @@ export function NewTenderForm({ onSave, onBack, existingTender }: NewTenderFormP
         resultDate: existingTender?.resultDate,
         cancelledDate: existingTender?.cancelledDate
       }
+
+      console.log('[NewTenderForm][handleSave] Final tenderData:', tenderData)
+      console.log('[NewTenderForm][handleSave] tenderData.id:', tenderData.id)
+      console.log('[NewTenderForm][handleSave] tenderData.quantities length:', tenderData.quantities?.length)
 
       await onSave?.(tenderData)
       setSaveDialogOpen(false)

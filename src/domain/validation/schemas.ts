@@ -61,6 +61,18 @@ const projectSchema = projectBaseSchema.extend({
 const projectCreateSchema = projectBaseSchema;
 const projectUpdateSchema = projectSchema.partial().strip();
 
+// Quantity item schema for tender BOQ/quantity tables
+const quantityItemSchema = z.object({
+  id: z.number(),
+  serialNumber: z.string(),
+  unit: z.string(),
+  quantity: z.string(),
+  specifications: z.string(),
+  originalDescription: z.string().optional(),
+  description: z.string().optional(),
+  canonicalDescription: z.string().optional(),
+});
+
 const tenderBaseSchema = z
   .object({
     name: nonEmptyString,
@@ -91,6 +103,8 @@ const tenderBaseSchema = z
     category: nonEmptyString,
     location: nonEmptyString,
     type: nonEmptyString,
+    projectDuration: optionalString,
+    description: optionalString,
     resultNotes: optionalString,
     winningBidValue: nonNegativeNumber.optional(),
     ourBidValue: nonNegativeNumber.optional(),
@@ -98,6 +112,12 @@ const tenderBaseSchema = z
     lostDate: optionalIsoDate,
     resultDate: optionalIsoDate,
     cancelledDate: optionalIsoDate,
+    // BOQ/Quantity table fields - allow multiple possible field names
+    quantities: z.array(quantityItemSchema).optional(),
+    quantityTable: z.array(quantityItemSchema).optional(),
+    items: z.array(quantityItemSchema).optional(),
+    boqItems: z.array(quantityItemSchema).optional(),
+    quantityItems: z.array(quantityItemSchema).optional(),
   })
   .strip();
 

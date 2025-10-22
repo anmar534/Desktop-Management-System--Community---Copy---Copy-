@@ -1,3 +1,4 @@
+// PricingSummary showcases headline financial metrics for the selected tender.
 import type React from 'react'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 

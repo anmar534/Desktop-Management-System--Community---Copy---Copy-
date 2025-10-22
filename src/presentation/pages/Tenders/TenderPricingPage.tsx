@@ -1,3 +1,4 @@
+// TenderPricingPage drives the full tender pricing workflow and persistence.
 import { saveToStorage, loadFromStorage, STORAGE_KEYS } from '@/shared/utils/storage/storage'
 import {
   createTenderPricingBackup,
@@ -18,18 +19,22 @@ import type {
   PricingPercentages,
   TenderBackupEntry,
   ExecutionMethod,
+  PricingViewItem,
 } from '@/shared/types/pricing'
+import type { PricingTemplate } from '@/shared/types/templates'
+import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
 import type {
   QuantityItem,
   TenderStatsPayload,
   TenderStatsRecord,
   TenderWithPricingSources,
   PricingViewName,
-} from './pricing/tender-pricing-process/types'
+  TenderAttachment,
+} from '@/presentation/components/pricing/tender-pricing-process/types'
 // (Phase MVP Official/Draft) استيراد الهوك الجديد لإدارة المسودة والنسخة الرسمية
 import { useEditableTenderPricing } from '@/application/hooks/useEditableTenderPricing'
 // Phase 2 authoring engine adoption helpers (flag-guarded)
-import { PRICING_FLAGS, isPricingEntry } from '@/shared/utils/pricing/pricingHelpers'
+import { isPricingEntry } from '@/shared/utils/pricing/pricingHelpers'
 import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
 import { applyDefaultsToPricingMap } from '@/shared/utils/defaultPercentagesPropagation'
 import { formatDateValue } from '@/shared/utils/formatters/formatters'
@@ -61,8 +66,9 @@ import {
   DialogClose,
 } from '@/presentation/components/ui/dialog'
 import { toast } from 'sonner'
-import { useTenderPricingState } from './pricing/tender-pricing-process/hooks/useTenderPricingState'
-import { useTenderPricingCalculations } from './pricing/tender-pricing-process/hooks/useTenderPricingCalculations'
+import { useTenderPricingState } from '@/presentation/components/pricing/tender-pricing-process/hooks/useTenderPricingState'
+import { useTenderPricingCalculations } from '@/presentation/components/pricing/tender-pricing-process/hooks/useTenderPricingCalculations'
+// TenderPricingPage drives the full tender pricing workflow and persistence.
 import {
   AlertCircle,
   CheckCircle,
@@ -74,13 +80,13 @@ import {
   Save,
   Layers,
 } from 'lucide-react'
-import { PricingTemplateManager } from './bidding/PricingTemplateManager'
-import { useTenderPricingPersistence } from './pricing/tender-pricing-process/hooks/useTenderPricingPersistence'
+import { PricingTemplateManager } from '@/presentation/components/tenders/PricingTemplateManager'
+import { useTenderPricingPersistence } from '@/presentation/components/pricing/tender-pricing-process/hooks/useTenderPricingPersistence'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
-import { TenderPricingTabs } from './pricing/tender-pricing-process/views/TenderPricingTabs'
+import { TenderPricingTabs } from '@/presentation/components/pricing/tender-pricing-process/views/TenderPricingTabs'
 import { recordAuditEvent, type AuditEventLevel, type AuditEventStatus } from '@/shared/utils/storage/auditLog'
 
-export type { TenderWithPricingSources } from './pricing/tender-pricing-process/types'
+export type { TenderWithPricingSources } from '@/presentation/components/pricing/tender-pricing-process/types'
 
 // ==== Types ====
 
@@ -184,6 +190,9 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   const [pricingData, setPricingData] = useState<Map<string, PricingData>>(new Map())
   // (Official/Draft MVP) دمج الهوك الجديد (قراءة فقط حالياً لعرض حالة الاعتماد)
   const editablePricing = useEditableTenderPricing(tender)
+  // Unified BOQ read model to ensure central storage is the primary source for quantity items
+  const unifiedPricing = useUnifiedTenderPricing(tender)
+  const { items: unifiedItems, source: unifiedSource, status: unifiedStatus } = unifiedPricing
   const {
     currentItemIndex,
     setCurrentItemIndex,
@@ -218,6 +227,26 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   // استخراج بيانات جدول الكميات من المنافسة مع البحث المحسّن
   // MOVED HERE TO FIX TEMPORAL DEAD ZONE - quantityItems must be declared before template callbacks
   const quantityItems: QuantityItem[] = useMemo(() => {
+    console.log('[TenderPricingPage] Unified BOQ state before extraction:', {
+      unifiedStatus,
+      unifiedSource,
+      unifiedCount: Array.isArray(unifiedItems) ? unifiedItems.length : 0,
+    })
+
+    console.log('[TenderPricingPage] Extracting quantity items from tender:', {
+      tenderId: tender?.id,
+      tenderName: tender?.name,
+      hasQuantityTable: !!tender?.quantityTable,
+      hasQuantities: !!tender?.quantities,
+      hasItems: !!tender?.items,
+      hasBoqItems: !!tender?.boqItems,
+      hasQuantityItems: !!tender?.quantityItems,
+      hasScope: !!tender?.scope,
+      hasAttachments: !!tender?.attachments,
+      quantityTableLength: Array.isArray(tender?.quantityTable) ? tender.quantityTable.length : 0,
+      quantitiesLength: Array.isArray(tender?.quantities) ? tender.quantities.length : 0,
+    })
+
     const toTrimmedString = (value: unknown): string | undefined => {
       if (value === undefined || value === null) return undefined
       const text = String(value).trim()
@@ -245,7 +274,13 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     const asRaw = (source?: QuantityItem[] | null): RawQuantityItem[] | undefined =>
       Array.isArray(source) ? (source as RawQuantityItem[]) : undefined
 
+    const centralCandidate =
+      unifiedStatus === 'ready' && unifiedSource === 'central-boq' && Array.isArray(unifiedItems) && unifiedItems.length > 0
+        ? (unifiedItems as RawQuantityItem[])
+        : undefined
+
     const candidateSources: (RawQuantityItem[] | undefined)[] = [
+      centralCandidate,
       asRaw(tender?.quantityTable ?? undefined),
       asRaw(tender?.quantities ?? undefined),
       asRaw(tender?.items ?? undefined),
@@ -254,11 +289,19 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       scopeItems,
     ]
 
+    console.log('[TenderPricingPage] Candidate sources:', candidateSources.map((src, idx) => ({
+      index: idx,
+      isArray: Array.isArray(src),
+      length: Array.isArray(src) ? src.length : 0
+    })))
+
     let quantityData: RawQuantityItem[] =
       candidateSources.find((source) => Array.isArray(source) && source.length > 0) ?? []
 
+    console.log('[TenderPricingPage] Selected quantityData length:', quantityData.length)
+
     if (quantityData.length === 0 && Array.isArray(tender?.attachments)) {
-      const quantityAttachment = tender.attachments.find((att) => {
+      const quantityAttachment = tender.attachments.find((att: TenderAttachment) => {
         const normalizedName = att.name?.toLowerCase() ?? ''
         return (
           att.type === 'quantity' ||
@@ -268,8 +311,11 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
         )
       })
 
+      console.log('[TenderPricingPage] Quantity attachment found:', !!quantityAttachment)
+
       if (Array.isArray(quantityAttachment?.data)) {
         quantityData = quantityAttachment.data as RawQuantityItem[]
+        console.log('[TenderPricingPage] Loaded from attachment, length:', quantityData.length)
       }
     }
 
@@ -288,6 +334,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
       const description =
         toTrimmedString(item.description) ??
+        toTrimmedString(item.canonicalDescription) ??
         toTrimmedString((item as Record<string, unknown>).desc) ??
         toTrimmedString(item.name) ??
         ''
@@ -303,17 +350,79 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
         toTrimmedString((item as Record<string, unknown>).notes) ??
         'حسب المواصفات الفنية'
 
-      return {
+      const canonicalDescription =
+        toTrimmedString(item.canonicalDescription) ??
+        toTrimmedString(item.description) ??
+        toTrimmedString(item.name) ??
+        ''
+
+      const normalizedItem: QuantityItem = {
         id,
         itemNumber,
         description,
         unit,
         quantity,
         specifications,
-      } satisfies QuantityItem
+      }
+
+      if (canonicalDescription) {
+        normalizedItem.canonicalDescription = canonicalDescription
+      }
+
+      if ('rawDescription' in item) {
+        const rawDescription = toTrimmedString((item as Record<string, unknown>).rawDescription)
+        if (rawDescription) {
+          normalizedItem.rawDescription = rawDescription
+        }
+      }
+
+      if ('fullDescription' in item) {
+        const fullDescription = toTrimmedString((item as Record<string, unknown>).fullDescription)
+        if (fullDescription) {
+          normalizedItem.fullDescription = fullDescription
+        }
+      }
+
+      if ('estimated' in item && (item as Record<string, unknown>).estimated !== undefined) {
+        normalizedItem.estimated = (item as Record<string, unknown>).estimated
+      }
+
+      const maybeUnitPrice = toNumberOr((item as Record<string, unknown>).unitPrice, NaN)
+      if (Number.isFinite(maybeUnitPrice)) {
+        normalizedItem.unitPrice = maybeUnitPrice
+      } else if (typeof (item as Record<string, unknown>).estimated === 'object' && (item as Record<string, unknown>).estimated !== null) {
+        const estimatedUnitPrice = toNumberOr(
+          ((item as Record<string, unknown>).estimated as Record<string, unknown>).unitPrice,
+          NaN,
+        )
+        if (Number.isFinite(estimatedUnitPrice)) {
+          normalizedItem.unitPrice = estimatedUnitPrice
+        }
+      }
+
+      const maybeTotalPrice = toNumberOr((item as Record<string, unknown>).totalPrice, NaN)
+      if (Number.isFinite(maybeTotalPrice)) {
+        normalizedItem.totalPrice = maybeTotalPrice
+      } else if (typeof (item as Record<string, unknown>).estimated === 'object' && (item as Record<string, unknown>).estimated !== null) {
+        const estimatedTotal = toNumberOr(
+          ((item as Record<string, unknown>).estimated as Record<string, unknown>).totalPrice,
+          NaN,
+        )
+        if (Number.isFinite(estimatedTotal)) {
+          normalizedItem.totalPrice = estimatedTotal
+        }
+      }
+
+      return normalizedItem
     })
+    
+    console.log('[TenderPricingPage] ✅ Normalized items count:', normalizedItems.length)
+    if (normalizedItems.length > 0) {
+      console.log('[TenderPricingPage] Sample items (first 3):', normalizedItems.slice(0, 3))
+    }
+    
     return normalizedItems
-  }, [tender])
+  }, [tender, unifiedItems, unifiedSource, unifiedStatus])
 
   // ==== Template Management ====
 
@@ -521,33 +630,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     }))
   }
 
-  const notifySummaryEditingUnavailable = useCallback(() => {
-    toast.info(
-      'التحرير من تبويب الملخص غير مدعوم حالياً، يرجى التبديل إلى تبويب التسعير لإجراء التعديلات.',
-    )
-  }, [])
-
-  const addRowFromSummary = useCallback(
-    (_: string, __: ActualPricingSection) => {
-      notifySummaryEditingUnavailable()
-    },
-    [notifySummaryEditingUnavailable],
-  )
-
-  const updateRowFromSummary = useCallback(
-    (_: string, __: ActualPricingSection, ___: string, ____: string, _____: unknown) => {
-      notifySummaryEditingUnavailable()
-    },
-    [notifySummaryEditingUnavailable],
-  )
-
-  const deleteRowFromSummary = useCallback(
-    (_: string, __: ActualPricingSection, ___: string) => {
-      notifySummaryEditingUnavailable()
-    },
-    [notifySummaryEditingUnavailable],
-  )
-
   const handleViewChange = useCallback(
     (value: PricingViewName) => {
       changeView(value)
@@ -695,6 +777,134 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     },
     [markDirty],
   )
+
+  // حفظ يدوي للبند الحالي مع رسالة تأكيد وتحقق من صحة البيانات
+  const saveCurrentItem = useCallback(() => {
+    if (currentItem && isLoaded) {
+      const totals = calculateTotals()
+      // التحقق من وجود بيانات التسعير
+      const hasData =
+        currentPricing.materials.length > 0 ||
+        currentPricing.labor.length > 0 ||
+        currentPricing.equipment.length > 0 ||
+        currentPricing.subcontractors.length > 0
+
+      if (!hasData) {
+        toast.error('لا توجد بيانات للحفظ', {
+          description: 'يرجى إضافة بيانات التسعير قبل الحفظ',
+          duration: 4000,
+        })
+        return
+      }
+
+      // تأكيد وسم البند كمكتمل فقط عند الحفظ الصريح
+      const itemToSave: PricingData = { ...currentPricing, completed: true }
+      const newMap = new Map(pricingData)
+      newMap.set(currentItem.id, itemToSave)
+      setPricingData(newMap)
+      setCurrentPricing(itemToSave)
+
+      // حساب التفاصيل المالية
+      const itemTotals = {
+        materials: itemToSave.materials.reduce((sum, mat) => sum + (mat.total || 0), 0),
+        labor: itemToSave.labor.reduce((sum, lab) => sum + (lab.total || 0), 0),
+        equipment: itemToSave.equipment.reduce((sum, eq) => sum + (eq.total || 0), 0),
+        subcontractors: itemToSave.subcontractors.reduce((sum, sub) => sum + (sub.total || 0), 0),
+      }
+
+      const subtotal = Object.values(itemTotals).reduce((sum, val) => sum + val, 0)
+      const unitPrice = totals.total / currentItem.quantity
+
+      // حفظ في قاعدة البيانات
+      void pricingService.saveTenderPricing(tender.id, {
+        pricing: Array.from(newMap.entries()),
+        defaultPercentages,
+        lastUpdated: new Date().toISOString(),
+      })
+      // مزامنة لقطة BOQ المركزية بعد الحفظ اليدوي
+      void persistPricingAndBOQ(newMap)
+      // (Legacy Snapshot Removed) حذف إنشاء snapshot اليدوي.
+
+      // حفظ تفاصيل البند في التخزين الموحد للتطبيق
+      void saveToStorage(`tender-${tender.id}-pricing-item-${currentItem.id}`, {
+        tenderId: tender.id,
+        tenderTitle,
+        itemId: currentItem.id,
+        itemNumber: currentItem.itemNumber,
+        description: currentItem.description,
+        specifications: currentItem.specifications,
+        unit: currentItem.unit,
+        quantity: currentItem.quantity,
+        pricingData: itemToSave,
+        breakdown: itemTotals,
+        subtotal: subtotal,
+        additionalCosts: {
+          administrative: totals.administrative,
+          operational: totals.operational,
+          profit: totals.profit,
+        },
+        unitPrice: unitPrice,
+        totalValue: totals.total,
+        executionMethod: currentPricing.executionMethod ?? 'ذاتي',
+        technicalNotes: currentPricing.technicalNotes ?? '',
+        createdAt: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
+        status: 'completed',
+        version: 1, // لتتبع إصدارات التسعير
+      })
+
+      // تحديث إحصائيات المنافسة
+      const completionPercentage = (newMap.size / quantityItems.length) * 100
+      const projectTotal = calculateProjectTotal()
+      const statsPayload: TenderStatsPayload = {
+        totalItems: quantityItems.length,
+        pricedItems: newMap.size,
+        completionPercentage: completionPercentage,
+        totalValue: projectTotal,
+        averageUnitPrice:
+          projectTotal / quantityItems.reduce((sum, item) => sum + item.quantity, 0),
+        lastUpdated: new Date().toISOString(),
+      }
+      // حفظ الإحصائيات بشكل مجمّع تحت STORAGE_KEYS.TENDER_STATS
+      void (async () => {
+        const allStats = await loadFromStorage<TenderStatsRecord>(STORAGE_KEYS.TENDER_STATS, {})
+        allStats[tender.id] = statsPayload
+        await saveToStorage(STORAGE_KEYS.TENDER_STATS, allStats)
+      })()
+
+      // عرض رسالة تأكيد مفصلة
+      toast.success('تم الحفظ بنجاح', {
+        description: `تم حفظ تسعير البند رقم ${currentItem.itemNumber} - القيمة: ${formatCurrencyValue(totals.total)}`,
+        duration: 4000,
+      })
+
+      // إرسال إشعار تحديث للصفحات الأخرى (مثل صفحة تفاصيل المنافسة)
+      notifyPricingUpdate()
+
+      // تحديث حالة المنافسة فوراً بعد حفظ البند
+      updateTenderStatus()
+      recordPricingAudit('info', 'status-updated-after-save', {
+        itemId: currentItem.id,
+        completion: completionPercentage,
+      })
+    }
+  }, [
+    currentItem,
+    currentPricing,
+    pricingData,
+    tender.id,
+    isLoaded,
+    quantityItems,
+    calculateTotals,
+    calculateProjectTotal,
+    defaultPercentages,
+    notifyPricingUpdate,
+    persistPricingAndBOQ,
+    recordPricingAudit,
+    updateTenderStatus,
+    tenderTitle,
+    formatCurrencyValue,
+  ])
 
   const handleNavigatePrev = useCallback(() => {
     if (currentItemIndex > 0) {
@@ -871,135 +1081,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   ])
 
   // ملاحظة: تم إزالة دالة تنسيق العملة غير المستخدمة بعد تبسيط بطاقات الملخص.
-
-  // حفظ البيانات بشكل تلقائي مع debounce
-  // حفظ يدوي للبند الحالي مع رسالة تأكيد وتحقق من صحة البيانات
-  const saveCurrentItem = useCallback(() => {
-    if (currentItem && isLoaded) {
-      const totals = calculateTotals()
-      // التحقق من وجود بيانات التسعير
-      const hasData =
-        currentPricing.materials.length > 0 ||
-        currentPricing.labor.length > 0 ||
-        currentPricing.equipment.length > 0 ||
-        currentPricing.subcontractors.length > 0
-
-      if (!hasData) {
-        toast.error('لا توجد بيانات للحفظ', {
-          description: 'يرجى إضافة بيانات التسعير قبل الحفظ',
-          duration: 4000,
-        })
-        return
-      }
-
-      // تأكيد وسم البند كمكتمل فقط عند الحفظ الصريح
-      const itemToSave: PricingData = { ...currentPricing, completed: true }
-      const newMap = new Map(pricingData)
-      newMap.set(currentItem.id, itemToSave)
-      setPricingData(newMap)
-      setCurrentPricing(itemToSave)
-
-      // حساب التفاصيل المالية
-      const itemTotals = {
-        materials: itemToSave.materials.reduce((sum, mat) => sum + (mat.total || 0), 0),
-        labor: itemToSave.labor.reduce((sum, lab) => sum + (lab.total || 0), 0),
-        equipment: itemToSave.equipment.reduce((sum, eq) => sum + (eq.total || 0), 0),
-        subcontractors: itemToSave.subcontractors.reduce((sum, sub) => sum + (sub.total || 0), 0),
-      }
-
-      const subtotal = Object.values(itemTotals).reduce((sum, val) => sum + val, 0)
-      const unitPrice = totals.total / currentItem.quantity
-
-      // حفظ في قاعدة البيانات
-      void pricingService.saveTenderPricing(tender.id, {
-        pricing: Array.from(newMap.entries()),
-        defaultPercentages,
-        lastUpdated: new Date().toISOString(),
-      })
-      // مزامنة لقطة BOQ المركزية بعد الحفظ اليدوي
-      void persistPricingAndBOQ(newMap)
-      // (Legacy Snapshot Removed) حذف إنشاء snapshot اليدوي.
-
-      // حفظ تفاصيل البند في التخزين الموحد للتطبيق
-      void saveToStorage(`tender-${tender.id}-pricing-item-${currentItem.id}`, {
-        tenderId: tender.id,
-        tenderTitle,
-        itemId: currentItem.id,
-        itemNumber: currentItem.itemNumber,
-        description: currentItem.description,
-        specifications: currentItem.specifications,
-        unit: currentItem.unit,
-        quantity: currentItem.quantity,
-        pricingData: itemToSave,
-        breakdown: itemTotals,
-        subtotal: subtotal,
-        additionalCosts: {
-          administrative: totals.administrative,
-          operational: totals.operational,
-          profit: totals.profit,
-        },
-        unitPrice: unitPrice,
-        totalValue: totals.total,
-        executionMethod: currentPricing.executionMethod ?? 'ذاتي',
-        technicalNotes: currentPricing.technicalNotes ?? '',
-        createdAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        status: 'completed',
-        version: 1, // لتتبع إصدارات التسعير
-      })
-
-      // تحديث إحصائيات المنافسة
-      const completionPercentage = (newMap.size / quantityItems.length) * 100
-      const projectTotal = calculateProjectTotal()
-      const statsPayload: TenderStatsPayload = {
-        totalItems: quantityItems.length,
-        pricedItems: newMap.size,
-        completionPercentage: completionPercentage,
-        totalValue: projectTotal,
-        averageUnitPrice:
-          projectTotal / quantityItems.reduce((sum, item) => sum + item.quantity, 0),
-        lastUpdated: new Date().toISOString(),
-      }
-      // حفظ الإحصائيات بشكل مجمّع تحت STORAGE_KEYS.TENDER_STATS
-      void (async () => {
-        const allStats = await loadFromStorage<TenderStatsRecord>(STORAGE_KEYS.TENDER_STATS, {})
-        allStats[tender.id] = statsPayload
-        await saveToStorage(STORAGE_KEYS.TENDER_STATS, allStats)
-      })()
-
-      // عرض رسالة تأكيد مفصلة
-      toast.success('تم الحفظ بنجاح', {
-        description: `تم حفظ تسعير البند رقم ${currentItem.itemNumber} - القيمة: ${formatCurrencyValue(totals.total)}`,
-        duration: 4000,
-      })
-
-      // إرسال إشعار تحديث للصفحات الأخرى (مثل صفحة تفاصيل المنافسة)
-      notifyPricingUpdate()
-
-      // تحديث حالة المنافسة فوراً بعد حفظ البند
-      updateTenderStatus()
-      recordPricingAudit('info', 'status-updated-after-save', {
-        itemId: currentItem.id,
-        completion: completionPercentage,
-      })
-    }
-  }, [
-    currentItem,
-    currentPricing,
-    pricingData,
-    tender.id,
-    isLoaded,
-    quantityItems,
-    calculateTotals,
-    calculateProjectTotal,
-    defaultPercentages,
-    notifyPricingUpdate,
-    persistPricingAndBOQ,
-    recordPricingAudit,
-    updateTenderStatus,
-    tenderTitle,
-    formatCurrencyValue,
-  ])
 
   // تشغيل الحفظ التلقائي عند تغيير البيانات
   useEffect(() => {
@@ -1290,6 +1371,88 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
         duration: 4000,
       })
     }
+  }
+
+  // وظائف التحرير من تبويب الملخص - Optimized for performance
+  const addRowFromSummary = (itemId: string, section: ActualPricingSection) => {
+    const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
+    if (itemIndex === -1) return
+    
+    setCurrentItemIndex(itemIndex)
+    
+    // Update pricing data directly without setTimeout
+    setCurrentPricing((prev) => {
+      const newRow = createEmptyRow(section)
+      const currentItem = pricingViewItems[itemIndex]
+      
+      if ((section === 'materials' || section === 'subcontractors') && currentItem) {
+        newRow.quantity = currentItem.quantity
+      }
+      
+      return mutateSectionRows(prev, section, (rows) => {
+        return [...rows, recalculateRow(section, newRow)]
+      })
+    })
+    
+    markDirty()
+    updateTenderStatus()
+    
+    toast.success(`تم إضافة صف جديد في ${
+      section === 'materials' ? 'المواد' :
+      section === 'labor' ? 'العمالة' :
+      section === 'equipment' ? 'المعدات' :
+      'المقاولين من الباطن'
+    }`)
+  }
+
+  const updateRowFromSummary = (
+    itemId: string, 
+    section: ActualPricingSection, 
+    rowId: string, 
+    field: string, 
+    value: unknown
+  ) => {
+    const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
+    if (itemIndex === -1) return
+    
+    setCurrentItemIndex(itemIndex)
+    
+    // Update directly without setTimeout for immediate response
+    setCurrentPricing((prev) =>
+      mutateSectionRows(prev, section, (rows) =>
+        rows.map((row) => {
+          if (row.id !== rowId) {
+            return row
+          }
+
+          const sanitizedValue = sanitizeRowValue(
+            section, 
+            field as keyof SectionRowMap[typeof section], 
+            value as string | number | undefined
+          )
+          const updated = { ...row, [field]: sanitizedValue }
+          return recalculateRow(section, updated)
+        }),
+      ),
+    )
+    
+    // Mark dirty will trigger debounced save
+    markDirty()
+  }
+
+  const deleteRowFromSummary = (itemId: string, section: ActualPricingSection, rowId: string) => {
+    const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
+    if (itemIndex === -1) return
+    
+    setCurrentItemIndex(itemIndex)
+    
+    // Delete immediately without setTimeout
+    setCurrentPricing((prev) =>
+      mutateSectionRows(prev, section, (rows) => rows.filter((row) => row.id !== rowId)),
+    )
+    
+    markDirty()
+    toast.success('تم حذف الصف بنجاح')
   }
 
   // حفظ نسخة احتياطية من البيانات

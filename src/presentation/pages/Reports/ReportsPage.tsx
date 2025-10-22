@@ -54,7 +54,11 @@ interface QuickActionItem {
   primary?: boolean
 }
 
-export default function Reports() {
+interface ReportsPageProps {
+  onSectionChange?: (section: string) => void
+}
+
+export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
   const {
     projects: projectsState,
     tenders: tendersState,
@@ -132,11 +136,6 @@ export default function Reports() {
 
   const isLoading = providerLoading || clientsLoading || financialLoading
 
-  // Mock function for navigation
-  const onSectionChange = (section: string) => {
-    console.log('Navigate to:', section)
-  }
-
   // تقارير متاحة
   const availableReports: AvailableReport[] = [
     {
@@ -205,6 +204,13 @@ export default function Reports() {
     console.info('Export all reports requested')
   }
 
+  const handleSectionChange = (section: string) => {
+    if (onSectionChange) {
+      onSectionChange(section)
+    } else {
+      console.log('Navigate to:', section)
+    }
+  }
   const handleScheduleReport = () => {
     console.info('Schedule report dialog requested')
   }
@@ -300,7 +306,6 @@ export default function Reports() {
       <StatusBadge
         status={resolved.status}
         label={resolved.label}
-        size="sm"
         className="shadow-none"
       />
     )
@@ -332,7 +337,7 @@ export default function Reports() {
         color="text-primary"
         bgColor="bg-primary/10"
         trend={{ value: '+5%', direction: 'up' }}
-        onClick={() => onSectionChange('projects')}
+        onClick={() => handleSectionChange('projects')}
       />
       <DetailCard
         title="المنافسات الفائزة"
@@ -342,7 +347,7 @@ export default function Reports() {
         color="text-warning"
         bgColor="bg-warning/10"
         trend={{ value: '+12%', direction: 'up' }}
-        onClick={() => onSectionChange('tenders')}
+        onClick={() => handleSectionChange('tenders')}
       />
       <DetailCard
         title="العملاء النشطون"
@@ -352,7 +357,7 @@ export default function Reports() {
         color="text-success"
         bgColor="bg-success/10"
         trend={{ value: '+8%', direction: 'up' }}
-        onClick={() => onSectionChange('clients')}
+        onClick={() => handleSectionChange('clients')}
       />
       <DetailCard
         title="الربحية"
@@ -362,7 +367,7 @@ export default function Reports() {
         color="text-secondary-foreground"
         bgColor="bg-secondary/20"
         trend={{ value: '+3%', direction: 'up' }}
-        onClick={() => onSectionChange('financial')}
+        onClick={() => handleSectionChange('financial')}
       />
     </div>
   )
@@ -565,7 +570,7 @@ export default function Reports() {
             <Button
               className="w-full mt-4"
               variant="outline"
-              onClick={() => onSectionChange('projects')}
+              onClick={() => handleSectionChange('projects')}
             >
               <BarChart3 className="h-4 w-4 ml-2" />
               عرض تفاصيل المشاريع
@@ -605,7 +610,7 @@ export default function Reports() {
             <Button
               className="w-full mt-4"
               variant="outline"
-              onClick={() => onSectionChange('financial')}
+              onClick={() => handleSectionChange('financial')}
             >
               <PieChart className="h-4 w-4 ml-2" />
               عرض التفاصيل المالية

@@ -1,13 +1,4 @@
-/**
- * @fileoverview Enhanced Tender Card Component
- * @description Advanced tender card component with enhanced features including win chance indicators,
- * urgency badges, progress tracking, and improved visual design for the bidding system.
- *
- * @author Desktop Management System Team
- * @version 1.0.0
- * @since Phase 1 Implementation
- */
-
+// EnhancedTenderCard renders the primary tender overview card on the tenders hub.
 import { memo, useCallback, useMemo, useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -25,7 +16,6 @@ import {
   XCircle,
   Target,
   Brain,
-  Zap,
   Users,
   BarChart3,
   TrendingDown
@@ -52,7 +42,6 @@ import { predictWinProbability } from '@/shared/utils/ml/predictionModels'
 import { optimizeBidAmount } from '@/shared/utils/pricing/priceOptimization'
 import { analyticsService } from '@/application/services/analyticsService'
 import { competitiveService } from '@/application/services/competitiveService'
-import type { BidPerformance, CompetitorData } from '@/shared/types/analytics'
 
 // Helper function to get tender document price
 const parseNumericValue = (value: string | number | null | undefined): number => {
@@ -235,11 +224,20 @@ const EnhancedTenderCard = memo<EnhancedTenderCardProps>(({
 
         // Determine market trend based on recent opportunities
         const marketOpportunities = await competitiveService.getMarketOpportunities()
-        const recentOpportunities = marketOpportunities.filter(o =>
-          o.category === tenderData.category &&
-          o.region === tenderData.region &&
-          new Date(o.createdAt) > new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) // Last 90 days
-        )
+        const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000
+        const recentOpportunities = marketOpportunities.filter((opportunity) => {
+          const derivedCategory = (opportunity as { category?: string; segment?: string }).category
+            ?? (opportunity as { segment?: string }).segment
+          const derivedRegion = (opportunity as { region?: string }).region
+
+          const matchesCategory = derivedCategory ? derivedCategory === tenderData.category : true
+          const matchesRegion = derivedRegion ? derivedRegion === tenderData.region : true
+          const createdAt = opportunity.createdAt instanceof Date
+            ? opportunity.createdAt.getTime()
+            : new Date(opportunity.createdAt).getTime()
+
+          return matchesCategory && matchesRegion && createdAt > ninetyDaysAgo
+        })
 
         const marketTrend = recentOpportunities.length > 5 ? 'up' :
                            recentOpportunities.length < 2 ? 'down' : 'stable'
@@ -260,7 +258,16 @@ const EnhancedTenderCard = memo<EnhancedTenderCardProps>(({
     }
 
     loadPredictiveData()
-  }, [enablePredictiveAnalytics, tender.id, tender.category, tender.location, tender.value])
+  }, [
+    enablePredictiveAnalytics,
+    tender.category,
+    tender.client,
+    tender.competitors?.length,
+    tender.deadline,
+    tender.id,
+    tender.location,
+    tender.value,
+  ])
 
   // Event handlers
   const handleOpenDetails = useCallback(() => {
