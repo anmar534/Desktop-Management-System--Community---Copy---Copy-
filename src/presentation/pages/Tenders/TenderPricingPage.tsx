@@ -37,30 +37,14 @@ import { useEditableTenderPricing } from '@/application/hooks/useEditableTenderP
 import { isPricingEntry } from '@/shared/utils/pricing/pricingHelpers'
 import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
 import { applyDefaultsToPricingMap } from '@/shared/utils/defaultPercentagesPropagation'
-import { formatDateValue } from '@/shared/utils/formatters/formatters'
-import { Button } from '@/presentation/components/ui/button'
 import { EmptyState } from '@/presentation/components/layout/PageLayout'
 import { ConfirmationDialog } from '@/presentation/components/ui/confirmation-dialog'
 import { confirmationMessages } from '@/shared/config/confirmationMessages'
-/**
- * Phase 2 Authoring Engine Integration Notes:
- * - الحساب legacy معزول في legacyAuthoringCompute().
- * - عند تفعيل PRICING_FLAGS.USE_ENGINE_AUTHORING يتم تشغيل مسارين:
- *    1) legacy لحساب القيم (لأغراض المقارنة فقط)
- */
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
-} from '@/presentation/components/ui/dialog'
 import { toast } from 'sonner'
 import { useTenderPricingState } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingState'
 import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
 // TenderPricingPage drives the full tender pricing workflow and persistence.
-import { AlertCircle, RotateCcw } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { useTenderPricingPersistence } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingPersistence'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { TenderPricingTabs } from '@/presentation/components/pricing/tender-pricing-process/views/TenderPricingTabs'
@@ -70,6 +54,7 @@ import {
   type AuditEventStatus,
 } from '@/shared/utils/storage/auditLog'
 import { PricingHeader } from '@/presentation/pages/Tenders/TenderPricing/components/PricingHeader'
+import { RestoreBackupDialog } from '@/presentation/pages/Tenders/TenderPricing/components/RestoreBackupDialog'
 import { TemplateManagerDialog } from '@/presentation/pages/Tenders/TenderPricing/components/TemplateManagerDialog'
 
 export type { TenderWithPricingSources } from '@/presentation/pages/Tenders/TenderPricing/types'
@@ -1717,67 +1702,15 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       />
 
       {/* Restore Backup Dialog Component */}
-      <Dialog
+      <RestoreBackupDialog
         open={restoreOpen}
-        onOpenChange={(openState) => {
-          setRestoreOpen(openState)
-          if (openState) void loadBackupsList()
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>استرجاع نسخة احتياطية</DialogTitle>
-            <DialogDescription>اختر نسخة لاسترجاع بيانات التسعير.</DialogDescription>
-          </DialogHeader>
-          <div className="max-h-64 overflow-auto mt-2 space-y-2" dir="rtl">
-            {backupsList.length === 0 && (
-              <EmptyState
-                icon={RotateCcw}
-                title="لا توجد نسخ احتياطية"
-                description="لم يتم إنشاء أي نسخ احتياطية لهذه المنافسة بعد."
-              />
-            )}
-            {backupsList.map((b) => (
-              <div
-                key={b.id}
-                className="flex items-center justify-between border border-border rounded p-2"
-              >
-                <div className="text-sm">
-                  <div className="font-medium">{formatTimestamp(b.timestamp)}</div>
-                  <div className="text-muted-foreground">
-                    نسبة الإكمال: {Math.round(b.completionPercentage)}% • الإجمالي:{' '}
-                    {formatCurrencyValue(b.totalValue, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    العناصر المسعرة: {b.itemsPriced}/{b.itemsTotal}
-                    {b.retentionExpiresAt
-                      ? ` • الاحتفاظ حتى ${formatDateValue(b.retentionExpiresAt, {
-                          locale: 'ar-SA',
-                          year: 'numeric',
-                          month: 'numeric',
-                          day: 'numeric',
-                        })}`
-                      : ''}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" onClick={() => restoreBackup(b.id)}>
-                    استرجاع
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-end mt-4">
-            <DialogClose asChild>
-              <Button variant="outline">إغلاق</Button>
-            </DialogClose>
-          </div>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setRestoreOpen}
+        backupsList={backupsList}
+        onLoadBackupsList={loadBackupsList}
+        onRestoreBackup={restoreBackup}
+        formatCurrencyValue={formatCurrencyValue}
+        formatTimestamp={formatTimestamp}
+      />
 
       <TenderPricingTabs
         currentView={currentView}
@@ -1791,24 +1724,14 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       {leaveConfirmationDialog}
 
       {/* Pricing Template Manager Dialog */}
-      <Dialog open={templateManagerOpen} onOpenChange={setTemplateManagerOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle>إدارة قوالب التسعير</DialogTitle>
-            <DialogDescription>
-              اختر قالب تسعير لتطبيقه على المنافسة أو احفظ الإعدادات الحالية كقالب جديد
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-hidden">
-            <TemplateManagerDialog
-              onSelectTemplate={handleTemplateApply}
-              onCreateTemplate={handleTemplateSave}
-              onUpdateTemplate={handleTemplateUpdate}
-              onDeleteTemplate={handleTemplateDelete}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <TemplateManagerDialog
+        open={templateManagerOpen}
+        onOpenChange={setTemplateManagerOpen}
+        onSelectTemplate={handleTemplateApply}
+        onCreateTemplate={handleTemplateSave}
+        onUpdateTemplate={handleTemplateUpdate}
+        onDeleteTemplate={handleTemplateDelete}
+      />
     </div>
   )
 }
