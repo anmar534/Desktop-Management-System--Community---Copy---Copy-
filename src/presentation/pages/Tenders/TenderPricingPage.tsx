@@ -30,7 +30,7 @@ import type {
   TenderWithPricingSources,
   PricingViewName,
   TenderAttachment,
-} from '@/presentation/components/pricing/tender-pricing-process/types'
+} from '@/presentation/pages/Tenders/TenderPricing/types'
 // (Phase MVP Official/Draft) استيراد الهوك الجديد لإدارة المسودة والنسخة الرسمية
 import { useEditableTenderPricing } from '@/application/hooks/useEditableTenderPricing'
 // Phase 2 authoring engine adoption helpers (flag-guarded)
@@ -66,8 +66,8 @@ import {
   DialogClose,
 } from '@/presentation/components/ui/dialog'
 import { toast } from 'sonner'
-import { useTenderPricingState } from '@/presentation/components/pricing/tender-pricing-process/hooks/useTenderPricingState'
-import { useTenderPricingCalculations } from '@/presentation/components/pricing/tender-pricing-process/hooks/useTenderPricingCalculations'
+import { useTenderPricingState } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingState'
+import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
 // TenderPricingPage drives the full tender pricing workflow and persistence.
 import {
   AlertCircle,
@@ -81,12 +81,16 @@ import {
   Layers,
 } from 'lucide-react'
 import { PricingTemplateManager } from '@/presentation/components/tenders/PricingTemplateManager'
-import { useTenderPricingPersistence } from '@/presentation/components/pricing/tender-pricing-process/hooks/useTenderPricingPersistence'
+import { useTenderPricingPersistence } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingPersistence'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { TenderPricingTabs } from '@/presentation/components/pricing/tender-pricing-process/views/TenderPricingTabs'
-import { recordAuditEvent, type AuditEventLevel, type AuditEventStatus } from '@/shared/utils/storage/auditLog'
+import {
+  recordAuditEvent,
+  type AuditEventLevel,
+  type AuditEventStatus,
+} from '@/shared/utils/storage/auditLog'
 
-export type { TenderWithPricingSources } from '@/presentation/components/pricing/tender-pricing-process/types'
+export type { TenderWithPricingSources } from '@/presentation/pages/Tenders/TenderPricing/types'
 
 // ==== Types ====
 
@@ -275,7 +279,10 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       Array.isArray(source) ? (source as RawQuantityItem[]) : undefined
 
     const centralCandidate =
-      unifiedStatus === 'ready' && unifiedSource === 'central-boq' && Array.isArray(unifiedItems) && unifiedItems.length > 0
+      unifiedStatus === 'ready' &&
+      unifiedSource === 'central-boq' &&
+      Array.isArray(unifiedItems) &&
+      unifiedItems.length > 0
         ? (unifiedItems as RawQuantityItem[])
         : undefined
 
@@ -289,11 +296,14 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       scopeItems,
     ]
 
-    console.log('[TenderPricingPage] Candidate sources:', candidateSources.map((src, idx) => ({
-      index: idx,
-      isArray: Array.isArray(src),
-      length: Array.isArray(src) ? src.length : 0
-    })))
+    console.log(
+      '[TenderPricingPage] Candidate sources:',
+      candidateSources.map((src, idx) => ({
+        index: idx,
+        isArray: Array.isArray(src),
+        length: Array.isArray(src) ? src.length : 0,
+      })),
+    )
 
     let quantityData: RawQuantityItem[] =
       candidateSources.find((source) => Array.isArray(source) && source.length > 0) ?? []
@@ -390,7 +400,10 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       const maybeUnitPrice = toNumberOr((item as Record<string, unknown>).unitPrice, NaN)
       if (Number.isFinite(maybeUnitPrice)) {
         normalizedItem.unitPrice = maybeUnitPrice
-      } else if (typeof (item as Record<string, unknown>).estimated === 'object' && (item as Record<string, unknown>).estimated !== null) {
+      } else if (
+        typeof (item as Record<string, unknown>).estimated === 'object' &&
+        (item as Record<string, unknown>).estimated !== null
+      ) {
         const estimatedUnitPrice = toNumberOr(
           ((item as Record<string, unknown>).estimated as Record<string, unknown>).unitPrice,
           NaN,
@@ -403,7 +416,10 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       const maybeTotalPrice = toNumberOr((item as Record<string, unknown>).totalPrice, NaN)
       if (Number.isFinite(maybeTotalPrice)) {
         normalizedItem.totalPrice = maybeTotalPrice
-      } else if (typeof (item as Record<string, unknown>).estimated === 'object' && (item as Record<string, unknown>).estimated !== null) {
+      } else if (
+        typeof (item as Record<string, unknown>).estimated === 'object' &&
+        (item as Record<string, unknown>).estimated !== null
+      ) {
         const estimatedTotal = toNumberOr(
           ((item as Record<string, unknown>).estimated as Record<string, unknown>).totalPrice,
           NaN,
@@ -415,12 +431,12 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
       return normalizedItem
     })
-    
+
     console.log('[TenderPricingPage] ✅ Normalized items count:', normalizedItems.length)
     if (normalizedItems.length > 0) {
       console.log('[TenderPricingPage] Sample items (first 3):', normalizedItems.slice(0, 3))
     }
-    
+
     return normalizedItems
   }, [tender, unifiedItems, unifiedSource, unifiedStatus])
 
@@ -1377,46 +1393,51 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   const addRowFromSummary = (itemId: string, section: ActualPricingSection) => {
     const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
     if (itemIndex === -1) return
-    
+
     setCurrentItemIndex(itemIndex)
-    
+
     // Update pricing data directly without setTimeout
     setCurrentPricing((prev) => {
       const newRow = createEmptyRow(section)
       const currentItem = pricingViewItems[itemIndex]
-      
+
       if ((section === 'materials' || section === 'subcontractors') && currentItem) {
         newRow.quantity = currentItem.quantity
       }
-      
+
       return mutateSectionRows(prev, section, (rows) => {
         return [...rows, recalculateRow(section, newRow)]
       })
     })
-    
+
     markDirty()
     updateTenderStatus()
-    
-    toast.success(`تم إضافة صف جديد في ${
-      section === 'materials' ? 'المواد' :
-      section === 'labor' ? 'العمالة' :
-      section === 'equipment' ? 'المعدات' :
-      'المقاولين من الباطن'
-    }`)
+
+    toast.success(
+      `تم إضافة صف جديد في ${
+        section === 'materials'
+          ? 'المواد'
+          : section === 'labor'
+            ? 'العمالة'
+            : section === 'equipment'
+              ? 'المعدات'
+              : 'المقاولين من الباطن'
+      }`,
+    )
   }
 
   const updateRowFromSummary = (
-    itemId: string, 
-    section: ActualPricingSection, 
-    rowId: string, 
-    field: string, 
-    value: unknown
+    itemId: string,
+    section: ActualPricingSection,
+    rowId: string,
+    field: string,
+    value: unknown,
   ) => {
     const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
     if (itemIndex === -1) return
-    
+
     setCurrentItemIndex(itemIndex)
-    
+
     // Update directly without setTimeout for immediate response
     setCurrentPricing((prev) =>
       mutateSectionRows(prev, section, (rows) =>
@@ -1426,16 +1447,16 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
           }
 
           const sanitizedValue = sanitizeRowValue(
-            section, 
-            field as keyof SectionRowMap[typeof section], 
-            value as string | number | undefined
+            section,
+            field as keyof SectionRowMap[typeof section],
+            value as string | number | undefined,
           )
           const updated = { ...row, [field]: sanitizedValue }
           return recalculateRow(section, updated)
         }),
       ),
     )
-    
+
     // Mark dirty will trigger debounced save
     markDirty()
   }
@@ -1443,14 +1464,14 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   const deleteRowFromSummary = (itemId: string, section: ActualPricingSection, rowId: string) => {
     const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
     if (itemIndex === -1) return
-    
+
     setCurrentItemIndex(itemIndex)
-    
+
     // Delete immediately without setTimeout
     setCurrentPricing((prev) =>
       mutateSectionRows(prev, section, (rows) => rows.filter((row) => row.id !== rowId)),
     )
-    
+
     markDirty()
     toast.success('تم حذف الصف بنجاح')
   }
@@ -1974,4 +1995,3 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     </div>
   )
 }
-
