@@ -43,7 +43,6 @@ import { toast } from 'sonner'
 import { useTenderPricingState } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingState'
 import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
 import { usePricingTemplates } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingTemplates'
-// TenderPricingPage drives the full tender pricing workflow and persistence.
 import { AlertCircle } from 'lucide-react'
 import { useTenderPricingPersistence } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingPersistence'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
@@ -944,7 +943,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
   // تحذير عند محاولة مغادرة الصفحة مع تغييرات غير معتمدة رسمياً
   useEffect(() => {
-    if (editablePricing.status !== 'ready') return
     if (editablePricing.status !== 'ready') return
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (editablePricing.dirty || editablePricing.isDraftNewer) {
