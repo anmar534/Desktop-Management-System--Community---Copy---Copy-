@@ -72,6 +72,12 @@ import {
 import { PricingHeader } from '@/presentation/pages/Tenders/TenderPricing/components/PricingHeader'
 import { TemplateManagerDialog } from '@/presentation/pages/Tenders/TenderPricing/components/TemplateManagerDialog'
 
+// Phase 2.5: Sections for incremental replacement
+import { MaterialsSection } from '@/presentation/pages/Tenders/TenderPricing/sections/MaterialsSection'
+import { LaborSection } from '@/presentation/pages/Tenders/TenderPricing/sections/LaborSection'
+import { EquipmentSection } from '@/presentation/pages/Tenders/TenderPricing/sections/EquipmentSection'
+import { SubcontractorsSection } from '@/presentation/pages/Tenders/TenderPricing/sections/SubcontractorsSection'
+
 export type { TenderWithPricingSources } from '@/presentation/pages/Tenders/TenderPricing/types'
 
 // ==== Types ====
