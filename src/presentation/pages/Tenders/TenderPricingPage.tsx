@@ -21,7 +21,6 @@ import type {
   ExecutionMethod,
   PricingViewItem,
 } from '@/shared/types/pricing'
-import type { PricingTemplate } from '@/shared/types/templates'
 import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
 import type {
   QuantityItem,
@@ -43,6 +42,7 @@ import { confirmationMessages } from '@/shared/config/confirmationMessages'
 import { toast } from 'sonner'
 import { useTenderPricingState } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingState'
 import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
+import { usePricingTemplates } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingTemplates'
 // TenderPricingPage drives the full tender pricing workflow and persistence.
 import { AlertCircle } from 'lucide-react'
 import { useTenderPricingPersistence } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingPersistence'
@@ -198,26 +198,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   // استخراج بيانات جدول الكميات من المنافسة مع البحث المحسّن
   // MOVED HERE TO FIX TEMPORAL DEAD ZONE - quantityItems must be declared before template callbacks
   const quantityItems: QuantityItem[] = useMemo(() => {
-    console.log('[TenderPricingPage] Unified BOQ state before extraction:', {
-      unifiedStatus,
-      unifiedSource,
-      unifiedCount: Array.isArray(unifiedItems) ? unifiedItems.length : 0,
-    })
-
-    console.log('[TenderPricingPage] Extracting quantity items from tender:', {
-      tenderId: tender?.id,
-      tenderName: tender?.name,
-      hasQuantityTable: !!tender?.quantityTable,
-      hasQuantities: !!tender?.quantities,
-      hasItems: !!tender?.items,
-      hasBoqItems: !!tender?.boqItems,
-      hasQuantityItems: !!tender?.quantityItems,
-      hasScope: !!tender?.scope,
-      hasAttachments: !!tender?.attachments,
-      quantityTableLength: Array.isArray(tender?.quantityTable) ? tender.quantityTable.length : 0,
-      quantitiesLength: Array.isArray(tender?.quantities) ? tender.quantities.length : 0,
-    })
-
     const toTrimmedString = (value: unknown): string | undefined => {
       if (value === undefined || value === null) return undefined
       const text = String(value).trim()
@@ -263,19 +243,8 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       scopeItems,
     ]
 
-    console.log(
-      '[TenderPricingPage] Candidate sources:',
-      candidateSources.map((src, idx) => ({
-        index: idx,
-        isArray: Array.isArray(src),
-        length: Array.isArray(src) ? src.length : 0,
-      })),
-    )
-
     let quantityData: RawQuantityItem[] =
       candidateSources.find((source) => Array.isArray(source) && source.length > 0) ?? []
-
-    console.log('[TenderPricingPage] Selected quantityData length:', quantityData.length)
 
     if (quantityData.length === 0 && Array.isArray(tender?.attachments)) {
       const quantityAttachment = tender.attachments.find((att: TenderAttachment) => {
@@ -288,11 +257,8 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
         )
       })
 
-      console.log('[TenderPricingPage] Quantity attachment found:', !!quantityAttachment)
-
       if (Array.isArray(quantityAttachment?.data)) {
         quantityData = quantityAttachment.data as RawQuantityItem[]
-        console.log('[TenderPricingPage] Loaded from attachment, length:', quantityData.length)
       }
     }
 
@@ -399,175 +365,21 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       return normalizedItem
     })
 
-    console.log('[TenderPricingPage] ✅ Normalized items count:', normalizedItems.length)
-    if (normalizedItems.length > 0) {
-      console.log('[TenderPricingPage] Sample items (first 3):', normalizedItems.slice(0, 3))
-    }
-
     return normalizedItems
   }, [tender, unifiedItems, unifiedSource, unifiedStatus])
 
-  // ==== Template Management ====
-
-  const handleTemplateApply = useCallback(
-    (template: PricingTemplate) => {
-      try {
-        // Apply template percentages to default percentages
-        setDefaultPercentages({
-          administrative: template.defaultPercentages.administrative,
-          operational: template.defaultPercentages.operational,
-          profit: template.defaultPercentages.profit,
-        })
-
-        // Apply template to all existing items if they don't have custom pricing
-        const updatedPricingData = new Map(pricingData)
-
-        quantityItems.forEach((item) => {
-          const existingPricing = updatedPricingData.get(item.id)
-
-          // Only apply template if item doesn't have detailed pricing yet
-          if (
-            !existingPricing ||
-            (!existingPricing.materials?.length &&
-              !existingPricing.labor?.length &&
-              !existingPricing.equipment?.length &&
-              !existingPricing.subcontractors?.length)
-          ) {
-            const templatePricing = {
-              ...existingPricing,
-              percentages: {
-                administrative: template.defaultPercentages.administrative,
-                operational: template.defaultPercentages.operational,
-                profit: template.defaultPercentages.profit,
-              },
-              additionalPercentages: {
-                administrative: template.defaultPercentages.administrative,
-                operational: template.defaultPercentages.operational,
-                profit: template.defaultPercentages.profit,
-              },
-              materials: existingPricing?.materials || [],
-              labor: existingPricing?.labor || [],
-              equipment: existingPricing?.equipment || [],
-              subcontractors: existingPricing?.subcontractors || [],
-              completed: existingPricing?.completed || false,
-              technicalNotes: existingPricing?.technicalNotes || '',
-            }
-
-            updatedPricingData.set(item.id, templatePricing)
-          }
-        })
-
-        setPricingData(updatedPricingData)
-        markDirty()
-
-        toast.success(`تم تطبيق قالب "${template.name}" بنجاح`)
-        setTemplateManagerOpen(false)
-      } catch (error) {
-        recordPricingAudit(
-          'error',
-          'template-apply-failed',
-          {
-            templateId: template.id,
-            templateName: template.name,
-            message: getErrorMessage(error),
-          },
-          'error',
-        )
-        toast.error('فشل في تطبيق القالب')
-      }
-    },
-    [
+  // استخدام hook إدارة القوالب بدلاً من الـ handlers المكررة
+  const { handleTemplateApply, handleTemplateSave, handleTemplateUpdate, handleTemplateDelete } =
+    usePricingTemplates({
       pricingData,
       quantityItems,
-      markDirty,
-      setDefaultPercentages,
+      defaultPercentages,
       setPricingData,
-      recordPricingAudit,
-      getErrorMessage,
-    ],
-  )
-
-  const handleTemplateSave = useCallback(
-    (templateData: Omit<PricingTemplate, 'id' | 'createdAt' | 'usageCount' | 'lastUsed'>) => {
-      try {
-        // Create template from current pricing state
-        const template: Omit<PricingTemplate, 'id' | 'createdAt' | 'usageCount' | 'lastUsed'> = {
-          ...templateData,
-          defaultPercentages: {
-            administrative: defaultPercentages.administrative,
-            operational: defaultPercentages.operational,
-            profit: defaultPercentages.profit,
-          },
-          // Calculate average cost breakdown from current pricing
-          costBreakdown: {
-            materials: 40, // Default values - could be calculated from current data
-            labor: 30,
-            equipment: 20,
-            subcontractors: 10,
-          },
-        }
-
-        toast.success(`تم حفظ القالب "${template.name}" بنجاح`)
-        return template
-      } catch (error) {
-        recordPricingAudit(
-          'error',
-          'template-save-failed',
-          {
-            templateName: templateData.name,
-            message: getErrorMessage(error),
-          },
-          'error',
-        )
-        toast.error('فشل في حفظ القالب')
-        throw error
-      }
-    },
-    [defaultPercentages, recordPricingAudit, getErrorMessage],
-  )
-
-  const handleTemplateUpdate = useCallback(
-    (template: PricingTemplate) => {
-      try {
-        // Update template logic would go here
-        toast.success(`تم تحديث القالب "${template.name}" بنجاح`)
-      } catch (error) {
-        recordPricingAudit(
-          'error',
-          'template-update-failed',
-          {
-            templateId: template.id,
-            templateName: template.name,
-            message: getErrorMessage(error),
-          },
-          'error',
-        )
-        toast.error('فشل في تحديث القالب')
-      }
-    },
-    [recordPricingAudit, getErrorMessage],
-  )
-
-  const handleTemplateDelete = useCallback(
-    (_templateId: string) => {
-      try {
-        // Delete template logic would go here
-        // TODO: Implement template deletion using templateId
-        toast.success('تم حذف القالب بنجاح')
-      } catch (error) {
-        recordPricingAudit(
-          'error',
-          'template-delete-failed',
-          {
-            message: getErrorMessage(error),
-          },
-          'error',
-        )
-        toast.error('فشل في حذف القالب')
-      }
-    },
-    [recordPricingAudit, getErrorMessage],
-  )
+      setDefaultPercentages,
+      markDirty,
+      setTemplateManagerOpen,
+      tenderId: tender.id,
+    })
 
   const leaveConfirmationDialog = (
     <ConfirmationDialog
@@ -1664,7 +1476,16 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     onPercentageChange: handlePercentageChange,
     onTechnicalNotesChange: handleTechnicalNotesChange,
     onAddRow: addRow,
-    onUpdateRow: updateRow,
+    onUpdateRow: (section: string, id: string, field: string, value: unknown) => {
+      const typedSection = section as ActualPricingSection
+      type Field = keyof SectionRowMap[typeof typedSection]
+      updateRow(
+        typedSection,
+        id,
+        field as Field,
+        value as SectionRowMap[typeof typedSection][Field],
+      )
+    },
     onDeleteRow: deleteRow,
     onSave: saveCurrentItem,
     onNavigatePrev: handleNavigatePrev,
