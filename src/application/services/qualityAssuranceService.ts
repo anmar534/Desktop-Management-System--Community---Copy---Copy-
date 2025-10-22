@@ -1,8 +1,4 @@
-import type {
-  QualityDashboard,
-  QualityMetrics,
-  QualityAlert
-} from '../types/quality'
+import type { QualityDashboard, QualityMetrics, QualityAlert } from '../types/quality'
 import type {
   PricingData,
   PricingValidationResult,
@@ -17,10 +13,10 @@ import type {
   QualityReport,
   BackupCreateOptions,
   QualityReportOptions,
-  QualityMetricsFilters
+  QualityMetricsFilters,
 } from '../types/qualityAssurance'
 
-const delay = (ms = 200) => new Promise(resolve => setTimeout(resolve, ms))
+const delay = (ms = 200) => new Promise((resolve) => setTimeout(resolve, ms))
 const generateId = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 10)}`
 
 const buildBaseQualityMetrics = (): QualityMetrics => ({
@@ -28,23 +24,23 @@ const buildBaseQualityMetrics = (): QualityMetrics => ({
   pricingValidationMetrics: {
     validationScore: 92.3,
     totalValidations: 128,
-    automatedRate: 0.78
+    automatedRate: 0.78,
   },
   completenessMetrics: {
     averageCompleteness: 88.6,
     totalChecks: 96,
-    documentsPending: 4
+    documentsPending: 4,
   },
   errorMetrics: {
     errorRate: 2.4,
     totalErrors: 12,
-    criticalErrors: 2
+    criticalErrors: 2,
   },
   trends: [
     { period: 'الأسبوع الماضي', score: 86.5 },
     { period: 'هذا الأسبوع', score: 87.4 },
-    { period: 'التوقع للأسبوع القادم', score: 88.1 }
-  ]
+    { period: 'التوقع للأسبوع القادم', score: 88.1 },
+  ],
 })
 
 const buildQualityTrends = () => {
@@ -56,7 +52,7 @@ const buildQualityTrends = () => {
       date: date.toISOString(),
       qualityScore: 82 + index * 1.8,
       checksCompleted: 32 + index * 3,
-      nonConformitiesRaised: Math.max(1, 6 - index)
+      nonConformitiesRaised: Math.max(1, 6 - index),
     }
   })
 }
@@ -69,7 +65,7 @@ const buildNonConformityTrends = () => {
       month: monthDate.toISOString(),
       majorCount: Math.max(1, 5 - index),
       minorCount: 4 + index,
-      criticalCount: Math.max(0, 2 - index)
+      criticalCount: Math.max(0, 2 - index),
     }
   })
 }
@@ -85,7 +81,7 @@ const createDashboardSnapshot = (projectId: string): QualityDashboard => ({
     correctiveActionsTotal: 24,
     checksCompleted: 42,
     checksInProgress: 7,
-    checksPlanned: 12
+    checksPlanned: 12,
   },
   qualityTrends: buildQualityTrends(),
   nonConformityTrends: buildNonConformityTrends(),
@@ -93,51 +89,51 @@ const createDashboardSnapshot = (projectId: string): QualityDashboard => ({
     {
       standardId: 'iso-9001',
       standardNameAr: 'ISO 9001 إدارة الجودة',
-      complianceRate: 93
+      complianceRate: 93,
     },
     {
       standardId: 'iso-14001',
       standardNameAr: 'ISO 14001 الإدارة البيئية',
-      complianceRate: 88
+      complianceRate: 88,
     },
     {
       standardId: 'corp-policy-qa',
       standardNameAr: 'سياسة الشركة لضمان الجودة',
-      complianceRate: 96
-    }
+      complianceRate: 96,
+    },
   ],
   recentActivities: [
     {
       id: generateId('activity'),
       descriptionAr: 'إكمال مراجعة الجودة للمناقصة الرئيسية',
-      performedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      performedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     },
     {
       id: generateId('activity'),
       descriptionAr: 'تحديث خطة الفحص الأسبوعية',
-      performedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString()
+      performedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
     },
     {
       id: generateId('activity'),
       descriptionAr: 'إغلاق عدم مطابقة حرجة بعد الإجراءات التصحيحية',
-      performedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString()
+      performedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
     },
     {
       id: generateId('activity'),
       descriptionAr: 'تنفيذ تدريب ضمان الجودة للفريق',
-      performedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ]
+      performedAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ],
 })
 
-let cachedAlerts: QualityAlert[] = [
+const cachedAlerts: QualityAlert[] = [
   {
     id: 'qa-alert-1',
     titleAr: 'عدم مطابقة حرجة في المستندات الفنية',
     descriptionAr: 'تم رصد نقص في وثائق الاعتماد لمورد رئيسي ضمن المناقصة الحالية.',
     severity: 'high',
     createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    category: 'documentation'
+    category: 'documentation',
   },
   {
     id: 'qa-alert-2',
@@ -145,7 +141,7 @@ let cachedAlerts: QualityAlert[] = [
     descriptionAr: 'معدل الأخطاء تجاوز الحد المسموح به في آخر جولة تحقق.',
     severity: 'medium',
     createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    category: 'pricing'
+    category: 'pricing',
   },
   {
     id: 'qa-alert-3',
@@ -153,8 +149,8 @@ let cachedAlerts: QualityAlert[] = [
     descriptionAr: 'بعض المستندات الداعمة لا تزال قيد المتابعة وتحتاج إلى تحديث.',
     severity: 'low',
     createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    category: 'completeness'
-  }
+    category: 'completeness',
+  },
 ]
 
 let backupHistory: BackupRecord[] = [
@@ -165,7 +161,7 @@ let backupHistory: BackupRecord[] = [
     createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'completed',
     includeMetadata: true,
-    sizeInMb: 1250
+    sizeInMb: 1250,
   },
   {
     id: 'backup-2',
@@ -174,8 +170,8 @@ let backupHistory: BackupRecord[] = [
     createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'completed',
     includeMetadata: true,
-    sizeInMb: 420
-  }
+    sizeInMb: 420,
+  },
 ]
 
 let qualityReports: QualityReport[] = [
@@ -185,11 +181,14 @@ let qualityReports: QualityReport[] = [
     generatedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
     summary: 'يسلط التقرير الضوء على اتجاهات الجودة والمخاطر الرئيسية وخطة التحسين.',
     format: 'comprehensive',
-    language: 'ar'
-  }
+    language: 'ar',
+  },
 ]
 
-const applyMetricsFilters = (metrics: QualityMetrics, filters?: QualityMetricsFilters): QualityMetrics => {
+const applyMetricsFilters = (
+  metrics: QualityMetrics,
+  filters?: QualityMetricsFilters,
+): QualityMetrics => {
   if (!filters?.start || !filters?.end) {
     return { ...metrics }
   }
@@ -208,16 +207,20 @@ const applyMetricsFilters = (metrics: QualityMetrics, filters?: QualityMetricsFi
     overallQualityScore: Number((metrics.overallQualityScore * modifier).toFixed(1)),
     pricingValidationMetrics: {
       ...metrics.pricingValidationMetrics,
-      validationScore: Number((metrics.pricingValidationMetrics.validationScore * modifier).toFixed(1))
+      validationScore: Number(
+        (metrics.pricingValidationMetrics.validationScore * modifier).toFixed(1),
+      ),
     },
     completenessMetrics: {
       ...metrics.completenessMetrics,
-      averageCompleteness: Number((metrics.completenessMetrics.averageCompleteness * modifier).toFixed(1))
+      averageCompleteness: Number(
+        (metrics.completenessMetrics.averageCompleteness * modifier).toFixed(1),
+      ),
     },
     errorMetrics: {
       ...metrics.errorMetrics,
-      errorRate: Number((metrics.errorMetrics.errorRate / modifier).toFixed(2))
-    }
+      errorRate: Number((metrics.errorMetrics.errorRate / modifier).toFixed(2)),
+    },
   }
 }
 
@@ -231,19 +234,19 @@ const validatePricingData = (pricingData: PricingData): PricingValidationIssue[]
       field: 'items',
       message: 'لا توجد عناصر تسعير محددة.',
       type: 'error',
-      severity: 'high'
+      severity: 'high',
     })
     return issues
   }
 
-  items.forEach(item => {
+  items.forEach((item) => {
     if (item.quantity <= 0) {
       issues.push({
         id: generateId('pricing-issue'),
         field: `quantity:${item.id}`,
         message: 'الكمية يجب أن تكون أكبر من صفر.',
         type: 'error',
-        severity: 'high'
+        severity: 'high',
       })
     }
 
@@ -253,7 +256,7 @@ const validatePricingData = (pricingData: PricingData): PricingValidationIssue[]
         field: `unitPrice:${item.id}`,
         message: 'سعر الوحدة يجب أن يكون موجباً.',
         type: 'error',
-        severity: 'high'
+        severity: 'high',
       })
     }
 
@@ -263,7 +266,7 @@ const validatePricingData = (pricingData: PricingData): PricingValidationIssue[]
         field: `description:${item.id}`,
         message: 'الوصف مفقود لعناصر التسعير.',
         type: 'warning',
-        severity: 'medium'
+        severity: 'medium',
       })
     }
   })
@@ -277,7 +280,10 @@ export const qualityAssuranceService = {
     return createDashboardSnapshot(projectId)
   },
 
-  async getQualityMetrics(projectId?: string, filters?: QualityMetricsFilters): Promise<QualityMetrics> {
+  async getQualityMetrics(
+    projectId?: string,
+    filters?: QualityMetricsFilters,
+  ): Promise<QualityMetrics> {
     await delay()
     const baseMetrics = buildBaseQualityMetrics()
     return applyMetricsFilters(baseMetrics, filters)
@@ -286,25 +292,25 @@ export const qualityAssuranceService = {
   async getQualityAlerts(projectId?: string): Promise<QualityAlert[]> {
     await delay()
     if (!projectId) {
-      return cachedAlerts.map(alert => ({ ...alert }))
+      return cachedAlerts.map((alert) => ({ ...alert }))
     }
 
-    return cachedAlerts.map(alert => ({ ...alert, id: `${alert.id}-${projectId}` }))
+    return cachedAlerts.map((alert) => ({ ...alert, id: `${alert.id}-${projectId}` }))
   },
 
   async getBackupHistory(): Promise<BackupRecord[]> {
     await delay()
-    return backupHistory.map(history => ({ ...history }))
+    return backupHistory.map((history) => ({ ...history }))
   },
 
   async validatePricing(pricingData: PricingData): Promise<PricingValidationResult> {
     await delay()
     const issues = validatePricingData(pricingData)
     const totalChecks = Math.max(1, pricingData.items.length * 3)
-    const failed = issues.filter(issue => issue.type === 'error').length
-    const warnings = issues.filter(issue => issue.type === 'warning').length
+    const failed = issues.filter((issue) => issue.type === 'error').length
+    const warnings = issues.filter((issue) => issue.type === 'warning').length
     const passed = Math.max(0, totalChecks - failed - warnings)
-    const validationScore = Number(((passed + warnings * 0.5) / totalChecks * 100).toFixed(1))
+    const validationScore = Number((((passed + warnings * 0.5) / totalChecks) * 100).toFixed(1))
 
     return {
       isValid: failed === 0,
@@ -314,37 +320,43 @@ export const qualityAssuranceService = {
         totalChecks,
         passed,
         failed,
-        warnings
-      }
+        warnings,
+      },
     }
   },
 
   async checkCompleteness(documentData: DocumentData): Promise<CompletenessCheckResult> {
     await delay()
     const documents = documentData.documents ?? []
-    const allFields = documents.flatMap(doc => doc.fields)
-    const completed = allFields.filter(field => field.status === 'complete').length
-    const partial = allFields.filter(field => field.status === 'partial').length
-    const missing = allFields.filter(field => field.status === 'missing').length
+    const allFields = documents.flatMap((doc) => doc.fields)
+    const completed = allFields.filter((field) => field.status === 'complete').length
+    const partial = allFields.filter((field) => field.status === 'partial').length
+    const missing = allFields.filter((field) => field.status === 'missing').length
     const totalFields = allFields.length || 1
 
-    const overallCompleteness = Number(((completed + partial * 0.5) / totalFields * 100).toFixed(1))
-    const completedDocuments = documents.filter(doc => doc.fields.every(field => field.status === 'complete')).length
-    const missingDocuments = documents.filter(doc => doc.fields.some(field => field.status === 'missing')).length
+    const overallCompleteness = Number(
+      (((completed + partial * 0.5) / totalFields) * 100).toFixed(1),
+    )
+    const completedDocuments = documents.filter((doc) =>
+      doc.fields.every((field) => field.status === 'complete'),
+    ).length
+    const missingDocuments = documents.filter((doc) =>
+      doc.fields.some((field) => field.status === 'missing'),
+    ).length
 
     return {
       overallCompleteness,
       totalDocuments: documents.length,
       completedDocuments,
       missingDocuments,
-      fields: allFields.map(field => ({ ...field }))
+      fields: allFields.map((field) => ({ ...field })),
     }
   },
 
   async detectErrors(data: QualityCheckData): Promise<ErrorDetectionResult> {
     await delay()
-    const failedChecks = data.checks.filter(check => check.status === 'failed')
-    const errors = failedChecks.flatMap(check => {
+    const failedChecks = data.checks.filter((check) => check.status === 'failed')
+    const errors = failedChecks.flatMap((check) => {
       if (!check.issues || check.issues.length === 0) {
         return [
           {
@@ -352,17 +364,17 @@ export const qualityAssuranceService = {
             category: check.name,
             severity: 'high',
             message: 'تم رصد فشل في التحقق من الجودة.',
-            recommendedAction: 'راجع تفاصيل الفحص وقم بإعادة التحقق بعد التصحيح.'
-          }
+            recommendedAction: 'راجع تفاصيل الفحص وقم بإعادة التحقق بعد التصحيح.',
+          },
         ]
       }
 
-      return check.issues.map(issue => ({
+      return check.issues.map((issue) => ({
         id: generateId('error'),
         category: check.name,
         severity: issue.includes('حرج') ? 'high' : 'medium',
         message: issue,
-        recommendedAction: 'تحقق من البيانات المرتبطة وطبق الإجراءات التصحيحية.'
+        recommendedAction: 'تحقق من البيانات المرتبطة وطبق الإجراءات التصحيحية.',
       }))
     })
 
@@ -372,14 +384,14 @@ export const qualityAssuranceService = {
     return {
       errorRate,
       totalErrors: errors.length,
-      errors
+      errors,
     }
   },
 
   async verifyConsistency(documents: DocumentSet): Promise<ConsistencyVerificationResult> {
     await delay()
     const seenCategories = new Map<string, string>()
-    const issues = documents.documents.flatMap(doc => {
+    const issues = documents.documents.flatMap((doc) => {
       if (!doc.category) {
         return []
       }
@@ -391,8 +403,8 @@ export const qualityAssuranceService = {
             id: generateId('consistency'),
             description: `عدم تناسق بين المستند "${existing}" والمستند "${doc.name}" ضمن الفئة ${doc.category}.`,
             severity: 'medium',
-            suggestedFix: 'قم بمراجعة تسميات المستندات وتأكد من توحيدها.'
-          }
+            suggestedFix: 'قم بمراجعة تسميات المستندات وتأكد من توحيدها.',
+          },
         ]
       }
 
@@ -403,7 +415,7 @@ export const qualityAssuranceService = {
     return {
       isConsistent: issues.length === 0,
       checksPerformed: documents.documents.length,
-      issues
+      issues,
     }
   },
 
@@ -416,7 +428,7 @@ export const qualityAssuranceService = {
       createdAt: new Date().toISOString(),
       status: 'completed',
       includeMetadata: options.includeMetadata,
-      sizeInMb: Number((300 + Math.random() * 700).toFixed(0))
+      sizeInMb: Number((300 + Math.random() * 700).toFixed(0)),
     }
 
     backupHistory = [newBackup, ...backupHistory].slice(0, 12)
@@ -436,10 +448,10 @@ export const qualityAssuranceService = {
         ? 'يتضمن التقرير أبرز مؤشرات الأداء وخطة الإجراءات التصحيحية المقترحة.'
         : 'يتضمن التقرير ملخص الأداء ومراقبة الجودة خلال الفترة المحددة.',
       format,
-      language
+      language,
     }
 
     qualityReports = [newReport, ...qualityReports].slice(0, 20)
     return { ...newReport }
-  }
+  },
 }

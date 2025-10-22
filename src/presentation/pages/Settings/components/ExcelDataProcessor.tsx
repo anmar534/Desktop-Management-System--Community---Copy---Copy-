@@ -6,16 +6,14 @@ import React from 'react'
 
 export type ExcelDataType = 'clients' | 'projects' | 'tenders' | 'bank-statement' | 'invoices'
 
-export interface ExcelRow {
-  [key: string]: unknown
-}
+export type ExcelRow = Record<string, unknown>
 
 export interface ProcessedDataMap {
-  'clients': unknown[]
-  'projects': unknown[]
-  'tenders': unknown[]
+  clients: unknown[]
+  projects: unknown[]
+  tenders: unknown[]
   'bank-statement': unknown[]
-  'invoices': unknown[]
+  invoices: unknown[]
 }
 
 export interface ValidationResult {
@@ -33,7 +31,7 @@ export class ExcelDataProcessor {
     return {
       isValid: true,
       errors: [],
-      warnings: []
+      warnings: [],
     }
   }
 }
@@ -51,4 +49,3 @@ export const ExcelDataProcessorComponent: React.FC<ExcelDataProcessorProps> = (p
     </div>
   )
 }
-

@@ -11,13 +11,13 @@
  * @example
  * ```typescript
  * import { bidComparisonService } from '@/services/bidComparisonService'
- * 
+ *
  * // Compare bids
  * const comparison = await bidComparisonService.compareBids(['bid1', 'bid2'])
- * 
+ *
  * // Analyze competitive gaps
  * const gapAnalysis = await bidComparisonService.analyzeCompetitiveGaps('bid1')
- * 
+ *
  * // Get positioning recommendations
  * const recommendations = await bidComparisonService.getPositioningRecommendations('bid1')
  * ```
@@ -37,17 +37,17 @@ export interface BidComparison {
   createdAt: string
   updatedAt: string
   createdBy: string
-  
+
   // Comparison Configuration
   bidIds: string[]
   comparisonType: 'detailed' | 'summary' | 'competitive'
   analysisDepth: 'basic' | 'advanced' | 'comprehensive'
-  
+
   // Comparison Results
   results: ComparisonResult
   insights: ComparisonInsight[]
   recommendations: string[]
-  
+
   // Status and Metadata
   status: 'draft' | 'in_progress' | 'completed' | 'archived'
   lastAnalyzed: string
@@ -67,7 +67,7 @@ export interface ComparisonSummary {
   priceRange: { min: number; max: number; average: number }
   timelineRange: { min: number; max: number; average: number }
   qualityScoreRange: { min: number; max: number; average: number }
-  winProbability: { [bidId: string]: number }
+  winProbability: Record<string, number>
   competitiveAdvantage: string[]
   keyDifferentiators: string[]
 }
@@ -81,10 +81,10 @@ export interface DetailedAnalysis {
 }
 
 export interface PriceAnalysis {
-  bidPrices: { [bidId: string]: number }
+  bidPrices: Record<string, number>
   priceVariation: number
-  costBreakdown: { [bidId: string]: CostBreakdown }
-  pricingStrategy: { [bidId: string]: string }
+  costBreakdown: Record<string, CostBreakdown>
+  pricingStrategy: Record<string, string>
   competitivePricing: CompetitivePricing
 }
 
@@ -105,25 +105,25 @@ export interface CompetitivePricing {
 }
 
 export interface TechnicalAnalysis {
-  technicalScores: { [bidId: string]: number }
-  technicalStrengths: { [bidId: string]: string[] }
-  technicalWeaknesses: { [bidId: string]: string[] }
-  innovationLevel: { [bidId: string]: 'low' | 'medium' | 'high' }
-  complianceLevel: { [bidId: string]: number }
+  technicalScores: Record<string, number>
+  technicalStrengths: Record<string, string[]>
+  technicalWeaknesses: Record<string, string[]>
+  innovationLevel: Record<string, 'low' | 'medium' | 'high'>
+  complianceLevel: Record<string, number>
 }
 
 export interface TimelineAnalysis {
-  proposedTimelines: { [bidId: string]: number }
-  timelineRealism: { [bidId: string]: 'optimistic' | 'realistic' | 'conservative' }
-  criticalPath: { [bidId: string]: string[] }
-  timelineRisk: { [bidId: string]: 'low' | 'medium' | 'high' }
+  proposedTimelines: Record<string, number>
+  timelineRealism: Record<string, 'optimistic' | 'realistic' | 'conservative'>
+  criticalPath: Record<string, string[]>
+  timelineRisk: Record<string, 'low' | 'medium' | 'high'>
 }
 
 export interface ResourceAnalysis {
-  resourceRequirements: { [bidId: string]: ResourceRequirement }
-  resourceAvailability: { [bidId: string]: number }
-  resourceOptimization: { [bidId: string]: string[] }
-  capacityUtilization: { [bidId: string]: number }
+  resourceRequirements: Record<string, ResourceRequirement>
+  resourceAvailability: Record<string, number>
+  resourceOptimization: Record<string, string[]>
+  capacityUtilization: Record<string, number>
 }
 
 export interface ResourceRequirement {
@@ -134,9 +134,9 @@ export interface ResourceRequirement {
 }
 
 export interface RiskAnalysis {
-  riskProfiles: { [bidId: string]: RiskProfile }
-  riskMitigation: { [bidId: string]: string[] }
-  overallRiskScore: { [bidId: string]: number }
+  riskProfiles: Record<string, RiskProfile>
+  riskMitigation: Record<string, string[]>
+  overallRiskScore: Record<string, number>
 }
 
 export interface RiskProfile {
@@ -300,30 +300,45 @@ export interface Milestone {
 
 export interface BidComparisonService {
   // Bid Comparison Management
-  createComparison(data: Omit<BidComparison, 'id' | 'createdAt' | 'updatedAt' | 'results' | 'insights' | 'recommendations' | 'lastAnalyzed' | 'confidenceScore'>): Promise<BidComparison>
+  createComparison(
+    data: Omit<
+      BidComparison,
+      | 'id'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'results'
+      | 'insights'
+      | 'recommendations'
+      | 'lastAnalyzed'
+      | 'confidenceScore'
+    >,
+  ): Promise<BidComparison>
   updateComparison(id: string, data: Partial<BidComparison>): Promise<BidComparison>
   deleteComparison(id: string): Promise<boolean>
   getComparison(id: string): Promise<BidComparison | null>
   getAllComparisons(filters?: BidComparisonFilters): Promise<BidComparison[]>
 
   // Bid Comparison Analysis
-  compareBids(bidIds: string[], analysisType?: 'basic' | 'advanced' | 'comprehensive'): Promise<ComparisonResult>
+  compareBids(
+    bidIds: string[],
+    analysisType?: 'basic' | 'advanced' | 'comprehensive',
+  ): Promise<ComparisonResult>
   analyzeCompetitiveGaps(bidId: string, competitorBids?: string[]): Promise<CompetitiveGapAnalysis>
   getPositioningRecommendations(bidId: string): Promise<PositioningRecommendation>
-  
+
   // Strategic Analysis
   generateStrategicResponse(comparisonId: string): Promise<StrategicRecommendation[]>
   assessMarketPosition(bidId: string): Promise<MarketPosition>
   identifyDifferentiators(bidId: string, competitorBids: string[]): Promise<string[]>
-  
+
   // Benchmarking
   benchmarkAgainstMarket(bidId: string): Promise<any>
   benchmarkAgainstCompetitors(bidId: string, competitorIds: string[]): Promise<any>
-  
+
   // Reporting and Export
   generateComparisonReport(comparisonId: string): Promise<string>
   exportComparison(comparisonId: string, format: 'json' | 'csv' | 'pdf'): Promise<string>
-  
+
   // Utility Functions
   calculateWinProbability(bidId: string, competitorBids: string[]): Promise<number>
   identifyKeyRisks(bidId: string): Promise<RiskFactor[]>
@@ -338,10 +353,22 @@ class BidComparisonServiceImpl implements BidComparisonService {
 
   // ===== BID COMPARISON MANAGEMENT =====
 
-  async createComparison(data: Omit<BidComparison, 'id' | 'createdAt' | 'updatedAt' | 'results' | 'insights' | 'recommendations' | 'lastAnalyzed' | 'confidenceScore'>): Promise<BidComparison> {
+  async createComparison(
+    data: Omit<
+      BidComparison,
+      | 'id'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'results'
+      | 'insights'
+      | 'recommendations'
+      | 'lastAnalyzed'
+      | 'confidenceScore'
+    >,
+  ): Promise<BidComparison> {
     try {
       const comparisons = await this.getAllComparisons()
-      
+
       const newComparison: BidComparison = {
         id: this.generateId(),
         ...data,
@@ -351,7 +378,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
         insights: [],
         recommendations: [],
         lastAnalyzed: new Date().toISOString(),
-        confidenceScore: 0
+        confidenceScore: 0,
       }
 
       comparisons.push(newComparison)
@@ -367,8 +394,8 @@ class BidComparisonServiceImpl implements BidComparisonService {
   async updateComparison(id: string, data: Partial<BidComparison>): Promise<BidComparison> {
     try {
       const comparisons = await this.getAllComparisons()
-      const index = comparisons.findIndex(c => c.id === id)
-      
+      const index = comparisons.findIndex((c) => c.id === id)
+
       if (index === -1) {
         throw new Error(`Bid comparison with id ${id} not found`)
       }
@@ -376,7 +403,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
       const updatedComparison = {
         ...comparisons[index],
         ...data,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       comparisons[index] = updatedComparison
@@ -392,8 +419,8 @@ class BidComparisonServiceImpl implements BidComparisonService {
   async deleteComparison(id: string): Promise<boolean> {
     try {
       const comparisons = await this.getAllComparisons()
-      const filteredComparisons = comparisons.filter(c => c.id !== id)
-      
+      const filteredComparisons = comparisons.filter((c) => c.id !== id)
+
       if (filteredComparisons.length === comparisons.length) {
         return false
       }
@@ -409,7 +436,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
   async getComparison(id: string): Promise<BidComparison | null> {
     try {
       const comparisons = await this.getAllComparisons()
-      return comparisons.find(c => c.id === id) || null
+      return comparisons.find((c) => c.id === id) || null
     } catch (error) {
       console.error('Error getting bid comparison:', error)
       return null
@@ -429,12 +456,15 @@ class BidComparisonServiceImpl implements BidComparisonService {
         }
 
         // Bid IDs filter
-        if (filters.bidIds && !comparison.bidIds.some(bidId => filters.bidIds!.includes(bidId))) {
+        if (filters.bidIds && !comparison.bidIds.some((bidId) => filters.bidIds!.includes(bidId))) {
           return false
         }
 
         // Comparison types filter
-        if (filters.comparisonTypes && !filters.comparisonTypes.includes(comparison.comparisonType)) {
+        if (
+          filters.comparisonTypes &&
+          !filters.comparisonTypes.includes(comparison.comparisonType)
+        ) {
           return false
         }
 
@@ -463,7 +493,8 @@ class BidComparisonServiceImpl implements BidComparisonService {
           return (
             (comparison.name && comparison.name.toLowerCase().includes(searchLower)) ||
             (comparison.nameEn && comparison.nameEn.toLowerCase().includes(searchLower)) ||
-            (comparison.description && comparison.description.toLowerCase().includes(searchLower)) ||
+            (comparison.description &&
+              comparison.description.toLowerCase().includes(searchLower)) ||
             (comparison.projectName && comparison.projectName.toLowerCase().includes(searchLower))
           )
         }
@@ -478,7 +509,10 @@ class BidComparisonServiceImpl implements BidComparisonService {
 
   // ===== BID COMPARISON ANALYSIS =====
 
-  async compareBids(bidIds: string[], analysisType: 'basic' | 'advanced' | 'comprehensive' = 'advanced'): Promise<ComparisonResult> {
+  async compareBids(
+    bidIds: string[],
+    analysisType: 'basic' | 'advanced' | 'comprehensive' = 'advanced',
+  ): Promise<ComparisonResult> {
     try {
       // Mock bid data - in real implementation, this would fetch from bid storage
       const bids = await this.getBidsData(bidIds)
@@ -498,7 +532,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
         detailedAnalysis,
         competitivePositioning,
         riskAssessment,
-        strategicRecommendations
+        strategicRecommendations,
       }
     } catch (error) {
       console.error('Error comparing bids:', error)
@@ -506,14 +540,17 @@ class BidComparisonServiceImpl implements BidComparisonService {
     }
   }
 
-  async analyzeCompetitiveGaps(bidId: string, competitorBids?: string[]): Promise<CompetitiveGapAnalysis> {
+  async analyzeCompetitiveGaps(
+    bidId: string,
+    competitorBids?: string[],
+  ): Promise<CompetitiveGapAnalysis> {
     try {
       const targetBid = await this.getBidData(bidId)
       if (!targetBid) {
         throw new Error(`Bid with id ${bidId} not found`)
       }
 
-      const competitors = competitorBids || await this.getCompetitorBids(bidId)
+      const competitors = competitorBids || (await this.getCompetitorBids(bidId))
       const competitorData = await this.getBidsData(competitors)
 
       const gaps = this.identifyCompetitiveGaps(targetBid, competitorData)
@@ -529,7 +566,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
         opportunities,
         threats,
         recommendations,
-        actionPlan
+        actionPlan,
       }
     } catch (error) {
       console.error('Error analyzing competitive gaps:', error)
@@ -546,7 +583,10 @@ class BidComparisonServiceImpl implements BidComparisonService {
 
       const currentPosition = await this.assessMarketPosition(bidId)
       const recommendedPosition = this.calculateRecommendedPosition(bid, currentPosition)
-      const positioningStrategy = this.developPositioningStrategy(currentPosition, recommendedPosition)
+      const positioningStrategy = this.developPositioningStrategy(
+        currentPosition,
+        recommendedPosition,
+      )
       const keyMessages = this.generateKeyMessages(bid, recommendedPosition)
       const differentiators = await this.identifyDifferentiators(bidId, [])
       const implementation = this.createImplementationPlan(positioningStrategy)
@@ -558,7 +598,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
         positioningStrategy,
         keyMessages,
         differentiators,
-        implementation
+        implementation,
       }
     } catch (error) {
       console.error('Error getting positioning recommendations:', error)
@@ -578,22 +618,32 @@ class BidComparisonServiceImpl implements BidComparisonService {
       const recommendations: StrategicRecommendation[] = []
 
       // Pricing recommendations
-      if (comparison.results.detailedAnalysis.priceAnalysis.competitivePricing.priceGapPercentage > 10) {
+      if (
+        comparison.results.detailedAnalysis.priceAnalysis.competitivePricing.priceGapPercentage > 10
+      ) {
         recommendations.push({
           category: 'pricing',
           priority: 'high',
-          recommendation: '┘à╪▒╪د╪ش╪╣╪ر ╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪د┘╪ز╪│╪╣┘è╪▒ ┘╪ز╪ص╪│┘è┘ ╪د┘┘à┘ê┘é┘ ╪د┘╪ز┘╪د┘╪│┘è',
+          recommendation:
+            '┘à╪▒╪د╪ش╪╣╪ر ╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪د┘╪ز╪│╪╣┘è╪▒ ┘╪ز╪ص╪│┘è┘ ╪د┘┘à┘ê┘é┘ ╪د┘╪ز┘╪د┘╪│┘è',
           rationale: '┘è┘ê╪ش╪» ┘╪ش┘ê╪ر ╪│╪╣╪▒┘è╪ر ┘â╪ذ┘è╪▒╪ر ┘à╪╣ ╪د┘┘à┘╪د┘╪│┘è┘',
-          implementation: ['╪ز╪ص┘┘è┘ ┘ç┘è┘â┘ ╪د┘╪ز┘â╪د┘┘è┘', '┘à╪▒╪د╪ش╪╣╪ر ┘ç┘ê╪د┘à╪┤ ╪د┘╪▒╪ذ╪ص', '╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر ╪د┘╪ز╪┤╪║┘è┘┘è╪ر'],
+          implementation: [
+            '╪ز╪ص┘┘è┘ ┘ç┘è┘â┘ ╪د┘╪ز┘â╪د┘┘è┘',
+            '┘à╪▒╪د╪ش╪╣╪ر ┘ç┘ê╪د┘à╪┤ ╪د┘╪▒╪ذ╪ص',
+            '╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر ╪د┘╪ز╪┤╪║┘è┘┘è╪ر',
+          ],
           expectedImpact: '╪ز╪ص╪│┘è┘ ┘╪▒╪╡ ╪د┘┘┘ê╪▓ ╪ذ┘╪│╪ذ╪ر 15-25%',
           timeline: '2-4 ╪ث╪│╪د╪ذ┘è╪╣',
-          cost: 50000
+          cost: 50000,
         })
       }
 
       // Technical recommendations
-      const avgTechnicalScore = Object.values(comparison.results.detailedAnalysis.technicalAnalysis.technicalScores)
-        .reduce((sum, score) => sum + score, 0) / comparison.bidIds.length
+      const avgTechnicalScore =
+        Object.values(comparison.results.detailedAnalysis.technicalAnalysis.technicalScores).reduce(
+          (sum, score) => sum + score,
+          0,
+        ) / comparison.bidIds.length
 
       if (avgTechnicalScore < 7) {
         recommendations.push({
@@ -601,10 +651,14 @@ class BidComparisonServiceImpl implements BidComparisonService {
           priority: 'medium',
           recommendation: '╪ز╪╣╪▓┘è╪▓ ╪د┘╪ش┘ê╪د┘╪ذ ╪د┘╪ز┘é┘┘è╪ر ┘┘╪╣╪▒╪╢',
           rationale: '╪د┘┘╪ز┘è╪ش╪ر ╪د┘╪ز┘é┘┘è╪ر ╪ث┘é┘ ┘à┘ ╪د┘┘à╪│╪ز┘ê┘ë ╪د┘┘à╪╖┘┘ê╪ذ',
-          implementation: ['╪ح╪╢╪د┘╪ر ╪«╪ذ╪▒╪د╪ة ╪ز┘é┘┘è┘è┘', '╪ز╪ص╪│┘è┘ ╪د┘┘à┘ê╪د╪╡┘╪د╪ز ╪د┘╪ز┘é┘┘è╪ر', '╪ح╪╢╪د┘╪ر ╪ص┘┘ê┘ ┘à╪ذ╪ز┘â╪▒╪ر'],
+          implementation: [
+            '╪ح╪╢╪د┘╪ر ╪«╪ذ╪▒╪د╪ة ╪ز┘é┘┘è┘è┘',
+            '╪ز╪ص╪│┘è┘ ╪د┘┘à┘ê╪د╪╡┘╪د╪ز ╪د┘╪ز┘é┘┘è╪ر',
+            '╪ح╪╢╪د┘╪ر ╪ص┘┘ê┘ ┘à╪ذ╪ز┘â╪▒╪ر',
+          ],
           expectedImpact: '╪ز╪ص╪│┘è┘ ╪د┘╪ز┘é┘è┘è┘à ╪د┘╪ز┘é┘┘è ╪ذ┘╪│╪ذ╪ر 20%',
           timeline: '3-6 ╪ث╪│╪د╪ذ┘è╪╣',
-          cost: 75000
+          cost: 75000,
         })
       }
 
@@ -628,7 +682,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
         price: 'competitive',
         quality: 'standard',
         innovation: 'moderate',
-        reliability: 'established'
+        reliability: 'established',
       }
     } catch (error) {
       console.error('Error assessing market position:', error)
@@ -649,7 +703,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
         '╪د╪│╪ز╪«╪»╪د┘à ╪ز┘é┘┘è╪د╪ز ╪د┘╪ذ┘╪د╪ة ╪د┘╪ص╪»┘è╪س╪ر',
         '┘╪▒┘è┘é ╪╣┘à┘ ┘à╪ز╪«╪╡╪╡ ┘ê┘à╪╣╪ز┘à╪»',
         '╪╢┘à╪د┘ ╪ش┘ê╪»╪ر ╪┤╪د┘à┘ ┘┘à╪»╪ر 5 ╪│┘┘ê╪د╪ز',
-        '╪د┘╪ز╪▓╪د┘à ╪ذ╪د┘┘à┘ê╪د╪╣┘è╪» ╪د┘┘à╪ص╪»╪»╪ر'
+        '╪د┘╪ز╪▓╪د┘à ╪ذ╪د┘┘à┘ê╪د╪╣┘è╪» ╪د┘┘à╪ص╪»╪»╪ر',
       ]
     } catch (error) {
       console.error('Error identifying differentiators:', error)
@@ -671,16 +725,16 @@ class BidComparisonServiceImpl implements BidComparisonService {
         marketAverage: {
           price: 2500000,
           timeline: 180,
-          qualityScore: 7.5
+          qualityScore: 7.5,
         },
         bidPerformance: {
           price: bid.totalPrice || 2300000,
           timeline: bid.timeline || 165,
-          qualityScore: bid.qualityScore || 8.2
+          qualityScore: bid.qualityScore || 8.2,
         },
         marketPosition: 'above_average',
         competitiveAdvantages: ['╪│╪╣╪▒ ╪ز┘╪د┘╪│┘è', '╪ش┘ê╪»╪ر ╪╣╪د┘┘è╪ر', '┘à╪»╪ر ╪ز┘┘┘è╪░ ╪ث┘é┘'],
-        improvementAreas: ['╪ز╪ص╪│┘è┘ ┘ç╪د┘à╪┤ ╪د┘╪▒╪ذ╪ص', '╪ز╪╣╪▓┘è╪▓ ╪د┘╪د╪ذ╪ز┘â╪د╪▒']
+        improvementAreas: ['╪ز╪ص╪│┘è┘ ┘ç╪د┘à╪┤ ╪د┘╪▒╪ذ╪ص', '╪ز╪╣╪▓┘è╪▓ ╪د┘╪د╪ذ╪ز┘â╪د╪▒'],
       }
     } catch (error) {
       console.error('Error benchmarking against market:', error)
@@ -700,7 +754,8 @@ class BidComparisonServiceImpl implements BidComparisonService {
       const competitorAverage = {
         price: competitors.reduce((sum, c) => sum + (c.totalPrice || 0), 0) / competitors.length,
         timeline: competitors.reduce((sum, c) => sum + (c.timeline || 0), 0) / competitors.length,
-        qualityScore: competitors.reduce((sum, c) => sum + (c.qualityScore || 0), 0) / competitors.length
+        qualityScore:
+          competitors.reduce((sum, c) => sum + (c.qualityScore || 0), 0) / competitors.length,
       }
 
       return {
@@ -708,11 +763,11 @@ class BidComparisonServiceImpl implements BidComparisonService {
         bidPerformance: {
           price: bid.totalPrice || 0,
           timeline: bid.timeline || 0,
-          qualityScore: bid.qualityScore || 0
+          qualityScore: bid.qualityScore || 0,
         },
         relativePosition: this.calculateRelativePosition(bid, competitors),
         strengths: this.identifyStrengths(bid, competitors),
-        weaknesses: this.identifyWeaknesses(bid, competitors)
+        weaknesses: this.identifyWeaknesses(bid, competitors),
       }
     } catch (error) {
       console.error('Error benchmarking against competitors:', error)
@@ -752,9 +807,11 @@ class BidComparisonServiceImpl implements BidComparisonService {
       // Key Differentiators
       if (comparison.results?.competitivePositioning?.differentiationFactors?.length > 0) {
         report += `## ╪╣┘ê╪د┘à┘ ╪د┘╪ز┘à┘è┘è╪▓ / Key Differentiators\n\n`
-        comparison.results.competitivePositioning.differentiationFactors.forEach((factor, index) => {
-          report += `${index + 1}. ${factor}\n`
-        })
+        comparison.results.competitivePositioning.differentiationFactors.forEach(
+          (factor, index) => {
+            report += `${index + 1}. ${factor}\n`
+          },
+        )
         report += `\n`
       }
 
@@ -835,21 +892,24 @@ class BidComparisonServiceImpl implements BidComparisonService {
       let probability = 50 // Base probability
 
       // Price factor
-      const avgCompetitorPrice = competitors.reduce((sum, c) => sum + (c.totalPrice || 0), 0) / competitors.length
+      const avgCompetitorPrice =
+        competitors.reduce((sum, c) => sum + (c.totalPrice || 0), 0) / competitors.length
       if (bid.totalPrice && avgCompetitorPrice > 0) {
         const priceAdvantage = (avgCompetitorPrice - bid.totalPrice) / avgCompetitorPrice
         probability += priceAdvantage * 30
       }
 
       // Quality factor
-      const avgCompetitorQuality = competitors.reduce((sum, c) => sum + (c.qualityScore || 0), 0) / competitors.length
+      const avgCompetitorQuality =
+        competitors.reduce((sum, c) => sum + (c.qualityScore || 0), 0) / competitors.length
       if (bid.qualityScore && avgCompetitorQuality > 0) {
         const qualityAdvantage = (bid.qualityScore - avgCompetitorQuality) / 10
         probability += qualityAdvantage * 20
       }
 
       // Timeline factor
-      const avgCompetitorTimeline = competitors.reduce((sum, c) => sum + (c.timeline || 0), 0) / competitors.length
+      const avgCompetitorTimeline =
+        competitors.reduce((sum, c) => sum + (c.timeline || 0), 0) / competitors.length
       if (bid.timeline && avgCompetitorTimeline > 0) {
         const timelineAdvantage = (avgCompetitorTimeline - bid.timeline) / avgCompetitorTimeline
         probability += timelineAdvantage * 15
@@ -877,7 +937,10 @@ class BidComparisonServiceImpl implements BidComparisonService {
           probability: 0.3,
           impact: 0.7,
           riskScore: 0.21,
-          mitigation: ['╪ز╪س╪ذ┘è╪ز ╪ث╪│╪╣╪د╪▒ ╪د┘┘à┘ê╪د╪»', '╪┤╪▒╪د╪ة ╪ز╪ث┘à┘è┘ ╪╢╪» ╪د┘╪ز┘é┘╪ذ╪د╪ز']
+          mitigation: [
+            '╪ز╪س╪ذ┘è╪ز ╪ث╪│╪╣╪د╪▒ ╪د┘┘à┘ê╪د╪»',
+            '╪┤╪▒╪د╪ة ╪ز╪ث┘à┘è┘ ╪╢╪» ╪د┘╪ز┘é┘╪ذ╪د╪ز',
+          ],
         },
         {
           category: 'schedule',
@@ -885,7 +948,10 @@ class BidComparisonServiceImpl implements BidComparisonService {
           probability: 0.4,
           impact: 0.6,
           riskScore: 0.24,
-          mitigation: ['╪د┘╪ز┘é╪»┘è┘à ╪د┘┘à╪ذ┘â╪▒ ┘┘╪ز╪▒╪د╪«┘è╪╡', '┘à╪ز╪د╪ذ╪╣╪ر ╪»┘ê╪▒┘è╪ر ┘à╪╣ ╪د┘╪ش┘ç╪د╪ز ╪د┘┘à╪«╪ز╪╡╪ر']
+          mitigation: [
+            '╪د┘╪ز┘é╪»┘è┘à ╪د┘┘à╪ذ┘â╪▒ ┘┘╪ز╪▒╪د╪«┘è╪╡',
+            '┘à╪ز╪د╪ذ╪╣╪ر ╪»┘ê╪▒┘è╪ر ┘à╪╣ ╪د┘╪ش┘ç╪د╪ز ╪د┘┘à╪«╪ز╪╡╪ر',
+          ],
         },
         {
           category: 'technical',
@@ -893,8 +959,11 @@ class BidComparisonServiceImpl implements BidComparisonService {
           probability: 0.2,
           impact: 0.8,
           riskScore: 0.16,
-          mitigation: ['┘à╪▒╪د╪ش╪╣╪ر ╪ز┘é┘┘è╪ر ╪┤╪د┘à┘╪ر', '╪د╪│╪ز╪┤╪د╪▒╪ر ╪«╪ذ╪▒╪د╪ة ┘à╪ز╪«╪╡╪╡┘è┘']
-        }
+          mitigation: [
+            '┘à╪▒╪د╪ش╪╣╪ر ╪ز┘é┘┘è╪ر ╪┤╪د┘à┘╪ر',
+            '╪د╪│╪ز╪┤╪د╪▒╪ر ╪«╪ذ╪▒╪د╪ة ┘à╪ز╪«╪╡╪╡┘è┘',
+          ],
+        },
       ]
 
       return risks.sort((a, b) => b.riskScore - a.riskScore)
@@ -915,7 +984,9 @@ class BidComparisonServiceImpl implements BidComparisonService {
 
       // Price improvements
       if (bid.totalPrice && bid.totalPrice > 2000000) {
-        improvements.push('┘à╪▒╪د╪ش╪╣╪ر ┘ç┘è┘â┘ ╪د┘╪ز┘â╪د┘┘è┘ ┘╪ز╪ص╪│┘è┘ ╪د┘╪ز┘╪د┘╪│┘è╪ر ╪د┘╪│╪╣╪▒┘è╪ر')
+        improvements.push(
+          '┘à╪▒╪د╪ش╪╣╪ر ┘ç┘è┘â┘ ╪د┘╪ز┘â╪د┘┘è┘ ┘╪ز╪ص╪│┘è┘ ╪د┘╪ز┘╪د┘╪│┘è╪ر ╪د┘╪│╪╣╪▒┘è╪ر',
+        )
         improvements.push('╪ز╪ص╪│┘è┘ ┘â┘╪د╪ة╪ر ╪د╪│╪ز╪«╪»╪د┘à ╪د┘┘à┘ê╪د╪▒╪» ┘╪«┘╪╢ ╪د┘╪ز┘â╪د┘┘è┘')
       }
 
@@ -958,7 +1029,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
         qualityScoreRange: { min: 0, max: 0, average: 0 },
         winProbability: {},
         competitiveAdvantage: [],
-        keyDifferentiators: []
+        keyDifferentiators: [],
       },
       detailedAnalysis: {
         priceAnalysis: {
@@ -970,33 +1041,33 @@ class BidComparisonServiceImpl implements BidComparisonService {
             marketPosition: 'competitive',
             priceGap: 0,
             priceGapPercentage: 0,
-            recommendedAdjustment: 0
-          }
+            recommendedAdjustment: 0,
+          },
         },
         technicalAnalysis: {
           technicalScores: {},
           technicalStrengths: {},
           technicalWeaknesses: {},
           innovationLevel: {},
-          complianceLevel: {}
+          complianceLevel: {},
         },
         timelineAnalysis: {
           proposedTimelines: {},
           timelineRealism: {},
           criticalPath: {},
-          timelineRisk: {}
+          timelineRisk: {},
         },
         resourceAnalysis: {
           resourceRequirements: {},
           resourceAvailability: {},
           resourceOptimization: {},
-          capacityUtilization: {}
+          capacityUtilization: {},
         },
         riskAnalysis: {
           riskProfiles: {},
           riskMitigation: {},
-          overallRiskScore: {}
-        }
+          overallRiskScore: {},
+        },
       },
       competitivePositioning: {
         marketPosition: {
@@ -1004,33 +1075,33 @@ class BidComparisonServiceImpl implements BidComparisonService {
           price: 'competitive',
           quality: 'standard',
           innovation: 'moderate',
-          reliability: 'established'
+          reliability: 'established',
         },
         competitiveAdvantages: [],
         competitiveGaps: [],
         positioningStrategy: '',
-        differentiationFactors: []
+        differentiationFactors: [],
       },
       riskAssessment: {
         overallRisk: 'medium',
         riskFactors: [],
         mitigationStrategies: [],
-        contingencyPlans: []
+        contingencyPlans: [],
       },
-      strategicRecommendations: []
+      strategicRecommendations: [],
     }
   }
 
   private async getBidsData(bidIds: string[]): Promise<any[]> {
     // Mock implementation - in real app, this would fetch from bid storage
-    return bidIds.map(id => ({
+    return bidIds.map((id) => ({
       id,
       totalPrice: Math.floor(Math.random() * 3000000) + 1000000,
       timeline: Math.floor(Math.random() * 200) + 100,
       qualityScore: Math.random() * 3 + 7,
       technicalScore: Math.random() * 3 + 7,
       companyName: `╪┤╪▒┘â╪ر ${id.slice(-3)}`,
-      experience: Math.floor(Math.random() * 20) + 5
+      experience: Math.floor(Math.random() * 20) + 5,
     }))
   }
 
@@ -1045,33 +1116,33 @@ class BidComparisonServiceImpl implements BidComparisonService {
   }
 
   private generateComparisonSummary(bids: any[]): ComparisonSummary {
-    const prices = bids.map(b => b.totalPrice || 0)
-    const timelines = bids.map(b => b.timeline || 0)
-    const qualityScores = bids.map(b => b.qualityScore || 0)
+    const prices = bids.map((b) => b.totalPrice || 0)
+    const timelines = bids.map((b) => b.timeline || 0)
+    const qualityScores = bids.map((b) => b.qualityScore || 0)
 
     return {
       totalBids: bids.length,
       priceRange: {
         min: Math.min(...prices),
         max: Math.max(...prices),
-        average: prices.reduce((sum, p) => sum + p, 0) / prices.length
+        average: prices.reduce((sum, p) => sum + p, 0) / prices.length,
       },
       timelineRange: {
         min: Math.min(...timelines),
         max: Math.max(...timelines),
-        average: timelines.reduce((sum, t) => sum + t, 0) / timelines.length
+        average: timelines.reduce((sum, t) => sum + t, 0) / timelines.length,
       },
       qualityScoreRange: {
         min: Math.min(...qualityScores),
         max: Math.max(...qualityScores),
-        average: qualityScores.reduce((sum, q) => sum + q, 0) / qualityScores.length
+        average: qualityScores.reduce((sum, q) => sum + q, 0) / qualityScores.length,
       },
       winProbability: bids.reduce((acc, bid) => {
         acc[bid.id] = Math.random() * 40 + 30 // Mock probability 30-70%
         return acc
       }, {}),
       competitiveAdvantage: ['╪│╪╣╪▒ ╪ز┘╪د┘╪│┘è', '╪ش┘ê╪»╪ر ╪╣╪د┘┘è╪ر', '╪«╪ذ╪▒╪ر ┘ê╪د╪│╪╣╪ر'],
-      keyDifferentiators: ['╪ز┘é┘┘è╪د╪ز ╪ص╪»┘è╪س╪ر', '┘╪▒┘è┘é ┘à╪ز╪«╪╡╪╡', '╪╢┘à╪د┘ ╪┤╪د┘à┘']
+      keyDifferentiators: ['╪ز┘é┘┘è╪د╪ز ╪ص╪»┘è╪س╪ر', '┘╪▒┘è┘é ┘à╪ز╪«╪╡╪╡', '╪╢┘à╪د┘ ╪┤╪د┘à┘'],
     }
   }
 
@@ -1098,7 +1169,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
             equipment: (bid.totalPrice || 0) * 0.15,
             overhead: (bid.totalPrice || 0) * 0.1,
             profit: (bid.totalPrice || 0) * 0.05,
-            contingency: (bid.totalPrice || 0) * 0.05
+            contingency: (bid.totalPrice || 0) * 0.05,
           }
           return acc
         }, {}),
@@ -1110,17 +1181,24 @@ class BidComparisonServiceImpl implements BidComparisonService {
           marketPosition: 'competitive',
           priceGap: 50000,
           priceGapPercentage: 2.5,
-          recommendedAdjustment: -25000
-        }
+          recommendedAdjustment: -25000,
+        },
       },
       technicalAnalysis: {
         technicalScores,
         technicalStrengths: bids.reduce((acc, bid) => {
-          acc[bid.id] = ['╪«╪ذ╪▒╪ر ╪ز┘é┘┘è╪ر', '╪ص┘┘ê┘ ┘à╪ذ╪ز┘â╪▒╪ر', '┘à╪╣╪د┘è┘è╪▒ ╪ش┘ê╪»╪ر ╪╣╪د┘┘è╪ر']
+          acc[bid.id] = [
+            '╪«╪ذ╪▒╪ر ╪ز┘é┘┘è╪ر',
+            '╪ص┘┘ê┘ ┘à╪ذ╪ز┘â╪▒╪ر',
+            '┘à╪╣╪د┘è┘è╪▒ ╪ش┘ê╪»╪ر ╪╣╪د┘┘è╪ر',
+          ]
           return acc
         }, {}),
         technicalWeaknesses: bids.reduce((acc, bid) => {
-          acc[bid.id] = ['╪ز╪ص╪ز╪د╪ش ╪ز╪ص╪│┘è┘ ┘┘è ╪د┘╪ز┘ê╪س┘è┘é', '┘é┘╪ر ╪د┘╪ز┘╪د╪╡┘è┘ ╪د┘╪ز┘é┘┘è╪ر']
+          acc[bid.id] = [
+            '╪ز╪ص╪ز╪د╪ش ╪ز╪ص╪│┘è┘ ┘┘è ╪د┘╪ز┘ê╪س┘è┘é',
+            '┘é┘╪ر ╪د┘╪ز┘╪د╪╡┘è┘ ╪د┘╪ز┘é┘┘è╪ر',
+          ]
           return acc
         }, {}),
         innovationLevel: bids.reduce((acc, bid) => {
@@ -1130,7 +1208,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
         complianceLevel: bids.reduce((acc, bid) => {
           acc[bid.id] = 85
           return acc
-        }, {})
+        }, {}),
       },
       timelineAnalysis: {
         proposedTimelines: bids.reduce((acc, bid) => {
@@ -1142,13 +1220,18 @@ class BidComparisonServiceImpl implements BidComparisonService {
           return acc
         }, {}),
         criticalPath: bids.reduce((acc, bid) => {
-          acc[bid.id] = ['╪د┘╪ز╪╡┘à┘è┘à', '╪د┘╪ص╪╡┘ê┘ ╪╣┘┘ë ╪د┘╪ز╪▒╪د╪«┘è╪╡', '╪د┘╪ز┘┘┘è╪░', '╪د┘╪ز╪│┘┘è┘à']
+          acc[bid.id] = [
+            '╪د┘╪ز╪╡┘à┘è┘à',
+            '╪د┘╪ص╪╡┘ê┘ ╪╣┘┘ë ╪د┘╪ز╪▒╪د╪«┘è╪╡',
+            '╪د┘╪ز┘┘┘è╪░',
+            '╪د┘╪ز╪│┘┘è┘à',
+          ]
           return acc
         }, {}),
         timelineRisk: bids.reduce((acc, bid) => {
           acc[bid.id] = 'medium'
           return acc
-        }, {})
+        }, {}),
       },
       resourceAnalysis: {
         resourceRequirements: bids.reduce((acc, bid) => {
@@ -1156,7 +1239,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
             personnel: 25,
             equipment: ['╪ص┘╪د╪▒╪د╪ز', '╪▒╪د┘╪╣╪د╪ز', '╪┤╪د╪ص┘╪د╪ز'],
             materials: ['╪«╪▒╪│╪د┘╪ر', '╪ص╪»┘è╪»', '╪ث╪│┘à┘╪ز'],
-            subcontractors: ['┘â┘ç╪▒╪ذ╪د╪ة', '╪│╪ذ╪د┘â╪ر', '╪ز┘â┘è┘è┘']
+            subcontractors: ['┘â┘ç╪▒╪ذ╪د╪ة', '╪│╪ذ╪د┘â╪ر', '╪ز┘â┘è┘è┘'],
           }
           return acc
         }, {}),
@@ -1165,13 +1248,16 @@ class BidComparisonServiceImpl implements BidComparisonService {
           return acc
         }, {}),
         resourceOptimization: bids.reduce((acc, bid) => {
-          acc[bid.id] = ['╪ز╪ص╪│┘è┘ ╪ش╪»┘ê┘╪ر ╪د┘┘à┘ê╪د╪▒╪»', '╪د╪│╪ز╪«╪»╪د┘à ╪ز┘é┘┘è╪د╪ز ╪ص╪»┘è╪س╪ر']
+          acc[bid.id] = [
+            '╪ز╪ص╪│┘è┘ ╪ش╪»┘ê┘╪ر ╪د┘┘à┘ê╪د╪▒╪»',
+            '╪د╪│╪ز╪«╪»╪د┘à ╪ز┘é┘┘è╪د╪ز ╪ص╪»┘è╪س╪ر',
+          ]
           return acc
         }, {}),
         capacityUtilization: bids.reduce((acc, bid) => {
           acc[bid.id] = 75
           return acc
-        }, {})
+        }, {}),
       },
       riskAnalysis: {
         riskProfiles: bids.reduce((acc, bid) => {
@@ -1180,7 +1266,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
             financialRisk: 4,
             scheduleRisk: 3,
             marketRisk: 2,
-            operationalRisk: 3
+            operationalRisk: 3,
           }
           return acc
         }, {}),
@@ -1191,8 +1277,8 @@ class BidComparisonServiceImpl implements BidComparisonService {
         overallRiskScore: bids.reduce((acc, bid) => {
           acc[bid.id] = 3.2
           return acc
-        }, {})
-      }
+        }, {}),
+      },
     }
   }
 
@@ -1203,7 +1289,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
         price: 'competitive',
         quality: 'standard',
         innovation: 'moderate',
-        reliability: 'established'
+        reliability: 'established',
       },
       competitiveAdvantages: [
         {
@@ -1211,15 +1297,15 @@ class BidComparisonServiceImpl implements BidComparisonService {
           description: '╪│╪╣╪▒ ╪ز┘╪د┘╪│┘è ┘à┘é╪د╪▒┘╪ر ╪ذ╪د┘╪│┘ê┘é',
           strength: 'moderate',
           sustainability: 'medium_term',
-          impact: 7
+          impact: 7,
         },
         {
           category: 'quality',
           description: '┘à╪╣╪د┘è┘è╪▒ ╪ش┘ê╪»╪ر ╪╣╪د┘┘è╪ر ┘ê┘à╪╣╪ز┘à╪»╪ر',
           strength: 'significant',
           sustainability: 'long_term',
-          impact: 8
-        }
+          impact: 8,
+        },
       ],
       competitiveGaps: [
         {
@@ -1227,11 +1313,20 @@ class BidComparisonServiceImpl implements BidComparisonService {
           description: '┘┘é╪╡ ┘┘è ╪د┘╪ص┘┘ê┘ ╪د┘╪ز┘é┘┘è╪ر ╪د┘┘à╪ذ╪ز┘â╪▒╪ر',
           severity: 'moderate',
           urgency: 'medium',
-          recommendations: ['╪د╪│╪ز╪س┘à╪د╪▒ ┘┘è ╪د┘╪ذ╪ص╪س ┘ê╪د┘╪ز╪╖┘ê┘è╪▒', '╪┤╪▒╪د┘â╪د╪ز ╪ز┘é┘┘è╪ر']
-        }
+          recommendations: [
+            '╪د╪│╪ز╪س┘à╪د╪▒ ┘┘è ╪د┘╪ذ╪ص╪س ┘ê╪د┘╪ز╪╖┘ê┘è╪▒',
+            '╪┤╪▒╪د┘â╪د╪ز ╪ز┘é┘┘è╪ر',
+          ],
+        },
       ],
-      positioningStrategy: '╪د┘╪ز╪▒┘â┘è╪▓ ╪╣┘┘ë ╪د┘╪ش┘ê╪»╪ر ┘ê╪د┘┘à┘ê╪س┘ê┘é┘è╪ر ┘à╪╣ ╪ز╪ص╪│┘è┘ ╪د┘╪ز┘╪د┘╪│┘è╪ر ╪د┘╪│╪╣╪▒┘è╪ر',
-      differentiationFactors: ['╪«╪ذ╪▒╪ر ┘ê╪د╪│╪╣╪ر', '╪ش┘ê╪»╪ر ╪╣╪د┘┘è╪ر', '╪د┘╪ز╪▓╪د┘à ╪ذ╪د┘┘à┘ê╪د╪╣┘è╪»', '╪«╪»┘à╪ر ┘à╪د ╪ذ╪╣╪» ╪د┘╪ذ┘è╪╣']
+      positioningStrategy:
+        '╪د┘╪ز╪▒┘â┘è╪▓ ╪╣┘┘ë ╪د┘╪ش┘ê╪»╪ر ┘ê╪د┘┘à┘ê╪س┘ê┘é┘è╪ر ┘à╪╣ ╪ز╪ص╪│┘è┘ ╪د┘╪ز┘╪د┘╪│┘è╪ر ╪د┘╪│╪╣╪▒┘è╪ر',
+      differentiationFactors: [
+        '╪«╪ذ╪▒╪ر ┘ê╪د╪│╪╣╪ر',
+        '╪ش┘ê╪»╪ر ╪╣╪د┘┘è╪ر',
+        '╪د┘╪ز╪▓╪د┘à ╪ذ╪د┘┘à┘ê╪د╪╣┘è╪»',
+        '╪«╪»┘à╪ر ┘à╪د ╪ذ╪╣╪» ╪د┘╪ذ┘è╪╣',
+      ],
     }
   }
 
@@ -1245,7 +1340,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
           probability: 0.3,
           impact: 0.7,
           riskScore: 0.21,
-          mitigation: ['╪ز╪س╪ذ┘è╪ز ╪ث╪│╪╣╪د╪▒ ╪د┘┘à┘ê╪د╪»', '╪ز╪ث┘à┘è┘ ╪╢╪» ╪د┘╪ز┘é┘╪ذ╪د╪ز']
+          mitigation: ['╪ز╪س╪ذ┘è╪ز ╪ث╪│╪╣╪د╪▒ ╪د┘┘à┘ê╪د╪»', '╪ز╪ث┘à┘è┘ ╪╢╪» ╪د┘╪ز┘é┘╪ذ╪د╪ز'],
         },
         {
           category: 'schedule',
@@ -1253,8 +1348,8 @@ class BidComparisonServiceImpl implements BidComparisonService {
           probability: 0.4,
           impact: 0.6,
           riskScore: 0.24,
-          mitigation: ['╪د┘╪ز┘é╪»┘è┘à ╪د┘┘à╪ذ┘â╪▒', '┘à╪ز╪د╪ذ╪╣╪ر ╪»┘ê╪▒┘è╪ر']
-        }
+          mitigation: ['╪د┘╪ز┘é╪»┘è┘à ╪د┘┘à╪ذ┘â╪▒', '┘à╪ز╪د╪ذ╪╣╪ر ╪»┘ê╪▒┘è╪ر'],
+        },
       ],
       mitigationStrategies: [
         {
@@ -1262,8 +1357,8 @@ class BidComparisonServiceImpl implements BidComparisonService {
           strategy: '╪ح╪»╪د╪▒╪ر ┘à╪«╪د╪╖╪▒ ╪د┘╪ز┘â┘┘╪ر',
           implementation: ['┘à╪▒╪د┘é╪ذ╪ر ╪د┘╪ث╪│╪╣╪د╪▒', '╪╣┘é┘ê╪» ╪╖┘ê┘è┘╪ر ╪د┘┘à╪»┘ë'],
           cost: 50000,
-          effectiveness: 0.8
-        }
+          effectiveness: 0.8,
+        },
       ],
       contingencyPlans: [
         {
@@ -1271,34 +1366,46 @@ class BidComparisonServiceImpl implements BidComparisonService {
           triggers: ['╪╣╪»┘à ╪د┘╪ص╪╡┘ê┘ ╪╣┘┘ë ╪ز╪▒╪«┘è╪╡ ╪«┘╪د┘ 30 ┘è┘ê┘à'],
           actions: ['╪ز┘╪╣┘è┘ ╪«╪╖╪ر ╪ذ╪»┘è┘╪ر', '╪د┘╪ز┘ê╪د╪╡┘ ┘à╪╣ ╪د┘╪ش┘ç╪د╪ز ╪د┘┘à╪«╪ز╪╡╪ر'],
           resources: ['┘╪▒┘è┘é ┘é╪د┘┘ê┘┘è', '╪د╪│╪ز╪┤╪د╪▒┘è ╪ز╪▒╪د╪«┘è╪╡'],
-          timeline: '2-4 ╪ث╪│╪د╪ذ┘è╪╣'
-        }
-      ]
+          timeline: '2-4 ╪ث╪│╪د╪ذ┘è╪╣',
+        },
+      ],
     }
   }
 
-  private generateStrategicRecommendations(bids: any[], analysisType: string): StrategicRecommendation[] {
+  private generateStrategicRecommendations(
+    bids: any[],
+    analysisType: string,
+  ): StrategicRecommendation[] {
     const recommendations: StrategicRecommendation[] = [
       {
         category: 'pricing',
         priority: 'high',
-        recommendation: '╪ز╪ص╪│┘è┘ ╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪د┘╪ز╪│╪╣┘è╪▒ ┘┘╪ص╪╡┘ê┘ ╪╣┘┘ë ┘à┘è╪▓╪ر ╪ز┘╪د┘╪│┘è╪ر',
+        recommendation:
+          '╪ز╪ص╪│┘è┘ ╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪د┘╪ز╪│╪╣┘è╪▒ ┘┘╪ص╪╡┘ê┘ ╪╣┘┘ë ┘à┘è╪▓╪ر ╪ز┘╪د┘╪│┘è╪ر',
         rationale: '╪د┘╪│╪╣╪▒ ╪د┘╪ص╪د┘┘è ╪ث╪╣┘┘ë ┘à┘ ┘à╪ز┘ê╪│╪╖ ╪د┘╪│┘ê┘é ╪ذ┘╪│╪ذ╪ر 5%',
-        implementation: ['┘à╪▒╪د╪ش╪╣╪ر ┘ç┘è┘â┘ ╪د┘╪ز┘â╪د┘┘è┘', '╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر ╪د┘╪ز╪┤╪║┘è┘┘è╪ر', '╪ح╪╣╪د╪»╪ر ╪ز┘é┘è┘è┘à ┘ç┘ê╪د┘à╪┤ ╪د┘╪▒╪ذ╪ص'],
+        implementation: [
+          '┘à╪▒╪د╪ش╪╣╪ر ┘ç┘è┘â┘ ╪د┘╪ز┘â╪د┘┘è┘',
+          '╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر ╪د┘╪ز╪┤╪║┘è┘┘è╪ر',
+          '╪ح╪╣╪د╪»╪ر ╪ز┘é┘è┘è┘à ┘ç┘ê╪د┘à╪┤ ╪د┘╪▒╪ذ╪ص',
+        ],
         expectedImpact: '╪▓┘è╪د╪»╪ر ┘╪▒╪╡ ╪د┘┘┘ê╪▓ ╪ذ┘╪│╪ذ╪ر 15-20%',
         timeline: '2-4 ╪ث╪│╪د╪ذ┘è╪╣',
-        cost: 25000
+        cost: 25000,
       },
       {
         category: 'technical',
         priority: 'medium',
         recommendation: '╪ز╪╣╪▓┘è╪▓ ╪د┘╪ش┘ê╪د┘╪ذ ╪د┘╪ز┘é┘┘è╪ر ┘ê╪د┘╪د╪ذ╪ز┘â╪د╪▒ ┘┘è ╪د┘╪╣╪▒╪╢',
         rationale: '╪د┘┘╪ز┘è╪ش╪ر ╪د┘╪ز┘é┘┘è╪ر ╪ث┘é┘ ┘à┘ ╪د┘┘à╪ز┘ê╪│╪╖ ╪د┘┘à╪╖┘┘ê╪ذ',
-        implementation: ['╪ح╪╢╪د┘╪ر ╪ص┘┘ê┘ ╪ز┘é┘┘è╪ر ┘à╪ذ╪ز┘â╪▒╪ر', '╪ز╪ص╪│┘è┘ ╪د┘┘à┘ê╪د╪╡┘╪د╪ز', '╪ح╪┤╪▒╪د┘â ╪«╪ذ╪▒╪د╪ة ╪ز┘é┘┘è┘è┘'],
+        implementation: [
+          '╪ح╪╢╪د┘╪ر ╪ص┘┘ê┘ ╪ز┘é┘┘è╪ر ┘à╪ذ╪ز┘â╪▒╪ر',
+          '╪ز╪ص╪│┘è┘ ╪د┘┘à┘ê╪د╪╡┘╪د╪ز',
+          '╪ح╪┤╪▒╪د┘â ╪«╪ذ╪▒╪د╪ة ╪ز┘é┘┘è┘è┘',
+        ],
         expectedImpact: '╪ز╪ص╪│┘è┘ ╪د┘╪ز┘é┘è┘è┘à ╪د┘╪ز┘é┘┘è ╪ذ┘╪│╪ذ╪ر 25%',
         timeline: '3-6 ╪ث╪│╪د╪ذ┘è╪╣',
-        cost: 75000
-      }
+        cost: 75000,
+      },
     ]
 
     if (analysisType === 'comprehensive') {
@@ -1307,10 +1414,14 @@ class BidComparisonServiceImpl implements BidComparisonService {
         priority: 'medium',
         recommendation: '╪ز╪╖┘ê┘è╪▒ ╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪ز┘à┘ê┘é╪╣ ╪ز┘╪د┘╪│┘è╪ر ┘ê╪د╪╢╪ص╪ر',
         rationale: '╪د┘╪ص╪د╪ش╪ر ┘╪ز┘à┘è┘è╪▓ ╪د┘╪╣╪▒╪╢ ╪╣┘ ╪د┘┘à┘╪د┘╪│┘è┘',
-        implementation: ['╪ز╪ص╪»┘è╪» ┘┘é╪د╪╖ ╪د┘┘é┘ê╪ر ╪د┘┘╪▒┘è╪»╪ر', '╪ز╪╖┘ê┘è╪▒ ╪▒╪│╪د╪خ┘ ╪ز╪│┘ê┘è┘é┘è╪ر', '╪ز╪ص╪│┘è┘ ╪د┘╪╣╪▒╪╢ ╪د┘╪ز┘é╪»┘è┘à┘è'],
+        implementation: [
+          '╪ز╪ص╪»┘è╪» ┘┘é╪د╪╖ ╪د┘┘é┘ê╪ر ╪د┘┘╪▒┘è╪»╪ر',
+          '╪ز╪╖┘ê┘è╪▒ ╪▒╪│╪د╪خ┘ ╪ز╪│┘ê┘è┘é┘è╪ر',
+          '╪ز╪ص╪│┘è┘ ╪د┘╪╣╪▒╪╢ ╪د┘╪ز┘é╪»┘è┘à┘è',
+        ],
         expectedImpact: '╪ز╪ص╪│┘è┘ ╪د┘╪د┘╪╖╪ذ╪د╪╣ ╪د┘╪╣╪د┘à ┘ê╪د┘╪ز┘à┘è┘è╪▓',
         timeline: '4-8 ╪ث╪│╪د╪ذ┘è╪╣',
-        cost: 40000
+        cost: 40000,
       })
     }
 
@@ -1321,38 +1432,53 @@ class BidComparisonServiceImpl implements BidComparisonService {
     const gaps: CompetitiveGap[] = []
 
     // Price gap analysis
-    const avgCompetitorPrice = competitorBids.reduce((sum, bid) => sum + (bid.totalPrice || 0), 0) / competitorBids.length
+    const avgCompetitorPrice =
+      competitorBids.reduce((sum, bid) => sum + (bid.totalPrice || 0), 0) / competitorBids.length
     if (targetBid.totalPrice > avgCompetitorPrice * 1.1) {
       gaps.push({
         category: 'price',
-        description: `╪د┘╪│╪╣╪▒ ╪ث╪╣┘┘ë ┘à┘ ┘à╪ز┘ê╪│╪╖ ╪د┘┘à┘╪د┘╪│┘è┘ ╪ذ┘╪│╪ذ╪ر ${((targetBid.totalPrice - avgCompetitorPrice) / avgCompetitorPrice * 100).toFixed(1)}%`,
+        description: `╪د┘╪│╪╣╪▒ ╪ث╪╣┘┘ë ┘à┘ ┘à╪ز┘ê╪│╪╖ ╪د┘┘à┘╪د┘╪│┘è┘ ╪ذ┘╪│╪ذ╪ر ${(((targetBid.totalPrice - avgCompetitorPrice) / avgCompetitorPrice) * 100).toFixed(1)}%`,
         severity: 'significant',
         urgency: 'high',
-        recommendations: ['┘à╪▒╪د╪ش╪╣╪ر ┘ç┘è┘â┘ ╪د┘╪ز┘â╪د┘┘è┘', '╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر ╪د┘╪ز╪┤╪║┘è┘┘è╪ر', '╪ح╪╣╪د╪»╪ر ╪ز┘é┘è┘è┘à ┘ç┘ê╪د┘à╪┤ ╪د┘╪▒╪ذ╪ص']
+        recommendations: [
+          '┘à╪▒╪د╪ش╪╣╪ر ┘ç┘è┘â┘ ╪د┘╪ز┘â╪د┘┘è┘',
+          '╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر ╪د┘╪ز╪┤╪║┘è┘┘è╪ر',
+          '╪ح╪╣╪د╪»╪ر ╪ز┘é┘è┘è┘à ┘ç┘ê╪د┘à╪┤ ╪د┘╪▒╪ذ╪ص',
+        ],
       })
     }
 
     // Quality gap analysis
-    const avgCompetitorQuality = competitorBids.reduce((sum, bid) => sum + (bid.qualityScore || 0), 0) / competitorBids.length
+    const avgCompetitorQuality =
+      competitorBids.reduce((sum, bid) => sum + (bid.qualityScore || 0), 0) / competitorBids.length
     if (targetBid.qualityScore < avgCompetitorQuality * 0.9) {
       gaps.push({
         category: 'quality',
         description: '┘à╪│╪ز┘ê┘ë ╪د┘╪ش┘ê╪»╪ر ╪ث┘é┘ ┘à┘ ┘à╪ز┘ê╪│╪╖ ╪د┘┘à┘╪د┘╪│┘è┘',
         severity: 'moderate',
         urgency: 'medium',
-        recommendations: ['╪ز╪ص╪│┘è┘ ╪د┘┘à┘ê╪د╪╡┘╪د╪ز ╪د┘╪ز┘é┘┘è╪ر', '╪ح╪╢╪د┘╪ر ╪╢┘à╪د┘╪د╪ز ╪ح╪╢╪د┘┘è╪ر', '╪ز╪╣╪▓┘è╪▓ ┘à╪╣╪د┘è┘è╪▒ ╪د┘╪ش┘ê╪»╪ر']
+        recommendations: [
+          '╪ز╪ص╪│┘è┘ ╪د┘┘à┘ê╪د╪╡┘╪د╪ز ╪د┘╪ز┘é┘┘è╪ر',
+          '╪ح╪╢╪د┘╪ر ╪╢┘à╪د┘╪د╪ز ╪ح╪╢╪د┘┘è╪ر',
+          '╪ز╪╣╪▓┘è╪▓ ┘à╪╣╪د┘è┘è╪▒ ╪د┘╪ش┘ê╪»╪ر',
+        ],
       })
     }
 
     // Timeline gap analysis
-    const avgCompetitorTimeline = competitorBids.reduce((sum, bid) => sum + (bid.timeline || 0), 0) / competitorBids.length
+    const avgCompetitorTimeline =
+      competitorBids.reduce((sum, bid) => sum + (bid.timeline || 0), 0) / competitorBids.length
     if (targetBid.timeline > avgCompetitorTimeline * 1.2) {
       gaps.push({
         category: 'timeline',
         description: '┘à╪»╪ر ╪د┘╪ز┘┘┘è╪░ ╪ث╪╖┘ê┘ ┘à┘ ╪د┘┘à┘╪د┘╪│┘è┘',
         severity: 'moderate',
         urgency: 'medium',
-        recommendations: ['╪ز╪ص╪│┘è┘ ╪ش╪»┘ê┘╪ر ╪د┘┘à╪┤╪▒┘ê╪╣', '╪▓┘è╪د╪»╪ر ╪د┘┘à┘ê╪د╪▒╪»', '╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر']
+        recommendations: [
+          '╪ز╪ص╪│┘è┘ ╪ش╪»┘ê┘╪ر ╪د┘┘à╪┤╪▒┘ê╪╣',
+          '╪▓┘è╪د╪»╪ر ╪د┘┘à┘ê╪د╪▒╪»',
+          '╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر',
+        ],
       })
     }
 
@@ -1363,20 +1489,26 @@ class BidComparisonServiceImpl implements BidComparisonService {
     const opportunities: string[] = []
 
     // Price opportunities
-    const minCompetitorPrice = Math.min(...competitorBids.map(b => b.totalPrice || Infinity))
+    const minCompetitorPrice = Math.min(...competitorBids.map((b) => b.totalPrice || Infinity))
     if (targetBid.totalPrice < minCompetitorPrice) {
-      opportunities.push('┘à┘è╪▓╪ر ╪ز┘╪د┘╪│┘è╪ر ┘┘è ╪د┘╪│╪╣╪▒ - ╪د┘╪د╪│╪ز┘╪د╪»╪ر ┘à┘ ┘â┘ê┘┘â ╪د┘╪ث┘é┘ ╪│╪╣╪▒╪د┘ï')
+      opportunities.push(
+        '┘à┘è╪▓╪ر ╪ز┘╪د┘╪│┘è╪ر ┘┘è ╪د┘╪│╪╣╪▒ - ╪د┘╪د╪│╪ز┘╪د╪»╪ر ┘à┘ ┘â┘ê┘┘â ╪د┘╪ث┘é┘ ╪│╪╣╪▒╪د┘ï',
+      )
     }
 
     // Quality opportunities
-    const maxCompetitorQuality = Math.max(...competitorBids.map(b => b.qualityScore || 0))
+    const maxCompetitorQuality = Math.max(...competitorBids.map((b) => b.qualityScore || 0))
     if (targetBid.qualityScore >= maxCompetitorQuality) {
-      opportunities.push('┘à┘è╪▓╪ر ╪ز┘╪د┘╪│┘è╪ر ┘┘è ╪د┘╪ش┘ê╪»╪ر - ╪د┘╪ز╪▒┘â┘è╪▓ ╪╣┘┘ë ╪د┘╪ز┘┘ê┘é ╪د┘╪ز┘é┘┘è')
+      opportunities.push(
+        '┘à┘è╪▓╪ر ╪ز┘╪د┘╪│┘è╪ر ┘┘è ╪د┘╪ش┘ê╪»╪ر - ╪د┘╪ز╪▒┘â┘è╪▓ ╪╣┘┘ë ╪د┘╪ز┘┘ê┘é ╪د┘╪ز┘é┘┘è',
+      )
     }
 
     // Experience opportunities
     if (targetBid.experience > 10) {
-      opportunities.push('╪د┘╪د╪│╪ز┘╪د╪»╪ر ┘à┘ ╪د┘╪«╪ذ╪▒╪ر ╪د┘┘ê╪د╪│╪╣╪ر ┘┘è ╪د┘┘à╪┤╪د╪▒┘è╪╣ ╪د┘┘à┘à╪د╪س┘╪ر')
+      opportunities.push(
+        '╪د┘╪د╪│╪ز┘╪د╪»╪ر ┘à┘ ╪د┘╪«╪ذ╪▒╪ر ╪د┘┘ê╪د╪│╪╣╪ر ┘┘è ╪د┘┘à╪┤╪د╪▒┘è╪╣ ╪د┘┘à┘à╪د╪س┘╪ر',
+      )
     }
 
     // General opportunities
@@ -1391,13 +1523,13 @@ class BidComparisonServiceImpl implements BidComparisonService {
     const threats: string[] = []
 
     // Price threats
-    const minCompetitorPrice = Math.min(...competitorBids.map(b => b.totalPrice || Infinity))
+    const minCompetitorPrice = Math.min(...competitorBids.map((b) => b.totalPrice || Infinity))
     if (targetBid.totalPrice > minCompetitorPrice * 1.15) {
       threats.push('┘à┘╪د┘╪│╪ر ╪│╪╣╪▒┘è╪ر ╪┤╪»┘è╪»╪ر ┘à┘ ╪╣╪▒┘ê╪╢ ╪ث┘é┘ ╪│╪╣╪▒╪د┘ï')
     }
 
     // Quality threats
-    const maxCompetitorQuality = Math.max(...competitorBids.map(b => b.qualityScore || 0))
+    const maxCompetitorQuality = Math.max(...competitorBids.map((b) => b.qualityScore || 0))
     if (targetBid.qualityScore < maxCompetitorQuality * 0.85) {
       threats.push('┘à┘╪د┘╪│╪ر ┘é┘ê┘è╪ر ┘┘è ┘à╪│╪ز┘ê┘ë ╪د┘╪ش┘ê╪»╪ر ┘ê╪د┘┘à┘ê╪د╪╡┘╪د╪ز ╪د┘╪ز┘é┘┘è╪ر')
     }
@@ -1414,7 +1546,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
   private generateGapRecommendations(gaps: CompetitiveGap[]): string[] {
     const recommendations: string[] = []
 
-    gaps.forEach(gap => {
+    gaps.forEach((gap) => {
       recommendations.push(...gap.recommendations)
     })
 
@@ -1431,27 +1563,35 @@ class BidComparisonServiceImpl implements BidComparisonService {
     const actionPlan: ActionPlan[] = []
 
     // Actions for critical gaps
-    const criticalGaps = gaps.filter(gap => gap.severity === 'critical' || gap.urgency === 'high')
-    criticalGaps.forEach(gap => {
+    const criticalGaps = gaps.filter((gap) => gap.severity === 'critical' || gap.urgency === 'high')
+    criticalGaps.forEach((gap) => {
       actionPlan.push({
         action: `┘à╪╣╪د┘╪ش╪ر ${gap.description}`,
         priority: gap.urgency === 'high' ? 'high' : 'medium',
         timeline: gap.urgency === 'high' ? '1-2 ╪ث╪│╪د╪ذ┘è╪╣' : '2-4 ╪ث╪│╪د╪ذ┘è╪╣',
         resources: ['┘╪▒┘è┘é ┘à╪ز╪«╪╡╪╡', '╪د╪│╪ز╪┤╪د╪▒┘è ╪«╪د╪▒╪ش┘è', '┘à┘è╪▓╪د┘┘è╪ر ╪ز╪╖┘ê┘è╪▒'],
         expectedOutcome: `╪ز╪ص╪│┘è┘ ${gap.category} ╪ذ┘╪│╪ذ╪ر 20-30%`,
-        successMetrics: ['╪ز╪ص╪│┘è┘ ╪د┘┘╪ز┘è╪ش╪ر', '╪ز┘é┘┘è┘ ╪د┘┘╪ش┘ê╪ر', '╪▓┘è╪د╪»╪ر ╪د┘╪ز┘╪د┘╪│┘è╪ر']
+        successMetrics: [
+          '╪ز╪ص╪│┘è┘ ╪د┘┘╪ز┘è╪ش╪ر',
+          '╪ز┘é┘┘è┘ ╪د┘┘╪ش┘ê╪ر',
+          '╪▓┘è╪د╪»╪ر ╪د┘╪ز┘╪د┘╪│┘è╪ر',
+        ],
       })
     })
 
     // Actions for opportunities
-    opportunities.slice(0, 3).forEach(opportunity => {
+    opportunities.slice(0, 3).forEach((opportunity) => {
       actionPlan.push({
         action: `╪د┘╪د╪│╪ز┘╪د╪»╪ر ┘à┘ ${opportunity}`,
         priority: 'medium',
         timeline: '4-8 ╪ث╪│╪د╪ذ┘è╪╣',
         resources: ['┘╪▒┘è┘é ╪د┘╪ز╪╖┘ê┘è╪▒', '┘à┘è╪▓╪د┘┘è╪ر ╪ز╪│┘ê┘è┘é', '╪┤╪▒╪د┘â╪د╪ز'],
         expectedOutcome: '╪ز╪╣╪▓┘è╪▓ ╪د┘┘à┘ê┘é┘ ╪د┘╪ز┘╪د┘╪│┘è',
-        successMetrics: ['╪▓┘è╪د╪»╪ر ┘╪▒╪╡ ╪د┘┘┘ê╪▓', '╪ز╪ص╪│┘è┘ ╪د┘╪│┘à╪╣╪ر', '┘┘à┘ê ╪د┘╪ص╪╡╪ر ╪د┘╪│┘ê┘é┘è╪ر']
+        successMetrics: [
+          '╪▓┘è╪د╪»╪ر ┘╪▒╪╡ ╪د┘┘┘ê╪▓',
+          '╪ز╪ص╪│┘è┘ ╪د┘╪│┘à╪╣╪ر',
+          '┘┘à┘ê ╪د┘╪ص╪╡╪ر ╪د┘╪│┘ê┘é┘è╪ر',
+        ],
       })
     })
 
@@ -1465,7 +1605,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
       price: 'competitive',
       quality: 'premium',
       innovation: 'innovative',
-      reliability: 'proven'
+      reliability: 'proven',
     }
   }
 
@@ -1479,7 +1619,7 @@ class BidComparisonServiceImpl implements BidComparisonService {
       '╪ش┘ê╪»╪ر ╪╣╪د┘┘è╪ر ┘ê╪ز┘é┘┘è╪د╪ز ┘à╪ز╪╖┘ê╪▒╪ر',
       '╪«╪ذ╪▒╪ر ┘ê╪د╪│╪╣╪ر ┘ê╪د┘╪ز╪▓╪د┘à ╪ذ╪د┘┘à┘ê╪د╪╣┘è╪»',
       '╪ص┘┘ê┘ ┘à╪ذ╪ز┘â╪▒╪ر ┘ê┘à╪«╪╡╪╡╪ر ┘┘â┘ ┘à╪┤╪▒┘ê╪╣',
-      '╪«╪»┘à╪ر ╪┤╪د┘à┘╪ر ┘à┘ ╪د┘╪ز╪╡┘à┘è┘à ╪ح┘┘ë ╪د┘╪ز╪│┘┘è┘à'
+      '╪«╪»┘à╪ر ╪┤╪د┘à┘╪ر ┘à┘ ╪د┘╪ز╪╡┘à┘è┘à ╪ح┘┘ë ╪د┘╪ز╪│┘┘è┘à',
     ]
   }
 
@@ -1490,18 +1630,30 @@ class BidComparisonServiceImpl implements BidComparisonService {
           phase: '╪د┘╪ز╪ص╪╢┘è╪▒ ┘ê╪د┘╪ز╪«╪╖┘è╪╖',
           description: '┘ê╪╢╪╣ ╪د┘╪ث╪│╪│ ┘┘╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪د┘╪ش╪»┘è╪»╪ر',
           duration: '2-4 ╪ث╪│╪د╪ذ┘è╪╣',
-          activities: ['╪ز╪ص┘┘è┘ ╪د┘┘ê╪╢╪╣ ╪د┘╪ص╪د┘┘è', '┘ê╪╢╪╣ ╪د┘╪«╪╖╪ر ╪د┘╪ز┘╪╡┘è┘┘è╪ر', '╪ز╪ص╪»┘è╪» ╪د┘┘à┘ê╪د╪▒╪»'],
-          deliverables: ['╪ز┘é╪▒┘è╪▒ ╪د┘╪ز╪ص┘┘è┘', '╪«╪╖╪ر ╪د┘╪ز┘┘┘è╪░', '┘à┘è╪▓╪د┘┘è╪ر ╪د┘┘à╪┤╪▒┘ê╪╣'],
-          dependencies: ['┘à┘ê╪د┘┘é╪ر ╪د┘╪ح╪»╪د╪▒╪ر', '╪ز┘ê┘╪▒ ╪د┘┘à┘ê╪د╪▒╪»']
+          activities: [
+            '╪ز╪ص┘┘è┘ ╪د┘┘ê╪╢╪╣ ╪د┘╪ص╪د┘┘è',
+            '┘ê╪╢╪╣ ╪د┘╪«╪╖╪ر ╪د┘╪ز┘╪╡┘è┘┘è╪ر',
+            '╪ز╪ص╪»┘è╪» ╪د┘┘à┘ê╪د╪▒╪»',
+          ],
+          deliverables: [
+            '╪ز┘é╪▒┘è╪▒ ╪د┘╪ز╪ص┘┘è┘',
+            '╪«╪╖╪ر ╪د┘╪ز┘┘┘è╪░',
+            '┘à┘è╪▓╪د┘┘è╪ر ╪د┘┘à╪┤╪▒┘ê╪╣',
+          ],
+          dependencies: ['┘à┘ê╪د┘┘é╪ر ╪د┘╪ح╪»╪د╪▒╪ر', '╪ز┘ê┘╪▒ ╪د┘┘à┘ê╪د╪▒╪»'],
         },
         {
           phase: '╪د┘╪ز┘┘┘è╪░',
           description: '╪ز╪╖╪ذ┘è┘é ╪د┘╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪د┘╪ش╪»┘è╪»╪ر',
           duration: '6-12 ╪ث╪│╪د╪ذ┘è╪╣',
-          activities: ['╪ز╪╖┘ê┘è╪▒ ╪د┘┘à┘╪ز╪ش╪د╪ز', '╪ز╪»╪▒┘è╪ذ ╪د┘┘╪▒┘è┘é', '╪ز╪╖╪ذ┘è┘é ╪د┘╪ز╪ص╪│┘è┘╪د╪ز'],
+          activities: [
+            '╪ز╪╖┘ê┘è╪▒ ╪د┘┘à┘╪ز╪ش╪د╪ز',
+            '╪ز╪»╪▒┘è╪ذ ╪د┘┘╪▒┘è┘é',
+            '╪ز╪╖╪ذ┘è┘é ╪د┘╪ز╪ص╪│┘è┘╪د╪ز',
+          ],
           deliverables: ['┘à┘╪ز╪ش╪د╪ز ┘à╪ص╪│┘╪ر', '┘╪▒┘è┘é ┘à╪»╪▒╪ذ', '╪╣┘à┘┘è╪د╪ز ┘à╪ص╪│┘╪ر'],
-          dependencies: ['╪د┘â╪ز┘à╪د┘ ┘à╪▒╪ص┘╪ر ╪د┘╪ز╪ص╪╢┘è╪▒', '╪ز┘ê┘╪▒ ╪د┘┘à┘ê╪د╪▒╪»']
-        }
+          dependencies: ['╪د┘â╪ز┘à╪د┘ ┘à╪▒╪ص┘╪ر ╪د┘╪ز╪ص╪╢┘è╪▒', '╪ز┘ê┘╪▒ ╪د┘┘à┘ê╪د╪▒╪»'],
+        },
       ],
       timeline: '3-6 ╪ث╪┤┘ç╪▒',
       budget: 500000,
@@ -1511,22 +1663,28 @@ class BidComparisonServiceImpl implements BidComparisonService {
           name: '╪د┘â╪ز┘à╪د┘ ╪د┘╪ز╪ص┘┘è┘',
           date: '2024-02-15',
           criteria: ['╪ز┘é╪▒┘è╪▒ ╪┤╪د┘à┘', '╪«╪╖╪ر ┘à╪╣╪ز┘à╪»╪ر'],
-          deliverables: ['╪ز┘é╪▒┘è╪▒ ╪د┘╪ز╪ص┘┘è┘', '╪«╪╖╪ر ╪د┘╪ز┘┘┘è╪░']
+          deliverables: ['╪ز┘é╪▒┘è╪▒ ╪د┘╪ز╪ص┘┘è┘', '╪«╪╖╪ر ╪د┘╪ز┘┘┘è╪░'],
         },
         {
           name: '╪ذ╪»╪د┘è╪ر ╪د┘╪ز┘┘┘è╪░',
           date: '2024-03-01',
           criteria: ['┘╪▒┘è┘é ╪ش╪د┘ç╪▓', '┘à┘ê╪د╪▒╪» ┘à╪ز┘ê┘╪▒╪ر'],
-          deliverables: ['┘╪▒┘è┘é ┘à╪»╪▒╪ذ', '╪ث╪»┘ê╪د╪ز ╪ش╪د┘ç╪▓╪ر']
-        }
+          deliverables: ['┘╪▒┘è┘é ┘à╪»╪▒╪ذ', '╪ث╪»┘ê╪د╪ز ╪ش╪د┘ç╪▓╪ر'],
+        },
       ],
-      successMetrics: ['╪ز╪ص╪│┘è┘ ╪د┘┘à┘ê┘é┘ ╪د┘╪ز┘╪د┘╪│┘è', '╪▓┘è╪د╪»╪ر ┘╪▒╪╡ ╪د┘┘┘ê╪▓', '╪ز╪ص╪│┘è┘ ╪د┘╪▒╪ذ╪ص┘è╪ر']
+      successMetrics: [
+        '╪ز╪ص╪│┘è┘ ╪د┘┘à┘ê┘é┘ ╪د┘╪ز┘╪د┘╪│┘è',
+        '╪▓┘è╪د╪»╪ر ┘╪▒╪╡ ╪د┘┘┘ê╪▓',
+        '╪ز╪ص╪│┘è┘ ╪د┘╪▒╪ذ╪ص┘è╪ر',
+      ],
     }
   }
 
   private calculateRelativePosition(bid: any, competitors: any[]): string {
-    const avgPrice = competitors.reduce((sum, c) => sum + (c.totalPrice || 0), 0) / competitors.length
-    const avgQuality = competitors.reduce((sum, c) => sum + (c.qualityScore || 0), 0) / competitors.length
+    const avgPrice =
+      competitors.reduce((sum, c) => sum + (c.totalPrice || 0), 0) / competitors.length
+    const avgQuality =
+      competitors.reduce((sum, c) => sum + (c.qualityScore || 0), 0) / competitors.length
 
     if (bid.totalPrice < avgPrice && bid.qualityScore > avgQuality) {
       return '┘à╪ز┘┘ê┘é - ╪│╪╣╪▒ ╪ث┘é┘ ┘ê╪ش┘ê╪»╪ر ╪ث╪╣┘┘ë'
@@ -1542,9 +1700,12 @@ class BidComparisonServiceImpl implements BidComparisonService {
   private identifyStrengths(bid: any, competitors: any[]): string[] {
     const strengths: string[] = []
 
-    const avgPrice = competitors.reduce((sum, c) => sum + (c.totalPrice || 0), 0) / competitors.length
-    const avgQuality = competitors.reduce((sum, c) => sum + (c.qualityScore || 0), 0) / competitors.length
-    const avgTimeline = competitors.reduce((sum, c) => sum + (c.timeline || 0), 0) / competitors.length
+    const avgPrice =
+      competitors.reduce((sum, c) => sum + (c.totalPrice || 0), 0) / competitors.length
+    const avgQuality =
+      competitors.reduce((sum, c) => sum + (c.qualityScore || 0), 0) / competitors.length
+    const avgTimeline =
+      competitors.reduce((sum, c) => sum + (c.timeline || 0), 0) / competitors.length
 
     if (bid.totalPrice < avgPrice) {
       strengths.push('╪│╪╣╪▒ ╪ز┘╪د┘╪│┘è ╪ث┘é┘ ┘à┘ ╪د┘┘à╪ز┘ê╪│╪╖')
@@ -1568,9 +1729,12 @@ class BidComparisonServiceImpl implements BidComparisonService {
   private identifyWeaknesses(bid: any, competitors: any[]): string[] {
     const weaknesses: string[] = []
 
-    const avgPrice = competitors.reduce((sum, c) => sum + (c.totalPrice || 0), 0) / competitors.length
-    const avgQuality = competitors.reduce((sum, c) => sum + (c.qualityScore || 0), 0) / competitors.length
-    const avgTimeline = competitors.reduce((sum, c) => sum + (c.timeline || 0), 0) / competitors.length
+    const avgPrice =
+      competitors.reduce((sum, c) => sum + (c.totalPrice || 0), 0) / competitors.length
+    const avgQuality =
+      competitors.reduce((sum, c) => sum + (c.qualityScore || 0), 0) / competitors.length
+    const avgTimeline =
+      competitors.reduce((sum, c) => sum + (c.timeline || 0), 0) / competitors.length
 
     if (bid.totalPrice > avgPrice * 1.1) {
       weaknesses.push('╪│╪╣╪▒ ╪ث╪╣┘┘ë ┘à┘ ╪د┘┘à╪ز┘ê╪│╪╖ ╪ذ╪┤┘â┘ ┘à┘╪ص┘ê╪╕')
@@ -1608,42 +1772,42 @@ class BidComparisonServiceImpl implements BidComparisonService {
   }
 
   private translatePosition(position: string): string {
-    const translations: { [key: string]: string } = {
-      'leader': '┘é╪د╪خ╪»',
-      'challenger': '┘à╪ز╪ص╪»┘è',
-      'follower': '╪ز╪د╪ذ╪╣',
-      'niche': '┘à╪ز╪«╪╡╪╡',
-      'lowest': '╪د┘╪ث┘é┘',
-      'competitive': '╪ز┘╪د┘╪│┘è',
-      'premium': '┘à┘à┘è╪▓',
-      'basic': '╪ث╪│╪د╪│┘è',
-      'standard': '┘é┘è╪د╪│┘è',
-      'conservative': '┘à╪ص╪د┘╪╕',
-      'moderate': '┘à╪ز┘ê╪│╪╖',
-      'innovative': '┘à╪ذ╪ز┘â╪▒',
-      'developing': '┘╪د┘à┘è',
-      'established': '╪▒╪د╪│╪«',
-      'proven': '┘à╪س╪ذ╪ز'
+    const translations: Record<string, string> = {
+      leader: '┘é╪د╪خ╪»',
+      challenger: '┘à╪ز╪ص╪»┘è',
+      follower: '╪ز╪د╪ذ╪╣',
+      niche: '┘à╪ز╪«╪╡╪╡',
+      lowest: '╪د┘╪ث┘é┘',
+      competitive: '╪ز┘╪د┘╪│┘è',
+      premium: '┘à┘à┘è╪▓',
+      basic: '╪ث╪│╪د╪│┘è',
+      standard: '┘é┘è╪د╪│┘è',
+      conservative: '┘à╪ص╪د┘╪╕',
+      moderate: '┘à╪ز┘ê╪│╪╖',
+      innovative: '┘à╪ذ╪ز┘â╪▒',
+      developing: '┘╪د┘à┘è',
+      established: '╪▒╪د╪│╪«',
+      proven: '┘à╪س╪ذ╪ز',
     }
     return translations[position] || position
   }
 
   private translatePriority(priority: string): string {
-    const translations: { [key: string]: string } = {
-      'low': '┘à┘╪«┘╪╢╪ر',
-      'medium': '┘à╪ز┘ê╪│╪╖╪ر',
-      'high': '╪╣╪د┘┘è╪ر',
-      'critical': '╪ص╪▒╪ش╪ر'
+    const translations: Record<string, string> = {
+      low: '┘à┘╪«┘╪╢╪ر',
+      medium: '┘à╪ز┘ê╪│╪╖╪ر',
+      high: '╪╣╪د┘┘è╪ر',
+      critical: '╪ص╪▒╪ش╪ر',
     }
     return translations[priority] || priority
   }
 
   private translateRisk(risk: string): string {
-    const translations: { [key: string]: string } = {
-      'low': '┘à┘╪«┘╪╢╪ر',
-      'medium': '┘à╪ز┘ê╪│╪╖╪ر',
-      'high': '╪╣╪د┘┘è╪ر',
-      'critical': '╪ص╪▒╪ش╪ر'
+    const translations: Record<string, string> = {
+      low: '┘à┘╪«┘╪╢╪ر',
+      medium: '┘à╪ز┘ê╪│╪╖╪ر',
+      high: '╪╣╪د┘┘è╪ر',
+      critical: '╪ص╪▒╪ش╪ر',
     }
     return translations[risk] || risk
   }

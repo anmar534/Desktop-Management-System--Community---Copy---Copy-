@@ -1,7 +1,7 @@
 ﻿/**
  * ╪«╪»┘à╪ر ╪ز╪ص┘┘è┘ ╪د┘╪▒╪ذ╪ص┘è╪ر
  * Profitability Analysis Service
- * 
+ *
  * ╪ز╪ص┘┘è┘ ╪┤╪د┘à┘ ┘╪▒╪ذ╪ص┘è╪ر ╪د┘┘à╪┤╪د╪▒┘è╪╣ ┘ê╪د┘╪╣┘à┘╪د╪ة ┘à╪╣ ┘à╪ج╪┤╪▒╪د╪ز ╪د┘╪ث╪»╪د╪ة ╪د┘┘à╪د┘┘è
  * Comprehensive profitability analysis for projects and clients with financial KPIs
  */
@@ -17,12 +17,12 @@ export interface ProjectProfitability {
   clientId: string
   clientName: string
   clientNameEn: string
-  
+
   // ╪د┘╪ح┘è╪▒╪د╪»╪د╪ز - Revenue
   totalRevenue: number
   contractValue: number
   additionalRevenue: number
-  
+
   // ╪د┘╪ز┘â╪د┘┘è┘ - Costs
   totalCosts: number
   directCosts: number
@@ -31,25 +31,25 @@ export interface ProjectProfitability {
   materialCosts: number
   equipmentCosts: number
   overheadCosts: number
-  
+
   // ╪د┘╪▒╪ذ╪ص┘è╪ر - Profitability
   grossProfit: number
   grossProfitMargin: number
   netProfit: number
   netProfitMargin: number
-  
+
   // ┘à╪ج╪┤╪▒╪د╪ز ╪د┘╪ث╪»╪د╪ة - Performance Indicators
   roi: number // Return on Investment
   costEfficiency: number
   revenuePerDay: number
   profitPerDay: number
-  
+
   // ╪د┘╪ز┘ê╪د╪▒┘è╪« ┘ê╪د┘╪ص╪د┘╪ر - Dates and Status
   startDate: string
   endDate: string
   duration: number // ╪ذ╪د┘╪ث┘è╪د┘à
   status: 'active' | 'completed' | 'on-hold' | 'cancelled'
-  
+
   // ╪د┘╪ذ┘è╪د┘╪د╪ز ╪د┘┘ê╪╡┘┘è╪ر - Metadata
   createdAt: string
   updatedAt: string
@@ -61,32 +61,32 @@ export interface ClientProfitability {
   clientId: string
   clientName: string
   clientNameEn: string
-  
+
   // ╪ح╪ش┘à╪د┘┘è ╪د┘╪ث╪╣┘à╪د┘ - Total Business
   totalProjects: number
   totalRevenue: number
   totalCosts: number
   totalProfit: number
-  
+
   // ┘à╪ز┘ê╪│╪╖╪د╪ز - Averages
   averageProjectValue: number
   averageProfitMargin: number
   averageProjectDuration: number
-  
+
   // ┘à╪ج╪┤╪▒╪د╪ز ╪د┘╪╣┘à┘è┘ - Client Metrics
   clientLifetimeValue: number
   clientAcquisitionCost: number
   clientRetentionRate: number
   clientSatisfactionScore: number
-  
+
   // ╪د┘╪ز╪╡┘┘è┘ - Classification
   profitabilityRank: number
   clientTier: 'platinum' | 'gold' | 'silver' | 'bronze'
   riskLevel: 'low' | 'medium' | 'high'
-  
+
   // ╪د┘┘à╪┤╪د╪▒┘è╪╣ - Projects
   projects: ProjectProfitability[]
-  
+
   // ╪د┘╪ز┘ê╪د╪▒┘è╪« - Dates
   firstProjectDate: string
   lastProjectDate: string
@@ -100,7 +100,7 @@ export interface ProfitabilityComparison {
   comparisonType: 'projects' | 'clients' | 'periods'
   title: string
   titleEn: string
-  
+
   // ╪د┘╪ذ┘è╪د┘╪د╪ز ╪د┘┘à┘é╪د╪▒┘╪ر - Comparison Data
   items: Array<{
     id: string
@@ -113,7 +113,7 @@ export interface ProfitabilityComparison {
     roi: number
     rank: number
   }>
-  
+
   // ╪د┘╪ح╪ص╪╡╪د╪خ┘è╪د╪ز - Statistics
   totalRevenue: number
   totalCosts: number
@@ -121,11 +121,11 @@ export interface ProfitabilityComparison {
   averageProfitMargin: number
   bestPerformer: string
   worstPerformer: string
-  
+
   // ╪د┘┘╪ز╪▒╪ر ╪د┘╪▓┘à┘┘è╪ر - Time Period
   startDate: string
   endDate: string
-  
+
   // ╪د┘╪ذ┘è╪د┘╪د╪ز ╪د┘┘ê╪╡┘┘è╪ر - Metadata
   createdAt: string
   updatedAt: string
@@ -137,7 +137,7 @@ export interface ProfitabilityTrend {
   entityType: 'project' | 'client'
   entityName: string
   entityNameEn: string
-  
+
   // ╪د┘╪ذ┘è╪د┘╪د╪ز ╪د┘╪┤┘ç╪▒┘è╪ر - Monthly Data
   monthlyData: Array<{
     month: string
@@ -148,18 +148,18 @@ export interface ProfitabilityTrend {
     profitMargin: number
     cumulativeProfit: number
   }>
-  
+
   // ╪د┘╪د╪ز╪ش╪د┘ç╪د╪ز - Trends
   revenueGrowthRate: number
   profitGrowthRate: number
   marginTrend: 'improving' | 'stable' | 'declining'
   seasonalityFactor: number
-  
+
   // ╪د┘╪ز┘╪ذ╪ج╪د╪ز - Forecasts
   projectedRevenue: number
   projectedProfit: number
   confidenceLevel: number
-  
+
   // ╪د┘╪ذ┘è╪د┘╪د╪ز ╪د┘┘ê╪╡┘┘è╪ر - Metadata
   createdAt: string
   updatedAt: string
@@ -186,21 +186,24 @@ export class ProfitabilityAnalysisService {
       const projectData = await this.getProjectData(projectId)
       const costs = await this.getProjectCosts(projectId)
       const revenue = await this.getProjectRevenue(projectId)
-      
+
       // ╪ص╪│╪د╪ذ ╪د┘╪▒╪ذ╪ص┘è╪ر
       const grossProfit = revenue.totalRevenue - costs.directCosts
-      const grossProfitMargin = revenue.totalRevenue > 0 ? (grossProfit / revenue.totalRevenue) * 100 : 0
-      
+      const grossProfitMargin =
+        revenue.totalRevenue > 0 ? (grossProfit / revenue.totalRevenue) * 100 : 0
+
       const netProfit = revenue.totalRevenue - costs.totalCosts
-      const netProfitMargin = revenue.totalRevenue > 0 ? (netProfit / revenue.totalRevenue) * 100 : 0
-      
+      const netProfitMargin =
+        revenue.totalRevenue > 0 ? (netProfit / revenue.totalRevenue) * 100 : 0
+
       // ╪ص╪│╪د╪ذ ┘à╪ج╪┤╪▒╪د╪ز ╪د┘╪ث╪»╪د╪ة
       const duration = this.calculateDuration(projectData.startDate, projectData.endDate)
       const roi = costs.totalCosts > 0 ? (netProfit / costs.totalCosts) * 100 : 0
-      const costEfficiency = revenue.totalRevenue > 0 ? (costs.totalCosts / revenue.totalRevenue) * 100 : 0
+      const costEfficiency =
+        revenue.totalRevenue > 0 ? (costs.totalCosts / revenue.totalRevenue) * 100 : 0
       const revenuePerDay = duration > 0 ? revenue.totalRevenue / duration : 0
       const profitPerDay = duration > 0 ? netProfit / duration : 0
-      
+
       const profitability: ProjectProfitability = {
         id: `prof_${projectId}_${Date.now()}`,
         projectId,
@@ -209,12 +212,12 @@ export class ProfitabilityAnalysisService {
         clientId: projectData.clientId,
         clientName: projectData.clientName,
         clientNameEn: projectData.clientNameEn,
-        
+
         // ╪د┘╪ح┘è╪▒╪د╪»╪د╪ز
         totalRevenue: revenue.totalRevenue,
         contractValue: revenue.contractValue,
         additionalRevenue: revenue.additionalRevenue,
-        
+
         // ╪د┘╪ز┘â╪د┘┘è┘
         totalCosts: costs.totalCosts,
         directCosts: costs.directCosts,
@@ -223,34 +226,34 @@ export class ProfitabilityAnalysisService {
         materialCosts: costs.materialCosts,
         equipmentCosts: costs.equipmentCosts,
         overheadCosts: costs.overheadCosts,
-        
+
         // ╪د┘╪▒╪ذ╪ص┘è╪ر
         grossProfit,
         grossProfitMargin,
         netProfit,
         netProfitMargin,
-        
+
         // ┘à╪ج╪┤╪▒╪د╪ز ╪د┘╪ث╪»╪د╪ة
         roi,
         costEfficiency,
         revenuePerDay,
         profitPerDay,
-        
+
         // ╪د┘╪ز┘ê╪د╪▒┘è╪« ┘ê╪د┘╪ص╪د┘╪ر
         startDate: projectData.startDate,
         endDate: projectData.endDate,
         duration,
         status: projectData.status,
-        
+
         // ╪د┘╪ذ┘è╪د┘╪د╪ز ╪د┘┘ê╪╡┘┘è╪ر
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        version: 1
+        version: 1,
       }
-      
+
       // ╪ص┘╪╕ ╪د┘╪ذ┘è╪د┘╪د╪ز
       await this.saveProjectProfitability(profitability)
-      
+
       return profitability
     } catch (error) {
       console.error('Error calculating project profitability:', error)
@@ -267,86 +270,89 @@ export class ProfitabilityAnalysisService {
       // ╪ش┘╪ذ ╪ش┘à┘è╪╣ ┘à╪┤╪د╪▒┘è╪╣ ╪د┘╪╣┘à┘è┘
       const clientProjects = await this.getClientProjects(clientId)
       const projectProfitabilities = await Promise.all(
-        clientProjects.map(project => this.calculateProjectProfitability(project.id))
+        clientProjects.map((project) => this.calculateProjectProfitability(project.id)),
       )
-      
+
       // ╪ص╪│╪د╪ذ ╪د┘╪ح╪ش┘à╪د┘┘è╪د╪ز
       const totalProjects = projectProfitabilities.length
       const totalRevenue = projectProfitabilities.reduce((sum, p) => sum + p.totalRevenue, 0)
       const totalCosts = projectProfitabilities.reduce((sum, p) => sum + p.totalCosts, 0)
       const totalProfit = totalRevenue - totalCosts
-      
+
       // ╪ص╪│╪د╪ذ ╪د┘┘à╪ز┘ê╪│╪╖╪د╪ز
       const averageProjectValue = totalProjects > 0 ? totalRevenue / totalProjects : 0
       const averageProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0
-      const averageProjectDuration = totalProjects > 0 
-        ? projectProfitabilities.reduce((sum, p) => sum + p.duration, 0) / totalProjects 
-        : 0
-      
+      const averageProjectDuration =
+        totalProjects > 0
+          ? projectProfitabilities.reduce((sum, p) => sum + p.duration, 0) / totalProjects
+          : 0
+
       // ╪ص╪│╪د╪ذ ┘à╪ج╪┤╪▒╪د╪ز ╪د┘╪╣┘à┘è┘
       const clientLifetimeValue = this.calculateClientLifetimeValue(projectProfitabilities)
       const clientAcquisitionCost = this.calculateClientAcquisitionCost(clientId)
       const clientRetentionRate = this.calculateClientRetentionRate(clientId)
       const clientSatisfactionScore = await this.getClientSatisfactionScore(clientId)
-      
+
       // ╪ز╪ص╪»┘è╪» ╪د┘╪ز╪╡┘┘è┘
       const profitabilityRank = await this.calculateClientRank(clientId, totalProfit)
       const clientTier = this.determineClientTier(totalRevenue, averageProfitMargin)
       const riskLevel = this.assessClientRisk(projectProfitabilities)
-      
+
       // ╪ز┘ê╪د╪▒┘è╪« ╪د┘┘à╪┤╪د╪▒┘è╪╣
-      const projectDates = projectProfitabilities.map(p => new Date(p.startDate))
-      const firstProjectDate = projectDates.length > 0
-        ? new Date(Math.min(...projectDates.map(d => d.getTime()))).toISOString()
-        : new Date().toISOString()
-      const lastProjectDate = projectDates.length > 0
-        ? new Date(Math.max(...projectDates.map(d => d.getTime()))).toISOString()
-        : new Date().toISOString()
-      
+      const projectDates = projectProfitabilities.map((p) => new Date(p.startDate))
+      const firstProjectDate =
+        projectDates.length > 0
+          ? new Date(Math.min(...projectDates.map((d) => d.getTime()))).toISOString()
+          : new Date().toISOString()
+      const lastProjectDate =
+        projectDates.length > 0
+          ? new Date(Math.max(...projectDates.map((d) => d.getTime()))).toISOString()
+          : new Date().toISOString()
+
       const clientData = await this.getClientData(clientId)
-      
+
       const clientProfitability: ClientProfitability = {
         id: `client_prof_${clientId}_${Date.now()}`,
         clientId,
         clientName: clientData.name,
         clientNameEn: clientData.nameEn,
-        
+
         // ╪ح╪ش┘à╪د┘┘è ╪د┘╪ث╪╣┘à╪د┘
         totalProjects,
         totalRevenue,
         totalCosts,
         totalProfit,
-        
+
         // ┘à╪ز┘ê╪│╪╖╪د╪ز
         averageProjectValue,
         averageProfitMargin,
         averageProjectDuration,
-        
+
         // ┘à╪ج╪┤╪▒╪د╪ز ╪د┘╪╣┘à┘è┘
         clientLifetimeValue,
         clientAcquisitionCost,
         clientRetentionRate,
         clientSatisfactionScore,
-        
+
         // ╪د┘╪ز╪╡┘┘è┘
         profitabilityRank,
         clientTier,
         riskLevel,
-        
+
         // ╪د┘┘à╪┤╪د╪▒┘è╪╣
         projects: projectProfitabilities,
-        
+
         // ╪د┘╪ز┘ê╪د╪▒┘è╪«
         firstProjectDate,
         lastProjectDate,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        version: 1
+        version: 1,
       }
-      
+
       // ╪ص┘╪╕ ╪د┘╪ذ┘è╪د┘╪د╪ز
       await this.saveClientProfitability(clientProfitability)
-      
+
       return clientProfitability
     } catch (error) {
       console.error('Error calculating client profitability:', error)
@@ -362,7 +368,7 @@ export class ProfitabilityAnalysisService {
     type: 'projects' | 'clients' | 'periods',
     itemIds: string[],
     startDate?: string,
-    endDate?: string
+    endDate?: string,
   ): Promise<ProfitabilityComparison> {
     try {
       let items: any[] = []
@@ -374,7 +380,7 @@ export class ProfitabilityAnalysisService {
         titleEn = 'Project Profitability Comparison'
 
         const profitabilities = await Promise.all(
-          itemIds.map(id => this.calculateProjectProfitability(id))
+          itemIds.map((id) => this.calculateProjectProfitability(id)),
         )
 
         items = profitabilities.map((p, index) => ({
@@ -386,14 +392,14 @@ export class ProfitabilityAnalysisService {
           profit: p.netProfit,
           profitMargin: p.netProfitMargin,
           roi: p.roi,
-          rank: index + 1
+          rank: index + 1,
         }))
       } else if (type === 'clients') {
         title = '┘à┘é╪د╪▒┘╪ر ╪▒╪ذ╪ص┘è╪ر ╪د┘╪╣┘à┘╪د╪ة'
         titleEn = 'Client Profitability Comparison'
 
         const profitabilities = await Promise.all(
-          itemIds.map(id => this.calculateClientProfitability(id))
+          itemIds.map((id) => this.calculateClientProfitability(id)),
         )
 
         items = profitabilities.map((p, index) => ({
@@ -405,7 +411,7 @@ export class ProfitabilityAnalysisService {
           profit: p.totalProfit,
           profitMargin: p.averageProfitMargin,
           roi: p.totalCosts > 0 ? (p.totalProfit / p.totalCosts) * 100 : 0,
-          rank: index + 1
+          rank: index + 1,
         }))
       }
 
@@ -436,7 +442,7 @@ export class ProfitabilityAnalysisService {
         startDate: startDate || '',
         endDate: endDate || '',
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       // ╪ص┘╪╕ ╪د┘┘à┘é╪د╪▒┘╪ر
@@ -456,28 +462,23 @@ export class ProfitabilityAnalysisService {
   async analyzeProfitabilityTrend(
     entityId: string,
     entityType: 'project' | 'client',
-    months: number = 12
+    months = 12,
   ): Promise<ProfitabilityTrend> {
     try {
-      const entityData = entityType === 'project'
-        ? await this.getProjectData(entityId)
-        : await this.getClientData(entityId)
+      const entityData =
+        entityType === 'project'
+          ? await this.getProjectData(entityId)
+          : await this.getClientData(entityId)
 
       // ╪ش┘╪ذ ╪د┘╪ذ┘è╪د┘╪د╪ز ╪د┘╪┤┘ç╪▒┘è╪ر
       const monthlyData = await this.getMonthlyProfitabilityData(entityId, entityType, months)
 
       // ╪ص╪│╪د╪ذ ┘à╪╣╪»┘╪د╪ز ╪د┘┘┘à┘ê
-      const revenueGrowthRate = this.calculateGrowthRate(
-        monthlyData.map(m => m.revenue)
-      )
-      const profitGrowthRate = this.calculateGrowthRate(
-        monthlyData.map(m => m.profit)
-      )
+      const revenueGrowthRate = this.calculateGrowthRate(monthlyData.map((m) => m.revenue))
+      const profitGrowthRate = this.calculateGrowthRate(monthlyData.map((m) => m.profit))
 
       // ╪ز╪ص╪»┘è╪» ╪د╪ز╪ش╪د┘ç ╪د┘┘ç╪د┘à╪┤
-      const marginTrend = this.determineTrend(
-        monthlyData.map(m => m.profitMargin)
-      )
+      const marginTrend = this.determineTrend(monthlyData.map((m) => m.profitMargin))
 
       // ╪ص╪│╪د╪ذ ╪╣╪د┘à┘ ╪د┘┘à┘ê╪│┘à┘è╪ر
       const seasonalityFactor = this.calculateSeasonality(monthlyData)
@@ -501,7 +502,7 @@ export class ProfitabilityAnalysisService {
         projectedProfit,
         confidenceLevel,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       // ╪ص┘╪╕ ╪د┘╪د╪ز╪ش╪د┘ç
@@ -518,9 +519,9 @@ export class ProfitabilityAnalysisService {
    * ╪ش┘╪ذ ╪ث┘╪╢┘ ╪د┘┘à╪┤╪د╪▒┘è╪╣ ╪▒╪ذ╪ص┘è╪ر
    * Get most profitable projects
    */
-  async getMostProfitableProjects(limit: number = 10): Promise<ProjectProfitability[]> {
+  async getMostProfitableProjects(limit = 10): Promise<ProjectProfitability[]> {
     try {
-      const allProfitabilities = await asyncStorage.getItem(this.projectProfitabilityKey) || []
+      const allProfitabilities = (await asyncStorage.getItem(this.projectProfitabilityKey)) || []
 
       return allProfitabilities
         .sort((a: ProjectProfitability, b: ProjectProfitability) => b.netProfit - a.netProfit)
@@ -535,9 +536,9 @@ export class ProfitabilityAnalysisService {
    * ╪ش┘╪ذ ╪ث┘╪╢┘ ╪د┘╪╣┘à┘╪د╪ة ╪▒╪ذ╪ص┘è╪ر
    * Get most profitable clients
    */
-  async getMostProfitableClients(limit: number = 10): Promise<ClientProfitability[]> {
+  async getMostProfitableClients(limit = 10): Promise<ClientProfitability[]> {
     try {
-      const allProfitabilities = await asyncStorage.getItem(this.clientProfitabilityKey) || []
+      const allProfitabilities = (await asyncStorage.getItem(this.clientProfitabilityKey)) || []
 
       return allProfitabilities
         .sort((a: ClientProfitability, b: ClientProfitability) => b.totalProfit - a.totalProfit)
@@ -556,7 +557,7 @@ export class ProfitabilityAnalysisService {
    */
   private async getProjectData(projectId: string): Promise<any> {
     // ┘à╪ص╪د┘â╪د╪ر ╪ش┘╪ذ ╪ذ┘è╪د┘╪د╪ز ╪د┘┘à╪┤╪▒┘ê╪╣ ┘à┘ ╪«╪»┘à╪ر ╪د┘┘à╪┤╪د╪▒┘è╪╣
-    const projects = await asyncStorage.getItem('projects') || []
+    const projects = (await asyncStorage.getItem('projects')) || []
     const project = projects.find((p: any) => p.id === projectId)
 
     if (!project) {
@@ -572,7 +573,7 @@ export class ProfitabilityAnalysisService {
       clientNameEn: project.clientNameEn,
       startDate: project.startDate,
       endDate: project.endDate,
-      status: project.status
+      status: project.status,
     }
   }
 
@@ -582,7 +583,7 @@ export class ProfitabilityAnalysisService {
    */
   private async getProjectCosts(projectId: string): Promise<any> {
     // ┘à╪ص╪د┘â╪د╪ر ╪ش┘╪ذ ╪ز┘â╪د┘┘è┘ ╪د┘┘à╪┤╪▒┘ê╪╣
-    const costs = await asyncStorage.getItem('project_costs') || []
+    const costs = (await asyncStorage.getItem('project_costs')) || []
     const projectCosts = costs.filter((c: any) => c.projectId === projectId)
 
     const directCosts = projectCosts
@@ -618,7 +619,7 @@ export class ProfitabilityAnalysisService {
       laborCosts,
       materialCosts,
       equipmentCosts,
-      overheadCosts
+      overheadCosts,
     }
   }
 
@@ -628,7 +629,7 @@ export class ProfitabilityAnalysisService {
    */
   private async getProjectRevenue(projectId: string): Promise<any> {
     // ┘à╪ص╪د┘â╪د╪ر ╪ش┘╪ذ ╪ح┘è╪▒╪د╪»╪د╪ز ╪د┘┘à╪┤╪▒┘ê╪╣
-    const revenues = await asyncStorage.getItem('project_revenues') || []
+    const revenues = (await asyncStorage.getItem('project_revenues')) || []
     const projectRevenues = revenues.filter((r: any) => r.projectId === projectId)
 
     const contractValue = projectRevenues
@@ -644,7 +645,7 @@ export class ProfitabilityAnalysisService {
     return {
       totalRevenue,
       contractValue,
-      additionalRevenue
+      additionalRevenue,
     }
   }
 
@@ -664,7 +665,7 @@ export class ProfitabilityAnalysisService {
    * Get client projects
    */
   private async getClientProjects(clientId: string): Promise<any[]> {
-    const projects = await asyncStorage.getItem('projects') || []
+    const projects = (await asyncStorage.getItem('projects')) || []
     return projects.filter((p: any) => p.clientId === clientId)
   }
 
@@ -673,7 +674,7 @@ export class ProfitabilityAnalysisService {
    * Get client data
    */
   private async getClientData(clientId: string): Promise<any> {
-    const clients = await asyncStorage.getItem('clients') || []
+    const clients = (await asyncStorage.getItem('clients')) || []
     const client = clients.find((c: any) => c.id === clientId)
 
     if (!client) {
@@ -683,7 +684,7 @@ export class ProfitabilityAnalysisService {
     return {
       id: client.id,
       name: client.name,
-      nameEn: client.nameEn
+      nameEn: client.nameEn,
     }
   }
 
@@ -706,9 +707,9 @@ export class ProfitabilityAnalysisService {
   private calculateAverageProjectsPerYear(projects: ProjectProfitability[]): number {
     if (projects.length === 0) return 0
 
-    const dates = projects.map(p => new Date(p.startDate))
-    const firstDate = new Date(Math.min(...dates.map(d => d.getTime())))
-    const lastDate = new Date(Math.max(...dates.map(d => d.getTime())))
+    const dates = projects.map((p) => new Date(p.startDate))
+    const firstDate = new Date(Math.min(...dates.map((d) => d.getTime())))
+    const lastDate = new Date(Math.max(...dates.map((d) => d.getTime())))
 
     const yearsDiff = (lastDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24 * 365)
 
@@ -747,7 +748,7 @@ export class ProfitabilityAnalysisService {
    * Calculate client rank
    */
   private async calculateClientRank(clientId: string, totalProfit: number): Promise<number> {
-    const allClients = await asyncStorage.getItem(this.clientProfitabilityKey) || []
+    const allClients = (await asyncStorage.getItem(this.clientProfitabilityKey)) || []
     const sortedClients = allClients.sort((a: any, b: any) => b.totalProfit - a.totalProfit)
     const rank = sortedClients.findIndex((c: any) => c.clientId === clientId) + 1
     return rank || allClients.length + 1
@@ -757,7 +758,10 @@ export class ProfitabilityAnalysisService {
    * ╪ز╪ص╪»┘è╪» ┘╪خ╪ر ╪د┘╪╣┘à┘è┘
    * Determine client tier
    */
-  private determineClientTier(totalRevenue: number, averageProfitMargin: number): 'platinum' | 'gold' | 'silver' | 'bronze' {
+  private determineClientTier(
+    totalRevenue: number,
+    averageProfitMargin: number,
+  ): 'platinum' | 'gold' | 'silver' | 'bronze' {
     if (totalRevenue >= 1000000 && averageProfitMargin >= 20) return 'platinum'
     if (totalRevenue >= 500000 && averageProfitMargin >= 15) return 'gold'
     if (totalRevenue >= 100000 && averageProfitMargin >= 10) return 'silver'
@@ -769,7 +773,7 @@ export class ProfitabilityAnalysisService {
    * Assess client risk
    */
   private assessClientRisk(projects: ProjectProfitability[]): 'low' | 'medium' | 'high' {
-    const profitMargins = projects.map(p => p.netProfitMargin)
+    const profitMargins = projects.map((p) => p.netProfitMargin)
     const averageMargin = profitMargins.reduce((sum, m) => sum + m, 0) / profitMargins.length
     const marginVariance = this.calculateVariance(profitMargins)
 
@@ -786,7 +790,7 @@ export class ProfitabilityAnalysisService {
     if (values.length === 0) return 0
 
     const mean = values.reduce((sum, v) => sum + v, 0) / values.length
-    const squaredDiffs = values.map(v => Math.pow(v - mean, 2))
+    const squaredDiffs = values.map((v) => Math.pow(v - mean, 2))
     return squaredDiffs.reduce((sum, d) => sum + d, 0) / values.length
   }
 
@@ -797,7 +801,7 @@ export class ProfitabilityAnalysisService {
   private async getMonthlyProfitabilityData(
     entityId: string,
     entityType: 'project' | 'client',
-    months: number
+    months: number,
   ): Promise<any[]> {
     // ┘à╪ص╪د┘â╪د╪ر ╪ش┘╪ذ ╪د┘╪ذ┘è╪د┘╪د╪ز ╪د┘╪┤┘ç╪▒┘è╪ر
     const monthlyData = []
@@ -820,7 +824,7 @@ export class ProfitabilityAnalysisService {
         costs: baseCosts,
         profit,
         profitMargin,
-        cumulativeProfit: monthlyData.reduce((sum, m) => sum + m.profit, 0) + profit
+        cumulativeProfit: monthlyData.reduce((sum, m) => sum + m.profit, 0) + profit,
       })
     }
 
@@ -864,7 +868,7 @@ export class ProfitabilityAnalysisService {
   private calculateSeasonality(monthlyData: any[]): number {
     if (monthlyData.length < 12) return 0
 
-    const revenues = monthlyData.map(m => m.revenue)
+    const revenues = monthlyData.map((m) => m.revenue)
     const averageRevenue = revenues.reduce((sum, r) => sum + r, 0) / revenues.length
     const variance = this.calculateVariance(revenues)
 
@@ -884,7 +888,7 @@ export class ProfitabilityAnalysisService {
       return {
         projectedRevenue: 0,
         projectedProfit: 0,
-        confidenceLevel: 0
+        confidenceLevel: 0,
       }
     }
 
@@ -892,18 +896,21 @@ export class ProfitabilityAnalysisService {
     const averageRevenue = recentData.reduce((sum, m) => sum + m.revenue, 0) / recentData.length
     const averageProfit = recentData.reduce((sum, m) => sum + m.profit, 0) / recentData.length
 
-    const revenueGrowth = this.calculateGrowthRate(recentData.map(m => m.revenue))
+    const revenueGrowth = this.calculateGrowthRate(recentData.map((m) => m.revenue))
     const projectedRevenue = averageRevenue * (1 + revenueGrowth / 100)
     const projectedProfit = averageProfit * (1 + revenueGrowth / 100)
 
     // ╪ص╪│╪د╪ذ ┘à╪│╪ز┘ê┘ë ╪د┘╪س┘é╪ر ╪ذ┘╪د╪ة┘ï ╪╣┘┘ë ╪د╪│╪ز┘é╪▒╪د╪▒ ╪د┘╪ذ┘è╪د┘╪د╪ز
-    const revenueVariance = this.calculateVariance(recentData.map(m => m.revenue))
-    const confidenceLevel = Math.max(0, Math.min(100, 100 - (revenueVariance / averageRevenue) * 100))
+    const revenueVariance = this.calculateVariance(recentData.map((m) => m.revenue))
+    const confidenceLevel = Math.max(
+      0,
+      Math.min(100, 100 - (revenueVariance / averageRevenue) * 100),
+    )
 
     return {
       projectedRevenue,
       projectedProfit,
-      confidenceLevel
+      confidenceLevel,
     }
   }
 
@@ -915,11 +922,17 @@ export class ProfitabilityAnalysisService {
    */
   private async saveProjectProfitability(profitability: ProjectProfitability): Promise<void> {
     try {
-      const existing = await asyncStorage.getItem(this.projectProfitabilityKey) || []
-      const index = existing.findIndex((p: ProjectProfitability) => p.projectId === profitability.projectId)
+      const existing = (await asyncStorage.getItem(this.projectProfitabilityKey)) || []
+      const index = existing.findIndex(
+        (p: ProjectProfitability) => p.projectId === profitability.projectId,
+      )
 
       if (index >= 0) {
-        existing[index] = { ...profitability, updatedAt: new Date().toISOString(), version: existing[index].version + 1 }
+        existing[index] = {
+          ...profitability,
+          updatedAt: new Date().toISOString(),
+          version: existing[index].version + 1,
+        }
       } else {
         existing.push(profitability)
       }
@@ -937,11 +950,17 @@ export class ProfitabilityAnalysisService {
    */
   private async saveClientProfitability(profitability: ClientProfitability): Promise<void> {
     try {
-      const existing = await asyncStorage.getItem(this.clientProfitabilityKey) || []
-      const index = existing.findIndex((p: ClientProfitability) => p.clientId === profitability.clientId)
+      const existing = (await asyncStorage.getItem(this.clientProfitabilityKey)) || []
+      const index = existing.findIndex(
+        (p: ClientProfitability) => p.clientId === profitability.clientId,
+      )
 
       if (index >= 0) {
-        existing[index] = { ...profitability, updatedAt: new Date().toISOString(), version: existing[index].version + 1 }
+        existing[index] = {
+          ...profitability,
+          updatedAt: new Date().toISOString(),
+          version: existing[index].version + 1,
+        }
       } else {
         existing.push(profitability)
       }
@@ -959,7 +978,7 @@ export class ProfitabilityAnalysisService {
    */
   private async saveComparison(comparison: ProfitabilityComparison): Promise<void> {
     try {
-      const existing = await asyncStorage.getItem(this.comparisonsKey) || []
+      const existing = (await asyncStorage.getItem(this.comparisonsKey)) || []
       existing.push(comparison)
       await asyncStorage.setItem(this.comparisonsKey, existing)
     } catch (error) {
@@ -974,9 +993,10 @@ export class ProfitabilityAnalysisService {
    */
   private async saveTrend(trend: ProfitabilityTrend): Promise<void> {
     try {
-      const existing = await asyncStorage.getItem(this.trendsKey) || []
-      const index = existing.findIndex((t: ProfitabilityTrend) =>
-        t.entityId === trend.entityId && t.entityType === trend.entityType
+      const existing = (await asyncStorage.getItem(this.trendsKey)) || []
+      const index = existing.findIndex(
+        (t: ProfitabilityTrend) =>
+          t.entityId === trend.entityId && t.entityType === trend.entityType,
       )
 
       if (index >= 0) {
@@ -998,7 +1018,7 @@ export class ProfitabilityAnalysisService {
    */
   async getProjectProfitability(projectId: string): Promise<ProjectProfitability | null> {
     try {
-      const profitabilities = await asyncStorage.getItem(this.projectProfitabilityKey) || []
+      const profitabilities = (await asyncStorage.getItem(this.projectProfitabilityKey)) || []
       return profitabilities.find((p: ProjectProfitability) => p.projectId === projectId) || null
     } catch (error) {
       console.error('Error getting project profitability:', error)
@@ -1012,7 +1032,7 @@ export class ProfitabilityAnalysisService {
    */
   async getClientProfitability(clientId: string): Promise<ClientProfitability | null> {
     try {
-      const profitabilities = await asyncStorage.getItem(this.clientProfitabilityKey) || []
+      const profitabilities = (await asyncStorage.getItem(this.clientProfitabilityKey)) || []
       return profitabilities.find((p: ClientProfitability) => p.clientId === clientId) || null
     } catch (error) {
       console.error('Error getting client profitability:', error)
@@ -1026,7 +1046,7 @@ export class ProfitabilityAnalysisService {
    */
   async getAllComparisons(): Promise<ProfitabilityComparison[]> {
     try {
-      return await asyncStorage.getItem(this.comparisonsKey) || []
+      return (await asyncStorage.getItem(this.comparisonsKey)) || []
     } catch (error) {
       console.error('Error getting comparisons:', error)
       return []
@@ -1037,12 +1057,17 @@ export class ProfitabilityAnalysisService {
    * ╪ش┘╪ذ ╪د┘╪د╪ز╪ش╪د┘ç
    * Get trend
    */
-  async getTrend(entityId: string, entityType: 'project' | 'client'): Promise<ProfitabilityTrend | null> {
+  async getTrend(
+    entityId: string,
+    entityType: 'project' | 'client',
+  ): Promise<ProfitabilityTrend | null> {
     try {
-      const trends = await asyncStorage.getItem(this.trendsKey) || []
-      return trends.find((t: ProfitabilityTrend) =>
-        t.entityId === entityId && t.entityType === entityType
-      ) || null
+      const trends = (await asyncStorage.getItem(this.trendsKey)) || []
+      return (
+        trends.find(
+          (t: ProfitabilityTrend) => t.entityId === entityId && t.entityType === entityType,
+        ) || null
+      )
     } catch (error) {
       console.error('Error getting trend:', error)
       return null
@@ -1055,7 +1080,7 @@ export class ProfitabilityAnalysisService {
    */
   async deleteProjectProfitability(projectId: string): Promise<void> {
     try {
-      const existing = await asyncStorage.getItem(this.projectProfitabilityKey) || []
+      const existing = (await asyncStorage.getItem(this.projectProfitabilityKey)) || []
       const filtered = existing.filter((p: ProjectProfitability) => p.projectId !== projectId)
       await asyncStorage.setItem(this.projectProfitabilityKey, filtered)
     } catch (error) {
@@ -1070,7 +1095,7 @@ export class ProfitabilityAnalysisService {
    */
   async deleteClientProfitability(clientId: string): Promise<void> {
     try {
-      const existing = await asyncStorage.getItem(this.clientProfitabilityKey) || []
+      const existing = (await asyncStorage.getItem(this.clientProfitabilityKey)) || []
       const filtered = existing.filter((p: ClientProfitability) => p.clientId !== clientId)
       await asyncStorage.setItem(this.clientProfitabilityKey, filtered)
     } catch (error) {
@@ -1086,13 +1111,13 @@ export class ProfitabilityAnalysisService {
   async refreshAllData(): Promise<void> {
     try {
       // ╪ح╪╣╪د╪»╪ر ╪ص╪│╪د╪ذ ╪▒╪ذ╪ص┘è╪ر ╪ش┘à┘è╪╣ ╪د┘┘à╪┤╪د╪▒┘è╪╣
-      const projects = await asyncStorage.getItem('projects') || []
+      const projects = (await asyncStorage.getItem('projects')) || []
       for (const project of projects) {
         await this.calculateProjectProfitability(project.id)
       }
 
       // ╪ح╪╣╪د╪»╪ر ╪ص╪│╪د╪ذ ╪▒╪ذ╪ص┘è╪ر ╪ش┘à┘è╪╣ ╪د┘╪╣┘à┘╪د╪ة
-      const clients = await asyncStorage.getItem('clients') || []
+      const clients = (await asyncStorage.getItem('clients')) || []
       for (const client of clients) {
         await this.calculateClientProfitability(client.id)
       }

@@ -17,7 +17,7 @@ import {
 
 type KPIStatus = 'success' | 'warning' | 'danger' | 'info'
 
-type KPIGroups = {
+interface KPIGroups {
   critical: EnhancedKPICardProps[]
   financial: EnhancedKPICardProps[]
   project: EnhancedKPICardProps[]
@@ -85,9 +85,7 @@ const buildTrend = (current: number, previous?: number) => {
   const trend = calculateTrend(current, previous)
   return {
     ...trend,
-    percentage: Number.isFinite(trend.percentage)
-      ? Number(trend.percentage.toFixed(1))
-      : 0,
+    percentage: Number.isFinite(trend.percentage) ? Number(trend.percentage.toFixed(1)) : 0,
   }
 }
 
@@ -98,7 +96,11 @@ const ratio = (numerator: number, denominator: number): number => {
   return numerator / denominator
 }
 
-const evaluateStatus = (value: number, thresholds: { success: number; warning: number }, mode: 'higher' | 'lower' = 'higher'): KPIStatus => {
+const evaluateStatus = (
+  value: number,
+  thresholds: { success: number; warning: number },
+  mode: 'higher' | 'lower' = 'higher',
+): KPIStatus => {
   if (!Number.isFinite(value)) {
     return 'info'
   }
@@ -134,7 +136,11 @@ const createKpiGroups = (
     : undefined
   const totalInvoiceValue = toNumber(metrics.invoices.totalValue)
   const outstandingRatio = ratio(outstandingAmount, totalInvoiceValue)
-  const outstandingStatus = evaluateStatus(outstandingRatio, { success: 0.2, warning: 0.4 }, 'lower')
+  const outstandingStatus = evaluateStatus(
+    outstandingRatio,
+    { success: 0.2, warning: 0.4 },
+    'lower',
+  )
 
   const winRate = toPercent(metrics.tenders.performance.winRate)
   const previousWinRate = prevMetrics?.tenders.performance.winRate
@@ -142,7 +148,11 @@ const createKpiGroups = (
 
   const criticalProjects = metrics.projects.criticalCount
   const previousCriticalProjects = prevMetrics?.projects.criticalCount
-  const criticalProjectsStatus = evaluateStatus(criticalProjects, { success: 1, warning: 3 }, 'lower')
+  const criticalProjectsStatus = evaluateStatus(
+    criticalProjects,
+    { success: 1, warning: 3 },
+    'lower',
+  )
 
   const upcomingDeadlines = metrics.tenders.upcomingDeadlines
   const previousUpcoming = prevMetrics?.tenders.upcomingDeadlines
@@ -159,7 +169,12 @@ const createKpiGroups = (
 
   const collectionRate = toPercent(ratio(paidAmount, totalInvoiceValue) * 100)
   const previousCollectionRate = prevMetrics
-    ? toPercent(ratio(toNumber(prevMetrics.invoices.paidAmount), toNumber(prevMetrics.invoices.totalValue)) * 100)
+    ? toPercent(
+        ratio(
+          toNumber(prevMetrics.invoices.paidAmount),
+          toNumber(prevMetrics.invoices.totalValue),
+        ) * 100,
+      )
     : undefined
   const collectionStatus = evaluateStatus(collectionRate, { success: 85, warning: 70 }, 'higher')
 
@@ -184,18 +199,22 @@ const createKpiGroups = (
     'higher',
   )
 
-  const costVariancePct = toPercent(
-    metrics.projects.costSummary?.totals?.variance?.pct ?? 0,
-  )
+  const costVariancePct = toPercent(metrics.projects.costSummary?.totals?.variance?.pct ?? 0)
   const previousVariance = prevMetrics
     ? toPercent(prevMetrics.projects.costSummary?.totals?.variance?.pct ?? 0)
     : undefined
-  const varianceStatus = evaluateStatus(Math.abs(costVariancePct), { success: 5, warning: 10 }, 'lower')
+  const varianceStatus = evaluateStatus(
+    Math.abs(costVariancePct),
+    { success: 5, warning: 10 },
+    'lower',
+  )
 
   const totalProjects = Math.max(metrics.projects.totalCount, 1)
   const safetyCompliance = toPercent((metrics.projects.onTrackCount / totalProjects) * 100)
   const previousCompliance = prevMetrics
-    ? toPercent((prevMetrics.projects.onTrackCount / Math.max(prevMetrics.projects.totalCount, 1)) * 100)
+    ? toPercent(
+        (prevMetrics.projects.onTrackCount / Math.max(prevMetrics.projects.totalCount, 1)) * 100,
+      )
     : undefined
   const safetyStatus = evaluateStatus(safetyCompliance, { success: 80, warning: 65 }, 'higher')
 
@@ -206,7 +225,15 @@ const createKpiGroups = (
   const incidentsStatus = evaluateStatus(incidentAlerts, { success: 1, warning: 3 }, 'lower')
 
   const trainingCompletion = toPercent(Math.min(100, safetyCompliance + 10))
-  const previousTraining = prevMetrics ? toPercent(Math.min(100, (prevMetrics.projects.onTrackCount / Math.max(prevMetrics.projects.totalCount, 1)) * 100 + 10)) : undefined
+  const previousTraining = prevMetrics
+    ? toPercent(
+        Math.min(
+          100,
+          (prevMetrics.projects.onTrackCount / Math.max(prevMetrics.projects.totalCount, 1)) * 100 +
+            10,
+        ),
+      )
+    : undefined
   const trainingStatus = evaluateStatus(trainingCompletion, { success: 85, warning: 70 }, 'higher')
 
   const auditChecks = Math.max(metrics.projects.totalCount * 3, 10)
@@ -275,7 +302,11 @@ const createKpiGroups = (
       value: Math.round(remainingBudget),
       unit: 'ر.س',
       trend: buildTrend(remainingBudget, previousRemaining),
-      status: evaluateStatus(ratio(remainingBudget, totalBudget) * 100, { success: 30, warning: 15 }, 'higher'),
+      status: evaluateStatus(
+        ratio(remainingBudget, totalBudget) * 100,
+        { success: 30, warning: 15 },
+        'higher',
+      ),
       icon: Target,
       description: 'سيولة الميزانيات المتاحة للتنفيذ',
       showProgress: true,
@@ -452,9 +483,12 @@ export function useEnhancedKPIs(options: UseEnhancedKPIsOptions = {}): UseEnhanc
       return
     }
 
-    const intervalId = window.setInterval(() => {
-      void refreshKPIs()
-    }, Math.max(15_000, refreshInterval))
+    const intervalId = window.setInterval(
+      () => {
+        void refreshKPIs()
+      },
+      Math.max(15_000, refreshInterval),
+    )
 
     return () => {
       window.clearInterval(intervalId)
@@ -475,4 +509,3 @@ export function useEnhancedKPIs(options: UseEnhancedKPIsOptions = {}): UseEnhanc
     setAutoRefreshEnabled,
   }
 }
-

@@ -33,7 +33,7 @@ import type {
   MarketSegment,
   PricingStrategy,
   ConfidenceLevel,
-  DataSource
+  DataSource,
 } from '../types/competitive'
 
 // ===== SERVICE INTERFACE =====
@@ -48,8 +48,15 @@ export interface CompetitorDatabaseService {
   searchCompetitors(filters: CompetitorSearchFilters): Promise<Competitor[]>
 
   // Project Tracking
-  addCompetitorProject(competitorId: string, project: Omit<CompetitorProject, 'id'>): Promise<CompetitorProject>
-  updateCompetitorProject(competitorId: string, projectId: string, data: Partial<CompetitorProject>): Promise<CompetitorProject>
+  addCompetitorProject(
+    competitorId: string,
+    project: Omit<CompetitorProject, 'id'>,
+  ): Promise<CompetitorProject>
+  updateCompetitorProject(
+    competitorId: string,
+    projectId: string,
+    data: Partial<CompetitorProject>,
+  ): Promise<CompetitorProject>
   removeCompetitorProject(competitorId: string, projectId: string): Promise<boolean>
   getCompetitorProjects(competitorId: string): Promise<CompetitorProject[]>
 
@@ -62,7 +69,9 @@ export interface CompetitorDatabaseService {
   // Bulk Operations
   importCompetitors(competitors: CreateCompetitorData[]): Promise<ImportResult>
   exportCompetitors(format: 'json' | 'csv'): Promise<string>
-  bulkUpdateCompetitors(updates: Array<{ id: string; data: Partial<Competitor> }>): Promise<BulkUpdateResult>
+  bulkUpdateCompetitors(
+    updates: Array<{ id: string; data: Partial<Competitor> }>,
+  ): Promise<BulkUpdateResult>
 
   // Utility Functions
   validateCompetitorData(data: Partial<Competitor>): ValidationResult
@@ -272,7 +281,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       weaknesses: data.weaknesses || [],
       opportunities: data.opportunities || [],
       threats: data.threats || [],
-      tags: data.tags || []
+      tags: data.tags || [],
     }
 
     const competitors = await this.getAllCompetitors()
@@ -284,8 +293,8 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
 
   async updateCompetitor(id: string, data: Partial<Competitor>): Promise<Competitor> {
     const competitors = await this.getAllCompetitors()
-    const index = competitors.findIndex(c => c.id === id)
-    
+    const index = competitors.findIndex((c) => c.id === id)
+
     if (index === -1) {
       throw new Error(`Competitor with id ${id} not found`)
     }
@@ -294,7 +303,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       ...competitors[index],
       ...data,
       updatedAt: new Date().toISOString(),
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     }
 
     competitors[index] = updatedCompetitor
@@ -305,8 +314,8 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
 
   async deleteCompetitor(id: string): Promise<boolean> {
     const competitors = await this.getAllCompetitors()
-    const filteredCompetitors = competitors.filter(c => c.id !== id)
-    
+    const filteredCompetitors = competitors.filter((c) => c.id !== id)
+
     if (filteredCompetitors.length === competitors.length) {
       return false // Competitor not found
     }
@@ -326,7 +335,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
 
   async getCompetitor(id: string): Promise<Competitor | null> {
     const competitors = await this.getAllCompetitors()
-    return competitors.find(c => c.id === id) || null
+    return competitors.find((c) => c.id === id) || null
   }
 
   async getAllCompetitors(): Promise<Competitor[]> {
@@ -341,8 +350,8 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
 
   async searchCompetitors(filters: CompetitorSearchFilters): Promise<Competitor[]> {
     const competitors = await this.getAllCompetitors()
-    
-    return competitors.filter(competitor => {
+
+    return competitors.filter((competitor) => {
       // Type filter
       if (filters.type && !filters.type.includes(competitor.type)) {
         return false
@@ -354,8 +363,10 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       }
 
       // Market segments filter
-      if (filters.marketSegments && !filters.marketSegments.some(segment => 
-        competitor.marketSegments.includes(segment))) {
+      if (
+        filters.marketSegments &&
+        !filters.marketSegments.some((segment) => competitor.marketSegments.includes(segment))
+      ) {
         return false
       }
 
@@ -376,14 +387,18 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       }
 
       // Specializations filter
-      if (filters.specializations && !filters.specializations.some(spec => 
-        competitor.specializations.includes(spec))) {
+      if (
+        filters.specializations &&
+        !filters.specializations.some((spec) => competitor.specializations.includes(spec))
+      ) {
         return false
       }
 
       // Geographic coverage filter
-      if (filters.geographicCoverage && !filters.geographicCoverage.some(geo => 
-        competitor.geographicCoverage.includes(geo))) {
+      if (
+        filters.geographicCoverage &&
+        !filters.geographicCoverage.some((geo) => competitor.geographicCoverage.includes(geo))
+      ) {
         return false
       }
 
@@ -402,9 +417,11 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
           competitor.nameEn,
           competitor.headquarters,
           ...competitor.specializations,
-          ...competitor.tags || []
-        ].join(' ').toLowerCase()
-        
+          ...(competitor.tags || []),
+        ]
+          .join(' ')
+          .toLowerCase()
+
         if (!searchableText.includes(searchTerm)) {
           return false
         }
@@ -453,7 +470,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     return {
       isValid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     }
   }
 
@@ -463,7 +480,10 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
 
   // ===== PROJECT TRACKING =====
 
-  async addCompetitorProject(competitorId: string, project: Omit<CompetitorProject, 'id'>): Promise<CompetitorProject> {
+  async addCompetitorProject(
+    competitorId: string,
+    project: Omit<CompetitorProject, 'id'>,
+  ): Promise<CompetitorProject> {
     const competitor = await this.getCompetitor(competitorId)
     if (!competitor) {
       throw new Error(`Competitor with id ${competitorId} not found`)
@@ -471,7 +491,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
 
     const newProject: CompetitorProject = {
       ...project,
-      id: this.generateProjectId()
+      id: this.generateProjectId(),
     }
 
     // Update competitor's recent projects
@@ -498,7 +518,11 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     return newProject
   }
 
-  async updateCompetitorProject(competitorId: string, projectId: string, data: Partial<CompetitorProject>): Promise<CompetitorProject> {
+  async updateCompetitorProject(
+    competitorId: string,
+    projectId: string,
+    data: Partial<CompetitorProject>,
+  ): Promise<CompetitorProject> {
     const allProjects = await asyncStorage.getItem(this.PROJECTS_KEY, {})
     const competitorProjects = allProjects[competitorId] || []
 
@@ -516,7 +540,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     // Update competitor's recent projects and recalculate metrics
     const competitor = await this.getCompetitor(competitorId)
     if (competitor) {
-      const recentProjectIndex = competitor.recentProjects.findIndex(p => p.id === projectId)
+      const recentProjectIndex = competitor.recentProjects.findIndex((p) => p.id === projectId)
       if (recentProjectIndex !== -1) {
         competitor.recentProjects[recentProjectIndex] = updatedProject
         await this.recalculateCompetitorMetrics(competitor)
@@ -542,7 +566,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     // Update competitor's recent projects
     const competitor = await this.getCompetitor(competitorId)
     if (competitor) {
-      competitor.recentProjects = competitor.recentProjects.filter(p => p.id !== projectId)
+      competitor.recentProjects = competitor.recentProjects.filter((p) => p.id !== projectId)
       await this.recalculateCompetitorMetrics(competitor)
       await this.updateCompetitor(competitorId, competitor)
     }
@@ -581,7 +605,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       opportunities: this.identifyOpportunities(competitor),
       recommendations: this.generateRecommendations(competitor),
       keyInsights: this.generateKeyInsights(competitor),
-      lastAnalyzed: new Date().toISOString()
+      lastAnalyzed: new Date().toISOString(),
     }
   }
 
@@ -590,12 +614,12 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     const totalMarket = competitors.reduce((sum, c) => sum + c.marketShare, 0)
 
     const competitorData = competitors
-      .filter(c => c.marketShare > 0)
-      .map(c => ({
+      .filter((c) => c.marketShare > 0)
+      .map((c) => ({
         id: c.id,
         name: c.name,
         marketShare: c.marketShare,
-        trend: this.calculateMarketShareTrend(c)
+        trend: this.calculateMarketShareTrend(c),
       }))
       .sort((a, b) => b.marketShare - a.marketShare)
 
@@ -603,9 +627,9 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       totalMarket,
       competitors: competitorData,
       ourPosition: 0, // TODO: Calculate our position
-      topCompetitors: competitorData.slice(0, 5).map(c => c.id),
+      topCompetitors: competitorData.slice(0, 5).map((c) => c.id),
       marketConcentration: this.calculateMarketConcentration(competitorData),
-      analysisDate: new Date().toISOString()
+      analysisDate: new Date().toISOString(),
     }
   }
 
@@ -625,15 +649,13 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       pricingTrends,
       discountPatterns,
       competitivePricing: await this.analyzeCompetitivePricing(competitor),
-      recommendations: this.generatePricingRecommendations(competitor)
+      recommendations: this.generatePricingRecommendations(competitor),
     }
   }
 
   async getPerformanceComparison(competitorIds: string[]): Promise<PerformanceComparison> {
-    const competitors = await Promise.all(
-      competitorIds.map(id => this.getCompetitor(id))
-    )
-    const validCompetitors = competitors.filter(c => c !== null) as Competitor[]
+    const competitors = await Promise.all(competitorIds.map((id) => this.getCompetitor(id)))
+    const validCompetitors = competitors.filter((c) => c !== null) as Competitor[]
 
     const metrics = [
       {
@@ -642,8 +664,8 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
         values: validCompetitors.map((c, index) => ({
           competitorId: c.id,
           value: c.marketShare,
-          rank: index + 1
-        }))
+          rank: index + 1,
+        })),
       },
       {
         name: 'Win Rate',
@@ -651,8 +673,8 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
         values: validCompetitors.map((c, index) => ({
           competitorId: c.id,
           value: c.winRate,
-          rank: index + 1
-        }))
+          rank: index + 1,
+        })),
       },
       {
         name: 'Average Bid Value',
@@ -660,13 +682,13 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
         values: validCompetitors.map((c, index) => ({
           competitorId: c.id,
           value: c.averageBidValue,
-          rank: index + 1
-        }))
-      }
+          rank: index + 1,
+        })),
+      },
     ]
 
     // Sort and rank each metric
-    metrics.forEach(metric => {
+    metrics.forEach((metric) => {
       metric.values.sort((a, b) => b.value - a.value)
       metric.values.forEach((value, index) => {
         value.rank = index + 1
@@ -683,8 +705,8 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       summary: {
         topPerformer,
         averagePerformance,
-        performanceGaps
-      }
+        performanceGaps,
+      },
     }
   }
 
@@ -695,7 +717,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       successful: 0,
       failed: 0,
       errors: [],
-      importedIds: []
+      importedIds: [],
     }
 
     for (let i = 0; i < competitors.length; i++) {
@@ -708,7 +730,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
         result.errors.push({
           row: i + 1,
           error: error instanceof Error ? error.message : 'Unknown error',
-          data: competitors[i]
+          data: competitors[i],
         })
       }
     }
@@ -724,11 +746,19 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     } else {
       // CSV format
       const headers = [
-        'ID', 'Name', 'Type', 'Status', 'Market Share', 'Win Rate',
-        'Headquarters', 'Website', 'Specializations', 'Market Segments'
+        'ID',
+        'Name',
+        'Type',
+        'Status',
+        'Market Share',
+        'Win Rate',
+        'Headquarters',
+        'Website',
+        'Specializations',
+        'Market Segments',
       ]
 
-      const rows = competitors.map(c => [
+      const rows = competitors.map((c) => [
         c.id,
         c.name,
         c.type,
@@ -738,18 +768,20 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
         c.headquarters,
         c.website || '',
         c.specializations.join(';'),
-        c.marketSegments.join(';')
+        c.marketSegments.join(';'),
       ])
 
-      return [headers, ...rows].map(row => row.join(',')).join('\n')
+      return [headers, ...rows].map((row) => row.join(',')).join('\n')
     }
   }
 
-  async bulkUpdateCompetitors(updates: Array<{ id: string; data: Partial<Competitor> }>): Promise<BulkUpdateResult> {
+  async bulkUpdateCompetitors(
+    updates: Array<{ id: string; data: Partial<Competitor> }>,
+  ): Promise<BulkUpdateResult> {
     const result: BulkUpdateResult = {
       successful: 0,
       failed: 0,
-      errors: []
+      errors: [],
     }
 
     for (const update of updates) {
@@ -760,7 +792,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
         result.failed++
         result.errors.push({
           id: update.id,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         })
       }
     }
@@ -778,8 +810,8 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
 
     const projects = await this.getCompetitorProjects(competitorId)
     const currentYear = new Date().getFullYear()
-    const thisYearProjects = projects.filter(p =>
-      p.startDate && new Date(p.startDate).getFullYear() === currentYear
+    const thisYearProjects = projects.filter(
+      (p) => p.startDate && new Date(p.startDate).getFullYear() === currentYear,
     )
 
     const metrics = {
@@ -788,19 +820,19 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       averageBidValue: competitor.averageBidValue,
       projectsPerYear: thisYearProjects.length,
       growthRate: this.calculateGrowthRate(competitor, projects),
-      competitiveStrength: this.calculateCompetitiveStrength(competitor)
+      competitiveStrength: this.calculateCompetitiveStrength(competitor),
     }
 
     const trends = {
       marketShareTrend: this.calculateMarketShareTrend(competitor),
-      performanceTrend: this.calculatePerformanceTrend(competitor, projects)
+      performanceTrend: this.calculatePerformanceTrend(competitor, projects),
     }
 
     return {
       competitorId,
       metrics,
       trends,
-      calculatedAt: new Date().toISOString()
+      calculatedAt: new Date().toISOString(),
     }
   }
 
@@ -821,13 +853,13 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
         strengths: competitor.strengths,
         weaknesses: competitor.weaknesses,
         opportunities: competitor.opportunities,
-        threats: competitor.threats
+        threats: competitor.threats,
       },
       marketPosition: analysis.marketPosition,
       competitiveThreats: this.identifyCompetitiveThreats(competitor),
       strategicRecommendations: analysis.recommendations,
       dataQuality: this.assessDataQuality(competitor),
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
     }
   }
 
@@ -841,26 +873,33 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     const projects = competitor.recentProjects || []
 
     // Calculate win rate
-    const completedProjects = projects.filter(p => p.status === 'completed' || p.status === 'awarded')
-    const wonProjects = projects.filter(p => p.status === 'awarded' || p.status === 'completed')
-    competitor.winRate = completedProjects.length > 0 ? (wonProjects.length / completedProjects.length) * 100 : 0
+    const completedProjects = projects.filter(
+      (p) => p.status === 'completed' || p.status === 'awarded',
+    )
+    const wonProjects = projects.filter((p) => p.status === 'awarded' || p.status === 'completed')
+    competitor.winRate =
+      completedProjects.length > 0 ? (wonProjects.length / completedProjects.length) * 100 : 0
 
     // Calculate average bid value
-    const projectsWithValues = projects.filter(p => p.bidValue > 0)
-    competitor.averageBidValue = projectsWithValues.length > 0
-      ? projectsWithValues.reduce((sum, p) => sum + p.bidValue, 0) / projectsWithValues.length
-      : 0
+    const projectsWithValues = projects.filter((p) => p.bidValue > 0)
+    competitor.averageBidValue =
+      projectsWithValues.length > 0
+        ? projectsWithValues.reduce((sum, p) => sum + p.bidValue, 0) / projectsWithValues.length
+        : 0
 
     // Update projects completed count
     competitor.projectsCompleted = wonProjects.length
   }
 
-  private calculateMarketPosition(competitor: Competitor, allCompetitors: Competitor[]): 'leader' | 'challenger' | 'follower' | 'niche' {
+  private calculateMarketPosition(
+    competitor: Competitor,
+    allCompetitors: Competitor[],
+  ): 'leader' | 'challenger' | 'follower' | 'niche' {
     const sortedByMarketShare = allCompetitors
-      .filter(c => c.marketShare > 0)
+      .filter((c) => c.marketShare > 0)
       .sort((a, b) => b.marketShare - a.marketShare)
 
-    const position = sortedByMarketShare.findIndex(c => c.id === competitor.id)
+    const position = sortedByMarketShare.findIndex((c) => c.id === competitor.id)
     const totalCompetitors = sortedByMarketShare.length
 
     if (position === 0) return 'leader'
@@ -885,7 +924,8 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     // Strengths vs weaknesses component (10%)
     const strengthsCount = competitor.strengths.length
     const weaknessesCount = competitor.weaknesses.length
-    const balanceScore = strengthsCount > 0 ? strengthsCount / (strengthsCount + weaknessesCount) : 0
+    const balanceScore =
+      strengthsCount > 0 ? strengthsCount / (strengthsCount + weaknessesCount) : 0
     strength += balanceScore * 10
 
     return Math.round(strength)
@@ -914,7 +954,9 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     }
 
     if (competitor.winRate < 30) {
-      opportunities.push('╪ز╪ص╪│┘è┘ ╪د┘╪╣╪▒┘ê╪╢ ┘┘è ╪د┘┘é╪╖╪د╪╣╪د╪ز ╪د┘╪ز┘è ┘è╪╢╪╣┘ ┘┘è┘ç╪د ╪د┘┘à┘╪د┘╪│')
+      opportunities.push(
+        '╪ز╪ص╪│┘è┘ ╪د┘╪╣╪▒┘ê╪╢ ┘┘è ╪د┘┘é╪╖╪د╪╣╪د╪ز ╪د┘╪ز┘è ┘è╪╢╪╣┘ ┘┘è┘ç╪د ╪د┘┘à┘╪د┘╪│',
+      )
     }
 
     if (competitor.geographicCoverage.length < 3) {
@@ -929,14 +971,18 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     const strength = this.calculateCompetitiveStrength(competitor)
 
     if (strength > 70) {
-      recommendations.push('┘à╪▒╪د┘é╪ذ╪ر ╪»┘é┘è┘é╪ر ┘╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪د╪ز ╪د┘╪ز╪│╪╣┘è╪▒ ┘ê╪د┘╪╣╪▒┘ê╪╢')
+      recommendations.push(
+        '┘à╪▒╪د┘é╪ذ╪ر ╪»┘é┘è┘é╪ر ┘╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪د╪ز ╪د┘╪ز╪│╪╣┘è╪▒ ┘ê╪د┘╪╣╪▒┘ê╪╢',
+      )
       recommendations.push('╪ز╪╖┘ê┘è╪▒ ┘à┘è╪▓╪د╪ز ╪ز┘╪د┘╪│┘è╪ر ┘╪▒┘è╪»╪ر ┘┘╪ز┘┘ê┘é')
     } else if (strength > 40) {
       recommendations.push('╪ز╪ص┘┘è┘ ┘┘é╪د╪╖ ╪د┘┘é┘ê╪ر ┘ê╪د┘╪د╪│╪ز┘╪د╪»╪ر ┘à┘┘ç╪د')
       recommendations.push('╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر ╪د┘╪ز╪┤╪║┘è┘┘è╪ر ┘┘┘à┘╪د┘╪│╪ر')
     } else {
       recommendations.push('╪د╪│╪ز╪║┘╪د┘ ┘┘é╪د╪╖ ╪د┘╪╢╪╣┘ ┘┘è ╪د┘╪╣╪▒┘ê╪╢ ╪د┘┘à╪ذ╪د╪┤╪▒╪ر')
-      recommendations.push('╪د┘╪ز╪▒┘â┘è╪▓ ╪╣┘┘ë ╪د┘┘é╪╖╪د╪╣╪د╪ز ╪د┘╪ز┘è ┘è╪╢╪╣┘ ┘┘è┘ç╪د ╪د┘┘à┘╪د┘╪│')
+      recommendations.push(
+        '╪د┘╪ز╪▒┘â┘è╪▓ ╪╣┘┘ë ╪د┘┘é╪╖╪د╪╣╪د╪ز ╪د┘╪ز┘è ┘è╪╢╪╣┘ ┘┘è┘ç╪د ╪د┘┘à┘╪د┘╪│',
+      )
     }
 
     return recommendations
@@ -945,21 +991,31 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
   private generateKeyInsights(competitor: Competitor): string[] {
     const insights: string[] = []
 
-    insights.push(`╪ص╪╡╪ر ╪│┘ê┘é┘è╪ر: ${competitor.marketShare}% - ${this.getMarketShareInsight(competitor.marketShare)}`)
-    insights.push(`┘à╪╣╪»┘ ╪د┘┘┘ê╪▓: ${competitor.winRate}% - ${this.getWinRateInsight(competitor.winRate)}`)
+    insights.push(
+      `╪ص╪╡╪ر ╪│┘ê┘é┘è╪ر: ${competitor.marketShare}% - ${this.getMarketShareInsight(competitor.marketShare)}`,
+    )
+    insights.push(
+      `┘à╪╣╪»┘ ╪د┘┘┘ê╪▓: ${competitor.winRate}% - ${this.getWinRateInsight(competitor.winRate)}`,
+    )
 
     if (competitor.pricingStrategy) {
-      insights.push(`╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪د┘╪ز╪│╪╣┘è╪▒: ${this.getPricingStrategyInsight(competitor.pricingStrategy)}`)
+      insights.push(
+        `╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪د┘╪ز╪│╪╣┘è╪▒: ${this.getPricingStrategyInsight(competitor.pricingStrategy)}`,
+      )
     }
 
     if (competitor.specializations.length > 0) {
-      insights.push(`╪د┘╪ز╪«╪╡╪╡╪د╪ز ╪د┘╪▒╪خ┘è╪│┘è╪ر: ${competitor.specializations.slice(0, 3).join('╪î ')}`)
+      insights.push(
+        `╪د┘╪ز╪«╪╡╪╡╪د╪ز ╪د┘╪▒╪خ┘è╪│┘è╪ر: ${competitor.specializations.slice(0, 3).join('╪î ')}`,
+      )
     }
 
     return insights
   }
 
-  private calculateMarketShareTrend(competitor: Competitor): 'increasing' | 'decreasing' | 'stable' {
+  private calculateMarketShareTrend(
+    competitor: Competitor,
+  ): 'increasing' | 'decreasing' | 'stable' {
     // This would typically analyze historical data
     // For now, return stable as default
     return 'stable'
@@ -971,11 +1027,13 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     return Math.round(hhi)
   }
 
-  private analyzePricingTrends(projects: CompetitorProject[]): Array<{ period: string; averagePrice: number; marginRange: [number, number] }> {
+  private analyzePricingTrends(
+    projects: CompetitorProject[],
+  ): Array<{ period: string; averagePrice: number; marginRange: [number, number] }> {
     // Group projects by year and calculate trends
-    const yearlyData: { [year: string]: { prices: number[]; margins: number[] } } = {}
+    const yearlyData: Record<string, { prices: number[]; margins: number[] }> = {}
 
-    projects.forEach(project => {
+    projects.forEach((project) => {
       if (project.startDate && project.bidValue > 0) {
         const year = new Date(project.startDate).getFullYear().toString()
         if (!yearlyData[year]) {
@@ -991,23 +1049,22 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     return Object.entries(yearlyData).map(([year, data]) => ({
       period: year,
       averagePrice: data.prices.reduce((sum, p) => sum + p, 0) / data.prices.length,
-      marginRange: data.margins.length > 0
-        ? [Math.min(...data.margins), Math.max(...data.margins)]
-        : [0, 0]
+      marginRange:
+        data.margins.length > 0 ? [Math.min(...data.margins), Math.max(...data.margins)] : [0, 0],
     }))
   }
 
   private async analyzeCompetitivePricing(competitor: Competitor): Promise<{
-    vsMarketAverage: number;
-    vsOurPricing: number;
-    pricePosition: 'premium' | 'competitive' | 'discount';
+    vsMarketAverage: number
+    vsOurPricing: number
+    pricePosition: 'premium' | 'competitive' | 'discount'
   }> {
     // This would compare against market averages and our pricing
     // For now, return default values
     return {
       vsMarketAverage: 0,
       vsOurPricing: 0,
-      pricePosition: 'competitive'
+      pricePosition: 'competitive',
     }
   }
 
@@ -1031,9 +1088,9 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
   private identifyTopPerformer(competitors: Competitor[]): string {
     if (competitors.length === 0) return ''
 
-    const scored = competitors.map(c => ({
+    const scored = competitors.map((c) => ({
       id: c.id,
-      score: this.calculateCompetitiveStrength(c)
+      score: this.calculateCompetitiveStrength(c),
     }))
 
     scored.sort((a, b) => b.score - a.score)
@@ -1043,20 +1100,23 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
   private calculateAveragePerformance(competitors: Competitor[]): number {
     if (competitors.length === 0) return 0
 
-    const totalStrength = competitors.reduce((sum, c) => sum + this.calculateCompetitiveStrength(c), 0)
+    const totalStrength = competitors.reduce(
+      (sum, c) => sum + this.calculateCompetitiveStrength(c),
+      0,
+    )
     return Math.round(totalStrength / competitors.length)
   }
 
   private identifyPerformanceGaps(competitors: Competitor[]): Array<{
-    metric: string;
-    gap: number;
-    significance: 'high' | 'medium' | 'low';
+    metric: string
+    gap: number
+    significance: 'high' | 'medium' | 'low'
   }> {
     // Analyze performance gaps between competitors
     const gaps: Array<{ metric: string; gap: number; significance: 'high' | 'medium' | 'low' }> = []
 
-    const marketShares = competitors.map(c => c.marketShare)
-    const winRates = competitors.map(c => c.winRate)
+    const marketShares = competitors.map((c) => c.marketShare)
+    const winRates = competitors.map((c) => c.winRate)
 
     const marketShareGap = Math.max(...marketShares) - Math.min(...marketShares)
     const winRateGap = Math.max(...winRates) - Math.min(...winRates)
@@ -1064,13 +1124,13 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     gaps.push({
       metric: 'Market Share',
       gap: marketShareGap,
-      significance: marketShareGap > 20 ? 'high' : marketShareGap > 10 ? 'medium' : 'low'
+      significance: marketShareGap > 20 ? 'high' : marketShareGap > 10 ? 'medium' : 'low',
     })
 
     gaps.push({
       metric: 'Win Rate',
       gap: winRateGap,
-      significance: winRateGap > 30 ? 'high' : winRateGap > 15 ? 'medium' : 'low'
+      significance: winRateGap > 30 ? 'high' : winRateGap > 15 ? 'medium' : 'low',
     })
 
     return gaps
@@ -1082,18 +1142,21 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     const lastYear = currentYear - 1
 
     const currentYearValue = projects
-      .filter(p => p.startDate && new Date(p.startDate).getFullYear() === currentYear)
+      .filter((p) => p.startDate && new Date(p.startDate).getFullYear() === currentYear)
       .reduce((sum, p) => sum + p.bidValue, 0)
 
     const lastYearValue = projects
-      .filter(p => p.startDate && new Date(p.startDate).getFullYear() === lastYear)
+      .filter((p) => p.startDate && new Date(p.startDate).getFullYear() === lastYear)
       .reduce((sum, p) => sum + p.bidValue, 0)
 
     if (lastYearValue === 0) return 0
     return Math.round(((currentYearValue - lastYearValue) / lastYearValue) * 100)
   }
 
-  private calculatePerformanceTrend(competitor: Competitor, projects: CompetitorProject[]): 'improving' | 'declining' | 'stable' {
+  private calculatePerformanceTrend(
+    competitor: Competitor,
+    projects: CompetitorProject[],
+  ): 'improving' | 'declining' | 'stable' {
     const growthRate = this.calculateGrowthRate(competitor, projects)
 
     if (growthRate > 10) return 'improving'
@@ -1101,10 +1164,15 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     return 'stable'
   }
 
-  private generateExecutiveSummary(competitor: Competitor, analysis: CompetitiveAnalysisResult): string {
-    return `${competitor.name} ┘ç┘ê ┘à┘╪د┘╪│ ${analysis.marketPosition} ┘┘è ╪د┘╪│┘ê┘é ╪ذ╪ص╪╡╪ر ╪│┘ê┘é┘è╪ر ${competitor.marketShare}% ┘ê┘à╪╣╪»┘ ┘┘ê╪▓ ${competitor.winRate}%. ` +
-           `┘à╪│╪ز┘ê┘ë ╪د┘╪ز┘ç╪»┘è╪»: ${analysis.threatLevel}. ╪د┘┘é┘ê╪ر ╪د┘╪ز┘╪د┘╪│┘è╪ر: ${analysis.competitiveStrength}/100. ` +
-           `┘è╪ز╪«╪╡╪╡ ┘┘è ${competitor.specializations.slice(0, 2).join(' ┘ê')} ┘ê┘è╪╣┘à┘ ┘┘è ${competitor.marketSegments.slice(0, 2).join(' ┘ê')}.`
+  private generateExecutiveSummary(
+    competitor: Competitor,
+    analysis: CompetitiveAnalysisResult,
+  ): string {
+    return (
+      `${competitor.name} ┘ç┘ê ┘à┘╪د┘╪│ ${analysis.marketPosition} ┘┘è ╪د┘╪│┘ê┘é ╪ذ╪ص╪╡╪ر ╪│┘ê┘é┘è╪ر ${competitor.marketShare}% ┘ê┘à╪╣╪»┘ ┘┘ê╪▓ ${competitor.winRate}%. ` +
+      `┘à╪│╪ز┘ê┘ë ╪د┘╪ز┘ç╪»┘è╪»: ${analysis.threatLevel}. ╪د┘┘é┘ê╪ر ╪د┘╪ز┘╪د┘╪│┘è╪ر: ${analysis.competitiveStrength}/100. ` +
+      `┘è╪ز╪«╪╡╪╡ ┘┘è ${competitor.specializations.slice(0, 2).join(' ┘ê')} ┘ê┘è╪╣┘à┘ ┘┘è ${competitor.marketSegments.slice(0, 2).join(' ┘ê')}.`
+    )
   }
 
   private identifyCompetitiveThreats(competitor: Competitor): string[] {
@@ -1125,23 +1193,37 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     return threats
   }
 
-  private assessDataQuality(competitor: Competitor): { completeness: number; accuracy: number; freshness: number } {
+  private assessDataQuality(competitor: Competitor): {
+    completeness: number
+    accuracy: number
+    freshness: number
+  } {
     let completeness = 0
     const fields = [
-      competitor.name, competitor.headquarters, competitor.marketShare,
-      competitor.winRate, competitor.specializations.length > 0,
-      competitor.marketSegments.length > 0
+      competitor.name,
+      competitor.headquarters,
+      competitor.marketShare,
+      competitor.winRate,
+      competitor.specializations.length > 0,
+      competitor.marketSegments.length > 0,
     ]
 
-    completeness = (fields.filter(f => f).length / fields.length) * 100
+    completeness = (fields.filter((f) => f).length / fields.length) * 100
 
-    const daysSinceUpdate = Math.floor((Date.now() - new Date(competitor.lastUpdated).getTime()) / (1000 * 60 * 60 * 24))
+    const daysSinceUpdate = Math.floor(
+      (Date.now() - new Date(competitor.lastUpdated).getTime()) / (1000 * 60 * 60 * 24),
+    )
     const freshness = Math.max(0, 100 - daysSinceUpdate)
 
     return {
       completeness: Math.round(completeness),
-      accuracy: competitor.confidenceLevel === 'high' ? 90 : competitor.confidenceLevel === 'medium' ? 70 : 50,
-      freshness: Math.round(freshness)
+      accuracy:
+        competitor.confidenceLevel === 'high'
+          ? 90
+          : competitor.confidenceLevel === 'medium'
+            ? 70
+            : 50,
+      freshness: Math.round(freshness),
     }
   }
 
@@ -1166,7 +1248,7 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
       value_based: '┘é╪د╪خ┘à╪ر ╪╣┘┘ë ╪د┘┘é┘è┘à╪ر',
       penetration: '╪د╪«╪ز╪▒╪د┘é ╪د┘╪│┘ê┘é',
       premium: '┘à┘à┘è╪▓╪ر',
-      unknown: '╪║┘è╪▒ ┘à╪ص╪»╪»╪ر'
+      unknown: '╪║┘è╪▒ ┘à╪ص╪»╪»╪ر',
     }
     return strategies[strategy]
   }
