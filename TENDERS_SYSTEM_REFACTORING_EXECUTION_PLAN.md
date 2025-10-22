@@ -789,8 +789,10 @@ src/presentation/pages/Tenders/TenderPricing/
 
 **الأولوية:** 🟠 عالية
 **المدة:** يومان
-**الحالة:** ⏳ لم يبدأ
-**التقدم:** 0%
+**الحالة:** 🔄 قيد التنفيذ
+**التقدم:** 50% (Phase 3.1-3.3 مكتملة ✅)
+**تاريخ البدء:** 2025-10-23
+**Commits:** 86984e4 (Phase 3.1-3.2), 57bea52 (Phase 3.3)
 
 ## الهدف
 
@@ -824,33 +826,139 @@ src/presentation/components/tenders/TenderDetails/
 
 ## خطوات التنفيذ
 
-### 3.1 إنشاء البنية الأساسية ⏳
+### 3.1 إنشاء البنية الأساسية ✅
+
+**الحالة:** ✅ مكتمل
+**Commit:** `86984e4`
+**التاريخ:** 2025-10-23
 
 ```bash
-⏳ mkdir -p src/presentation/components/tenders/TenderDetails/tabs
-⏳ mkdir -p src/presentation/components/tenders/TenderDetails/components
-⏳ mkdir -p src/presentation/components/tenders/TenderDetails/hooks
+✅ mkdir -p src/presentation/components/tenders/TenderDetails/tabs
+✅ mkdir -p src/presentation/components/tenders/TenderDetails/components
+✅ mkdir -p src/presentation/components/tenders/TenderDetails/hooks
 ```
 
-### 3.2 استخراج Hooks ⏳
+**الملفات المنشأة:**
 
-#### 3.2.1 useTenderDetails.ts ⏳
+- ✅ `types.ts` (98 سطر) - Type definitions مركزية
+  - TenderDetailsProps, CollapsedSections, TabValue
+  - QuantityItem, TenderAttachment
+  - PricingData + MaterialRow, LaborRow, EquipmentRow, SubcontractorRow
 
-#### 3.2.2 useTenderActions.ts ⏳
+### 3.2 استخراج Hooks ✅
 
-#### 3.2.3 useTenderAttachments.ts ⏳
+**الحالة:** ✅ مكتمل
+**Commit:** `86984e4`
+**التاريخ:** 2025-10-23
 
-### 3.3 إنشاء المكونات المشتركة ⏳
+#### 3.2.1 useTenderDetails.ts ✅
 
-#### 3.3.1 TenderHeader.tsx ⏳
+**المسؤولية:** إدارة حالة المنافسة وتحميل البيانات
+**الأسطر:** ~122 سطر
 
-#### 3.3.2 StatusActions.tsx ⏳
+```typescript
+✅ Created: hooks/useTenderDetails.ts
+// - Tender state management (activeTab, localTender, collapsedSections)
+// - Unified pricing data integration
+// - Currency & quantity formatters
+// - Event listeners for tender updates
+// - Completion calculations
+```
 
-#### 3.3.3 CostAnalysisTable.tsx ⏳
+#### 3.2.2 useTenderActions.ts ✅
 
-#### 3.3.4 AttachmentsList.tsx ⏳
+**المسؤولية:** إجراءات المنافسة (Submit, Update Status)
+**الأسطر:** ~92 سطر
 
-#### 3.3.5 QuantityTableRow.tsx ⏳
+```typescript
+✅ Created: hooks/useTenderActions.ts
+// - Submit tender workflow
+// - Submit dialog management
+// - Integration with tenderSubmissionService
+// - Success/error toast notifications
+// - Purchase order & booklet expense creation
+```
+
+#### 3.2.3 useTenderAttachments.ts ✅
+
+**المسؤولية:** إدارة المرفقات والملفات الفنية
+**الأسطر:** ~91 سطر
+
+```typescript
+✅ Created: hooks/useTenderAttachments.ts
+// - Merge original + technical attachments
+// - FileUploadService integration
+// - Preview & download handlers
+// - Fallback to default attachments
+```
+
+**✅ إجمالي Hooks:** 3 hooks, ~305 سطر
+
+### 3.3 إنشاء المكونات المشتركة ✅
+
+**الحالة:** ✅ مكتمل
+**Commit:** `57bea52`
+**التاريخ:** 2025-10-23
+
+#### 3.3.1 TenderHeader.tsx ✅
+
+**المسؤولية:** رأس الصفحة مع العنوان والإجراءات
+**الأسطر:** ~80 سطر
+
+```typescript
+✅ Created: components/TenderHeader.tsx
+// - Back button + title + client info
+// - Status badges (current, ready, needs files)
+// - Submit button (conditional)
+// - TenderStatusManager integration
+```
+
+#### 3.3.2 AttachmentItem.tsx ✅
+
+**المسؤولية:** عرض مرفق واحد
+**الأسطر:** ~100 سطر
+
+```typescript
+✅ Created: components/AttachmentItem.tsx
+// - File type icons (PDF, Excel, DWG, Technical)
+// - File size formatter
+// - Preview & download buttons
+// - Technical file badge
+// - Upload date display
+```
+
+#### 3.3.3 TenderInfoCard.tsx ✅
+
+**المسؤولية:** بطاقة معلومات قابلة لإعادة الاستخدام
+**الأسطر:** ~50 سطر
+
+```typescript
+✅ Created: components/TenderInfoCard.tsx
+// - Card wrapper with icon + title
+// - InfoRow sub-component (label/value pairs)
+// - Full-width row support
+// - Optional icons per row
+```
+
+#### 3.3.4 CostAnalysisTable.tsx ✅
+
+**المسؤولية:** جدول تحليل التكاليف
+**الأسطر:** ~60 سطر
+
+```typescript
+✅ Created: components/CostAnalysisTable.tsx
+// - Cost breakdown per section
+// - Materials, Labor, Equipment, Subcontractors
+// - Subtotal calculation
+// - Currency formatting
+```
+
+**✅ إجمالي Components:** 4 components, ~290 سطر
+
+**Barrel Exports:**
+
+- ✅ `components/index.ts` - تصدير جميع Components
+- ✅ `hooks/index.ts` - تصدير جميع Hooks
 
 ### 3.4 إنشاء التبويبات ⏳
 
