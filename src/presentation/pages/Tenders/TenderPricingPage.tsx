@@ -40,15 +40,6 @@ import { applyDefaultsToPricingMap } from '@/shared/utils/defaultPercentagesProp
 import { formatDateValue } from '@/shared/utils/formatters/formatters'
 import { Button } from '@/presentation/components/ui/button'
 import { EmptyState } from '@/presentation/components/layout/PageLayout'
-import { Badge } from '@/presentation/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from '@/presentation/components/ui/dropdown-menu'
 import { ConfirmationDialog } from '@/presentation/components/ui/confirmation-dialog'
 import { confirmationMessages } from '@/shared/config/confirmationMessages'
 /**
@@ -69,17 +60,7 @@ import { toast } from 'sonner'
 import { useTenderPricingState } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingState'
 import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
 // TenderPricingPage drives the full tender pricing workflow and persistence.
-import {
-  AlertCircle,
-  CheckCircle,
-  TrendingUp,
-  Settings,
-  RotateCcw,
-  Download,
-  ArrowRight,
-  Save,
-  Layers,
-} from 'lucide-react'
+import { AlertCircle, RotateCcw } from 'lucide-react'
 import { useTenderPricingPersistence } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingPersistence'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { TenderPricingTabs } from '@/presentation/components/pricing/tender-pricing-process/views/TenderPricingTabs'
@@ -89,7 +70,6 @@ import {
   type AuditEventStatus,
 } from '@/shared/utils/storage/auditLog'
 import { PricingHeader } from '@/presentation/pages/Tenders/TenderPricing/components/PricingHeader'
-import { RestoreBackupDialog } from '@/presentation/pages/Tenders/TenderPricing/components/RestoreBackupDialog'
 import { TemplateManagerDialog } from '@/presentation/pages/Tenders/TenderPricing/components/TemplateManagerDialog'
 
 export type { TenderWithPricingSources } from '@/presentation/pages/Tenders/TenderPricing/types'
@@ -1832,3 +1812,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     </div>
   )
 }
+
+// Export alias for compatibility
+export { TenderPricingProcess as TenderPricingPage }
