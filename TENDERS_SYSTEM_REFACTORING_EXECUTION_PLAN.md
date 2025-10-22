@@ -243,9 +243,10 @@ import type { ITenderRepository } from '@/repository/tender.repository';
 **الأولوية:** 🔴 عالية جداً
 **المدة:** 3 أيام
 **الحالة:** 🔄 قيد التنفيذ
-**التقدم:** 75%
+**التقدم:** 75% (Phase 2.1-2.4 مكتملة ✅)
 **تاريخ البدء:** 2025-10-22
-**آخر تحديث:** 2025-10-22 20:15
+**آخر تحديث:** 2025-10-22 21:30
+**Commits:** 75ebddf (Phase 2.1), 886423e (Phase 2.2-2.4)
 
 ## الهدف
 
@@ -314,74 +315,112 @@ src/presentation/pages/Tenders/TenderPricing/
 
 **الإجمالي:** 8 ملفات، 1,827 سطر
 
-### 2.2 نقل واستخراج Hooks ⏳
+### 2.2 Shared Components ✅
 
-**الحالة:** ⏳ لم يبدأ
+**الحالة:** ✅ مكتمل
+**Commit Hash:** `886423e`
+**التاريخ:** 2025-10-22
 
-#### 2.2.1 إنشاء usePricingState.ts ⏳
+**الملفات المنشأة:**
 
-**المسؤولية:** إدارة حالة جميع أقسام التسعير
+- ✅ `components/PricingSummary.tsx` (154 سطر) - عرض ملخص التكاليف
+  - التكاليف المباشرة (materials, labor, equipment, subcontractors)
+  - النسب الإضافية (administrative, operational, profit)
+  - VAT والإجمالي النهائي
+  - استخدام design tokens (text-primary, text-muted-foreground)
+- ✅ `components/CostSectionCard.tsx` (73 سطر) - Card wrapper قابل لإعادة الاستخدام
+  - Header مع أيقونة وعنوان
+  - عرض الإجمالي والعدد
+  - زر Add New
+  - Children للمحتوى
+- ✅ `components/PricingRow.tsx` (169 سطر) - صف جدول قابل للتحرير
+  - حقول: Description, Quantity, UnitPrice, Total
+  - دعم Waste percentage للمواد
+  - أزرار: Edit, Delete, Duplicate
+  - ReadOnly mode
+- ✅ `components/PricingActions.tsx` (114 سطر) - أزرار الإجراءات
+  - Save, Export, Import, Restore, Template, Back
+  - حالات: Saving, Dirty
+  - Dropdown menu للإجراءات المتقدمة
 
-**الكود:**
+**الإجمالي:** 4 components جديدة، 510 سطر
+**إجمالي Components:** 7 components، 919 سطر
 
-```typescript
-⏳ // src/presentation/pages/Tenders/TenderPricing/hooks/usePricingState.ts
+### 2.3 Pricing Sections ✅
 
-import { useState, useCallback } from 'react'
-import type {
-  MaterialRow,
-  LaborRow,
-  EquipmentRow,
-  SubcontractorRow,
-  PricingPercentages
-} from '@/shared/types/pricing'
+**الحالة:** ✅ مكتمل
+**Commit Hash:** `886423e`
+**التاريخ:** 2025-10-22
 
-export function usePricingState() {
-  const [materials, setMaterials] = useState<MaterialRow[]>([])
-  const [labor, setLabor] = useState<LaborRow[]>([])
-  const [equipment, setEquipment] = useState<EquipmentRow[]>([])
-  const [subcontractors, setSubcontractors] = useState<SubcontractorRow[]>([])
-  const [percentages, setPercentages] = useState<PricingPercentages>({
-    administrative: 0,
-    operational: 0,
-    profit: 0,
-    vat: 15
-  })
+**الملفات المنشأة:**
 
-  const updateMaterials = useCallback((updater: MaterialRow[] | ((prev: MaterialRow[]) => MaterialRow[])) => {
-    setMaterials(updater)
-  }, [])
+- ✅ `sections/MaterialsSection.tsx` (168 سطر) - جدول المواد مع دعم Waste
+  - MaterialRow type (hasWaste, wastePercentage)
+  - CRUD operations
+  - Accordion expandable
+- ✅ `sections/LaborSection.tsx` (154 سطر) - جدول العمالة
+  - LaborRow type
+  - description, quantity, price
+- ✅ `sections/EquipmentSection.tsx` (154 سطر) - جدول المعدات
+  - EquipmentRow type
+  - description, quantity, price
+- ✅ `sections/SubcontractorsSection.tsx` (154 سطر) - جدول المقاولين
+  - SubcontractorRow type
+  - description, quantity, price
 
-  const updateLabor = useCallback((updater: LaborRow[] | ((prev: LaborRow[]) => LaborRow[])) => {
-    setLabor(updater)
-  }, [])
+**الإجمالي:** 4 sections، 630 سطر
 
-  const updateEquipment = useCallback((updater: EquipmentRow[] | ((prev: EquipmentRow[]) => EquipmentRow[])) => {
-    setEquipment(updater)
-  }, [])
+**✅ إجمالي Phase 2.1-2.3:** 2,967 سطر (types + hooks + components + sections)
 
-  const updateSubcontractors = useCallback((updater: SubcontractorRow[] | ((prev: SubcontractorRow[]) => SubcontractorRow[])) => {
-    setSubcontractors(updater)
-  }, [])
+### 2.4 إعادة كتابة TenderPricingPage.tsx ⏳
 
-  const updatePercentages = useCallback((updater: Partial<PricingPercentages>) => {
-    setPercentages(prev => ({ ...prev, ...updater }))
-  }, [])
+**الحالة:** ⏳ التالي - لم يبدأ
+const [materials, setMaterials] = useState<MaterialRow[]>([])
+const [labor, setLabor] = useState<LaborRow[]>([])
+const [equipment, setEquipment] = useState<EquipmentRow[]>([])
+const [subcontractors, setSubcontractors] = useState<SubcontractorRow[]>([])
+const [percentages, setPercentages] = useState<PricingPercentages>({
+administrative: 0,
+operational: 0,
+profit: 0,
+vat: 15
+})
 
-  return {
-    materials,
-    labor,
-    equipment,
-    subcontractors,
-    percentages,
-    updateMaterials,
-    updateLabor,
-    updateEquipment,
-    updateSubcontractors,
-    updatePercentages
-  }
+const updateMaterials = useCallback((updater: MaterialRow[] | ((prev: MaterialRow[]) => MaterialRow[])) => {
+setMaterials(updater)
+}, [])
+
+const updateLabor = useCallback((updater: LaborRow[] | ((prev: LaborRow[]) => LaborRow[])) => {
+setLabor(updater)
+}, [])
+
+const updateEquipment = useCallback((updater: EquipmentRow[] | ((prev: EquipmentRow[]) => EquipmentRow[])) => {
+setEquipment(updater)
+}, [])
+
+const updateSubcontractors = useCallback((updater: SubcontractorRow[] | ((prev: SubcontractorRow[]) => SubcontractorRow[])) => {
+setSubcontractors(updater)
+}, [])
+
+const updatePercentages = useCallback((updater: Partial<PricingPercentages>) => {
+setPercentages(prev => ({ ...prev, ...updater }))
+}, [])
+
+return {
+materials,
+labor,
+equipment,
+subcontractors,
+percentages,
+updateMaterials,
+updateLabor,
+updateEquipment,
+updateSubcontractors,
+updatePercentages
 }
-```
+}
+
+````
 
 #### 2.2.2 إنشاء usePricingCalculations.ts ⏳
 
@@ -389,7 +428,7 @@ export function usePricingState() {
 
 ```typescript
 ⏳ // سيتم استخراجه من الملف الأصلي
-```
+````
 
 #### 2.2.3 إنشاء usePricingPersistence.ts ⏳
 
