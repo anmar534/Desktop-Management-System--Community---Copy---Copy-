@@ -372,9 +372,15 @@ src/presentation/pages/Tenders/TenderPricing/
 
 **✅ إجمالي Phase 2.1-2.3:** 2,967 سطر (types + hooks + components + sections)
 
-### 2.4 إعادة كتابة TenderPricingPage.tsx ⏳
+### 2.4 إعادة كتابة TenderPricingPage.tsx 🔄
 
-**الحالة:** ⏳ التالي - لم يبدأ
+**الحالة:** 🔄 قيد التنفيذ  
+**الملف الحالي:** 1,656 سطر  
+**الهدف:** ~200 سطر  
+**التقدم:** 10%
+
+**Commits المكتملة:**
+- ✅ f74e149: Phase 2.5.1 - Clean unused imports (-15 lines)
 const [materials, setMaterials] = useState<MaterialRow[]>([])
 const [labor, setLabor] = useState<LaborRow[]>([])
 const [equipment, setEquipment] = useState<EquipmentRow[]>([])
