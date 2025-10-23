@@ -2,41 +2,36 @@
  * ProjectAttachmentsTab Component
  *
  * Displays project attachments with upload/download functionality
+ * Refactored to use useProjectAttachments hook - Phase 1.3
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Button } from '@/presentation/components/ui/button'
 import { EmptyState } from '@/presentation/components/layout/PageLayout'
 import { FileText } from 'lucide-react'
-
-interface ProjectAttachment {
-  id: string
-  name: string
-  size: number
-  mimeType: string
-  uploadedAt: string
-  contentBase64: string
-}
+import { useProjectAttachments } from '../hooks/useProjectAttachments'
+import { useProjectFormatters } from '../hooks/useProjectFormatters'
 
 interface ProjectAttachmentsTabProps {
-  attachments: ProjectAttachment[]
-  isUploading: boolean
-  onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onDeleteAttachment: (id: string) => void
-  onDownloadAttachment: (att: ProjectAttachment) => void
-  onRefreshAttachments: () => void
-  formatTimestamp: (value: string | number | Date | null | undefined) => string
+  projectId: string
 }
 
-export function ProjectAttachmentsTab({
-  attachments,
-  isUploading,
-  onFileUpload,
-  onDeleteAttachment,
-  onDownloadAttachment,
-  onRefreshAttachments,
-  formatTimestamp,
-}: ProjectAttachmentsTabProps) {
+export function ProjectAttachmentsTab({ projectId }: ProjectAttachmentsTabProps) {
+  const { attachments, isUploading, uploadFile, downloadFile, deleteFile } = useProjectAttachments({
+    projectId,
+  })
+
+  const { formatTimestamp } = useProjectFormatters()
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      await uploadFile(file)
+      // Reset input to allow uploading the same file again
+      e.target.value = ''
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -47,10 +42,12 @@ export function ProjectAttachmentsTab({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center gap-3">
-          <input aria-label="رفع ملف" type="file" onChange={onFileUpload} disabled={isUploading} />
-          <Button variant="outline" size="sm" onClick={onRefreshAttachments}>
-            تحديث القائمة
-          </Button>
+          <input
+            aria-label="رفع ملف"
+            type="file"
+            onChange={handleFileChange}
+            disabled={isUploading}
+          />
         </div>
 
         {!attachments || attachments.length === 0 ? (
@@ -73,14 +70,10 @@ export function ProjectAttachmentsTab({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={() => onDownloadAttachment(att)}>
+                  <Button size="sm" variant="outline" onClick={() => downloadFile(att)}>
                     تحميل
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => onDeleteAttachment(att.id)}
-                  >
+                  <Button size="sm" variant="destructive" onClick={() => deleteFile(att.id)}>
                     حذف
                   </Button>
                 </div>
