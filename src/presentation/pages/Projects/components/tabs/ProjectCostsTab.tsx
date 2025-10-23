@@ -2,8 +2,9 @@
  * 💰 Project Costs Tab Component
  * Displays detailed project cost management with pricing synchronization
  *
- * Extracted from EnhancedProjectDetails.tsx as part of Phase 1.2 refactoring
- * Date: 2025-10-23
+ * Already refactored and delegates to SimplifiedProjectCostView
+ * BOQ sync logic remains in parent (Phase 1.4 will move to useBOQSync)
+ * Phase 1.3 - No changes needed
  */
 
 import { Button } from '@/presentation/components/ui/button'
