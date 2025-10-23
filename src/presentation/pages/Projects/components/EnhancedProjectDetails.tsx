@@ -43,6 +43,7 @@ import { formatCurrency } from '@/data/centralData'
 import { toast } from 'sonner'
 import { useProjectFormatters } from './hooks/useProjectFormatters'
 import { useProjectData } from './hooks/useProjectData'
+import { useProjectCosts } from './hooks/useProjectCosts'
 import type { Tender } from '@/data/centralData'
 import type { PurchaseOrder } from '@/shared/types/contracts'
 import {
@@ -76,10 +77,12 @@ export function EnhancedProjectDetails({
 }: ProjectDetailsProps) {
   // Use custom hooks for data management
   const { project } = useProjectData({ projectId })
-  const { projects: projectsState, financial } = useFinancialState()
+  const { projects: projectsState } = useFinancialState()
   const { updateProject, deleteProject } = projectsState
   const { getExpensesByProject } = useExpenses()
-  const { getProjectActualCost } = financial
+
+  // Use financial calculations hook
+  const { financialMetrics, financialHealth } = useProjectCosts({ projectId: project?.id ?? '' })
 
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -178,7 +181,6 @@ export function EnhancedProjectDetails({
   }, [project])
 
   const projectExpenses = project ? getExpensesByProject(project.id) : []
-  const actualCost = project ? getProjectActualCost(project.id) : 0
 
   // الاستماع لتحديثات BOQ من النظام المركزي لتحديث العرض فورًا
   useEffect(() => {
@@ -469,14 +471,13 @@ export function EnhancedProjectDetails({
     )
   }
 
-  // حساب الإحصائيات المالية بالمفاهيم الصحيحة
-  const contractValue = project.contractValue || project.value || project.budget || 0 // قيمة العقد (الإيرادات)
-  const estimatedCost = project.estimatedCost || 0 // التكلفة التقديرية (الميزانية المخططة)
-  const actualProfit = contractValue - actualCost // الربح الفعلي
-  const expectedProfit = contractValue - estimatedCost // الربح المتوقع
-  const spentPercentage = estimatedCost > 0 ? (actualCost / estimatedCost) * 100 : 0
-  const profitMargin = contractValue > 0 ? (actualProfit / contractValue) * 100 : 0
-  const financialVariance = actualCost - estimatedCost // الانحراف المالي (Actual vs Budget)
+  // استخدام البيانات المالية من الـ hook
+  const actualCost = financialMetrics?.actualCost ?? 0
+  const actualProfit = financialMetrics?.actualProfit ?? 0
+  const expectedProfit = financialMetrics?.expectedProfit ?? 0
+  const spentPercentage = financialMetrics?.spentPercentage ?? 0
+  const profitMargin = financialMetrics?.profitMargin ?? 0
+  const financialVariance = financialMetrics?.financialVariance ?? 0
 
   // ===============================
   // 🧭 تنقل مختصر
@@ -768,23 +769,8 @@ export function EnhancedProjectDetails({
         <TabsContent value="overview" className="space-y-6">
           <ProjectOverviewTab
             project={project}
-            financialMetrics={{
-              contractValue,
-              estimatedCost,
-              actualCost,
-              actualProfit,
-              expectedProfit,
-              profitMargin,
-              financialVariance,
-              spentPercentage,
-            }}
-            financialHealth={
-              financialVariance <= 0
-                ? 'green'
-                : financialVariance <= estimatedCost * 0.1
-                  ? 'yellow'
-                  : 'red'
-            }
+            financialMetrics={financialMetrics}
+            financialHealth={financialHealth}
             onNavigateTo={handleNavigateTo}
           />
         </TabsContent>
