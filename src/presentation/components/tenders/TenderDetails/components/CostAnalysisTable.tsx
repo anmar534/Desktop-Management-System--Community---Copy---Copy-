@@ -1,7 +1,6 @@
 // CostAnalysisTable Component
 // Displays cost breakdown for a priced item
 
-import React from 'react'
 import type { PricingData } from '../types'
 
 interface CostAnalysisTableProps {
