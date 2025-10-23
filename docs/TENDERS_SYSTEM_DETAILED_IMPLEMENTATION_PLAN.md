@@ -574,43 +574,82 @@
 
 ## الأسبوع 2: تفكيك TenderPricingPage (5 أيام)
 
-### اليوم 11 (الإثنين): إنشاء المكونات الجديدة - الجزء 1
+### اليوم 11 (الإثنين): إنشاء المكونات الجديدة - الجزء 1 ✅ **[مكتمل: 23 أكتوبر 2025]**
 
-**المهام:**
+**ملاحظة:** تم تغيير النهج من component extraction إلى hook extraction لتحسين separation of concerns
 
-- [ ] **09:00-09:30** اجتماع صباحي
-- [ ] **09:30-11:30** إنشاء PricingProgress.tsx
+**ما تم تنفيذه:**
+
+- [x] **09:00-11:00** إنشاء `useTenderPricingBackup` custom hook
 
   ```typescript
-  // src/presentation/pages/Tenders/TenderPricing/components/PricingProgress.tsx
-  interface PricingProgressProps {
-    completedCount: number
-    totalCount: number
-    completionPercentage: number
-  }
-
-  export function PricingProgress({ completedCount, totalCount, completionPercentage }: PricingProgressProps) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>تقدم التسعير</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between text-sm">
-              <span>البنود المكتملة</span>
-              <span>{completedCount} / {totalCount}</span>
-            </div>
-            <Progress value={completionPercentage} />
-            <p className="text-sm text-muted-foreground">
-              تم إكمال {completionPercentage.toFixed(0)}% من التسعير
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  // src/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingBackup.ts
+  // Hook لإدارة النسخ الاحتياطية (createBackup, loadBackupsList, restoreBackup)
+  export function useTenderPricingBackup({ ... }): UseTenderPricingBackupReturn
   ```
+
+- [x] **11:00-12:00** استخراج 3 functions من TenderPricingPage:
+
+  - `createBackup` - حفظ نسخة احتياطية (45 سطر)
+  - `loadBackupsList` - تحميل قائمة النسخ (4 سطر)
+  - `restoreBackup` - استرجاع نسخة (38 سطر)
+
+- [x] **12:00-13:00** استراحة الغداء
+
+- [x] **13:00-15:00** دمج الـ hook في TenderPricingPage
+
+  ```typescript
+  const { backupsList, createBackup, loadBackupsList, restoreBackup } =
+    useTenderPricingBackup({ ... })
+  ```
+
+- [x] **15:00-16:00** حذف الكود القديم المكرر
+- [x] **16:00-17:00** إصلاح type compatibility issues
+- [x] **17:00-17:30** Testing و validation
+
+**النتائج:**
+
+- ✅ TenderPricingPage: 1,560 → 1,314 سطر (**-246 سطر، -15.8%**)
+- ✅ Hook جديد: useTenderPricingBackup.ts (177 سطر)
+- ✅ توفير صافي: 69 سطر
+- ✅ Commits: 804443c, 048cd7b, 28101e6, b78e395
+
+---
+
+### اليوم 12 (الثلاثاء): إنشاء المكونات الجديدة - الجزء 2
+
+**الخطة الأصلية (تم تعديلها):**
+
+```typescript
+// src/presentation/pages/Tenders/TenderPricing/components/PricingProgress.tsx
+interface PricingProgressProps {
+  completedCount: number
+  totalCount: number
+  completionPercentage: number
+}
+
+export function PricingProgress({ completedCount, totalCount, completionPercentage }: PricingProgressProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>تقدم التسعير</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex justify-between text-sm">
+            <span>البنود المكتملة</span>
+            <span>{completedCount} / {totalCount}</span>
+          </div>
+          <Progress value={completionPercentage} />
+          <p className="text-sm text-muted-foreground">
+            تم إكمال {completionPercentage.toFixed(0)}% من التسعير
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+```
 
 - [ ] **11:30-12:00** كتابة Tests للمكون
 
