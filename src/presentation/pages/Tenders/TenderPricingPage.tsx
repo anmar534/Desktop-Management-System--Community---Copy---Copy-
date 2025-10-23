@@ -2,6 +2,7 @@
 import { saveToStorage, loadFromStorage, STORAGE_KEYS } from '@/shared/utils/storage/storage'
 import { pricingService } from '@/application/services/pricingService'
 import { exportTenderPricingToExcel } from '@/presentation/pages/Tenders/TenderPricing/utils/exportUtils'
+import { formatTimestamp as formatTimestampUtil } from '@/presentation/pages/Tenders/TenderPricing/utils/dateUtils'
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type {
   MaterialRow,
@@ -100,27 +101,13 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     },
     [quantityFormatter],
   )
-  const timestampFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat('ar-SA', {
-        dateStyle: 'short',
-        timeStyle: 'short',
-      }),
+
+  // Use imported timestamp formatter utility
+  const formatTimestamp = useCallback(
+    (value: string | number | Date | null | undefined) => formatTimestampUtil(value),
     [],
   )
-  const formatTimestamp = useCallback(
-    (value: string | number | Date | null | undefined) => {
-      if (value === null || value === undefined) {
-        return '—'
-      }
-      const date = value instanceof Date ? value : new Date(value)
-      if (Number.isNaN(date.getTime())) {
-        return '—'
-      }
-      return timestampFormatter.format(date)
-    },
-    [timestampFormatter],
-  )
+
   const tenderTitle = tender.title ?? tender.name ?? ''
   const recordPricingAudit = useCallback(
     (
