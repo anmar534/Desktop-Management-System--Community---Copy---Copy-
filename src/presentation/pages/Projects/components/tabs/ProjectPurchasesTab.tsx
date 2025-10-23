@@ -2,6 +2,7 @@
  * ProjectPurchasesTab Component
  *
  * Displays purchase orders related to the project
+ * Refactored to use useProjectFormatters hook - Phase 1.3
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
@@ -15,7 +16,7 @@ import {
   TableRow,
 } from '@/presentation/components/ui/table'
 import { Package } from 'lucide-react'
-import { formatCurrency } from '@/data/centralData'
+import { useProjectFormatters } from '../hooks/useProjectFormatters'
 
 interface PurchaseOrder {
   id: string
@@ -28,10 +29,11 @@ interface PurchaseOrder {
 
 interface ProjectPurchasesTabProps {
   purchaseOrders: PurchaseOrder[]
-  formatDateOnly: (value: string | number | Date | null | undefined, fallback?: string) => string
 }
 
-export function ProjectPurchasesTab({ purchaseOrders, formatDateOnly }: ProjectPurchasesTabProps) {
+export function ProjectPurchasesTab({ purchaseOrders }: ProjectPurchasesTabProps) {
+  const { formatCurrency, formatDateOnly } = useProjectFormatters()
+
   return (
     <Card>
       <CardHeader>
