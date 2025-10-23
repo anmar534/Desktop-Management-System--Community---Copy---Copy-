@@ -1,7 +1,6 @@
 // WorkflowTab Component
 // Tender results management and workflow
 
-import React from 'react'
 import { TenderQuickResults } from '@/presentation/pages/Tenders/components/TenderQuickResults'
 import { TenderResultsManager } from '@/presentation/pages/Tenders/components/TenderResultsManager'
 

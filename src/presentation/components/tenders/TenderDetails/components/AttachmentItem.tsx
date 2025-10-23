@@ -1,7 +1,6 @@
 // AttachmentItem Component
 // Displays a single attachment with icon, name, size, and actions
 
-import React from 'react'
 import { Card, CardContent } from '@/presentation/components/ui/card'
 import { Button } from '@/presentation/components/ui/button'
 import { Badge } from '@/presentation/components/ui/badge'

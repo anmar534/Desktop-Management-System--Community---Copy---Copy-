@@ -1,7 +1,6 @@
 // TenderHeader Component
 // Header section with title, back button, status badges, and actions
 
-import React from 'react'
 import { Button } from '@/presentation/components/ui/button'
 import { Badge } from '@/presentation/components/ui/badge'
 import { TenderStatusManager } from '@/presentation/pages/Tenders/components/TenderStatusManager'

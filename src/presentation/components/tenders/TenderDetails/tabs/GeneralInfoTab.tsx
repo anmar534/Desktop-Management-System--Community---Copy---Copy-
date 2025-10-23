@@ -1,7 +1,6 @@
 // GeneralInfoTab Component
 // General information tab displaying tender details, dates, and values
 
-import React from 'react'
 import { TenderInfoCard, InfoRow } from '../components/TenderInfoCard'
 import { Building2, Calendar, MapPin, DollarSign, CheckCircle, AlertCircle } from 'lucide-react'
 

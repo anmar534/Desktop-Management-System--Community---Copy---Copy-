@@ -1,5 +1,5 @@
 // RiskAssessmentMatrix scores tender risks and highlights mitigation actions.
-import type React from 'react';
+import type React from 'react'
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -19,22 +19,16 @@ import {
   Brain,
   Target,
   BarChart3,
-  Lightbulb
+  Lightbulb,
 } from 'lucide-react'
 
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-
-import { Slider } from '../ui/slider'
-import { Label } from '../ui/label'
-import { Textarea } from '../ui/textarea'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../ui/tooltip'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Badge } from '@/presentation/components/ui/badge'
+import { Slider } from '@/presentation/components/ui/slider'
+import { Label } from '@/presentation/components/ui/label'
+import { Textarea } from '@/presentation/components/ui/textarea'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 
 // Import predictive analytics services
 import { predictWinProbability } from '@/shared/utils/ml/predictionModels'
@@ -91,71 +85,71 @@ const defaultRiskFactors: Omit<RiskFactor, 'impact' | 'probability' | 'mitigatio
     name: 'التعقيد التقني',
     description: 'مستوى التعقيد التقني للمشروع والتقنيات المطلوبة',
     category: 'technical',
-    icon: Zap
+    icon: Zap,
   },
   {
     id: 'project_size',
     name: 'حجم المشروع',
     description: 'حجم وقيمة المشروع مقارنة بقدرات الشركة',
     category: 'technical',
-    icon: Building
+    icon: Building,
   },
   {
     id: 'client_payment_history',
     name: 'تاريخ دفع العميل',
     description: 'سجل العميل في الدفع والالتزام بالعقود السابقة',
     category: 'financial',
-    icon: DollarSign
+    icon: DollarSign,
   },
   {
     id: 'cash_flow_impact',
     name: 'تأثير التدفق النقدي',
     description: 'تأثير المشروع على التدفق النقدي للشركة',
     category: 'financial',
-    icon: TrendingUp
+    icon: TrendingUp,
   },
   {
     id: 'timeline_pressure',
     name: 'ضغط الجدول الزمني',
     description: 'مدى ضيق الجدول الزمني المطلوب للتنفيذ',
     category: 'schedule',
-    icon: Clock
+    icon: Clock,
   },
   {
     id: 'resource_availability',
     name: 'توفر الموارد',
     description: 'توفر العمالة والمعدات والمواد المطلوبة',
     category: 'schedule',
-    icon: Users
+    icon: Users,
   },
   {
     id: 'contract_terms',
     name: 'شروط العقد',
     description: 'مدى عدالة وقابلية تنفيذ شروط العقد',
     category: 'commercial',
-    icon: FileText
+    icon: FileText,
   },
   {
     id: 'competition_level',
     name: 'مستوى المنافسة',
     description: 'عدد وقوة المنافسين في هذه المناقصة',
     category: 'commercial',
-    icon: Shield
+    icon: Shield,
   },
   {
     id: 'market_conditions',
     name: 'ظروف السوق',
     description: 'الظروف الاقتصادية والسوقية العامة',
     category: 'external',
-    icon: TrendingUp
+    icon: TrendingUp,
   },
   {
     id: 'regulatory_changes',
     name: 'التغييرات التنظيمية',
     description: 'احتمالية تغيير القوانين أو اللوائح المؤثرة',
     category: 'external',
-    icon: AlertTriangle
-  }
+    icon: AlertTriangle,
+  },
 ]
 
 const categoryLabels = {
@@ -163,7 +157,7 @@ const categoryLabels = {
   financial: 'مالي',
   schedule: 'جدولة',
   commercial: 'تجاري',
-  external: 'خارجي'
+  external: 'خارجي',
 }
 
 const categoryColors = {
@@ -171,31 +165,41 @@ const categoryColors = {
   financial: 'bg-green-100 text-green-800',
   schedule: 'bg-yellow-100 text-yellow-800',
   commercial: 'bg-purple-100 text-purple-800',
-  external: 'bg-red-100 text-red-800'
+  external: 'bg-red-100 text-red-800',
 }
 
 const riskLevelConfig = {
   low: { label: 'منخفض', color: 'text-success', bgColor: 'bg-success/10', icon: CheckCircle2 },
   medium: { label: 'متوسط', color: 'text-warning', bgColor: 'bg-warning/10', icon: AlertCircle },
-  high: { label: 'عالي', color: 'text-destructive', bgColor: 'bg-destructive/10', icon: AlertTriangle },
-  critical: { label: 'حرج', color: 'text-destructive', bgColor: 'bg-destructive/20', icon: XCircle }
+  high: {
+    label: 'عالي',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/10',
+    icon: AlertTriangle,
+  },
+  critical: {
+    label: 'حرج',
+    color: 'text-destructive',
+    bgColor: 'bg-destructive/20',
+    icon: XCircle,
+  },
 }
 
 export function RiskAssessmentMatrix({
   onAssessmentComplete,
   initialAssessment,
   tender,
-  enablePredictiveAnalytics = false
+  enablePredictiveAnalytics = false,
 }: RiskAssessmentMatrixProps) {
   const [riskFactors, setRiskFactors] = useState<RiskFactor[]>(() => {
     if (initialAssessment) {
       return initialAssessment.factors
     }
-    return defaultRiskFactors.map(factor => ({
+    return defaultRiskFactors.map((factor) => ({
       ...factor,
       impact: 3,
       probability: 3,
-      mitigation: ''
+      mitigation: '',
     }))
   })
 
@@ -225,7 +229,7 @@ export function RiskAssessmentMatrix({
     threatLevel: null,
     opportunities: [],
     optimizedMargin: null,
-    loading: false
+    loading: false,
   })
 
   // Load predictive analytics data
@@ -233,7 +237,7 @@ export function RiskAssessmentMatrix({
     if (!enablePredictiveAnalytics || !tender) return
 
     const loadPredictiveData = async () => {
-      setPredictiveData(prev => ({ ...prev, loading: true }))
+      setPredictiveData((prev) => ({ ...prev, loading: true }))
 
       try {
         // Get historical performance data
@@ -244,8 +248,12 @@ export function RiskAssessmentMatrix({
         const marketOpportunities = await competitiveService.getMarketOpportunities()
 
         const competitorCount = tender.competitors?.length ?? competitors.length
-        const clientType = tender.client.includes('حكوم') || tender.client.includes('وزارة') ? 'government' : 'private'
-        const tenderValue = typeof tender.value === 'number' ? tender.value : Number(tender.value ?? 0)
+        const clientType =
+          tender.client.includes('حكوم') || tender.client.includes('وزارة')
+            ? 'government'
+            : 'private'
+        const tenderValue =
+          typeof tender.value === 'number' ? tender.value : Number(tender.value ?? 0)
 
         const winPrediction = predictWinProbability(
           tenderValue,
@@ -255,22 +263,20 @@ export function RiskAssessmentMatrix({
           tender.location,
           clientType,
           bidPerformances,
-          competitors
+          competitors,
         )
 
         // Calculate competitive and market risks
         const competitiveRisk = Math.min(100, competitors.length * 15) // Higher competitor count = higher risk
-        const marketRisk = marketOpportunities.length > 0 ?
-          Math.max(0, 100 - (marketOpportunities.length * 10)) : 50 // More opportunities = lower risk
+        const marketRisk =
+          marketOpportunities.length > 0 ? Math.max(0, 100 - marketOpportunities.length * 10) : 50 // More opportunities = lower risk
 
         // Determine market trend and threat level
         const marketTrend: 'up' | 'down' | 'stable' =
-          marketOpportunities.length > 5 ? 'up' :
-          marketOpportunities.length < 2 ? 'down' : 'stable'
+          marketOpportunities.length > 5 ? 'up' : marketOpportunities.length < 2 ? 'down' : 'stable'
 
         const threatLevel: 'low' | 'medium' | 'high' =
-          competitors.length <= 3 ? 'low' :
-          competitors.length <= 6 ? 'medium' : 'high'
+          competitors.length <= 3 ? 'low' : competitors.length <= 6 ? 'medium' : 'high'
 
         const priceOptimization = optimizeBidAmount(
           tenderValue,
@@ -284,10 +290,16 @@ export function RiskAssessmentMatrix({
             minMargin: 10,
             maxMargin: 30,
             targetWinProbability: 60,
-            riskTolerance: threatLevel === 'high' ? 'high' : threatLevel === 'medium' ? 'medium' : 'low',
+            riskTolerance:
+              threatLevel === 'high' ? 'high' : threatLevel === 'medium' ? 'medium' : 'low',
             objective: 'balanced',
-            marketConditions: marketTrend === 'up' ? 'favorable' : marketTrend === 'down' ? 'challenging' : 'neutral'
-          }
+            marketConditions:
+              marketTrend === 'up'
+                ? 'favorable'
+                : marketTrend === 'down'
+                  ? 'challenging'
+                  : 'neutral',
+          },
         )
 
         setPredictiveData({
@@ -299,13 +311,13 @@ export function RiskAssessmentMatrix({
           competitorCount: competitors.length,
           marketTrend,
           threatLevel,
-          opportunities: marketOpportunities.slice(0, 3).map(opp => opp.title),
+          opportunities: marketOpportunities.slice(0, 3).map((opp) => opp.title),
           optimizedMargin: Math.round(priceOptimization.optimalMargin),
-          loading: false
+          loading: false,
         })
       } catch (error) {
         console.error('Error loading predictive data:', error)
-  setPredictiveData(prev => ({ ...prev, loading: false, optimizedMargin: null }))
+        setPredictiveData((prev) => ({ ...prev, loading: false, optimizedMargin: null }))
       }
     }
 
@@ -315,7 +327,7 @@ export function RiskAssessmentMatrix({
   // Calculate overall risk assessment with AI enhancement
   const riskAssessment = useMemo((): RiskAssessment => {
     const totalRiskScore = riskFactors.reduce((sum, factor) => {
-      return sum + (factor.impact * factor.probability)
+      return sum + factor.impact * factor.probability
     }, 0)
 
     const maxPossibleScore = riskFactors.length * 25 // 5 * 5 for each factor
@@ -327,11 +339,14 @@ export function RiskAssessmentMatrix({
       const competitiveRiskAdjustment = (predictiveData.competitiveRisk || 0) * 0.2 // 20% weight to competitive risk
       const marketRiskAdjustment = (predictiveData.marketRisk || 0) * 0.1 // 10% weight to market risk
 
-      normalizedScore = Math.min(100, normalizedScore + aiRiskAdjustment + competitiveRiskAdjustment + marketRiskAdjustment)
+      normalizedScore = Math.min(
+        100,
+        normalizedScore + aiRiskAdjustment + competitiveRiskAdjustment + marketRiskAdjustment,
+      )
     }
 
-  let overallRiskLevel: RiskAssessment['overallRiskLevel']
-  let recommendedMargin: number
+    let overallRiskLevel: RiskAssessment['overallRiskLevel']
+    let recommendedMargin: number
 
     if (normalizedScore <= 25) {
       overallRiskLevel = 'low'
@@ -359,7 +374,7 @@ export function RiskAssessmentMatrix({
       overallRiskLevel,
       riskScore: normalizedScore,
       recommendedMargin,
-      mitigationPlan
+      mitigationPlan,
     }
 
     // Add AI predictions if available
@@ -369,14 +384,14 @@ export function RiskAssessmentMatrix({
         confidence: predictiveData.confidence || 0,
         competitiveRisk: predictiveData.competitiveRisk || 0,
         marketRisk: predictiveData.marketRisk || 0,
-        recommendedActions: predictiveData.recommendedActions
+        recommendedActions: predictiveData.recommendedActions,
       }
 
       assessment.competitiveIntelligence = {
         competitorCount: predictiveData.competitorCount,
         marketTrend: predictiveData.marketTrend || 'stable',
         threatLevel: predictiveData.threatLevel || 'medium',
-        opportunities: predictiveData.opportunities
+        opportunities: predictiveData.opportunities,
       }
     }
 
@@ -384,9 +399,9 @@ export function RiskAssessmentMatrix({
   }, [riskFactors, mitigationPlan, enablePredictiveAnalytics, predictiveData, tender])
 
   const updateRiskFactor = useCallback((factorId: string, updates: Partial<RiskFactor>) => {
-    setRiskFactors(prev => prev.map(factor => 
-      factor.id === factorId ? { ...factor, ...updates } : factor
-    ))
+    setRiskFactors((prev) =>
+      prev.map((factor) => (factor.id === factorId ? { ...factor, ...updates } : factor)),
+    )
   }, [])
 
   const handleComplete = useCallback(() => {
@@ -429,8 +444,7 @@ export function RiskAssessmentMatrix({
           <p className="text-muted-foreground">
             {enablePredictiveAnalytics
               ? 'تقييم شامل للمخاطر مع تحليلات تنبؤية وذكاء تنافسي'
-              : 'قيّم المخاطر المحتملة للمشروع لتحديد هامش الربح المناسب'
-            }
+              : 'قيّم المخاطر المحتملة للمشروع لتحديد هامش الربح المناسب'}
           </p>
         </div>
 
@@ -444,7 +458,9 @@ export function RiskAssessmentMatrix({
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">النتيجة</p>
-                <p className={`font-bold ${config.color}`}>{Math.round(riskAssessment.riskScore)}%</p>
+                <p className={`font-bold ${config.color}`}>
+                  {Math.round(riskAssessment.riskScore)}%
+                </p>
               </div>
             </div>
           </CardContent>
@@ -503,13 +519,20 @@ export function RiskAssessmentMatrix({
                   <div className="text-center p-3 bg-white/50 rounded-lg">
                     <BarChart3 className="h-6 w-6 text-info mx-auto mb-2" />
                     <div className="text-lg font-bold text-info mb-1">
-                      {predictiveData.marketTrend === 'up' ? '↗️ صاعد' :
-                       predictiveData.marketTrend === 'down' ? '↘️ هابط' : '→ مستقر'}
+                      {predictiveData.marketTrend === 'up'
+                        ? '↗️ صاعد'
+                        : predictiveData.marketTrend === 'down'
+                          ? '↘️ هابط'
+                          : '→ مستقر'}
                     </div>
                     <p className="text-xs text-muted-foreground">اتجاه السوق</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      تهديد: {predictiveData.threatLevel === 'low' ? 'منخفض' :
-                              predictiveData.threatLevel === 'medium' ? 'متوسط' : 'عالي'}
+                      تهديد:{' '}
+                      {predictiveData.threatLevel === 'low'
+                        ? 'منخفض'
+                        : predictiveData.threatLevel === 'medium'
+                          ? 'متوسط'
+                          : 'عالي'}
                     </p>
                   </div>
                 )}
@@ -539,7 +562,10 @@ export function RiskAssessmentMatrix({
                 </div>
                 <ul className="space-y-1">
                   {predictiveData.recommendedActions.slice(0, 3).map((action, index) => (
-                    <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <li
+                      key={index}
+                      className="text-sm text-muted-foreground flex items-start gap-2"
+                    >
                       <span className="text-primary">•</span>
                       {action}
                     </li>
@@ -557,7 +583,10 @@ export function RiskAssessmentMatrix({
                 </div>
                 <ul className="space-y-1">
                   {predictiveData.opportunities.map((opportunity, index) => (
-                    <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <li
+                      key={index}
+                      className="text-sm text-muted-foreground flex items-start gap-2"
+                    >
                       <span className="text-success">•</span>
                       {opportunity}
                     </li>
@@ -572,11 +601,14 @@ export function RiskAssessmentMatrix({
       {/* Risk Factors */}
       <div className="grid gap-4">
         {Object.entries(
-          riskFactors.reduce((acc, factor) => {
-            if (!acc[factor.category]) acc[factor.category] = []
-            acc[factor.category].push(factor)
-            return acc
-          }, {} as Record<string, RiskFactor[]>)
+          riskFactors.reduce(
+            (acc, factor) => {
+              if (!acc[factor.category]) acc[factor.category] = []
+              acc[factor.category].push(factor)
+              return acc
+            },
+            {} as Record<string, RiskFactor[]>,
+          ),
         ).map(([category, factors]) => (
           <Card key={category}>
             <CardHeader className="pb-3">
@@ -584,7 +616,9 @@ export function RiskAssessmentMatrix({
                 <Badge className={categoryColors[category as keyof typeof categoryColors]}>
                   {categoryLabels[category as keyof typeof categoryLabels]}
                 </Badge>
-                <span className="text-lg">{categoryLabels[category as keyof typeof categoryLabels]}</span>
+                <span className="text-lg">
+                  {categoryLabels[category as keyof typeof categoryLabels]}
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -608,8 +642,8 @@ export function RiskAssessmentMatrix({
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className={getRiskColor(factor.impact, factor.probability)}
                               >
                                 {getRiskLevel(factor.impact, factor.probability)}
@@ -628,7 +662,9 @@ export function RiskAssessmentMatrix({
                         <Label className="text-sm">التأثير ({factor.impact}/5)</Label>
                         <Slider
                           value={[factor.impact]}
-                          onValueChange={([value]) => updateRiskFactor(factor.id, { impact: value })}
+                          onValueChange={([value]) =>
+                            updateRiskFactor(factor.id, { impact: value })
+                          }
                           max={5}
                           min={1}
                           step={1}
@@ -644,7 +680,9 @@ export function RiskAssessmentMatrix({
                         <Label className="text-sm">الاحتمالية ({factor.probability}/5)</Label>
                         <Slider
                           value={[factor.probability]}
-                          onValueChange={([value]) => updateRiskFactor(factor.id, { probability: value })}
+                          onValueChange={([value]) =>
+                            updateRiskFactor(factor.id, { probability: value })
+                          }
                           max={5}
                           min={1}
                           step={1}
@@ -662,7 +700,9 @@ export function RiskAssessmentMatrix({
                       <Textarea
                         placeholder="اكتب الإجراءات المقترحة لتخفيف هذه المخاطر..."
                         value={factor.mitigation}
-                        onChange={(e) => updateRiskFactor(factor.id, { mitigation: e.target.value })}
+                        onChange={(e) =>
+                          updateRiskFactor(factor.id, { mitigation: e.target.value })
+                        }
                         className="min-h-[60px]"
                       />
                     </div>
@@ -714,9 +754,7 @@ export function RiskAssessmentMatrix({
             </div>
 
             <div className="text-center p-4 border rounded-lg">
-              <div className={`text-2xl font-bold ${config.color} mb-1`}>
-                {config.label}
-              </div>
+              <div className={`text-2xl font-bold ${config.color} mb-1`}>{config.label}</div>
               <p className="text-sm text-muted-foreground">مستوى المخاطر</p>
             </div>
 
@@ -768,8 +806,11 @@ export function RiskAssessmentMatrix({
                       <div className="flex justify-between items-center">
                         <span className="text-sm">اتجاه السوق:</span>
                         <span className="font-medium">
-                          {riskAssessment.competitiveIntelligence.marketTrend === 'up' ? 'صاعد' :
-                           riskAssessment.competitiveIntelligence.marketTrend === 'down' ? 'هابط' : 'مستقر'}
+                          {riskAssessment.competitiveIntelligence.marketTrend === 'up'
+                            ? 'صاعد'
+                            : riskAssessment.competitiveIntelligence.marketTrend === 'down'
+                              ? 'هابط'
+                              : 'مستقر'}
                         </span>
                       </div>
                     </>
@@ -783,12 +824,17 @@ export function RiskAssessmentMatrix({
                   التوصيات الذكية
                 </h4>
                 <div className="space-y-2">
-                  {riskAssessment.aiPredictions.recommendedActions.slice(0, 3).map((action, index) => (
-                    <div key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-primary text-xs">•</span>
-                      <span>{action}</span>
-                    </div>
-                  ))}
+                  {riskAssessment.aiPredictions.recommendedActions
+                    .slice(0, 3)
+                    .map((action, index) => (
+                      <div
+                        key={index}
+                        className="text-sm text-muted-foreground flex items-start gap-2"
+                      >
+                        <span className="text-primary text-xs">•</span>
+                        <span>{action}</span>
+                      </div>
+                    ))}
                 </div>
               </div>
             </div>
@@ -796,30 +842,36 @@ export function RiskAssessmentMatrix({
           <div className="space-y-2">
             <Label>خطة إدارة المخاطر الشاملة</Label>
             <Textarea
-              placeholder={enablePredictiveAnalytics
-                ? "اكتب خطة شاملة لإدارة المخاطر المحددة في هذا المشروع... (ستتم إضافة التوصيات الذكية تلقائياً)"
-                : "اكتب خطة شاملة لإدارة المخاطر المحددة في هذا المشروع..."
+              placeholder={
+                enablePredictiveAnalytics
+                  ? 'اكتب خطة شاملة لإدارة المخاطر المحددة في هذا المشروع... (ستتم إضافة التوصيات الذكية تلقائياً)'
+                  : 'اكتب خطة شاملة لإدارة المخاطر المحددة في هذا المشروع...'
               }
               value={mitigationPlan}
               onChange={(e) => setMitigationPlan(e.target.value)}
               className="min-h-[100px]"
             />
-            {enablePredictiveAnalytics && riskAssessment.aiPredictions && riskAssessment.aiPredictions.recommendedActions.length > 0 && (
-              <div className="mt-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                <p className="text-sm font-medium text-primary mb-2 flex items-center gap-2">
-                  <Brain className="h-4 w-4" />
-                  اقتراحات إضافية من الذكاء الاصطناعي:
-                </p>
-                <ul className="space-y-1">
-                  {riskAssessment.aiPredictions.recommendedActions.map((action, index) => (
-                    <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      {action}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {enablePredictiveAnalytics &&
+              riskAssessment.aiPredictions &&
+              riskAssessment.aiPredictions.recommendedActions.length > 0 && (
+                <div className="mt-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <p className="text-sm font-medium text-primary mb-2 flex items-center gap-2">
+                    <Brain className="h-4 w-4" />
+                    اقتراحات إضافية من الذكاء الاصطناعي:
+                  </p>
+                  <ul className="space-y-1">
+                    {riskAssessment.aiPredictions.recommendedActions.map((action, index) => (
+                      <li
+                        key={index}
+                        className="text-sm text-muted-foreground flex items-start gap-2"
+                      >
+                        <span className="text-primary">•</span>
+                        {action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
           </div>
 
           <div className="flex justify-between items-center">
@@ -833,9 +885,7 @@ export function RiskAssessmentMatrix({
             </div>
 
             <div className="flex gap-3">
-              <Button variant="outline">
-                حفظ كمسودة
-              </Button>
+              <Button variant="outline">حفظ كمسودة</Button>
               <Button onClick={handleComplete} className="gap-2">
                 <CheckCircle2 className="h-4 w-4" />
                 تطبيق التقييم
@@ -847,6 +897,3 @@ export function RiskAssessmentMatrix({
     </div>
   )
 }
-
-
-

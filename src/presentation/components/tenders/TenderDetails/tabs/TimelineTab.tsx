@@ -1,7 +1,6 @@
 // TimelineTab Component
 // Timeline of tender events and deadlines
 
-import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Calendar, ExternalLink, Clock, CheckCircle } from 'lucide-react'
 

@@ -1,7 +1,6 @@
 // AttachmentsTab Component
 // Displays all tender attachments including technical files
 
-import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { AttachmentItem } from '../components/AttachmentItem'
 import { Paperclip, CheckCircle } from 'lucide-react'
