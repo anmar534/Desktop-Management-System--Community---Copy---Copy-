@@ -10,7 +10,6 @@ import type {
   LaborRow,
   EquipmentRow,
   SubcontractorRow,
-  PricingRow,
   PricingData,
   PricingPercentages,
   ExecutionMethod,
@@ -38,6 +37,8 @@ import { useTenderPricingState } from '@/presentation/pages/Tenders/TenderPricin
 import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
 import { usePricingTemplates } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingTemplates'
 import { useTenderPricingBackup } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingBackup'
+import { usePricingRowOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingRowOperations'
+import { useSummaryOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useSummaryOperations'
 import { AlertCircle } from 'lucide-react'
 import { useTenderPricingPersistence } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingPersistence'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
@@ -64,8 +65,6 @@ interface SectionRowMap {
   equipment: EquipmentRow
   subcontractors: SubcontractorRow
 }
-
-type SectionRowField<Section extends ActualPricingSection> = keyof SectionRowMap[Section]
 
 interface TenderPricingProcessProps {
   tender: TenderWithPricingSources
@@ -798,289 +797,27 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     })
   }, [isLoaded, tender.id, tenderTitle, updateTenderStatus, recordPricingAudit])
 
-  const clampValue = (value: number, min: number, max: number) =>
-    Math.min(max, Math.max(min, value))
-
-  const toNonNegativeNumber = (input: unknown): number => {
-    const parsed = Number(input)
-    if (!Number.isFinite(parsed) || parsed < 0) {
-      return 0
-    }
-    return parsed
-  }
-
-  const roundToTwoDecimals = (value: number) => Math.round(value * 100) / 100
-
-  const calculateRowTotal = (
-    type: ActualPricingSection,
-    row: MaterialRow | LaborRow | EquipmentRow | SubcontractorRow,
-  ): number => {
-    const quantity = toNonNegativeNumber(row.quantity)
-    const price = toNonNegativeNumber(row.price ?? 0)
-
-    if (type === 'materials') {
-      const materialRow = row as MaterialRow
-      const wastePercentage = materialRow.hasWaste
-        ? clampValue(toNonNegativeNumber(materialRow.wastePercentage ?? 0), 0, 100)
-        : 0
-      const wasteMultiplier = materialRow.hasWaste ? 1 + wastePercentage / 100 : 1
-      return roundToTwoDecimals(quantity * price * wasteMultiplier)
-    }
-
-    return roundToTwoDecimals(quantity * price)
-  }
-
-  const recalculateRow = <Section extends ActualPricingSection>(
-    type: Section,
-    row: SectionRowMap[Section],
-  ): SectionRowMap[Section] => ({
-    ...row,
-    total: calculateRowTotal(type, row),
+  // Row operations hook - manages add, update, delete operations for pricing rows
+  const { addRow, deleteRow, updateRow } = usePricingRowOperations({
+    setCurrentPricing,
+    currentItem,
+    markDirty,
+    updateTenderStatus,
+    recordPricingAudit,
+    getErrorMessage,
   })
 
-  const sanitizeRowValue = <
-    Section extends ActualPricingSection,
-    Field extends SectionRowField<Section>,
-  >(
-    type: Section,
-    field: Field,
-    value: SectionRowMap[Section][Field],
-  ): SectionRowMap[Section][Field] => {
-    if (field === 'quantity' || field === 'price') {
-      return toNonNegativeNumber(value) as SectionRowMap[Section][Field]
-    }
+  // Summary operations hook - manages row operations from summary view
+  const { addRowFromSummary, updateRowFromSummary, deleteRowFromSummary } = useSummaryOperations({
+    pricingViewItems,
+    setCurrentItemIndex,
+    addRow,
+    updateRow,
+    deleteRow,
+    markDirty,
+    updateTenderStatus,
+  })
 
-    if (type === 'materials' && field === 'wastePercentage') {
-      const sanitized = clampValue(toNonNegativeNumber(value), 0, 100)
-      return sanitized as SectionRowMap[Section][Field]
-    }
-
-    return value
-  }
-
-  const mutateSectionRows = <Section extends ActualPricingSection>(
-    data: PricingData,
-    section: Section,
-    mutate: (rows: SectionRowMap[Section][]) => SectionRowMap[Section][],
-  ): PricingData => {
-    switch (section) {
-      case 'materials':
-        return { ...data, materials: mutate(data.materials) }
-      case 'labor':
-        return { ...data, labor: mutate(data.labor) }
-      case 'equipment':
-        return { ...data, equipment: mutate(data.equipment) }
-      case 'subcontractors':
-        return { ...data, subcontractors: mutate(data.subcontractors) }
-      default:
-        return data
-    }
-  }
-
-  // إنشاء صف فارغ
-  const createEmptyRow = <Section extends ActualPricingSection>(
-    type: Section,
-  ): SectionRowMap[Section] => {
-    const baseRow: PricingRow = {
-      id: Date.now().toString(),
-      description: '',
-      unit: 'وحدة',
-      quantity: 1,
-      price: 0,
-      total: 0,
-    }
-
-    if (type === 'materials') {
-      const materialRow: MaterialRow = {
-        ...baseRow,
-        name: '',
-        hasWaste: false,
-        wastePercentage: 10,
-      }
-      return materialRow as SectionRowMap[Section]
-    }
-
-    return baseRow as SectionRowMap[Section]
-  }
-
-  // إضافة صف جديد
-  const addRow = <Section extends ActualPricingSection>(type: Section) => {
-    setCurrentPricing((prev) =>
-      mutateSectionRows(prev, type, (rows) => {
-        const newRow = createEmptyRow(type)
-        if ((type === 'materials' || type === 'subcontractors') && currentItem) {
-          newRow.quantity = currentItem.quantity
-        }
-        return [...rows, recalculateRow(type, newRow)]
-      }),
-    )
-    markDirty()
-
-    // تحديث فوري للحالة عند إضافة أول صف (يعني بدء العمل)
-    updateTenderStatus()
-    recordPricingAudit('info', 'status-updated-after-add-row', {
-      section: type,
-      itemId: currentItem?.id ?? 'unknown',
-    })
-  }
-
-  // حذف صف
-  const deleteRow = <Section extends ActualPricingSection>(type: Section, id: string) => {
-    setCurrentPricing((prev) =>
-      mutateSectionRows(prev, type, (rows) => rows.filter((row) => row.id !== id)),
-    )
-    markDirty()
-  }
-
-  // تحديث صف مع معالجة محسنة للأخطاء والتحقق من صحة البيانات
-  const updateRow = <Section extends ActualPricingSection, Field extends SectionRowField<Section>>(
-    type: Section,
-    id: string,
-    field: Field,
-    value: SectionRowMap[Section][Field],
-  ) => {
-    try {
-      setCurrentPricing((prev) =>
-        mutateSectionRows(prev, type, (rows) =>
-          rows.map((row) => {
-            if (row.id !== id) {
-              return row
-            }
-
-            const sanitizedValue = sanitizeRowValue(type, field, value)
-            const nextRow: SectionRowMap[Section] = {
-              ...row,
-              [field]: sanitizedValue,
-            }
-
-            if (type === 'materials') {
-              const materialRow = nextRow as MaterialRow
-              if (field === 'hasWaste' && !sanitizedValue) {
-                materialRow.hasWaste = false
-                materialRow.wastePercentage = 0
-              }
-            }
-
-            return recalculateRow(type, nextRow)
-          }),
-        ),
-      )
-
-      // تحديث فوري للحالة بعد تعديل البيانات
-      updateTenderStatus()
-      recordPricingAudit('info', 'status-updated-after-edit', {
-        section: type,
-        itemId: currentItem?.id ?? 'unknown',
-        rowId: id,
-      })
-      markDirty()
-    } catch (error) {
-      recordPricingAudit(
-        'error',
-        'row-update-failed',
-        {
-          section: type,
-          itemId: currentItem?.id ?? 'unknown',
-          rowId: id,
-          field,
-          message: getErrorMessage(error),
-        },
-        'error',
-      )
-      toast.error('خطأ في تحديث البيانات', {
-        description: 'حدث خطأ أثناء تحديث البيانات. يرجى المحاولة مرة أخرى.',
-        duration: 4000,
-      })
-    }
-  }
-
-  // وظائف التحرير من تبويب الملخص - Optimized for performance
-  const addRowFromSummary = (itemId: string, section: ActualPricingSection) => {
-    const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
-    if (itemIndex === -1) return
-
-    setCurrentItemIndex(itemIndex)
-
-    // Update pricing data directly without setTimeout
-    setCurrentPricing((prev) => {
-      const newRow = createEmptyRow(section)
-      const currentItem = pricingViewItems[itemIndex]
-
-      if ((section === 'materials' || section === 'subcontractors') && currentItem) {
-        newRow.quantity = currentItem.quantity
-      }
-
-      return mutateSectionRows(prev, section, (rows) => {
-        return [...rows, recalculateRow(section, newRow)]
-      })
-    })
-
-    markDirty()
-    updateTenderStatus()
-
-    toast.success(
-      `تم إضافة صف جديد في ${
-        section === 'materials'
-          ? 'المواد'
-          : section === 'labor'
-            ? 'العمالة'
-            : section === 'equipment'
-              ? 'المعدات'
-              : 'المقاولين من الباطن'
-      }`,
-    )
-  }
-
-  const updateRowFromSummary = (
-    itemId: string,
-    section: ActualPricingSection,
-    rowId: string,
-    field: string,
-    value: unknown,
-  ) => {
-    const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
-    if (itemIndex === -1) return
-
-    setCurrentItemIndex(itemIndex)
-
-    // Update directly without setTimeout for immediate response
-    setCurrentPricing((prev) =>
-      mutateSectionRows(prev, section, (rows) =>
-        rows.map((row) => {
-          if (row.id !== rowId) {
-            return row
-          }
-
-          const sanitizedValue = sanitizeRowValue(
-            section,
-            field as keyof SectionRowMap[typeof section],
-            value as string | number | undefined,
-          )
-          const updated = { ...row, [field]: sanitizedValue }
-          return recalculateRow(section, updated)
-        }),
-      ),
-    )
-
-    // Mark dirty will trigger debounced save
-    markDirty()
-  }
-
-  const deleteRowFromSummary = (itemId: string, section: ActualPricingSection, rowId: string) => {
-    const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
-    if (itemIndex === -1) return
-
-    setCurrentItemIndex(itemIndex)
-
-    // Delete immediately without setTimeout
-    setCurrentPricing((prev) =>
-      mutateSectionRows(prev, section, (rows) => rows.filter((row) => row.id !== rowId)),
-    )
-
-    toast.success('تم حذف الصف بنجاح')
-  }
-
-  // تصدير البيانات إلى Excel
   // تصدير البيانات إلى Excel (using utility function)
   const exportPricingToExcel = useCallback(() => {
     exportTenderPricingToExcel({
