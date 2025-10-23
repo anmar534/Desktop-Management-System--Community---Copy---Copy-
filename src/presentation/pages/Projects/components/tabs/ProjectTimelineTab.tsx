@@ -2,11 +2,12 @@
  * ProjectTimelineTab Component
  *
  * Displays project timeline with phases and progress
+ * Refactored to use ProjectProgressBar component - Phase 1.3
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
-import { Progress } from '@/presentation/components/ui/progress'
 import { Calendar } from 'lucide-react'
+import { ProjectProgressBar } from '../shared/ProjectProgressBar'
 
 interface ProjectTimelineTabProps {
   startDate: string
@@ -15,15 +16,6 @@ interface ProjectTimelineTabProps {
 }
 
 export function ProjectTimelineTab({ startDate, endDate, progress }: ProjectTimelineTabProps) {
-  const start = startDate ? new Date(startDate).getTime() : Date.now()
-  const end = endDate ? new Date(endDate).getTime() : start + 30 * 24 * 3600 * 1000
-
-  const dateFormatter = new Intl.DateTimeFormat('ar-SA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-
   // تقسيم تقريبي للمراحل
   const planning = Math.round(0.2 * 100)
   const execution = Math.round(0.7 * 100)
@@ -38,10 +30,15 @@ export function ProjectTimelineTab({ startDate, endDate, progress }: ProjectTime
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="text-sm text-muted-foreground flex justify-between">
-          <span>البداية: {dateFormatter.format(new Date(start))}</span>
-          <span>النهاية: {dateFormatter.format(new Date(end))}</span>
-        </div>
+        {/* Progress bar with dates */}
+        <ProjectProgressBar
+          progress={progress}
+          startDate={startDate}
+          endDate={endDate}
+          showDates={true}
+        />
+
+        {/* Phase breakdown */}
         <div className="w-full h-4 rounded overflow-hidden flex">
           <div className="h-full bg-info flex-[2]" title="تخطيط" />
           <div className="h-full bg-success flex-[7]" title="تنفيذ" />
@@ -51,13 +48,6 @@ export function ProjectTimelineTab({ startDate, endDate, progress }: ProjectTime
           <span>تخطيط: {planning}%</span>
           <span>تنفيذ: {execution}%</span>
           <span>تسليم: {handover}%</span>
-        </div>
-        <div className="mt-2">
-          <div className="flex justify-between text-sm mb-1">
-            <span>نسبة الإنجاز</span>
-            <span>{progress}%</span>
-          </div>
-          <Progress value={progress} className="h-2" />
         </div>
       </CardContent>
     </Card>
