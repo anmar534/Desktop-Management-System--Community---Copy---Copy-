@@ -1410,7 +1410,9 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
         }}
         onExportToExcel={exportPricingToExcel}
         onUpdateStatus={updateTenderStatus}
-        recordAudit={recordPricingAudit}
+        recordAudit={(level, action, metadata, status) =>
+          recordPricingAudit(level as AuditEventLevel, action, metadata, status as AuditEventStatus)
+        }
         getErrorMessage={getErrorMessage}
       />
 
