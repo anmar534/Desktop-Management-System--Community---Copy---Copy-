@@ -90,13 +90,32 @@
 
 ## 🔄 قيد التنفيذ
 
-_لا شيء - جاهز لـ Week 2_
+### 🔵 Week 2 - Day 11: استخراج Backup Logic [23 أكتوبر 2025]
+
+**Commit:** 804443c
+
+#### الإنجازات حتى الآن:
+
+- ✅ إنشاء custom hook: `useTenderPricingBackup`
+- ✅ نقل 3 functions من TenderPricingPage للـ hook:
+  - `createBackup` (حفظ نسخة احتياطية)
+  - `loadBackupsList` (تحميل قائمة النسخ)
+  - `restoreBackup` (استرجاع نسخة)
+- ✅ دمج الـ hook في TenderPricingPage
+- ✅ حذف الكود القديم المكرر
+
+#### النتائج:
+
+- **TenderPricingPage:** 1,560 → 1,314 سطر (**-246 سطر**)
+- **ملف Hook جديد:** useTenderPricingBackup.ts (177 سطر)
+- **توفير صافي:** 246 - 177 = **69 سطر محذوف**
+- **تحسين:** فصل concerns + قابلية إعادة الاستخدام
 
 ---
 
 ## ⏳ القادم
 
-### Week 2: TenderPricingPage Refactoring
+### Week 2: TenderPricingPage Refactoring (يستمر)
 
 - استخراج PricingProgress component
 - استخراج PricingActions component
@@ -119,9 +138,11 @@ _لا شيء - جاهز لـ Week 2_
 4. **511c807** - docs: Add tenders refactoring progress log
 5. **f888554** - refactor: Clean up imports in tenders components
 6. **3c4386c** - refactor: Convert relative imports to absolute paths
+7. **4624a63** - docs: Update Day 8 completion - no dead code found
+8. **804443c** - refactor: Extract backup logic to useTenderPricingBackup hook
 
-**إجمالي التغييرات:** -5,481 سطر صافي (30.2% تحسين) + 8 files improved + 0 dead code
+**إجمالي التغييرات:** -5,550 سطر صافي (30.6% تحسين) + 1 custom hook created
 
 ---
 
-**آخر تحديث:** 23 أكتوبر 2025، 17:15
+**آخر تحديث:** 23 أكتوبر 2025، 17:45
