@@ -16,8 +16,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/compone
 import { Button } from '@/presentation/components/ui/button'
 import { Badge } from '@/presentation/components/ui/badge'
 import { Progress } from '@/presentation/components/ui/progress'
+import { Input } from '@/presentation/components/ui/input'
 import { Label } from '@/presentation/components/ui/label'
+import { Textarea } from '@/presentation/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/presentation/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/presentation/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -28,16 +45,22 @@ import {
 } from '@/presentation/components/ui/dialog'
 // (Tooltip components removed with legacy CostsTable cleanup)
 import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
-import { Building2, Calendar, User, MapPin, AlertTriangle, Edit, Trash2 } from 'lucide-react'
+import {
+  Building2,
+  Calendar,
+  DollarSign,
+  User,
+  MapPin,
+  AlertTriangle,
+  Edit,
+  Trash2,
+  BarChart3,
+  Package,
+  FileText,
+  Link as LinkIcon,
+} from 'lucide-react'
 import { useFinancialState } from '@/application/context'
-import { ProjectOverviewTab } from './tabs/ProjectOverviewTab'
-import { ProjectCostsTab } from './tabs/ProjectCostsTab'
-import { ProjectBudgetTab } from './tabs/ProjectBudgetTab'
-import { ProjectTimelineTab } from './tabs/ProjectTimelineTab'
-import { ProjectPurchasesTab } from './tabs/ProjectPurchasesTab'
-import { ProjectAttachmentsTab } from './tabs/ProjectAttachmentsTab'
-import { ProjectEditDialog } from './dialogs/ProjectEditDialog'
-import type { ProjectEditFormData } from './dialogs/ProjectEditDialog'
+import { SimplifiedProjectCostView } from './cost/SimplifiedProjectCostView'
 import { useExpenses } from '@/application/hooks/useExpenses'
 import { formatCurrency } from '@/data/centralData'
 import { toast } from 'sonner'
@@ -78,8 +101,22 @@ interface ProjectDetailsProps {
   onSectionChange?: (section: string) => void
 }
 
-// استخدام النوع من ProjectEditDialog
-type EditFormData = ProjectEditFormData
+// واجهة بيانات النموذج
+interface EditFormData {
+  name: string
+  client: string
+  description: string
+  location: string
+  budget: number
+  contractValue?: number // قيمة العقد (الإيرادات)
+  estimatedCost?: number // التكلفة التقديرية (الميزانية المخططة)
+  expectedProfit?: number // الربح المتوقع
+  startDate: string
+  endDate: string
+  status: 'planning' | 'active' | 'paused' | 'completed' | 'delayed'
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  progress: number
+}
 
 export function EnhancedProjectDetails({
   projectId,
@@ -176,6 +213,7 @@ export function EnhancedProjectDetails({
     budget: 0,
     contractValue: 0,
     estimatedCost: 0,
+    expectedProfit: 0,
     startDate: '',
     endDate: '',
     status: 'active',
@@ -472,6 +510,7 @@ export function EnhancedProjectDetails({
         budget: project.budget || 0,
         contractValue: project.contractValue || project.value || project.budget || 0,
         estimatedCost: project.estimatedCost || 0,
+        expectedProfit: project.expectedProfit || 0,
         startDate: project.startDate || '',
         endDate: project.endDate || '',
         status: project.status || 'active',
@@ -743,23 +782,10 @@ export function EnhancedProjectDetails({
 
   // دوال المعالجة
   const handleSaveEdit = async () => {
-    if (!project) return
-
     try {
       const updatedProject = {
         ...project,
-        name: editFormData.name,
-        client: editFormData.client,
-        description: editFormData.description,
-        location: editFormData.location,
-        budget: editFormData.budget ?? 0,
-        contractValue: editFormData.contractValue ?? 0,
-        estimatedCost: editFormData.estimatedCost ?? 0,
-        startDate: editFormData.startDate,
-        endDate: editFormData.endDate,
-        status: editFormData.status as typeof project.status,
-        priority: editFormData.priority as typeof project.priority,
-        progress: editFormData.progress,
+        ...editFormData,
         updatedAt: new Date().toISOString(),
       }
 
@@ -916,82 +942,546 @@ export function EnhancedProjectDetails({
 
         {/* نظرة عامة + مؤشرات مالية مختصرة */}
         <TabsContent value="overview" className="space-y-6">
-          <ProjectOverviewTab
-            project={project}
-            statusInfo={statusInfo}
-            financialMetrics={{
-              contractValue,
-              estimatedCost,
-              actualCost,
-              actualProfit,
-              profitMargin,
-              financialVariance,
-            }}
-            onNavigateTo={handleNavigateTo}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* المعلومات الأساسية */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  المعلومات الأساسية
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">اسم المشروع</Label>
+                    <div className="text-lg font-semibold mt-1">{project.name}</div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">العميل</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      {project.client}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="px-2"
+                        onClick={() => handleNavigateTo('clients')}
+                      >
+                        <LinkIcon className="h-4 w-4" />
+                        <span className="sr-only">فتح العميل</span>
+                      </Button>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-muted-foreground">الموقع</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      {project.location || 'غير محدد'}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">الحالة</Label>
+                      <div className="mt-1">
+                        <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        نسبة الإنجاز
+                      </Label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <Progress value={project.progress || 0} className="h-2 w-40" />
+                        <span className="text-sm font-medium">{project.progress || 0}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ملخص مالي سريع */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  ملخص مالي
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">قيمة العقد (الإيرادات)</span>
+                    <span className="font-semibold text-info">{formatCurrency(contractValue)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">
+                      التكلفة التقديرية (الميزانية المخططة)
+                    </span>
+                    <span className="font-semibold text-warning">
+                      {formatCurrency(estimatedCost)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">التكلفة الفعلية</span>
+                    <span className="font-semibold text-destructive">
+                      {formatCurrency(actualCost)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center border-t pt-2">
+                    <span className="text-sm text-muted-foreground">الربح الفعلي</span>
+                    <span
+                      className={`font-semibold ${actualProfit >= 0 ? 'text-success' : 'text-destructive'}`}
+                    >
+                      {formatCurrency(actualProfit)} ({profitMargin.toFixed(1)}%)
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">الانحراف المالي</span>
+                    <span
+                      className={`font-semibold ${financialVariance <= 0 ? 'text-success' : 'text-destructive'}`}
+                    >
+                      {financialVariance >= 0 ? '+' : ''}
+                      {formatCurrency(financialVariance)}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* التكاليف التفصيلية */}
         <TabsContent value="costs" className="space-y-4">
-          <ProjectCostsTab
-            projectId={project.id}
-            relatedTender={relatedTender}
-            boqAvailability={boqAvailability}
-            onSyncPricing={handleSyncPricingData}
-            onImportBOQ={handleImportBOQFromTender}
-          />
+          <div className="space-y-4">
+            {relatedTender && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-muted bg-muted/10 px-4 py-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  أدوات تسعير المشروع
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button size="sm" variant="secondary" onClick={handleSyncPricingData}>
+                    🔄 إعادة مزامنة التسعير
+                  </Button>
+                  {!boqAvailability.hasProjectBOQ && boqAvailability.hasTenderBOQ && (
+                    <Button size="sm" onClick={handleImportBOQFromTender}>
+                      📥 استيراد BOQ من المنافسة
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <SimplifiedProjectCostView projectId={project.id} tenderId={relatedTender?.id} />
+            <div className="text-xs text-muted-foreground leading-relaxed border border-dashed border-muted rounded-lg px-4 py-3">
+              تم تطبيق العرض المبسط الجديد لإدارة التكاليف المستوحى من تصميم صفحات التسعير في
+              المناقصات. التصميم يركز على الوضوح والبساطة.
+            </div>
+          </div>
         </TabsContent>
 
         {/* مقارنة الميزانية */}
         <TabsContent value="budget" className="space-y-4">
-          <ProjectBudgetTab
-            budgetComparison={budgetComparison}
-            budgetSummary={budgetSummary}
-            budgetLoading={budgetLoading}
-            relatedTender={relatedTender}
-            formatQuantity={formatQuantity}
-            formatCurrency={formatCurrency}
-            onSyncPricing={handleSyncPricingData}
-            onNavigateToTenders={onSectionChange ? () => onSectionChange('tenders') : undefined}
-          />
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  مقارنة الميزانية - التقديرية مقابل الفعلية
+                </CardTitle>
+                {relatedTender && (
+                  <Button size="sm" variant="secondary" onClick={handleSyncPricingData}>
+                    🔄 إعادة مزامنة التسعير
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {budgetLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+                    <p className="text-sm text-muted-foreground">جاري تحميل بيانات المقارنة...</p>
+                  </div>
+                </div>
+              ) : budgetSummary ? (
+                <div className="space-y-6">
+                  {/* ملخص المقارنة */}
+                  <div className="grid grid-cols-1 gap-4 rounded-lg bg-muted/10 p-4 md:grid-cols-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-info">{budgetSummary.totalItems}</div>
+                      <div className="text-sm text-muted-foreground">إجمالي البنود</div>
+                    </div>
+                    <div className="text-center">
+                      <div
+                        className={`text-2xl font-bold ${budgetSummary.totalVariance > 0 ? 'text-destructive' : budgetSummary.totalVariance < 0 ? 'text-success' : 'text-muted-foreground'}`}
+                      >
+                        {budgetSummary.totalVariancePercentage > 0 ? '+' : ''}
+                        {budgetSummary.totalVariancePercentage.toFixed(1)}%
+                      </div>
+                      <div className="text-sm text-muted-foreground">إجمالي الفارق</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-destructive">
+                        {budgetSummary.overBudgetItems}
+                      </div>
+                      <div className="text-sm text-muted-foreground">بنود تجاوزت الميزانية</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-warning">
+                        {budgetSummary.criticalAlerts}
+                      </div>
+                      <div className="text-sm text-muted-foreground">تنبيهات حرجة</div>
+                    </div>
+                  </div>
+
+                  {/* جدول المقارنة التفصيلي */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-border">
+                      <thead>
+                        <tr className="bg-muted/20">
+                          <th className="border border-border p-2 text-right">البند</th>
+                          <th className="border border-border p-2 text-center">الوحدة</th>
+                          <th className="border border-border p-2 text-center">الكمية</th>
+                          <th className="border border-border p-2 text-center">
+                            التكلفة التقديرية
+                          </th>
+                          <th className="border border-border p-2 text-center">التكلفة الفعلية</th>
+                          <th className="border border-border p-2 text-center">الفارق</th>
+                          <th className="border border-border p-2 text-center">الحالة</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {budgetComparison.map((item) => (
+                          <tr key={item.itemId} className="transition-colors hover:bg-muted/40">
+                            <td className="border border-border p-2">
+                              <div className="font-medium">{item.description}</div>
+                              {item.variance.alerts.length > 0 && (
+                                <div className="mt-1 text-xs text-warning">
+                                  {item.variance.alerts.map((alert, i) => (
+                                    <div key={i}>{alert}</div>
+                                  ))}
+                                </div>
+                              )}
+                            </td>
+                            <td className="border border-border p-2 text-center">{item.unit}</td>
+                            <td className="border border-border p-2 text-center">
+                              {formatQuantity(item.quantity)}
+                            </td>
+                            <td className="border border-border p-2 text-center">
+                              <div className="text-sm">
+                                <div>{formatCurrency(item.estimated.total)}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  ({formatCurrency(item.estimated.unitPrice)}/وحدة)
+                                </div>
+                              </div>
+                            </td>
+                            <td className="border border-border p-2 text-center">
+                              <div className="text-sm">
+                                <div>{formatCurrency(item.actual.total)}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  ({formatCurrency(item.actual.unitPrice)}/وحدة)
+                                </div>
+                              </div>
+                            </td>
+                            <td className="border border-border p-2 text-center">
+                              <div
+                                className={`font-medium ${
+                                  item.variance.amount > 0
+                                    ? 'text-destructive'
+                                    : item.variance.amount < 0
+                                      ? 'text-success'
+                                      : 'text-muted-foreground'
+                                }`}
+                              >
+                                {item.variance.amount > 0 ? '+' : ''}
+                                {formatCurrency(item.variance.amount)}
+                              </div>
+                              <div
+                                className={`text-xs ${
+                                  item.variance.percentage > 0
+                                    ? 'text-destructive'
+                                    : item.variance.percentage < 0
+                                      ? 'text-success'
+                                      : 'text-muted-foreground'
+                                }`}
+                              >
+                                ({item.variance.percentage > 0 ? '+' : ''}
+                                {item.variance.percentage.toFixed(1)}%)
+                              </div>
+                            </td>
+                            <td className="border border-border p-2 text-center">
+                              <Badge
+                                variant={
+                                  item.variance.status === 'over-budget'
+                                    ? 'destructive'
+                                    : item.variance.status === 'under-budget'
+                                      ? 'secondary'
+                                      : 'outline'
+                                }
+                                className={
+                                  item.variance.status === 'under-budget'
+                                    ? 'bg-success/10 text-success'
+                                    : ''
+                                }
+                              >
+                                {item.variance.status === 'over-budget'
+                                  ? 'تجاوز الميزانية'
+                                  : item.variance.status === 'under-budget'
+                                    ? 'توفير'
+                                    : 'ضمن الميزانية'}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <EmptyState
+                  icon={AlertTriangle}
+                  title="لا توجد بيانات مقارنة"
+                  description={`لعرض مقارنة الميزانية، يجب ربط المشروع بمنافسة مكتملة التسعير${relatedTender ? ` (المنافسة الحالية: ${relatedTender.name})` : ''}.`}
+                  {...(onSectionChange
+                    ? {
+                        actionLabel: 'إدارة المنافسات',
+                        onAction: () => onSectionChange('tenders'),
+                      }
+                    : {})}
+                />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* الجدول الزمني */}
         <TabsContent value="timeline" className="space-y-4">
-          <ProjectTimelineTab
-            startDate={project.startDate}
-            endDate={project.endDate}
-            progress={project.progress || 0}
+          <TimelineCard
+            project={{
+              startDate: project.startDate,
+              endDate: project.endDate,
+              progress: project.progress || 0,
+            }}
           />
         </TabsContent>
 
         {/* المشتريات المرتبطة */}
         <TabsContent value="purchases" className="space-y-4">
-          <ProjectPurchasesTab purchaseOrders={purchaseOrders} formatDateOnly={formatDateOnly} />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                أوامر الشراء المرتبطة
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PurchasesTable orders={purchaseOrders} formatDateOnly={formatDateOnly} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* المستندات والمرفقات */}
         <TabsContent value="attachments" className="space-y-4">
-          <ProjectAttachmentsTab
-            attachments={attachments}
-            isUploading={isUploading}
-            onFileUpload={handleFileUpload}
-            onDeleteAttachment={handleDeleteAttachment}
-            onDownloadAttachment={handleDownloadAttachment}
-            onRefreshAttachments={refreshAttachments}
-            formatTimestamp={formatTimestamp}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                المستندات والمرفقات
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-3">
+                <input
+                  aria-label="رفع ملف"
+                  type="file"
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                />
+                <Button variant="outline" size="sm" onClick={() => refreshAttachments()}>
+                  تحديث القائمة
+                </Button>
+              </div>
+              <AttachmentsList
+                attachments={attachments}
+                onDelete={handleDeleteAttachment}
+                onDownload={handleDownloadAttachment}
+                formatTimestamp={formatTimestamp}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
       {/* نموذج تعديل المشروع */}
-      <ProjectEditDialog
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-        formData={editFormData}
-        onFormDataChange={setEditFormData}
-        onSave={handleSaveEdit}
-      />
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>تعديل المشروع</DialogTitle>
+            <DialogDescription>تحديث بيانات ومعلومات المشروع</DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name">اسم المشروع *</Label>
+                <Input
+                  id="name"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData((prev) => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="client">العميل *</Label>
+                <Input
+                  id="client"
+                  value={editFormData.client}
+                  onChange={(e) => setEditFormData((prev) => ({ ...prev, client: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="description">وصف المشروع</Label>
+              <Textarea
+                id="description"
+                value={editFormData.description}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({ ...prev, description: e.target.value }))
+                }
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="location">الموقع</Label>
+                <Input
+                  id="location"
+                  value={editFormData.location}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({ ...prev, location: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="contractValue">قيمة العقد (الإيرادات) - ريال</Label>
+                <Input
+                  id="contractValue"
+                  type="number"
+                  value={editFormData.contractValue ?? editFormData.budget ?? 0}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({ ...prev, contractValue: Number(e.target.value) }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="estimatedCost">التكلفة التقديرية (الميزانية المخططة) - ريال</Label>
+                <Input
+                  id="estimatedCost"
+                  type="number"
+                  value={editFormData.estimatedCost ?? 0}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({ ...prev, estimatedCost: Number(e.target.value) }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="startDate">تاريخ البداية</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={editFormData.startDate}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({ ...prev, startDate: e.target.value }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="endDate">تاريخ الانتهاء</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={editFormData.endDate}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({ ...prev, endDate: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="status">الحالة</Label>
+                <Select
+                  value={editFormData.status}
+                  onValueChange={(value: any) =>
+                    setEditFormData((prev) => ({ ...prev, status: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="planning">تحت التخطيط</SelectItem>
+                    <SelectItem value="active">نشط</SelectItem>
+                    <SelectItem value="paused">متوقف مؤقتاً</SelectItem>
+                    <SelectItem value="completed">مكتمل</SelectItem>
+                    <SelectItem value="delayed">متأخر</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="priority">الأولوية</Label>
+                <Select
+                  value={editFormData.priority}
+                  onValueChange={(value: any) =>
+                    setEditFormData((prev) => ({ ...prev, priority: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">منخفضة</SelectItem>
+                    <SelectItem value="medium">متوسطة</SelectItem>
+                    <SelectItem value="high">عالية</SelectItem>
+                    <SelectItem value="critical">حرجة</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="progress">نسبة الإنجاز (%)</Label>
+                <Input
+                  id="progress"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={editFormData.progress}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({ ...prev, progress: Number(e.target.value) }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              إلغاء
+            </Button>
+            <Button onClick={handleSaveEdit}>حفظ التحديثات</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* نموذج إضافة مشترى */}
       {/* تأكيد الحذف */}
@@ -1018,6 +1508,145 @@ export function EnhancedProjectDetails({
         </DialogContent>
       </Dialog>
     </PageLayout>
+  )
+}
+
+// (Removed legacy CostsTable component – superseded by ProjectCostView)
+
+// ===============================
+// 🧾 جدول المشتريات المرتبطة
+// ===============================
+function PurchasesTable(props: {
+  orders: any[]
+  formatDateOnly: (value: string | number | Date | null | undefined, fallback?: string) => string
+}) {
+  const { orders, formatDateOnly } = props
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>رقم أمر الشراء</TableHead>
+          <TableHead>المورد/العميل</TableHead>
+          <TableHead>التاريخ</TableHead>
+          <TableHead>المبلغ</TableHead>
+          <TableHead>الحالة</TableHead>
+          <TableHead>بنود</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {(orders || []).map((o) => (
+          <TableRow key={o.id}>
+            <TableCell className="font-medium">{o.id}</TableCell>
+            <TableCell>{o.client || '—'}</TableCell>
+            <TableCell>{formatDateOnly(o.createdDate, '—')}</TableCell>
+            <TableCell className="font-medium">{formatCurrency(o.value || 0)}</TableCell>
+            <TableCell>
+              <Badge variant="secondary">{o.status || '—'}</Badge>
+            </TableCell>
+            <TableCell>{o.items?.length || 0}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
+}
+
+// ===============================
+// ⏱️ الجدول الزمني (Timeline)
+// ===============================
+function TimelineCard(props: {
+  project: { startDate: string; endDate: string; progress: number }
+}) {
+  const { startDate, endDate, progress } = props.project
+  const start = startDate ? new Date(startDate).getTime() : Date.now()
+  const end = endDate ? new Date(endDate).getTime() : start + 30 * 24 * 3600 * 1000
+  const dateFormatter = new Intl.DateTimeFormat('ar-SA', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+  // تقسيم تقريبي للمراحل
+  const planning = Math.round(0.2 * 100)
+  const execution = Math.round(0.7 * 100)
+  const handover = 100 - planning - execution
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          الجدول الزمني
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="text-sm text-muted-foreground flex justify-between">
+          <span>البداية: {dateFormatter.format(new Date(start))}</span>
+          <span>النهاية: {dateFormatter.format(new Date(end))}</span>
+        </div>
+        <div className="w-full h-4 rounded overflow-hidden flex">
+          <div className="h-full bg-info flex-[2]" title="تخطيط" />
+          <div className="h-full bg-success flex-[7]" title="تنفيذ" />
+          <div className="h-full bg-warning flex-[1]" title="تسليم" />
+        </div>
+        <div className="text-sm flex justify-between">
+          <span>تخطيط: {planning}%</span>
+          <span>تنفيذ: {execution}%</span>
+          <span>تسليم: {handover}%</span>
+        </div>
+        <div className="mt-2">
+          <div className="flex justify-between text-sm mb-1">
+            <span>نسبة الإنجاز</span>
+            <span>{progress}%</span>
+          </div>
+          <Progress value={progress} className="h-2" />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ===============================
+// 📎 قائمة المرفقات
+// ===============================
+function AttachmentsList(props: {
+  attachments: ProjectAttachment[]
+  onDelete: (id: string) => void
+  onDownload: (att: ProjectAttachment) => void
+  formatTimestamp: (value: string | number | Date | null | undefined) => string
+}) {
+  const { attachments, onDelete, onDownload, formatTimestamp } = props
+  if (!attachments || attachments.length === 0) {
+    return (
+      <EmptyState
+        icon={FileText}
+        title="لا توجد مرفقات"
+        description="ابدأ برفع ملفات المشروع لحفظ الوثائق المهمة في مكان واحد."
+      />
+    )
+  }
+  return (
+    <div className="space-y-2">
+      {attachments.map((att) => (
+        <div key={att.id} className="flex items-center justify-between border rounded-md p-2">
+          <div className="flex items-center gap-3">
+            <FileText className="h-5 w-5 text-muted-foreground" />
+            <div className="flex flex-col">
+              <span className="font-medium">{att.name}</span>
+              <span className="text-xs text-muted-foreground">
+                {formatTimestamp(att.uploadedAt)} • {(att.size / 1024).toFixed(1)} ك.ب
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => onDownload(att)}>
+              تحميل
+            </Button>
+            <Button size="sm" variant="destructive" onClick={() => onDelete(att.id)}>
+              حذف
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 

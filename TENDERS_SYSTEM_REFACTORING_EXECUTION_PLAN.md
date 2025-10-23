@@ -960,9 +960,42 @@ src/presentation/components/tenders/TenderDetails/
 - ✅ `components/index.ts` - تصدير جميع Components
 - ✅ `hooks/index.ts` - تصدير جميع Hooks
 
-### 3.4 إنشاء التبويبات ⏳
+### 3.4 إنشاء التبويبات 🔄
 
-#### 3.4.1 GeneralInfoTab.tsx ⏳
+**الحالة:** 🔄 قيد التنفيذ (2/5 مكتملة)
+**التاريخ:** 2025-10-23
+
+#### 3.4.1 GeneralInfoTab.tsx ✅
+
+**المسؤولية:** تبويب المعلومات العامة
+**الأسطر:** ~195 سطر
+**الحالة:** ✅ مكتمل
+
+```typescript
+✅ Created: tabs/GeneralInfoTab.tsx
+// - Status alerts (ready, needs files, incomplete pricing)
+// - General info card (client, type, location, description)
+// - Dates & values card (deadline, submission, booklet price, expected value)
+// - Technical & financial info (tender number, source, bonds)
+// - Uses TenderInfoCard & InfoRow components
+```
+
+#### 3.4.2 AttachmentsTab.tsx ✅
+
+**المسؤولية:** تبويب المرفقات
+**الأسطر:** ~65 سطر
+**الحالة:** ✅ مكتمل
+
+```typescript
+✅ Created: tabs/AttachmentsTab.tsx
+// - Technical files alert
+// - AttachmentItem components list
+// - Preview & download actions
+```
+
+**✅ مكتمل حتى الآن:** 2 tabs, ~260 سطر
+
+#### 3.4.3 TimelineTab.tsx ⏳
 
 #### 3.4.2 QuantitiesTab.tsx ⏳
 
