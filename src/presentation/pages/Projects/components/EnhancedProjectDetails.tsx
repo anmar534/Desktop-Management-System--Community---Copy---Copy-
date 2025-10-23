@@ -51,25 +51,11 @@ import {
 import { useBOQ } from '@/application/hooks/useBOQ'
 import { APP_EVENTS, emit } from '@/events/bus'
 import { buildPricingMap } from '@/shared/utils/pricing/normalizePricing'
-import { safeLocalStorage, whenStorageReady } from '@/shared/utils/storage/storage'
+import { whenStorageReady } from '@/shared/utils/storage/storage'
 import { projectBudgetService } from '@/application/services/projectBudgetService'
 import type { ProjectBudgetComparison } from '@/application/services/projectBudgetService'
 // Removed unused Expense type (legacy cost table eliminated)
-
-// ===============================
-// 📎 أنواع مساعدة داخلية للمرفقات وتكاليف الجدول
-// ===============================
-
-interface ProjectAttachment {
-  id: string
-  name: string
-  size: number
-  mimeType: string
-  uploadedAt: string
-  contentBase64: string
-}
-
-// Legacy CostRow interface removed (superseded by ProjectCostView domain model)
+// Removed ProjectAttachment interface (moved to useProjectAttachments hook)
 
 // واجهة البيانات
 interface ProjectDetailsProps {
@@ -98,8 +84,6 @@ export function EnhancedProjectDetails({
   const [budgetSummary, setBudgetSummary] = useState<any>(null)
   const [budgetLoading, setBudgetLoading] = useState(false)
   // Legacy sorting & per-expense state removed (handled by new ProjectCostView)
-  const [isUploading, setIsUploading] = useState(false)
-  const [attachments, setAttachments] = useState<ProjectAttachment[]>([])
   const [boqRefreshTick, setBoqRefreshTick] = useState(0)
   const [boqAvailability, setBoqAvailability] = useState({
     hasProjectBOQ: false,
@@ -107,43 +91,6 @@ export function EnhancedProjectDetails({
   })
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
   const [relatedTender, setRelatedTender] = useState<Tender | null>(null)
-  const quantityFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat('ar-SA', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-      }),
-    [],
-  )
-  const formatQuantity = useCallback(
-    (value: number | string | null | undefined) => {
-      const numeric = typeof value === 'number' ? value : Number(value ?? 0)
-      const safeValue = Number.isFinite(numeric) ? numeric : 0
-      return quantityFormatter.format(safeValue)
-    },
-    [quantityFormatter],
-  )
-  const timestampFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat('ar-SA', {
-        dateStyle: 'short',
-        timeStyle: 'short',
-      }),
-    [],
-  )
-  const formatTimestamp = useCallback(
-    (value: string | number | Date | null | undefined) => {
-      if (value === null || value === undefined) {
-        return '—'
-      }
-      const date = value instanceof Date ? value : new Date(value)
-      if (Number.isNaN(date.getTime())) {
-        return '—'
-      }
-      return timestampFormatter.format(date)
-    },
-    [timestampFormatter],
-  )
   const dateOnlyFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat('ar-SA', {
@@ -457,10 +404,6 @@ export function EnhancedProjectDetails({
     }
   }
 
-  // مفاتيح التخزين للمرفقات والتكاليف التقديرية
-  const ATTACHMENTS_KEY = project ? `project_attachments_${project.id}` : ''
-  // Removed: legacy local cost plan key (superseded by cost envelopes)
-
   // تهيئة بيانات النموذج عند العثور على المشروع
   useEffect(() => {
     if (project) {
@@ -480,17 +423,6 @@ export function EnhancedProjectDetails({
       })
     }
   }, [project])
-
-  // تحميل المرفقات (تمت إزالة تحميل خطة التكلفة القديمة)
-  useEffect(() => {
-    if (!project) return
-    try {
-      const savedAtt = safeLocalStorage.getItem<ProjectAttachment[]>(ATTACHMENTS_KEY, [])
-      setAttachments(savedAtt)
-    } catch (error) {
-      console.warn('تعذر تحميل المرفقات المخزنة محلياً:', error)
-    }
-  }, [projectId, project, ATTACHMENTS_KEY])
 
   // تحميل بيانات مقارنة الميزانية
   useEffect(() => {
@@ -608,72 +540,8 @@ export function EnhancedProjectDetails({
   // Expense deletion logic tied to legacy mixed table removed.
 
   // ===============================
-  // 📎 إدارة المرفقات (رفع/عرض/حذف/تنزيل)
+  // 📎 إدارة المرفقات - تمت إزالتها (تم نقلها إلى useProjectAttachments hook)
   // ===============================
-  const toBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const res = reader.result as string
-        const base64 = res.includes(',') ? res.split(',')[1] : res
-        resolve(base64)
-      }
-      reader.onerror = (err) => reject(err)
-      reader.readAsDataURL(file)
-    })
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!project) return
-    const file = e.target.files?.[0]
-    if (!file) return
-    setIsUploading(true)
-    try {
-      const base64 = await toBase64(file)
-      const att: ProjectAttachment = {
-        id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        name: file.name,
-        size: file.size,
-        mimeType: file.type,
-        uploadedAt: new Date().toISOString(),
-        contentBase64: base64,
-      }
-      const updated = [...attachments, att]
-      setAttachments(updated)
-      safeLocalStorage.setItem(ATTACHMENTS_KEY, updated)
-      toast.success('تم رفع الملف بنجاح')
-    } catch (err) {
-      console.error(err)
-      toast.error('فشل في رفع الملف')
-    } finally {
-      setIsUploading(false)
-      e.target.value = ''
-    }
-  }
-
-  const refreshAttachments = () => {
-    if (!project) return
-    const saved = safeLocalStorage.getItem<ProjectAttachment[]>(ATTACHMENTS_KEY, [])
-    setAttachments(saved)
-  }
-
-  const handleDeleteAttachment = (id: string) => {
-    const updated = attachments.filter((a) => a.id !== id)
-    setAttachments(updated)
-    safeLocalStorage.setItem(ATTACHMENTS_KEY, updated)
-  }
-
-  const handleDownloadAttachment = (att: ProjectAttachment) => {
-    try {
-      const dataUrl = `data:${att.mimeType};base64,${att.contentBase64}`
-      const a = document.createElement('a')
-      a.href = dataUrl
-      a.download = att.name
-      a.click()
-    } catch (e) {
-      console.error(e)
-      toast.error('تعذر تنزيل الملف')
-    }
-  }
 
   // الإحصائيات السريعة
   const quickStats = [
@@ -918,15 +786,23 @@ export function EnhancedProjectDetails({
         <TabsContent value="overview" className="space-y-6">
           <ProjectOverviewTab
             project={project}
-            statusInfo={statusInfo}
             financialMetrics={{
               contractValue,
               estimatedCost,
               actualCost,
               actualProfit,
+              expectedProfit,
               profitMargin,
               financialVariance,
+              spentPercentage,
             }}
+            financialHealth={
+              financialVariance <= 0
+                ? 'green'
+                : financialVariance <= estimatedCost * 0.1
+                  ? 'yellow'
+                  : 'red'
+            }
             onNavigateTo={handleNavigateTo}
           />
         </TabsContent>
@@ -949,8 +825,6 @@ export function EnhancedProjectDetails({
             budgetSummary={budgetSummary}
             budgetLoading={budgetLoading}
             relatedTender={relatedTender}
-            formatQuantity={formatQuantity}
-            formatCurrency={formatCurrency}
             onSyncPricing={handleSyncPricingData}
             onNavigateToTenders={onSectionChange ? () => onSectionChange('tenders') : undefined}
           />
@@ -967,20 +841,12 @@ export function EnhancedProjectDetails({
 
         {/* المشتريات المرتبطة */}
         <TabsContent value="purchases" className="space-y-4">
-          <ProjectPurchasesTab purchaseOrders={purchaseOrders} formatDateOnly={formatDateOnly} />
+          <ProjectPurchasesTab purchaseOrders={purchaseOrders} />
         </TabsContent>
 
         {/* المستندات والمرفقات */}
         <TabsContent value="attachments" className="space-y-4">
-          <ProjectAttachmentsTab
-            attachments={attachments}
-            isUploading={isUploading}
-            onFileUpload={handleFileUpload}
-            onDeleteAttachment={handleDeleteAttachment}
-            onDownloadAttachment={handleDownloadAttachment}
-            onRefreshAttachments={refreshAttachments}
-            formatTimestamp={formatTimestamp}
-          />
+          <ProjectAttachmentsTab projectId={project.id} />
         </TabsContent>
       </Tabs>
 
