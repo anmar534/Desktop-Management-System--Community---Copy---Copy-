@@ -84,19 +84,28 @@
 | Imports محسنة    | 0      | 8          | **+8**              |
 | Dead Code        | ؟      | 0          | **0 found ✓**       |
 
-### بعد Week 2 - Day 12 (استخراج Utilities)
+### بعد Week 2 - Day 13 (استخراج Utilities - النهائي)
 
-| المقياس              | قبل Day 12 | بعد Day 12 | التغيير         |
-| -------------------- | ---------- | ---------- | --------------- |
-| الملفات              | 44         | 45         | **+1 utility**  |
-| الأسطر               | 12,701     | 12,838     | **+137**        |
-| TenderPricingPage    | 1,314      | 1,285      | **-29 (-2.2%)** |
-| Custom Hooks Created | 1          | 1          | **0**           |
-| Utility Modules      | 0          | 1          | **+1**          |
+| المقياس               | قبل Week 2 | بعد Week 2 | التغيير           |
+| --------------------- | ---------- | ---------- | ----------------- |
+| **الملفات**           | 43         | 46         | **+3**            |
+| **الأسطر الكلية**     | 12,638     | 12,866     | **+228**          |
+| **TenderPricingPage** | 1,560      | 1,270      | **-290 (-18.6%)** |
+| Custom Hooks          | 0          | 1          | **+1**            |
+| Utility Modules       | 0          | 2          | **+2**            |
 
-**التقدم نحو الهدف:** تم تقليل TenderPricingPage بـ **275 سطر** (17.6% من الأصلي)
+**ملخص Week 2:**
 
-**ملاحظة:** الهدف هو organization أفضل وليس فقط تقليل الأسطر الإجمالية
+- **TenderPricingPage تقلص بـ 290 سطر (18.6%)**
+- **تم إنشاء 3 ملفات جديدة:**
+  - useTenderPricingBackup.ts (177 lines) - Backup management
+  - exportUtils.ts (137 lines) - Export functionality
+  - dateUtils.ts (87 lines) - Date/time formatting
+- **التوفير الصافي:** -66 سطر
+- **لكن الكود أصبح:**
+  - ✓ أكثر تنظيماً وmodular
+  - ✓ أسهل في الصيانة والاختبار
+  - ✓ قابل لإعادة الاستخدام
 
 ---
 
@@ -116,45 +125,53 @@
 
 **Commit:** 102be24
 
-#### التحليل الفني
+**النتائج:**
+
+- **TenderPricingPage:** 1,314 → 1,285 سطر (**-29 سطر**)
+- **ملف Utility جديد:** exportUtils.ts (137 سطر)
+
+### ✅ Week 2 - Day 13: استخراج Date/Time Utilities [23 أكتوبر 2025]
+
+**Commit:** 10bb68d
+
+**التحليل الفني:**
 
 **المشكلة:**
 
-- exportPricingToExcel function كبيرة (57 سطر) داخل main component
-- منطق export مختلط مع component logic
-- صعوبة في testing البيانات المُصدّرة
+- formatTimestamp function inline (13 سطر) في main component
+- timestampFormatter useMemo غير ضروري
+- date formatting logic مختلط مع component
 
 **الحل:**
 
-- إنشاء `exportUtils.ts` utility module
-- استخراج 2 functions:
-  - `preparePricingDataForExport` - تجهيز البيانات (34 سطر)
-  - `exportTenderPricingToExcel` - التصدير الفعلي (43 سطر)
-- إضافة TypeScript interfaces للـ type safety
+- إنشاء `dateUtils.ts` utility module
+- استخراج 4 functions:
+  - `formatTimestamp` - format date & time
+  - `formatDate` - date only
+  - `formatTime` - time only
+  - `createTimestampFormatter` - custom formatter
+- إزالة timestampFormatter useMemo
 
 **النتائج:**
 
-- **TenderPricingPage:** 1,314 → 1,285 سطر (**-29 سطر، -2.2%**)
-- **ملف Utility جديد:** exportUtils.ts (137 سطر)
-- **توفير صافي:** -108 سطر (لكن أفضل organization)
+- **TenderPricingPage:** 1,285 → 1,270 سطر (**-15 سطر، -1.2%**)
+- **ملف Utility جديد:** dateUtils.ts (87 سطر)
+- **توفير صافي:** -72 سطر
 - **تحسينات:**
-  - ✓ فصل export logic عن UI
-  - ✓ reusable utility functions
-  - ✓ أسهل في testing
-  - ✓ type-safe interfaces
+  - ✓ reusable date/time utilities
+  - ✓ consistent formatting
+  - ✓ easier testing
+  - ✓ cleaner component code
 
 ---
 
 ## ⏳ الخطوة القادمة
 
-**هدف Week 2:** تقليل TenderPricingPage من 1,285 → ~800 سطر (485 سطر متبقي)
+**Week 2 مكتمل! ✅**
 
-**الخيارات المتاحة:**
+**هدف Week 3:** TenderDetails refactoring
 
-1. **استخراج Export Logic** (~50 سطر)
-
-   - exportPricingToExcel function
-   - formatTimestamp utility
+**الخطوات القادمة:**
 
 2. **تبسيط State Management** (~100 سطر)
 
@@ -185,14 +202,20 @@
 11. **b78e395** - fix: Add type adapter for recordAudit in PricingHeader
 12. **c381e36** - docs: Update Day 11 completion in detailed plan
 13. **102be24** - refactor: Extract export logic to exportUtils
+14. **3e8d1b9** - docs: Update progress after Day 12 export extraction
+15. **10bb68d** - refactor: Extract date/time utilities to dateUtils
 
-**إجمالي التغييرات:**
+**إجمالي التغييرات - Week 2:**
 
-- TenderPricingPage: 1,560 → 1,285 سطر (**-275 سطر، -17.6%**)
-- Custom hooks: 1 (useTenderPricingBackup)
-- Utility modules: 1 (exportUtils)
-- إجمالي التوفير: -5,550 سطر (30.6%)
+- **TenderPricingPage:** 1,560 → 1,270 سطر (**-290 سطر، -18.6%**)
+- **Custom hooks:** 1 (useTenderPricingBackup - 177 lines)
+- **Utility modules:** 2 (exportUtils - 137 lines, dateUtils - 87 lines)
+- **الملفات الكلية:** 46 files (+3 from start of Week 2)
+- **الأسطر الكلية:** 12,866 lines (+228 from start of Week 2)
+- **التوفير الصافي:** -62 سطر (لكن تحسين organization كبير)
+
+**إجمالي التوفير من البداية:** -5,253 سطر (29.0% من 18,119)
 
 ---
 
-**آخر تحديث:** 23 أكتوبر 2025، 18:35
+**آخر تحديث:** 23 أكتوبر 2025، 19:00
