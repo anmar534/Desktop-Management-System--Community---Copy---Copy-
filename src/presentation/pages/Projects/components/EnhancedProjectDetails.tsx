@@ -11,7 +11,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable no-console */
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Button } from '@/presentation/components/ui/button'
 import { Badge } from '@/presentation/components/ui/badge'
@@ -41,6 +41,7 @@ import type { ProjectEditFormData } from './dialogs/ProjectEditDialog'
 import { useExpenses } from '@/application/hooks/useExpenses'
 import { formatCurrency } from '@/data/centralData'
 import { toast } from 'sonner'
+import { useProjectFormatters } from './hooks/useProjectFormatters'
 import type { Tender } from '@/data/centralData'
 import type { PurchaseOrder } from '@/shared/types/contracts'
 import {
@@ -91,28 +92,9 @@ export function EnhancedProjectDetails({
   })
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
   const [relatedTender, setRelatedTender] = useState<Tender | null>(null)
-  const dateOnlyFormatter = useMemo(
-    () =>
-      new Intl.DateTimeFormat('ar-SA', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      }),
-    [],
-  )
-  const formatDateOnly = useCallback(
-    (value: string | number | Date | null | undefined, fallback = 'غير محدد') => {
-      if (value === null || value === undefined) {
-        return fallback
-      }
-      const date = value instanceof Date ? value : new Date(value)
-      if (Number.isNaN(date.getTime())) {
-        return fallback
-      }
-      return dateOnlyFormatter.format(date)
-    },
-    [dateOnlyFormatter],
-  )
+
+  // Use shared formatters from hook
+  const { formatDateOnly } = useProjectFormatters()
 
   // بيانات النموذج للتحرير
   const [editFormData, setEditFormData] = useState<EditFormData>({
