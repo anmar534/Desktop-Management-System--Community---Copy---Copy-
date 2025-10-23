@@ -44,16 +44,14 @@ import { toast } from 'sonner'
 import { useProjectFormatters } from './hooks/useProjectFormatters'
 import { useProjectData } from './hooks/useProjectData'
 import { useProjectCosts } from './hooks/useProjectCosts'
+import { useBOQSync } from './hooks/useBOQSync'
 import type { Tender } from '@/data/centralData'
 import type { PurchaseOrder } from '@/shared/types/contracts'
 import {
-  getBOQRepository,
   getPurchaseOrderRepository,
   getTenderRepository,
 } from '@/application/services/serviceRegistry'
-import { useBOQ } from '@/application/hooks/useBOQ'
 import { APP_EVENTS, emit } from '@/events/bus'
-import { buildPricingMap } from '@/shared/utils/pricing/normalizePricing'
 import { whenStorageReady } from '@/shared/utils/storage/storage'
 import { projectBudgetService } from '@/application/services/projectBudgetService'
 import type { ProjectBudgetComparison } from '@/application/services/projectBudgetService'
@@ -90,14 +88,15 @@ export function EnhancedProjectDetails({
   const [budgetComparison, setBudgetComparison] = useState<ProjectBudgetComparison[]>([])
   const [budgetSummary, setBudgetSummary] = useState<any>(null)
   const [budgetLoading, setBudgetLoading] = useState(false)
-  // Legacy sorting & per-expense state removed (handled by new ProjectCostView)
-  const [boqRefreshTick, setBoqRefreshTick] = useState(0)
-  const [boqAvailability, setBoqAvailability] = useState({
-    hasProjectBOQ: false,
-    hasTenderBOQ: false,
-  })
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
   const [relatedTender, setRelatedTender] = useState<Tender | null>(null)
+
+  // Use BOQ sync hook for BOQ operations
+  const { boqAvailability, syncWithPricing, importFromTender } = useBOQSync({
+    projectId: project?.id ?? '',
+    tenderId: relatedTender?.id,
+    purchaseOrders,
+  })
 
   // Use shared formatters from hook
   const { formatDateOnly } = useProjectFormatters()
@@ -116,14 +115,6 @@ export function EnhancedProjectDetails({
     status: 'active',
     priority: 'medium',
     progress: 0,
-  })
-
-  const currentProjectId = project?.id ?? ''
-  const currentTenderId = relatedTender?.id
-  const { syncWithPricingData } = useBOQ({
-    projectId: currentProjectId,
-    tenderId: currentTenderId,
-    purchaseOrders,
   })
 
   useEffect(() => {
@@ -182,210 +173,15 @@ export function EnhancedProjectDetails({
 
   const projectExpenses = project ? getExpensesByProject(project.id) : []
 
-  // الاستماع لتحديثات BOQ من النظام المركزي لتحديث العرض فورًا
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return undefined
-    }
-
-    const handler = (event: CustomEvent<{ projectId?: string; tenderId?: string }>) => {
-      const detail = event?.detail ?? {}
-      if (
-        (currentProjectId && detail.projectId === currentProjectId) ||
-        (currentTenderId && detail.tenderId === currentTenderId)
-      ) {
-        setBoqRefreshTick((v) => v + 1)
-      }
-    }
-
-    try {
-      window.addEventListener(APP_EVENTS.BOQ_UPDATED, handler as EventListener)
-    } catch (error) {
-      console.warn('تعذر تسجيل مستمع تحديث BOQ:', error)
-    }
-
-    return () => {
-      try {
-        window.removeEventListener(APP_EVENTS.BOQ_UPDATED, handler as EventListener)
-      } catch (error) {
-        console.warn('تعذر إزالة مستمع تحديث BOQ:', error)
-      }
-    }
-  }, [currentProjectId, currentTenderId])
-
-  // تحديث حالة توفر BOQ للمشروع والمنافسة المرتبطة
-  useEffect(() => {
-    if (!currentProjectId) {
-      setBoqAvailability({ hasProjectBOQ: false, hasTenderBOQ: false })
-      return
-    }
-
-    let cancelled = false
-    const boqRepository = getBOQRepository()
-
-    void (async () => {
-      try {
-        const projectPromise = boqRepository.getByProjectId(currentProjectId)
-        const tenderPromise = currentTenderId
-          ? boqRepository.getByTenderId(currentTenderId)
-          : Promise.resolve(null)
-        const [projectBOQ, tenderBOQ] = await Promise.all([projectPromise, tenderPromise])
-
-        if (!cancelled) {
-          setBoqAvailability({
-            hasProjectBOQ: Boolean(projectBOQ),
-            hasTenderBOQ: Boolean(tenderBOQ?.items?.length),
-          })
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.warn('تعذر تحديث توفر BOQ:', error)
-        }
-      }
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [currentProjectId, currentTenderId, boqRefreshTick])
-
-  // استيراد جدول الكميات من المنافسة إلى المشروع
+  // Wrapper functions for BOQ operations from hook
   const handleImportBOQFromTender = async () => {
-    try {
-      if (!project || !relatedTender) return
-
-      const boqRepository = getBOQRepository()
-      let tenderBOQ = await boqRepository.getByTenderId(relatedTender.id)
-
-      if (!tenderBOQ) {
-        const { pricingService } = await import('@/application/services/pricingService')
-        const pricingData = await pricingService.loadTenderPricing(relatedTender.id)
-        const pricingArray = pricingData?.pricing
-
-        if (pricingArray && pricingArray.length > 0) {
-          const pricingMap = buildPricingMap(pricingArray)
-          const boqItems: any[] = []
-          let totalValue = 0
-
-          for (const [, normalized] of pricingMap.entries()) {
-            boqItems.push(normalized)
-            totalValue += normalized.totalPrice
-          }
-
-          if (boqItems.length > 0) {
-            const existingTenderBOQ = await boqRepository.getByTenderId(relatedTender.id)
-            tenderBOQ = {
-              id: existingTenderBOQ?.id ?? `boq_tender_${relatedTender.id}`,
-              tenderId: relatedTender.id,
-              projectId: undefined,
-              items: boqItems,
-              totalValue,
-              lastUpdated: new Date().toISOString(),
-            }
-            await boqRepository.createOrUpdate(tenderBOQ as any)
-            console.log('✅ تم إنشاء BOQ للمنافسة من بيانات التسعير (normalizePricing)')
-          }
-        }
-      }
-
-      if (!tenderBOQ) {
-        toast.info('لا يوجد جدول كميات أو بيانات تسعير مرتبطة بهذه المنافسة')
-        return
-      }
-
-      const existingProjectBOQ = await boqRepository.getByProjectId(project.id)
-      const projectBOQ = {
-        id: existingProjectBOQ?.id ?? `boq_project_${project.id}`,
-        totalValue: tenderBOQ.totalValue,
-        items: tenderBOQ.items.map((item) => ({
-          ...item,
-          originalId: item.id,
-          actualQuantity: item.actualQuantity ?? item.quantity,
-          actualUnitPrice: item.actualUnitPrice ?? item.unitPrice,
-        })),
-        projectId: project.id,
-        tenderId: undefined,
-        lastUpdated: new Date().toISOString(),
-      }
-
-      await boqRepository.createOrUpdate(projectBOQ as any)
-      toast.success('تم استيراد جدول الكميات من المنافسة إلى هذا المشروع')
-      setBoqRefreshTick((v) => v + 1)
-    } catch (e) {
-      console.error(e)
-      toast.error('تعذر استيراد جدول الكميات')
+    if (relatedTender) {
+      await importFromTender(relatedTender)
     }
   }
 
-  // إعادة مزامنة بيانات التسعير للمشروع الحالي
   const handleSyncPricingData = async () => {
-    try {
-      if (!project || !relatedTender) {
-        toast.error('لا يوجد مشروع أو منافسة مرتبطة')
-        return
-      }
-
-      toast.info('جاري إعادة مزامنة بيانات التسعير من تبويب الملخص...')
-
-      // استخدام الدالة المحدثة لمزامنة بيانات التسعير مباشرة عبر طبقة المستودعات
-      const directSyncSucceeded = await syncWithPricingData()
-
-      if (directSyncSucceeded) {
-        setBoqRefreshTick((v) => v + 1)
-        toast.success('تمت مزامنة بيانات التسعير بنجاح')
-        return
-      }
-
-      // في حالة فشل المزامنة المباشرة، استخدام الطريقة التقليدية
-      console.log('⚠️ تعذرت المزامنة المباشرة، محاولة الطريقة التقليدية...')
-
-      const boqRepository = getBOQRepository()
-      const projectBOQ = await boqRepository.getByProjectId(project.id)
-      if (!projectBOQ) {
-        toast.error('لا يوجد جدول كميات للمشروع')
-        return
-      }
-
-      // جلب بيانات التسعير من المنافسة
-      const { pricingService } = await import('@/application/services/pricingService')
-      const pricingData = await pricingService.loadTenderPricing(relatedTender.id)
-
-      if (!pricingData?.pricing || pricingData.pricing.length === 0) {
-        toast.error('لا توجد بيانات تسعير في المنافسة المرتبطة')
-        return
-      }
-
-      // بناء خريطة التسعير
-      const pricingMap = buildPricingMap(pricingData.pricing)
-      console.log('🔄 خريطة التسعير:', pricingMap)
-
-      // تطبيق الإصلاح على جميع البنود
-      const { repairBOQ } = await import('@/shared/utils/pricing/normalizePricing')
-      const result = repairBOQ(projectBOQ, pricingMap)
-
-      if (result.updated && result.repairedItems > 0) {
-        // تحديث BOQ بالبيانات المصلحة
-        const updatedBOQ = {
-          ...projectBOQ,
-          items: result.newItems,
-          lastUpdated: new Date().toISOString(),
-        }
-        await boqRepository.createOrUpdate(updatedBOQ as any)
-
-        // حذف مفتاح الإصلاح لإعادة تطبيقه
-        const { safeLocalStorage } = await import('@/shared/utils/storage/storage')
-        safeLocalStorage.removeItem(`boq_repair_applied_${projectBOQ.id}`)
-
-        setBoqRefreshTick((v) => v + 1)
-        toast.success(`تم إصلاح ${result.repairedItems} بند وإعادة مزامنة البيانات بنجاح`)
-        console.log('✅ إعادة المزامنة مكتملة:', { repairedItems: result.repairedItems })
-      } else {
-        toast.info('جميع البيانات محدثة بالفعل - لا حاجة للإصلاح')
-      }
-    } catch (error) {
-      console.error('خطأ في إعادة مزامنة التسعير:', error)
-      toast.error('تعذرت إعادة مزامنة بيانات التسعير')
-    }
+    await syncWithPricing()
   }
 
   // تهيئة بيانات النموذج عند العثور على المشروع
@@ -410,7 +206,8 @@ export function EnhancedProjectDetails({
 
   // تحميل بيانات مقارنة الميزانية
   useEffect(() => {
-    if (!currentProjectId || activeTab !== 'budget') {
+    const projectId = project?.id
+    if (!projectId || activeTab !== 'budget') {
       return
     }
 
@@ -420,8 +217,8 @@ export function EnhancedProjectDetails({
       setBudgetLoading(true)
       try {
         const [comparison, summary] = await Promise.all([
-          projectBudgetService.compareProjectBudget(currentProjectId),
-          projectBudgetService.getProjectBudgetSummary(currentProjectId),
+          projectBudgetService.compareProjectBudget(projectId),
+          projectBudgetService.getProjectBudgetSummary(projectId),
         ])
 
         if (!cancelled) {
@@ -445,7 +242,7 @@ export function EnhancedProjectDetails({
     return () => {
       cancelled = true
     }
-  }, [currentProjectId, activeTab])
+  }, [project?.id, activeTab])
 
   if (!project) {
     return (
