@@ -84,18 +84,19 @@
 | Imports محسنة    | 0      | 8          | **+8**              |
 | Dead Code        | ؟      | 0          | **0 found ✓**       |
 
-### بعد Week 2 - Day 11 (استخراج Hooks)
+### بعد Week 2 - Day 12 (استخراج Utilities)
 
-| المقياس              | قبل Week 2 | بعد Week 2 | التغيير           |
-| -------------------- | ---------- | ---------- | ----------------- |
-| الملفات              | 43         | 44         | **+1 hook**       |
-| الأسطر               | 12,638     | 12,701     | **+63**           |
-| TenderPricingPage    | 1,560      | 1,314      | **-246 (-15.8%)** |
-| Custom Hooks Created | 0          | 1          | **+1**            |
+| المقياس              | قبل Day 12 | بعد Day 12 | التغيير         |
+| -------------------- | ---------- | ---------- | --------------- |
+| الملفات              | 44         | 45         | **+1 utility**  |
+| الأسطر               | 12,701     | 12,838     | **+137**        |
+| TenderPricingPage    | 1,314      | 1,285      | **-29 (-2.2%)** |
+| Custom Hooks Created | 1          | 1          | **0**           |
+| Utility Modules      | 0          | 1          | **+1**          |
 
-**التقدم نحو الهدف:** 89.6% من هدف تخفيض الأسطر
+**التقدم نحو الهدف:** تم تقليل TenderPricingPage بـ **275 سطر** (17.6% من الأصلي)
 
-**ملاحظة:** الزيادة الطفيفة بسبب إنشاء hook منفصل (177 سطر)، لكن الملف الرئيسي انخفض بـ 246 سطر
+**ملاحظة:** الهدف هو organization أفضل وليس فقط تقليل الأسطر الإجمالية
 
 ---
 
@@ -103,38 +104,50 @@
 
 ### ✅ Week 2 - Day 11: استخراج Backup Logic [23 أكتوبر 2025]
 
-**Commit:** 804443c, 048cd7b
-
-#### التحليل الفني
-
-**المشكلة:**
-
-- TenderPricingPage كان يحتوي على 3 functions كبيرة للـ backup management (120+ سطر)
-- منطق backup مختلط مع presentation logic
-- صعوبة في testing و reusability
-
-**الحل:**
-
-- إنشاء `useTenderPricingBackup` hook منفصل
-- نقل 3 functions: `createBackup`, `loadBackupsList`, `restoreBackup`
-- عزل state management (backupsList) في الـ hook
+**Commit:** 804443c, 048cd7b, 28101e6, b78e395
 
 **النتائج:**
 
 - **TenderPricingPage:** 1,560 → 1,314 سطر (**-246 سطر، -15.8%**)
 - **ملف Hook جديد:** useTenderPricingBackup.ts (177 سطر)
 - **توفير صافي:** 69 سطر
+
+### ✅ Week 2 - Day 12: استخراج Export Logic [23 أكتوبر 2025]
+
+**Commit:** 102be24
+
+#### التحليل الفني
+
+**المشكلة:**
+
+- exportPricingToExcel function كبيرة (57 سطر) داخل main component
+- منطق export مختلط مع component logic
+- صعوبة في testing البيانات المُصدّرة
+
+**الحل:**
+
+- إنشاء `exportUtils.ts` utility module
+- استخراج 2 functions:
+  - `preparePricingDataForExport` - تجهيز البيانات (34 سطر)
+  - `exportTenderPricingToExcel` - التصدير الفعلي (43 سطر)
+- إضافة TypeScript interfaces للـ type safety
+
+**النتائج:**
+
+- **TenderPricingPage:** 1,314 → 1,285 سطر (**-29 سطر، -2.2%**)
+- **ملف Utility جديد:** exportUtils.ts (137 سطر)
+- **توفير صافي:** -108 سطر (لكن أفضل organization)
 - **تحسينات:**
-  - ✓ فصل concerns (business logic vs UI)
-  - ✓ قابلية إعادة استخدام الـ hook
-  - ✓ testability أفضل
-  - ✓ maintainability محسّن
+  - ✓ فصل export logic عن UI
+  - ✓ reusable utility functions
+  - ✓ أسهل في testing
+  - ✓ type-safe interfaces
 
 ---
 
 ## ⏳ الخطوة القادمة
 
-**هدف Week 2:** تقليل TenderPricingPage من 1,314 → ~800 سطر
+**هدف Week 2:** تقليل TenderPricingPage من 1,285 → ~800 سطر (485 سطر متبقي)
 
 **الخيارات المتاحة:**
 
@@ -170,9 +183,16 @@
 9. **048cd7b** - docs: Update progress - Week 2 Day 11 completed
 10. **28101e6** - docs: Update statistics after Week 2 Day 11 completion
 11. **b78e395** - fix: Add type adapter for recordAudit in PricingHeader
+12. **c381e36** - docs: Update Day 11 completion in detailed plan
+13. **102be24** - refactor: Extract export logic to exportUtils
 
-**إجمالي التغييرات:** -5,550 سطر صافي (30.6% تحسين) + 1 custom hook created
+**إجمالي التغييرات:**
+
+- TenderPricingPage: 1,560 → 1,285 سطر (**-275 سطر، -17.6%**)
+- Custom hooks: 1 (useTenderPricingBackup)
+- Utility modules: 1 (exportUtils)
+- إجمالي التوفير: -5,550 سطر (30.6%)
 
 ---
 
-**آخر تحديث:** 23 أكتوبر 2025، 18:10
+**آخر تحديث:** 23 أكتوبر 2025، 18:35
