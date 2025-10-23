@@ -3,6 +3,7 @@
  *
  * Displays budget comparison between estimated and actual costs
  * Shows variance analysis with color-coded alerts
+ * Refactored to use useProjectFormatters hook - Phase 1.3
  */
 
 import { DollarSign, AlertTriangle } from 'lucide-react'
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/compone
 import { Badge } from '@/presentation/components/ui/badge'
 import { Button } from '@/presentation/components/ui/button'
 import { EmptyState } from '@/presentation/components/layout/PageLayout'
+import { useProjectFormatters } from '../hooks/useProjectFormatters'
 import type { Tender } from '@/data/centralData'
 
 interface BudgetComparisonItem {
@@ -46,8 +48,6 @@ interface ProjectBudgetTabProps {
   budgetSummary: BudgetSummary | null
   budgetLoading: boolean
   relatedTender: Tender | null
-  formatQuantity: (value: number) => string
-  formatCurrency: (value: number) => string
   onSyncPricing: () => void
   onNavigateToTenders?: () => void
 }
@@ -57,11 +57,10 @@ export function ProjectBudgetTab({
   budgetSummary,
   budgetLoading,
   relatedTender,
-  formatQuantity,
-  formatCurrency,
   onSyncPricing,
   onNavigateToTenders,
 }: ProjectBudgetTabProps) {
+  const { formatQuantity, formatCurrency } = useProjectFormatters()
   return (
     <Card>
       <CardHeader>
