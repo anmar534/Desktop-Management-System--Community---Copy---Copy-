@@ -1,12 +1,5 @@
 // TenderPricingPage drives the full tender pricing workflow and persistence.
 import { saveToStorage, loadFromStorage, STORAGE_KEYS } from '@/shared/utils/storage/storage'
-import {
-  createTenderPricingBackup,
-  listTenderBackupEntries,
-  restoreTenderBackup,
-  noteBackupFailure,
-  type TenderPricingBackupPayload,
-} from '@/shared/utils/storage/backupManager'
 import { pricingService } from '@/application/services/pricingService'
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type {
@@ -17,7 +10,6 @@ import type {
   PricingRow,
   PricingData,
   PricingPercentages,
-  TenderBackupEntry,
   ExecutionMethod,
   PricingViewItem,
 } from '@/shared/types/pricing'
@@ -43,6 +35,7 @@ import { toast } from 'sonner'
 import { useTenderPricingState } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingState'
 import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
 import { usePricingTemplates } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingTemplates'
+import { useTenderPricingBackup } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingBackup'
 import { AlertCircle } from 'lucide-react'
 import { useTenderPricingPersistence } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingPersistence'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
@@ -432,7 +425,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   )
 
   const [isLoaded, setIsLoaded] = useState(false)
-  const [backupsList, setBackupsList] = useState<TenderBackupEntry[]>([])
 
   // Transform pricingData to include id property for domain pricing engine
   const pricingMapWithIds = useMemo(() => {
@@ -520,6 +512,21 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       setPricingData,
       formatCurrencyValue,
     })
+
+  // Custom hook for backup management
+  const { backupsList, createBackup, loadBackupsList, restoreBackup } = useTenderPricingBackup({
+    tenderId: tender.id,
+    tenderTitle,
+    pricingData,
+    quantityItemsCount: quantityItems.length,
+    defaultPercentages,
+    calculateProjectTotal,
+    setPricingData,
+    persistPricingAndBOQ,
+    recordAudit: (level, action, details, status) =>
+      recordPricingAudit(level as AuditEventLevel, action, details, status as AuditEventStatus),
+    getErrorMessage,
+  })
 
   const completedCount = useMemo(
     () => Array.from(pricingData.values()).filter((value) => value?.completed).length,
@@ -1249,121 +1256,8 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       mutateSectionRows(prev, section, (rows) => rows.filter((row) => row.id !== rowId)),
     )
 
-    markDirty()
     toast.success('تم حذف الصف بنجاح')
   }
-
-  // حفظ نسخة احتياطية من البيانات
-  const createBackup = useCallback(async () => {
-    const payload: TenderPricingBackupPayload = {
-      tenderId: tender.id,
-      tenderTitle,
-      pricing: Array.from(pricingData.entries()),
-      quantityItems,
-      completionPercentage:
-        quantityItems.length > 0 ? (pricingData.size / quantityItems.length) * 100 : 0,
-      totalValue: calculateProjectTotal(),
-      timestamp: new Date().toISOString(),
-      version: '1.0',
-    }
-
-    try {
-      await createTenderPricingBackup(payload, {
-        actor: 'tender-pricing-ui',
-        origin: 'renderer',
-      })
-      const updatedEntries = await listTenderBackupEntries(tender.id)
-      setBackupsList(updatedEntries)
-      toast.success('تم إنشاء نسخة احتياطية', {
-        description: 'تم حفظ نسخة احتياطية من البيانات بنجاح',
-        duration: 3000,
-      })
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : 'unknown-error'
-      recordPricingAudit(
-        'error',
-        'backup-create-failed',
-        {
-          message: getErrorMessage(error),
-          reason,
-        },
-        'error',
-      )
-      await noteBackupFailure(tender.id, reason, {
-        actor: 'tender-pricing-ui',
-        origin: 'renderer',
-      })
-      toast.error('فشل إنشاء النسخة الاحتياطية', {
-        description: 'تعذر حفظ النسخة الاحتياطية. يرجى المحاولة لاحقاً.',
-        duration: 4000,
-      })
-    }
-  }, [
-    tender.id,
-    tenderTitle,
-    pricingData,
-    quantityItems,
-    calculateProjectTotal,
-    recordPricingAudit,
-    getErrorMessage,
-  ])
-
-  // تحميل قائمة النسخ الاحتياطية عند فتح نافذة الاسترجاع
-  const loadBackupsList = useCallback(async () => {
-    const entries = await listTenderBackupEntries(tender.id)
-    setBackupsList(entries)
-  }, [tender.id])
-
-  // استرجاع نسخة احتياطية
-  const restoreBackup = useCallback(
-    async (entryId: string) => {
-      const snapshot = await restoreTenderBackup(tender.id, entryId, {
-        actor: 'tender-pricing-ui',
-        origin: 'renderer',
-      })
-
-      if (!snapshot) {
-        toast.error('تعذر العثور على النسخة الاحتياطية')
-        return
-      }
-
-      try {
-        const restoredMap = new Map<string, PricingData>(
-          snapshot.pricing as [string, PricingData][],
-        )
-        setPricingData(restoredMap)
-        await pricingService.saveTenderPricing(tender.id, {
-          pricing: Array.from(restoredMap.entries()),
-          defaultPercentages,
-          lastUpdated: new Date().toISOString(),
-        })
-        // مزامنة لقطة BOQ المركزية بعد الاسترجاع
-        await persistPricingAndBOQ(restoredMap)
-        toast.success('تم استرجاع النسخة بنجاح')
-        setRestoreOpen(false)
-        void loadBackupsList()
-      } catch (error) {
-        recordPricingAudit(
-          'error',
-          'backup-restore-failed',
-          {
-            entryId,
-            message: getErrorMessage(error),
-          },
-          'error',
-        )
-        toast.error('فشل استرجاع النسخة الاحتياطية')
-      }
-    },
-    [
-      tender.id,
-      defaultPercentages,
-      persistPricingAndBOQ,
-      loadBackupsList,
-      recordPricingAudit,
-      getErrorMessage,
-    ],
-  )
 
   // تصدير البيانات إلى Excel
   const exportPricingToExcel = useCallback(() => {
