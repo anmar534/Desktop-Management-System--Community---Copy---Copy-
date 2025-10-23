@@ -3,6 +3,7 @@ import { saveToStorage, loadFromStorage, STORAGE_KEYS } from '@/shared/utils/sto
 import { pricingService } from '@/application/services/pricingService'
 import { exportTenderPricingToExcel } from '@/presentation/pages/Tenders/TenderPricing/utils/exportUtils'
 import { formatTimestamp as formatTimestampUtil } from '@/presentation/pages/Tenders/TenderPricing/utils/dateUtils'
+import { parseQuantityItems } from '@/presentation/pages/Tenders/TenderPricing/utils/parseQuantityItems'
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type {
   MaterialRow,
@@ -22,7 +23,6 @@ import type {
   TenderStatsRecord,
   TenderWithPricingSources,
   PricingViewName,
-  TenderAttachment,
 } from '@/presentation/pages/Tenders/TenderPricing/types'
 // (Phase MVP Official/Draft) استيراد الهوك الجديد لإدارة المسودة والنسخة الرسمية
 import { useEditableTenderPricing } from '@/application/hooks/useEditableTenderPricing'
@@ -57,7 +57,6 @@ export type { TenderWithPricingSources } from '@/presentation/pages/Tenders/Tend
 
 type PricingSection = 'materials' | 'labor' | 'equipment' | 'subcontractors' | 'all'
 type ActualPricingSection = Exclude<PricingSection, 'all'>
-type RawQuantityItem = Partial<QuantityItem> & Record<string, unknown>
 
 interface SectionRowMap {
   materials: MaterialRow
@@ -176,177 +175,11 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   })
 
   // استخراج بيانات جدول الكميات من المنافسة مع البحث المحسّن
-  // MOVED HERE TO FIX TEMPORAL DEAD ZONE - quantityItems must be declared before template callbacks
-  const quantityItems: QuantityItem[] = useMemo(() => {
-    const toTrimmedString = (value: unknown): string | undefined => {
-      if (value === undefined || value === null) return undefined
-      const text = String(value).trim()
-      return text.length > 0 ? text : undefined
-    }
-
-    const toNumberOr = (value: unknown, fallback: number): number => {
-      if (typeof value === 'number' && Number.isFinite(value)) return value
-      if (typeof value === 'string') {
-        const parsed = Number(value)
-        if (Number.isFinite(parsed)) return parsed
-      }
-      return fallback
-    }
-
-    const scopeValue = tender?.scope
-    const scopeItems = (() => {
-      if (!scopeValue || typeof scopeValue === 'string' || Array.isArray(scopeValue)) {
-        return undefined
-      }
-      const candidate = (scopeValue as { items?: QuantityItem[] }).items
-      return Array.isArray(candidate) ? (candidate as RawQuantityItem[]) : undefined
-    })()
-
-    const asRaw = (source?: QuantityItem[] | null): RawQuantityItem[] | undefined =>
-      Array.isArray(source) ? (source as RawQuantityItem[]) : undefined
-
-    const centralCandidate =
-      unifiedStatus === 'ready' &&
-      unifiedSource === 'central-boq' &&
-      Array.isArray(unifiedItems) &&
-      unifiedItems.length > 0
-        ? (unifiedItems as RawQuantityItem[])
-        : undefined
-
-    const candidateSources: (RawQuantityItem[] | undefined)[] = [
-      centralCandidate,
-      asRaw(tender?.quantityTable ?? undefined),
-      asRaw(tender?.quantities ?? undefined),
-      asRaw(tender?.items ?? undefined),
-      asRaw(tender?.boqItems ?? undefined),
-      asRaw(tender?.quantityItems ?? undefined),
-      scopeItems,
-    ]
-
-    let quantityData: RawQuantityItem[] =
-      candidateSources.find((source) => Array.isArray(source) && source.length > 0) ?? []
-
-    if (quantityData.length === 0 && Array.isArray(tender?.attachments)) {
-      const quantityAttachment = tender.attachments.find((att: TenderAttachment) => {
-        const normalizedName = att.name?.toLowerCase() ?? ''
-        return (
-          att.type === 'quantity' ||
-          normalizedName.includes('كمية') ||
-          normalizedName.includes('boq') ||
-          normalizedName.includes('quantity')
-        )
-      })
-
-      if (Array.isArray(quantityAttachment?.data)) {
-        quantityData = quantityAttachment.data as RawQuantityItem[]
-      }
-    }
-
-    const normalizedItems = quantityData.map((item, index) => {
-      const indexBasedId = `item-${index + 1}`
-      const id =
-        toTrimmedString(item.id) ??
-        toTrimmedString(item.itemId) ??
-        toTrimmedString(item.number) ??
-        indexBasedId
-
-      const itemNumber =
-        toTrimmedString(item.itemNumber) ??
-        toTrimmedString(item.number) ??
-        String(index + 1).padStart(2, '0')
-
-      const description =
-        toTrimmedString(item.description) ??
-        toTrimmedString(item.canonicalDescription) ??
-        toTrimmedString((item as Record<string, unknown>).desc) ??
-        toTrimmedString(item.name) ??
-        ''
-
-      const unit =
-        toTrimmedString(item.unit) ??
-        toTrimmedString((item as Record<string, unknown>).uom) ??
-        'وحدة'
-      const quantity = toNumberOr(item.quantity, 1)
-      const specifications =
-        toTrimmedString(item.specifications) ??
-        toTrimmedString((item as Record<string, unknown>).spec) ??
-        toTrimmedString((item as Record<string, unknown>).notes) ??
-        'حسب المواصفات الفنية'
-
-      const canonicalDescription =
-        toTrimmedString(item.canonicalDescription) ??
-        toTrimmedString(item.description) ??
-        toTrimmedString(item.name) ??
-        ''
-
-      const normalizedItem: QuantityItem = {
-        id,
-        itemNumber,
-        description,
-        unit,
-        quantity,
-        specifications,
-      }
-
-      if (canonicalDescription) {
-        normalizedItem.canonicalDescription = canonicalDescription
-      }
-
-      if ('rawDescription' in item) {
-        const rawDescription = toTrimmedString((item as Record<string, unknown>).rawDescription)
-        if (rawDescription) {
-          normalizedItem.rawDescription = rawDescription
-        }
-      }
-
-      if ('fullDescription' in item) {
-        const fullDescription = toTrimmedString((item as Record<string, unknown>).fullDescription)
-        if (fullDescription) {
-          normalizedItem.fullDescription = fullDescription
-        }
-      }
-
-      if ('estimated' in item && (item as Record<string, unknown>).estimated !== undefined) {
-        normalizedItem.estimated = (item as Record<string, unknown>).estimated
-      }
-
-      const maybeUnitPrice = toNumberOr((item as Record<string, unknown>).unitPrice, NaN)
-      if (Number.isFinite(maybeUnitPrice)) {
-        normalizedItem.unitPrice = maybeUnitPrice
-      } else if (
-        typeof (item as Record<string, unknown>).estimated === 'object' &&
-        (item as Record<string, unknown>).estimated !== null
-      ) {
-        const estimatedUnitPrice = toNumberOr(
-          ((item as Record<string, unknown>).estimated as Record<string, unknown>).unitPrice,
-          NaN,
-        )
-        if (Number.isFinite(estimatedUnitPrice)) {
-          normalizedItem.unitPrice = estimatedUnitPrice
-        }
-      }
-
-      const maybeTotalPrice = toNumberOr((item as Record<string, unknown>).totalPrice, NaN)
-      if (Number.isFinite(maybeTotalPrice)) {
-        normalizedItem.totalPrice = maybeTotalPrice
-      } else if (
-        typeof (item as Record<string, unknown>).estimated === 'object' &&
-        (item as Record<string, unknown>).estimated !== null
-      ) {
-        const estimatedTotal = toNumberOr(
-          ((item as Record<string, unknown>).estimated as Record<string, unknown>).totalPrice,
-          NaN,
-        )
-        if (Number.isFinite(estimatedTotal)) {
-          normalizedItem.totalPrice = estimatedTotal
-        }
-      }
-
-      return normalizedItem
-    })
-
-    return normalizedItems
-  }, [tender, unifiedItems, unifiedSource, unifiedStatus])
+  // Uses parseQuantityItems utility for complex parsing logic
+  const quantityItems: QuantityItem[] = useMemo(
+    () => parseQuantityItems(tender, unifiedItems, unifiedSource, unifiedStatus),
+    [tender, unifiedItems, unifiedSource, unifiedStatus],
+  )
 
   // استخدام hook إدارة القوالب بدلاً من الـ handlers المكررة
   const { handleTemplateApply, handleTemplateSave, handleTemplateUpdate, handleTemplateDelete } =
