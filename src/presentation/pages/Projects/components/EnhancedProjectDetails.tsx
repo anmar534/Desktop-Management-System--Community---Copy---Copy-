@@ -42,6 +42,7 @@ import { useExpenses } from '@/application/hooks/useExpenses'
 import { formatCurrency } from '@/data/centralData'
 import { toast } from 'sonner'
 import { useProjectFormatters } from './hooks/useProjectFormatters'
+import { useProjectData } from './hooks/useProjectData'
 import type { Tender } from '@/data/centralData'
 import type { PurchaseOrder } from '@/shared/types/contracts'
 import {
@@ -73,8 +74,10 @@ export function EnhancedProjectDetails({
   onBack,
   onSectionChange,
 }: ProjectDetailsProps) {
+  // Use custom hooks for data management
+  const { project } = useProjectData({ projectId })
   const { projects: projectsState, financial } = useFinancialState()
-  const { projects, updateProject, deleteProject } = projectsState
+  const { updateProject, deleteProject } = projectsState
   const { getExpensesByProject } = useExpenses()
   const { getProjectActualCost } = financial
 
@@ -111,9 +114,6 @@ export function EnhancedProjectDetails({
     priority: 'medium',
     progress: 0,
   })
-
-  // البحث عن المشروع
-  const project = projects.find((p) => p.id === projectId)
 
   const currentProjectId = project?.id ?? ''
   const currentTenderId = relatedTender?.id
