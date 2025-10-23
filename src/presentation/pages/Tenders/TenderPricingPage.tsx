@@ -1,6 +1,7 @@
 // TenderPricingPage drives the full tender pricing workflow and persistence.
 import { saveToStorage, loadFromStorage, STORAGE_KEYS } from '@/shared/utils/storage/storage'
 import { pricingService } from '@/application/services/pricingService'
+import { exportTenderPricingToExcel } from '@/presentation/pages/Tenders/TenderPricing/utils/exportUtils'
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import type {
   MaterialRow,
@@ -1260,57 +1261,21 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   }
 
   // تصدير البيانات إلى Excel
+  // تصدير البيانات إلى Excel (using utility function)
   const exportPricingToExcel = useCallback(() => {
-    try {
-      const exportData = quantityItems.map((item) => {
-        const itemPricing = pricingData.get(item.id)
-        const totals = {
-          materials: (itemPricing?.materials ?? []).reduce((sum, mat) => sum + (mat.total ?? 0), 0),
-          labor: (itemPricing?.labor ?? []).reduce((sum, lab) => sum + (lab.total ?? 0), 0),
-          equipment: (itemPricing?.equipment ?? []).reduce((sum, eq) => sum + (eq.total ?? 0), 0),
-          subcontractors: (itemPricing?.subcontractors ?? []).reduce(
-            (sum, sub) => sum + (sub.total ?? 0),
-            0,
-          ),
-        }
-
-        const subtotal = totals.materials + totals.labor + totals.equipment + totals.subcontractors
-        const unitPrice = itemPricing ? subtotal / item.quantity : 0
-
-        return {
-          'رقم البند': item.itemNumber,
-          'وصف البند': item.description,
-          الوحدة: item.unit,
-          الكمية: item.quantity,
-          'سعر الوحدة': unitPrice.toFixed(2),
-          'القيمة الإجمالية': subtotal.toFixed(2),
-          'حالة التسعير': itemPricing ? 'مكتمل' : 'لم يبدأ',
-        }
-      })
-
-      // هنا يمكن إضافة منطق التصدير الفعلي
-      toast.info('جاري تطوير وظيفة التصدير', {
-        description: 'هذه الوظيفة قيد التطوير وستكون متاحة قريباً',
-        duration: 4000,
-      })
-
-      recordPricingAudit('info', 'export-pricing-requested', {
-        items: exportData.length,
-      })
-    } catch (error) {
-      recordPricingAudit(
-        'error',
-        'export-pricing-failed',
-        {
-          message: getErrorMessage(error),
-        },
-        'error',
-      )
-      toast.error('خطأ في التصدير', {
-        description: 'حدث خطأ أثناء إعداد البيانات للتصدير',
-        duration: 4000,
-      })
-    }
+    exportTenderPricingToExcel({
+      quantityItems: quantityItems.map((item) => ({
+        id: item.id,
+        itemNumber: item.itemNumber,
+        description: item.description,
+        unit: item.unit,
+        quantity: item.quantity,
+      })),
+      pricingData,
+      recordAudit: (level, action, metadata, status) =>
+        recordPricingAudit(level as AuditEventLevel, action, metadata, status as AuditEventStatus),
+      getErrorMessage,
+    })
   }, [quantityItems, pricingData, recordPricingAudit, getErrorMessage])
 
   if (!currentItem) {
