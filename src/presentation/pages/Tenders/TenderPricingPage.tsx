@@ -13,7 +13,8 @@ import type {
   PricingPercentages,
   PricingViewItem,
 } from '@/shared/types/pricing'
-import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
+// Zustand Store for unified pricing state management
+import { useTenderPricingStore } from '@/stores/tenderPricingStore'
 import type {
   QuantityItem,
   TenderWithPricingSources,
@@ -134,9 +135,16 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   const [pricingData, setPricingData] = useState<Map<string, PricingData>>(new Map())
   // (Official/Draft MVP) دمج الهوك الجديد (قراءة فقط حالياً لعرض حالة الاعتماد)
   const editablePricing = useEditableTenderPricing(tender)
-  // Unified BOQ read model to ensure central storage is the primary source for quantity items
-  const unifiedPricing = useUnifiedTenderPricing(tender)
-  const { items: unifiedItems, source: unifiedSource, status: unifiedStatus } = unifiedPricing
+  // Zustand Store: unified BOQ and pricing state
+  const { boqItems, loadPricing } = useTenderPricingStore()
+
+  // Load pricing data when component mounts or tender changes
+  useEffect(() => {
+    if (tender?.id) {
+      void loadPricing(tender.id)
+    }
+  }, [tender?.id, loadPricing])
+
   const {
     currentItemIndex,
     setCurrentItemIndex,
@@ -168,11 +176,27 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   })
 
   // استخراج بيانات جدول الكميات من المنافسة مع البحث المحسّن
-  // Uses parseQuantityItems utility for complex parsing logic
-  const quantityItems: QuantityItem[] = useMemo(
-    () => parseQuantityItems(tender, unifiedItems, unifiedSource, unifiedStatus),
-    [tender, unifiedItems, unifiedSource, unifiedStatus],
-  )
+  // Uses Zustand Store boqItems as primary source, with fallback to legacy parseQuantityItems
+  const quantityItems: QuantityItem[] = useMemo(() => {
+    // If Store has data, use it directly (preferred path)
+    if (boqItems && boqItems.length > 0) {
+      return boqItems.map((item, index) => ({
+        id: item.id || `item-${index + 1}`,
+        itemNumber: String(index + 1).padStart(2, '0'),
+        description: item.description || '',
+        unit: item.unit || 'وحدة',
+        quantity: item.quantity || 1,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        specifications: 'حسب المواصفات الفنية',
+        canonicalDescription: item.description || '',
+      }))
+    }
+
+    // Fallback: use parseQuantityItems with legacy data
+    // This will be removed in Week 6 (Legacy Cleanup)
+    return parseQuantityItems(tender, [], 'legacy', 'loading')
+  }, [boqItems, tender])
 
   const leaveConfirmationDialog = (
     <ConfirmationDialog
