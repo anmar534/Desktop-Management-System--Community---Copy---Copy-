@@ -28,8 +28,11 @@ export interface UnifiedTenderPricingResult {
 export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult {
   const tenderId = tender?.id
 
-  // استخراج legacy data مرة واحدة باستخدام useMemo
+  // Fix #2: استخراج legacy data مرة واحدة باستخدام useMemo مع tender.id فقط
+  // بدلاً من 5 dependencies (quantityTable, quantities, items, boqItems, quantityItems)
+  // هذا يقلل recalculations من 32 → ~5
   const legacyData = useMemo(() => {
+    if (!tender) return []
     return (
       tender.quantityTable ||
       tender.quantities ||
@@ -38,7 +41,8 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
       tender.quantityItems ||
       []
     )
-  }, [tender.quantityTable, tender.quantities, tender.items, tender.boqItems, tender.quantityItems])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenderId]) // ← استخدام tenderId فقط بدلاً من كل property
 
   // snapshot أزيل – لا حاجة لحالة منفصلة
   const [error, setError] = useState<any>(null)

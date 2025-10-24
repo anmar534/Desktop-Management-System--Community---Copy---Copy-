@@ -276,24 +276,89 @@
 
 ---
 
+## ✅ Bug Fix - updateTenderStatus [24 أكتوبر 2025]
+
+**الحالة:** ✅ مكتمل
+**الملف:** useTenderPricingPersistence.ts
+**المشكلة:** تحديث حالة المنافسة لم يتم حفظه في repository
+
+### المشكلة المكتشفة:
+
+عند إكمال التسعير والضغط على "اعتماد":
+
+- ✅ يتم حفظ الأسعار في BOQ Repository
+- ❌ **لا يتم** تحديث حالة المنافسة في Tender Repository
+- ❌ بطاقة المنافسة لا تُحدَّث
+- ❌ جدول الكميات لا يظهر البيانات
+
+### الحل المُنفذ:
+
+**في `useTenderPricingPersistence.ts` (السطر 532):**
+
+```typescript
+const updateTenderStatus = useCallback(async () => {
+  // ... الحسابات الموجودة ...
+
+  // إضافة: حفظ التغييرات إلى repository
+  try {
+    const tenderRepo = getTenderRepository()
+    const newTenderStatus = pricingStatus === 'completed' ? 'ready_to_submit' : 'under_action'
+
+    await tenderRepo.update(tender.id, {
+      status: newTenderStatus,
+      pricedItems: completedCount,
+      totalItems: quantityItems.length,
+      totalValue: totalValue,
+      completionPercentage: completionPercentage,
+    })
+
+    // إطلاق event لتحديث الواجهات
+    window.dispatchEvent(
+      new CustomEvent(APP_EVENTS.TENDER_UPDATED, {
+        detail: { tenderId: tender.id }
+      })
+    )
+
+    recordPersistenceAudit('info', 'tender-status-persisted', {...})
+  } catch (error) {
+    toast.error('فشل تحديث حالة المنافسة')
+  }
+}, [...])
+```
+
+**التغييرات:**
+
+- ✅ إضافة imports: `getTenderRepository`, `APP_EVENTS`
+- ✅ تحويل الدالة إلى `async`
+- ✅ حفظ: status, pricedItems, totalItems, totalValue, completionPercentage
+- ✅ إطلاق `TENDER_UPDATED` event
+- ✅ معالجة الأخطاء
+
+**النتيجة:**
+
+- ✅ تحديث حالة المنافسة يعمل بشكل صحيح
+- ✅ بطاقة المنافسة تُحدَّث تلقائياً
+- ✅ جدول الكميات يعرض البيانات
+- ✅ 0 أخطاء TypeScript
+
+---
+
 ## ⏳ الخطوة القادمة
 
-**Week 3 - Phase 3 مكتمل! ✅**
+**Week 3 - Phase 3 + Bug Fix مكتمل! ✅**
 
-**هدف Week 4:** Phase 4 - Additional refinements (اختياري)
+**هدف Week 4:** Phase 4 - TenderPricingWizard Refactoring
 
-**الخطوات المقترحة:**
+**الخطوات القادمة:**
 
-1. **استخراج Tabs المتبقية** (~250 سطر)
+1. **تفكيك TenderPricingWizard.tsx** (1,540 سطر)
 
-   - AttachmentsTab.tsx
-   - TimelineTab.tsx
-   - WorkflowTab.tsx
+   - استخراج 5 steps
+   - استخراج 4 مكونات واجهة
+   - استخراج 4 hooks
 
-2. **استخراج Helper Functions** (~80 سطر)
-   - getStatusText
-   - getStatusColor
-   - formatters
+2. **تفكيك NewTenderForm.tsx** (1,102 سطر)
+3. **تحسين TendersPage.tsx** (855 سطر)
 
 **الأولوية:** رفع التغييرات إلى Git أولاً!
 
@@ -320,16 +385,19 @@
 17. **6eda122** - docs: إضافة معرف الـ commit للمرحلة 3 في ملفات التوثيق
 18. **625e36b** - feat(tenders): Complete Phase 3 component extraction - Finalize TenderDetails refactoring
 19. **da4aaac** - feat(tenders): إضافة تشخيصات محسّنة لـ TenderDetails - فحص بيانات التسعير
+20. **97f7462** - docs: تحديث التوثيق - Phase 3 Complete بالكامل
+21. **[اليوم]** - fix(tenders): Fix updateTenderStatus - persist tender status to repository
 
-**إجمالي التغييرات - Week 3 (Phase 3):**
+**إجمالي التغييرات - Week 3 (Phase 3 + Bug Fix):**
 
 - **TenderDetails.tsx:** 1,981 → 431 سطر (**-1,550 سطر، -78.2%**)
 - **Tabs مستخرجة:** 5 (GeneralInfoTab, QuantitiesTab, AttachmentsTab, TimelineTab, WorkflowTab)
 - **Unused imports محذوفة:** 17 (100%)
 - **renderQuantityTable:** محذوفة بالكامل (~1,000 سطر منقولة لـ QuantitiesTab)
 - **renderAttachments:** محذوفة بالكامل (~200 سطر منقولة لـ AttachmentsTab)
+- **Bug Fix:** updateTenderStatus الآن يحفظ التغييرات بشكل صحيح ✅
 - **TypeScript/ESLint errors:** 0 ✅
-- **Commits:** 4 (8ebc0a7, 6eda122, 625e36b, da4aaac)
+- **Commits:** 5 (8ebc0a7, 6eda122, 625e36b, da4aaac, 97f7462 + today)
 
 **إجمالي التوفير من البداية:** -6,803 سطر (37.5% من 18,119)
 

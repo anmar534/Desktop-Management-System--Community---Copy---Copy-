@@ -1,5 +1,5 @@
 // TendersPage shows the tenders dashboard, filters, and quick actions.
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import type { LucideIcon } from 'lucide-react'
 import {
@@ -388,6 +388,10 @@ export function Tenders({ onSectionChange }: TendersProps) {
   const [tenderToDelete, setTenderToDelete] = useState<Tender | null>(null)
   const [tenderToSubmit, setTenderToSubmit] = useState<Tender | null>(null)
 
+  // Refs to prevent Event Loop (Fix #1)
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isRefreshingRef = useRef(false)
+
   const normalisedSearch = useMemo(() => normaliseSearchQuery(searchTerm), [searchTerm])
 
   const tenderSummary = useMemo(
@@ -459,14 +463,33 @@ export function Tenders({ onSectionChange }: TendersProps) {
     }
 
     const onUpdated = () => {
-      console.log('🔄 تم تحديث بيانات المناقصات - إعادة التحميل')
-      void refreshTenders()
+      // Fix #1: منع re-entrance (Event Loop Guard)
+      if (isRefreshingRef.current) {
+        console.log('⏭️ تخطي إعادة التحميل - جاري التحميل بالفعل')
+        return
+      }
+
+      // Fix #1: debounce لتجميع multiple updates في 500ms
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+
+      refreshTimeoutRef.current = setTimeout(() => {
+        isRefreshingRef.current = true
+        console.log('🔄 تم تحديث بيانات المناقصات - إعادة التحميل')
+        void refreshTenders().finally(() => {
+          isRefreshingRef.current = false
+        })
+      }, 500)
     }
 
     window.addEventListener(APP_EVENTS.TENDERS_UPDATED, onUpdated)
     window.addEventListener(APP_EVENTS.TENDER_UPDATED, onUpdated)
 
     return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
       window.removeEventListener(APP_EVENTS.TENDERS_UPDATED, onUpdated)
       window.removeEventListener(APP_EVENTS.TENDER_UPDATED, onUpdated)
     }
@@ -603,9 +626,15 @@ export function Tenders({ onSectionChange }: TendersProps) {
     (tender: Tender) => {
       console.log('[TendersPage][handleEditTender] Editing tender:', tender)
       console.log('[TendersPage][handleEditTender] tender.id:', tender.id)
-      console.log('[TendersPage][handleEditTender] tender.quantities:', (tender as unknown as Record<string, unknown>).quantities)
-      console.log('[TendersPage][handleEditTender] tender.quantityTable:', (tender as unknown as Record<string, unknown>).quantityTable)
-      
+      console.log(
+        '[TendersPage][handleEditTender] tender.quantities:',
+        (tender as unknown as Record<string, unknown>).quantities,
+      )
+      console.log(
+        '[TendersPage][handleEditTender] tender.quantityTable:',
+        (tender as unknown as Record<string, unknown>).quantityTable,
+      )
+
       setSelectedTender(tender)
       onSectionChange('new-tender', tender)
     },
@@ -954,4 +983,3 @@ function TenderTabs({ tabs, activeTab, onTabChange }: TenderTabsProps) {
     </div>
   )
 }
-

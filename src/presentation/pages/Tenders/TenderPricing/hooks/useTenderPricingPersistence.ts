@@ -13,7 +13,8 @@ import type {
 import type { BOQTotals, BOQData } from '@/shared/types/boq'
 import { pricingDataSyncService } from '@/application/services/pricingDataSyncService'
 import { pricingService } from '@/application/services/pricingService'
-import { getBOQRepository } from '@/application/services/serviceRegistry'
+import { getBOQRepository, getTenderRepository } from '@/application/services/serviceRegistry'
+import { APP_EVENTS } from '@/events/bus'
 import {
   PRICING_FLAGS,
   type PricingItemInput,
@@ -526,9 +527,9 @@ export function useTenderPricingPersistence({
 
   /**
    * Update tender status based on pricing completion
-   * Simplified version - just logs status updates
+   * Now persists changes to tender repository and emits update event
    */
-  const updateTenderStatus = useCallback(() => {
+  const updateTenderStatus = useCallback(async () => {
     const completedCount = Array.from(pricingData.values()).filter(
       (value) => value?.completed,
     ).length
@@ -567,13 +568,52 @@ export function useTenderPricingPersistence({
 
     lastStatusRef.current = currentState
 
-    recordPersistenceAudit('info', 'pricing-status-updated', {
-      pricingStatus,
-      completionPercentage,
-      itemsPriced: pricingData.size,
-      totalItems: quantityItems.length,
-      totalValue,
-    })
+    // Persist tender status to repository
+    try {
+      const tenderRepo = getTenderRepository()
+      const newTenderStatus = pricingStatus === 'completed' ? 'ready_to_submit' : 'under_action'
+
+      await tenderRepo.update(tender.id, {
+        status: newTenderStatus,
+        pricedItems: completedCount,
+        totalItems: quantityItems.length,
+        totalValue: totalValue,
+        completionPercentage: completionPercentage,
+      })
+
+      // Emit event to notify UI components
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent(APP_EVENTS.TENDER_UPDATED, {
+            detail: { tenderId: tender.id },
+          }),
+        )
+      }
+
+      recordPersistenceAudit('info', 'tender-status-persisted', {
+        pricingStatus,
+        tenderStatus: newTenderStatus,
+        completionPercentage,
+        itemsPriced: completedCount,
+        totalItems: quantityItems.length,
+        totalValue,
+      })
+    } catch (error) {
+      recordPersistenceAudit(
+        'error',
+        'tender-status-update-failed',
+        {
+          error: error instanceof Error ? error.message : 'unknown',
+          tenderId: tender.id,
+        },
+        'error',
+      )
+      toast.error('فشل تحديث حالة المنافسة', {
+        description: 'يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني',
+        duration: 5000,
+      })
+      return
+    }
 
     if (completionPercentage === 100) {
       toast.success('تم إكمال التسعير', {

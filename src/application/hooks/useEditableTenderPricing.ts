@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { pricingStorageAdapter, type PricingSnapshotItem, type PricingSnapshotTotals } from '@/application/services/pricingStorageAdapter'
+import {
+  pricingStorageAdapter,
+  type PricingSnapshotItem,
+  type PricingSnapshotTotals,
+} from '@/application/services/pricingStorageAdapter'
 import type { Tender } from '@/data/centralData'
 
 /**
@@ -19,13 +23,22 @@ export interface EditableTenderPricingResult {
   dirty: boolean
   officialAt?: string
   draftAt?: string
-  saveOfficial: (itemsOverride?: PricingSnapshotItem[], totalsOverride?: PricingSnapshotTotals | null) => Promise<void>
-  saveDraft: (itemsOverride?: PricingSnapshotItem[], totalsOverride?: PricingSnapshotTotals | null, source?: 'auto' | 'user') => Promise<void>
+  saveOfficial: (
+    itemsOverride?: PricingSnapshotItem[],
+    totalsOverride?: PricingSnapshotTotals | null,
+  ) => Promise<void>
+  saveDraft: (
+    itemsOverride?: PricingSnapshotItem[],
+    totalsOverride?: PricingSnapshotTotals | null,
+    source?: 'auto' | 'user',
+  ) => Promise<void>
   markDirty: () => void
   reload: () => Promise<void>
 }
 
-export function useEditableTenderPricing(tender: Tender | null | undefined): EditableTenderPricingResult {
+export function useEditableTenderPricing(
+  tender: Tender | null | undefined,
+): EditableTenderPricingResult {
   const tenderId = tender?.id
   const [status, setStatus] = useState<EditableTenderPricingResult['status']>('loading')
   const [items, setItems] = useState<PricingSnapshotItem[]>([])
@@ -38,7 +51,10 @@ export function useEditableTenderPricing(tender: Tender | null | undefined): Edi
   const [dirty, setDirty] = useState(false)
   const lastSerializedRef = useRef<string>('')
 
-  const serialize = (snapshotItems: PricingSnapshotItem[], snapshotTotals: PricingSnapshotTotals | null): string => {
+  const serialize = (
+    snapshotItems: PricingSnapshotItem[],
+    snapshotTotals: PricingSnapshotTotals | null,
+  ): string => {
     try {
       return JSON.stringify({ items: snapshotItems, totals: snapshotTotals })
     } catch {
@@ -49,7 +65,9 @@ export function useEditableTenderPricing(tender: Tender | null | undefined): Edi
   const load = useCallback(async () => {
     if (!tenderId) {
       setStatus('empty')
-      setItems([]); setTotals(null); setSource('none')
+      setItems([])
+      setTotals(null)
+      setSource('none')
       return
     }
     setStatus('loading')
@@ -93,78 +111,112 @@ export function useEditableTenderPricing(tender: Tender | null | undefined): Edi
     lastSerializedRef.current = serialize(chosenItems, chosenTotals)
   }, [tenderId])
 
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    void load()
+  }, [load])
 
-  const saveOfficial = useCallback(async (
-    itemsOverride?: PricingSnapshotItem[],
-    totalsOverride?: PricingSnapshotTotals | null
-  ) => {
-    if (!tenderId) return
-    const it = itemsOverride ?? items
-    const fallbackTotals: PricingSnapshotTotals = {
-      totalValue: it.reduce((sum, entry) => {
-        const value = typeof entry.totalPrice === 'number' ? entry.totalPrice : 0
-        return sum + value
-      }, 0)
-    }
-    const tt = totalsOverride ?? totals ?? fallbackTotals
-    await pricingStorageAdapter.saveOfficial(tenderId, it, tt, 'user')
-    setDirty(false)
-    setIsDraftNewer(false)
-    setHasDraft(false)
-    setSource('official')
-    setItems(it)
-    setTotals(tt)
-    setOfficialAt(new Date().toISOString())
-    lastSerializedRef.current = serialize(it, tt)
-  }, [tenderId, items, totals])
+  const saveOfficial = useCallback(
+    async (
+      itemsOverride?: PricingSnapshotItem[],
+      totalsOverride?: PricingSnapshotTotals | null,
+    ) => {
+      if (!tenderId) return
+      const it = itemsOverride ?? items
+      const fallbackTotals: PricingSnapshotTotals = {
+        totalValue: it.reduce((sum, entry) => {
+          const value = typeof entry.totalPrice === 'number' ? entry.totalPrice : 0
+          return sum + value
+        }, 0),
+      }
+      const tt = totalsOverride ?? totals ?? fallbackTotals
 
-  const saveDraft = useCallback(async (
-    itemsOverride?: PricingSnapshotItem[],
-    totalsOverride?: PricingSnapshotTotals | null,
-    src: 'auto' | 'user' = 'auto'
-  ) => {
-    if (!tenderId) return
-    const it = itemsOverride ?? items
-    const fallbackTotals: PricingSnapshotTotals = {
-      totalValue: it.reduce((sum, entry) => {
-        const value = typeof entry.totalPrice === 'number' ? entry.totalPrice : 0
-        return sum + value
-      }, 0)
-    }
-    const tt = totalsOverride ?? totals ?? fallbackTotals
-    const serialized = serialize(it, tt)
-    if (serialized === lastSerializedRef.current) {
-      return // لا تغيير
-    }
-    await pricingStorageAdapter.saveDraft(tenderId, it, tt, src)
-    setHasDraft(true)
-    setDraftAt(new Date().toISOString())
-    // لو يوجد official تصبح تعديلات غير معتمدة
-    if (source === 'official') {
-      setIsDraftNewer(true)
-      setDirty(true)
-    }
-    lastSerializedRef.current = serialized
-  }, [tenderId, items, totals, source])
+      // Fix #3: حفظ النسخة الرسمية
+      await pricingStorageAdapter.saveOfficial(tenderId, it, tt, 'user')
+
+      // Fix #3: حذف draft صراحةً بعد الاعتماد (إزالة رسالة "تغييرات غير معتمدة" الخاطئة)
+      if (hasDraft) {
+        await pricingStorageAdapter.clearDraft(tenderId)
+      }
+
+      setDirty(false)
+      setIsDraftNewer(false)
+      setHasDraft(false)
+      setSource('official')
+      setItems(it)
+      setTotals(tt)
+      setOfficialAt(new Date().toISOString())
+      setDraftAt(undefined) // مسح draft timestamp
+      lastSerializedRef.current = serialize(it, tt)
+    },
+    [tenderId, items, totals, hasDraft],
+  )
+
+  const saveDraft = useCallback(
+    async (
+      itemsOverride?: PricingSnapshotItem[],
+      totalsOverride?: PricingSnapshotTotals | null,
+      src: 'auto' | 'user' = 'auto',
+    ) => {
+      if (!tenderId) return
+      const it = itemsOverride ?? items
+      const fallbackTotals: PricingSnapshotTotals = {
+        totalValue: it.reduce((sum, entry) => {
+          const value = typeof entry.totalPrice === 'number' ? entry.totalPrice : 0
+          return sum + value
+        }, 0),
+      }
+      const tt = totalsOverride ?? totals ?? fallbackTotals
+      const serialized = serialize(it, tt)
+      if (serialized === lastSerializedRef.current) {
+        return // لا تغيير
+      }
+      await pricingStorageAdapter.saveDraft(tenderId, it, tt, src)
+      setHasDraft(true)
+      setDraftAt(new Date().toISOString())
+      // لو يوجد official تصبح تعديلات غير معتمدة
+      if (source === 'official') {
+        setIsDraftNewer(true)
+        setDirty(true)
+      }
+      lastSerializedRef.current = serialized
+    },
+    [tenderId, items, totals, source],
+  )
 
   const markDirty = useCallback(() => {
     setDirty(true)
   }, [])
 
-  return useMemo<EditableTenderPricingResult>(() => ({
-    status,
-    items,
-    totals,
-    source,
-    hasDraft,
-    isDraftNewer,
-    dirty,
-    officialAt,
-    draftAt,
-    saveOfficial,
-    saveDraft,
-    markDirty,
-    reload: load
-  }), [status, items, totals, source, hasDraft, isDraftNewer, dirty, officialAt, draftAt, saveOfficial, saveDraft, markDirty, load])
+  return useMemo<EditableTenderPricingResult>(
+    () => ({
+      status,
+      items,
+      totals,
+      source,
+      hasDraft,
+      isDraftNewer,
+      dirty,
+      officialAt,
+      draftAt,
+      saveOfficial,
+      saveDraft,
+      markDirty,
+      reload: load,
+    }),
+    [
+      status,
+      items,
+      totals,
+      source,
+      hasDraft,
+      isDraftNewer,
+      dirty,
+      officialAt,
+      draftAt,
+      saveOfficial,
+      saveDraft,
+      markDirty,
+      load,
+    ],
+  )
 }
