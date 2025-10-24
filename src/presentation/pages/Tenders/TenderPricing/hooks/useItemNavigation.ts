@@ -86,9 +86,9 @@ export function useItemNavigation({
   calculateTotals,
   calculateProjectTotal,
   formatCurrencyValue,
-  persistPricingAndBOQ,
-  notifyPricingUpdate,
-  updateTenderStatus,
+  persistPricingAndBOQ: _persistPricingAndBOQ, // Not used - BOQ save now only on main Save button
+  notifyPricingUpdate: _notifyPricingUpdate, // Not used - events now only on main Save button
+  updateTenderStatus: _updateTenderStatus, // Not used - status update now only on main Save button
   recordPricingAudit,
 }: UseItemNavigationParams): UseItemNavigationReturn {
   /**
@@ -158,8 +158,9 @@ export function useItemNavigation({
       lastUpdated: new Date().toISOString(),
     })
 
-    // Sync central BOQ snapshot after manual save
-    void persistPricingAndBOQ(newMap)
+    // REMOVED: persistPricingAndBOQ() - causes auto-save and infinite loop
+    // Saving to BOQ now only happens when user clicks "Save" button in header
+    // This prevents automatic repository saves that trigger events and page reloads
 
     // Save item details to unified storage
     void saveToStorage(`tender-${tenderId}-pricing-item-${currentItem.id}`, {
@@ -238,14 +239,11 @@ export function useItemNavigation({
       duration: 4000,
     })
 
-    // Notify other pages (like tender details)
-    console.log('[useItemNavigation] Notifying other pages...')
-    notifyPricingUpdate()
+    // REMOVED: notifyPricingUpdate() - causes events that trigger reloads
+    // REMOVED: updateTenderStatus() - updates repo without skipRefresh
+    // These will now only happen when user clicks main "Save" button in header
 
-    // Update tender status immediately after save
-    console.log('[useItemNavigation] Updating tender status...')
-    updateTenderStatus()
-    recordPricingAudit('info', 'status-updated-after-save', {
+    recordPricingAudit('info', 'item-saved-locally', {
       itemId: currentItem.id,
       completion: completionPercentage,
     })
@@ -259,10 +257,10 @@ export function useItemNavigation({
     calculateTotals,
     calculateProjectTotal,
     defaultPercentages,
-    notifyPricingUpdate,
-    persistPricingAndBOQ,
+    // REMOVED: notifyPricingUpdate - no longer called
+    // REMOVED: persistPricingAndBOQ - no longer called
+    // REMOVED: updateTenderStatus - no longer called
     recordPricingAudit,
-    updateTenderStatus,
     tenderTitle,
     formatCurrencyValue,
     setPricingData,
@@ -355,24 +353,13 @@ export function useItemNavigation({
         lastUpdated: new Date().toISOString(),
       })
 
-      // Save BOQ with skipEvent to prevent loop
-      void (async () => {
-        try {
-          await persistPricingAndBOQ(newMap)
-        } catch (error) {
-          console.error('[useItemNavigation] saveItemById: BOQ save failed', error)
-        }
-      })()
+      // REMOVED: persistPricingAndBOQ() - BOQ save now only on main Save button
+      // REMOVED: updateTenderStatus() - status update now only on main Save button
 
       toast.success('تم الحفظ بنجاح', {
         description: `تم حفظ تسعير البند رقم ${item.itemNumber} - القيمة: ${formatCurrencyValue(totalCost)}`,
         duration: 3000,
       })
-
-      // Update tender status
-      setTimeout(() => {
-        updateTenderStatus()
-      }, 100)
     },
     [
       quantityItems,
@@ -381,9 +368,9 @@ export function useItemNavigation({
       isLoaded,
       defaultPercentages,
       tenderId,
-      persistPricingAndBOQ,
+      // REMOVED: persistPricingAndBOQ - not called anymore
       formatCurrencyValue,
-      updateTenderStatus,
+      // REMOVED: updateTenderStatus - not called anymore
     ],
   )
 
