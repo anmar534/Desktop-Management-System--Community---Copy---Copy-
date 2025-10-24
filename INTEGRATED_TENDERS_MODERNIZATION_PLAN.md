@@ -3,9 +3,48 @@
 **Integrated Tenders Modernization Plan**
 
 **التاريخ:** 24 أكتوبر 2025  
-**آخر تحديث:** 24 أكتوبر 2025 - 21:00  
-**الحالة:** 🚀 قيد التنفيذ - **Week 5, Day 1 مكتمل**  
+**آخر تحديث:** 24 أكتوبر 2025 - 22:00  
+**الحالة:** 🚀 قيد التنفيذ - **Week 5, Day 1 مكتمل + قرار استراتيجي جديد**  
 **النهج:** دمج إعادة الهيكلة + إصلاحات التسعير + التحديث المعماري
+
+---
+
+## 🎯 قرار استراتيجي: حذف Draft System بالكامل
+
+**التاريخ:** 24 أكتوبر 2025 - 22:00
+
+### السياق
+
+بعد Week 5 Day 1، كنا نخطط لـ **Performance Optimization** بدلاً من migration كامل بسبب:
+
+- Draft/Official system معقد (9 state variables)
+- useTenderPricingPersistence ضخم (686 lines)
+- مخاطر عالية (3-4 أسابيع عمل)
+
+### الاكتشاف الحاسم 🔥
+
+**لا حاجة لنظام Draft!**
+
+- الحفظ يتم عند نقر المستخدم على زر Save فقط
+- لا auto-save، لا مسودات تلقائية
+- 70% من التعقيد غير ضروري!
+
+### القرار الجديد ✅
+
+**الاستبدال الكامل الآن** بدلاً من التدريجي!
+
+**لماذا؟**
+
+- ✅ حذف Draft → تقليل 70% من التعقيد
+- ✅ Migration بسيط جداً (يومان فقط)
+- ✅ نظام موحد 100% بدون hybrid
+- ✅ ROI فوري
+
+**الخطة الجديدة:**
+
+- **Day 2:** حذف Draft System كامل
+- **Day 3:** Testing & Cleanup
+- **Days 4-5:** Performance & Integration Tests
 
 ---
 
@@ -633,54 +672,128 @@ src/features/tenders/pricing/TenderPricingWizard/
 **الوقت المتوقع:** 2 أيام (بداية فقط)  
 **سيكتمل في:** Week 6
 
-### Week 5: Migration to Zustand (المعدّلة)
+### Week 5: Draft System Removal + Migration (المعدّلة) 🔥
 
-**الحالة:** ⚠️ **تحت المراجعة - التعقيد أكبر من المتوقع**
+**الحالة:** 🚀 **قيد التنفيذ - استراتيجية جديدة**
 
-#### التحديات المكتشفة
-
-1. **useEditableTenderPricing:**
-
-   - يدير Draft/Official system معقد
-   - يستخدم pricingStorageAdapter مع localStorage
-   - يحتاج إعادة تصميم كاملة
-   - **القرار:** الإبقاء عليه مؤقتاً
-
-2. **useTenderPricingPersistence:**
-   - يعتمد على domainPricing, pricingViewItems
-   - يدير event listeners متعددة
-   - يتكامل مع 10+ dependencies
-   - **القرار:** يحتاج دراسة أعمق قبل الاستبدال
-
-#### الخطة المعدّلة - Week 5
-
-**✅ Day 1: مكتمل**
+#### **✅ Day 1: مكتمل**
 
 - استبدال useUnifiedTenderPricing ✅
 - التكامل مع useTenderPricingStore ✅
 - 0 TypeScript errors ✅
-
-**📋 Day 2-3: إعادة تقييم**
-
-- مراجعة architecture الحالي
-- تحديد ما إذا كان Draft/Official ضروري
-- تخطيط استراتيجية مبسّطة
-- **الخيار 1:** دمج Draft system في Store
-- **الخيار 2:** إزالة Draft system كلياً
-- **الخيار 3:** الإبقاء على useEditableTenderPricing
-
-**🎯 الأولوية الجديدة:**
-بدلاً من migration كامل، سنركز على:
-
-1. ✅ تحسين TenderPricingStore (مكتمل)
-2. ✅ استبدال useUnifiedTenderPricing (مكتمل)
-3. 📋 تحسين الأداء (performance optimization)
-4. 📋 إضافة Integration Tests
-5. ⏳ Legacy cleanup (مؤجل لـ Week 6)
+- **Commits:** 580bbdd, 2d8ffa5, 31a02a4
 
 ---
 
-### Week 6: Complete Phase 4 + Legacy Cleanup (المعدّلة)
+#### **🔥 Day 2: Draft System Removal (قيد التنفيذ)**
+
+**القرار الاستراتيجي:**
+بعد تحليل عميق، اكتشفنا أن Draft System غير ضروري!
+
+- لا auto-save
+- الحفظ عند النقر فقط
+- 70% من التعقيد يمكن حذفه
+
+**التغييرات المخططة:**
+
+1. **useEditableTenderPricing.ts** (223 lines → DELETE)
+
+   - ❌ حذف 9 state variables (hasDraft, isDraftNewer, officialAt, draftAt, status, source, dirty)
+   - ❌ حذف saveDraft method
+   - ❌ حذف Draft/Official comparison logic
+   - ✅ الاستبدال: useTenderPricingStore فقط
+
+2. **pricingStorageAdapter.ts** (تبسيط)
+
+   - ❌ حذف loadDraft()
+   - ❌ حذف saveDraft()
+   - ❌ حذف clearDraft()
+   - ❌ حذف getStatus()
+   - ✅ الاحتفاظ: loadOfficial() → load()
+   - ✅ الاحتفاظ: saveOfficial() → save()
+
+3. **useTenderPricingPersistence.ts** (686 lines → ~200 lines)
+
+   - ❌ إزالة Draft logic
+   - ❌ إزالة auto-save mechanism
+   - ❌ إزالة conflict resolution
+   - ✅ تبسيط: حفظ مباشر عند النقر
+   - ✅ نقل business logic إلى Store
+
+4. **TenderPricingPage.tsx** (تحديث)
+   - ❌ حذف useEditableTenderPricing
+   - ✅ استخدام useTenderPricingStore فقط
+   - ❌ إزالة Draft UI (badges, alerts, reload buttons)
+   - ✅ Save button → savePricing() مباشرة
+
+**الوقت المتوقع:** يوم واحد (8 ساعات)
+
+---
+
+#### **Day 3: Testing & Cleanup**
+
+1. **Testing:**
+
+   - اختبار save workflow الجديد
+   - تعديل → نقر Save → حفظ في localStorage
+   - reload يحمّل البيانات الصحيحة
+
+2. **localStorage Cleanup:**
+
+   - حذف جميع PRICING_DRAFT keys
+   - migration script (optional)
+   - تحديث documentation
+
+3. **UI Cleanup:**
+   - البحث عن Draft-related UI
+   - إزالة badges، alerts، reload buttons
+   - تحديث TenderPricingWizard
+
+**الوقت المتوقع:** يوم واحد (8 ساعات)
+
+---
+
+#### **Days 4-5: Performance & Integration Tests**
+
+**Performance Optimization:**
+
+- Add memoization to selectors
+- Optimize re-render patterns
+- Measure before/after metrics
+- **Expected:** 20-30% performance improvement
+
+**Integration Tests:**
+
+- Create test suite for TenderPricingStore
+- Test loadPricing, savePricing, selectors
+- Mock BOQ Repository
+- **Expected:** Coverage 40% → 65%
+
+**الوقت المتوقع:** يومان (16 ساعة)
+
+---
+
+#### **ملخص Week 5 الجديد**
+
+| اليوم     | المهمة                  | الحالة | الوقت       |
+| --------- | ----------------------- | ------ | ----------- |
+| Day 1     | useUnifiedTenderPricing | ✅     | 2 ساعات     |
+| Day 2     | Draft System Removal    | �      | 8 ساعات     |
+| Day 3     | Testing & Cleanup       | ⏳     | 8 ساعات     |
+| Days 4-5  | Performance & Tests     | ⏳     | 16 ساعة     |
+| **Total** | **Week 5 Complete**     | 20%    | **34 ساعة** |
+
+**الفوائد:**
+
+- ✅ نظام موحد 100% (Zustand Store فقط)
+- ✅ تقليل 70% من التعقيد
+- ✅ حذف 500+ سطر من Draft logic
+- ✅ سهولة الصيانة والاختبار
+- ✅ أداء أفضل (less state management overhead)
+
+---
+
+### Week 6: Complete Phase 4 + Legacy Cleanup
 
 #### **Day 1-3: إكمال TenderPricingWizard**
 
