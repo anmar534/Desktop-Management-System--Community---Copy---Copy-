@@ -5,7 +5,6 @@
  */
 
 import type { StateCreator } from 'zustand'
-import type { TenderPricingState } from './types'
 
 export interface PricingItem {
   itemId: string
@@ -36,7 +35,7 @@ export interface DataSlice {
   setBOQItems: (items: BOQItem[]) => void
   updateItemPricing: (itemId: string, unitPrice: number, totalPrice: number, notes?: string) => void
   clearPricingData: () => void
-  reset: () => void
+  resetData: () => void
 }
 
 const initialDataState = {
@@ -45,45 +44,35 @@ const initialDataState = {
   boqItems: [],
 }
 
-export const createDataSlice: StateCreator<TenderPricingState, [], [], DataSlice> = (set) => ({
+export const createDataSlice: StateCreator<DataSlice> = (set) => ({
   ...initialDataState,
 
-  setCurrentTender: (tenderId) =>
-    set((state) => {
-      state.currentTenderId = tenderId
-    }),
+  setCurrentTender: (tenderId) => set({ currentTenderId: tenderId }),
 
-  setPricingData: (data) =>
-    set((state) => {
-      state.pricingData = data
-    }),
+  setPricingData: (data) => set({ pricingData: data }),
 
-  setBOQItems: (items) =>
-    set((state) => {
-      state.boqItems = items
-    }),
+  setBOQItems: (items) => set({ boqItems: items }),
 
   updateItemPricing: (itemId, unitPrice, totalPrice, notes) =>
     set((state) => {
-      const existing = state.pricingData.get(itemId)
-      state.pricingData.set(itemId, {
+      const newPricingData = new Map(state.pricingData)
+      const existing = newPricingData.get(itemId)
+      newPricingData.set(itemId, {
         itemId,
         unitPrice,
         totalPrice,
         notes: notes || existing?.notes,
         lastModified: new Date(),
       })
-      state.isDirty = true
+      return { pricingData: newPricingData }
     }),
 
-  clearPricingData: () =>
-    set((state) => {
-      state.pricingData.clear()
-    }),
+  clearPricingData: () => set({ pricingData: new Map() }),
 
-  reset: () =>
-    set((state) => {
-      Object.assign(state, initialDataState)
-      state.pricingData = new Map()
+  resetData: () =>
+    set({
+      currentTenderId: null,
+      pricingData: new Map(),
+      boqItems: [],
     }),
 })

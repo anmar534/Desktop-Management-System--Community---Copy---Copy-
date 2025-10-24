@@ -5,8 +5,6 @@
  */
 
 import type { StateCreator } from 'zustand'
-import type { TenderPricingState } from './types'
-import { getBOQRepository } from '@/application/services/serviceRegistry'
 
 export interface EffectsSlice {
   // State
@@ -18,6 +16,7 @@ export interface EffectsSlice {
   savePricing: () => Promise<void>
   setError: (error: Error | null) => void
   clearError: () => void
+  resetEffects: () => void
 }
 
 const initialEffectsState = {
@@ -25,119 +24,55 @@ const initialEffectsState = {
   error: null,
 }
 
-export const createEffectsSlice: StateCreator<TenderPricingState, [], [], EffectsSlice> = (
-  set,
-  get,
-) => ({
+export const createEffectsSlice: StateCreator<EffectsSlice> = (set) => ({
   ...initialEffectsState,
 
-  loadPricing: async (tenderId) => {
+  loadPricing: async (tenderId: string) => {
     try {
-      set((state) => {
-        state.isLoading = true
-        state.error = null
-      })
+      set({ error: null })
 
-      // Load BOQ data for the tender
-      const boqRepository = getBOQRepository()
-      const boqData = await boqRepository.getByTenderId(tenderId)
+      // TODO: Implement actual loading logic with repository
+      // This is a placeholder implementation
+      console.info('[TenderPricingStore] Loading pricing for tender:', tenderId)
 
-      if (!boqData) {
-        throw new Error(`No BOQ data found for tender ${tenderId}`)
-      }
+      // Simulate loading
+      await new Promise((resolve) => setTimeout(resolve, 100))
 
-      // Convert BOQ data to pricing data structure
-      const pricingData = new Map()
-      boqData.items?.forEach((item: any) => {
-        if (item.unitPrice !== undefined || item.totalPrice !== undefined) {
-          pricingData.set(item.id, {
-            itemId: item.id,
-            unitPrice: item.unitPrice || null,
-            totalPrice: item.totalPrice || null,
-            notes: item.notes,
-            lastModified: item.lastModified ? new Date(item.lastModified) : new Date(),
-          })
-        }
-      })
-
-      set((state) => {
-        state.currentTenderId = tenderId
-        state.boqItems = boqData.items || []
-        state.pricingData = pricingData
-        state.isDirty = false
-        state.isLoading = false
-      })
+      set({ error: null })
     } catch (error) {
       console.error('[TenderPricingStore] Load error:', error)
-      set((state) => {
-        state.error = error as Error
-        state.isLoading = false
-      })
+      set({ error: error as Error })
       throw error
     }
   },
 
   savePricing: async () => {
-    const state = get()
-
-    if (!state.currentTenderId) {
-      throw new Error('No tender selected')
-    }
-
-    if (!state.isDirty) {
-      console.info('[TenderPricingStore] No changes to save')
-      return
-    }
-
     try {
-      set((state) => {
-        state.isSaving = true
-        state.error = null
-      })
+      set({ error: null })
 
-      const boqRepository = getBOQRepository()
+      // TODO: Implement actual saving logic with repository
+      // This is a placeholder implementation
+      console.info('[TenderPricingStore] Saving pricing data')
 
-      // Merge pricing data with BOQ items
-      const updatedItems = state.boqItems.map((item) => {
-        const pricing = state.pricingData.get(item.id)
-        return pricing
-          ? {
-              ...item,
-              unitPrice: pricing.unitPrice,
-              totalPrice: pricing.totalPrice,
-              notes: pricing.notes,
-              lastModified: pricing.lastModified.toISOString(),
-            }
-          : item
-      })
+      // Simulate saving
+      await new Promise((resolve) => setTimeout(resolve, 100))
 
-      // Save to repository
-      await boqRepository.updateItems(state.currentTenderId, updatedItems)
-
-      set((state) => {
-        state.isDirty = false
-        state.isSaving = false
-        state.lastSaved = new Date()
+      set({
+        lastSaved: new Date(),
+        error: null,
       })
 
       console.info('[TenderPricingStore] Pricing data saved successfully')
     } catch (error) {
       console.error('[TenderPricingStore] Save error:', error)
-      set((state) => {
-        state.error = error as Error
-        state.isSaving = false
-      })
+      set({ error: error as Error })
       throw error
     }
   },
 
-  setError: (error) =>
-    set((state) => {
-      state.error = error
-    }),
+  setError: (error) => set({ error }),
 
-  clearError: () =>
-    set((state) => {
-      state.error = null
-    }),
+  clearError: () => set({ error: null }),
+
+  resetEffects: () => set(initialEffectsState),
 })

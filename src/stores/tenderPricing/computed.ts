@@ -4,42 +4,43 @@
  * Pure functions that derive state from the store
  */
 
-import type { TenderPricingState, TenderPricingComputed } from './types'
+import type { TenderPricingState } from './types'
 
 /**
- * Create computed/derived values from store state
+ * Computed/derived values
  */
-export const createComputedValues = (get: () => TenderPricingState): TenderPricingComputed => ({
-  getTotalValue: () => {
-    const state = get()
+export const computed = {
+  /**
+   * Calculate total value of all priced items
+   */
+  getTotalValue: (state: TenderPricingState): number => {
     let total = 0
-
     state.pricingData.forEach((item) => {
       if (item.totalPrice !== null) {
         total += item.totalPrice
       }
     })
-
     return total
   },
 
-  getPricedItemsCount: () => {
-    const state = get()
+  /**
+   * Count how many items have been priced
+   */
+  getPricedItemsCount: (state: TenderPricingState): number => {
     let count = 0
-
     state.pricingData.forEach((item) => {
       if (item.unitPrice !== null || item.totalPrice !== null) {
         count++
       }
     })
-
     return count
   },
 
-  getCompletionPercentage: () => {
-    const state = get()
+  /**
+   * Calculate completion percentage (0-100)
+   */
+  getCompletionPercentage: (state: TenderPricingState): number => {
     const totalItems = state.boqItems.length
-
     if (totalItems === 0) return 0
 
     const pricedCount = Array.from(state.pricingData.values()).filter(
@@ -49,8 +50,10 @@ export const createComputedValues = (get: () => TenderPricingState): TenderPrici
     return Math.round((pricedCount / totalItems) * 100)
   },
 
-  getFilteredItems: () => {
-    const state = get()
+  /**
+   * Get filtered BOQ items based on current filters
+   */
+  getFilteredItems: (state: TenderPricingState) => {
     const { searchTerm, priced, category } = state.filters
 
     return state.boqItems.filter((item) => {
@@ -82,7 +85,7 @@ export const createComputedValues = (get: () => TenderPricingState): TenderPrici
       return true
     })
   },
-})
+}
 
 /**
  * Memoized selectors for React components
@@ -151,4 +154,24 @@ export const selectors = {
    * Select last saved timestamp
    */
   lastSaved: (state: TenderPricingState) => state.lastSaved,
+
+  /**
+   * Select total value (computed)
+   */
+  totalValue: (state: TenderPricingState) => computed.getTotalValue(state),
+
+  /**
+   * Select priced items count (computed)
+   */
+  pricedCount: (state: TenderPricingState) => computed.getPricedItemsCount(state),
+
+  /**
+   * Select completion percentage (computed)
+   */
+  completionPercentage: (state: TenderPricingState) => computed.getCompletionPercentage(state),
+
+  /**
+   * Select filtered items (computed)
+   */
+  filteredItems: (state: TenderPricingState) => computed.getFilteredItems(state),
 }

@@ -2,8 +2,8 @@
  * Tender Pricing Store - TypeScript Types
  */
 
-import type { DataSlice } from './dataSlice'
-import type { UISlice } from './uiSlice'
+import type { DataSlice, BOQItem, PricingItem } from './dataSlice'
+import type { UISlice, FilterState } from './uiSlice'
 import type { EffectsSlice } from './effectsSlice'
 
 /**
@@ -18,26 +18,6 @@ export type TenderPricingState = DataSlice & UISlice & EffectsSlice
 export type TenderPricingSelector<T> = (state: TenderPricingState) => T
 
 /**
- * Computed selectors (derived state)
+ * Re-export types from slices
  */
-export interface TenderPricingComputed {
-  /**
-   * Calculate total value of all priced items
-   */
-  getTotalValue: () => number
-
-  /**
-   * Count how many items have been priced
-   */
-  getPricedItemsCount: () => number
-
-  /**
-   * Calculate completion percentage (0-100)
-   */
-  getCompletionPercentage: () => number
-
-  /**
-   * Get filtered BOQ items based on current filters
-   */
-  getFilteredItems: () => DataSlice['boqItems']
-}
+export type { DataSlice, UISlice, EffectsSlice, BOQItem, PricingItem, FilterState }

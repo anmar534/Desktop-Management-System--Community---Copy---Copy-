@@ -2,15 +2,12 @@
  * Zustand Store Middleware
  *
  * Re-exports all middleware for easy importing
+ *
+ * Note: Middleware implementations are WIP and will be added incrementally
  */
 
-export {
-  electronStorage,
-  saveToElectronStorage,
-  loadFromElectronStorage,
-  clearElectronStorage,
-} from './electronStorage'
-export type { ElectronStorageOptions } from './electronStorage'
+// TODO: Add electronStorage middleware
+// TODO: Add logger middleware
+// TODO: Add persist middleware
 
-export { logger, conditionalLogger } from './logger'
-export type { LoggerOptions } from './logger'
+export {}

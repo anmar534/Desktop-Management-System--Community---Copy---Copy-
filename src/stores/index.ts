@@ -7,8 +7,8 @@
 // Tender Pricing Store
 export {
   useTenderPricingStore,
-  useTenderPricingComputed,
-  tenderPricingSelectors,
+  selectors as tenderPricingSelectors,
+  computed as tenderPricingComputed,
   getTenderPricingStore,
   subscribeTenderPricing,
   resetTenderPricingStore,
@@ -20,19 +20,10 @@ export type {
   PricingItem,
   BOQItem,
   FilterState,
+  DataSlice,
+  UISlice,
+  EffectsSlice,
 } from './tenderPricing'
-
-// Middleware
-export {
-  electronStorage,
-  saveToElectronStorage,
-  loadFromElectronStorage,
-  clearElectronStorage,
-  logger,
-  conditionalLogger,
-} from './middleware'
-
-export type { ElectronStorageOptions, LoggerOptions } from './middleware'
 
 // Future stores will be added here:
 // export { useTendersStore } from './tenders';

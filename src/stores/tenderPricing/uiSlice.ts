@@ -5,7 +5,6 @@
  */
 
 import type { StateCreator } from 'zustand'
-import type { TenderPricingState } from './types'
 
 export interface FilterState {
   searchTerm: string
@@ -31,6 +30,7 @@ export interface UISlice {
   selectAll: (itemIds: string[]) => void
   setFilters: (filters: Partial<FilterState>) => void
   resetFilters: () => void
+  resetUI: () => void
 }
 
 const initialUIState = {
@@ -45,55 +45,43 @@ const initialUIState = {
   },
 }
 
-export const createUISlice: StateCreator<TenderPricingState, [], [], UISlice> = (set) => ({
+export const createUISlice: StateCreator<UISlice> = (set) => ({
   ...initialUIState,
 
-  markDirty: () =>
-    set((state) => {
-      state.isDirty = true
-    }),
+  markDirty: () => set({ isDirty: true }),
 
-  resetDirty: () =>
-    set((state) => {
-      state.isDirty = false
-    }),
+  resetDirty: () => set({ isDirty: false }),
 
-  setLoading: (loading) =>
-    set((state) => {
-      state.isLoading = loading
-    }),
+  setLoading: (loading) => set({ isLoading: loading }),
 
-  setSaving: (saving) =>
-    set((state) => {
-      state.isSaving = saving
-    }),
+  setSaving: (saving) => set({ isSaving: saving }),
 
   toggleItemSelection: (itemId) =>
     set((state) => {
-      if (state.selectedItems.has(itemId)) {
-        state.selectedItems.delete(itemId)
+      const newSelectedItems = new Set(state.selectedItems)
+      if (newSelectedItems.has(itemId)) {
+        newSelectedItems.delete(itemId)
       } else {
-        state.selectedItems.add(itemId)
+        newSelectedItems.add(itemId)
       }
+      return { selectedItems: newSelectedItems }
     }),
 
-  clearSelection: () =>
-    set((state) => {
-      state.selectedItems.clear()
-    }),
+  clearSelection: () => set({ selectedItems: new Set() }),
 
-  selectAll: (itemIds) =>
-    set((state) => {
-      state.selectedItems = new Set(itemIds)
-    }),
+  selectAll: (itemIds) => set({ selectedItems: new Set(itemIds) }),
 
   setFilters: (filters) =>
-    set((state) => {
-      state.filters = { ...state.filters, ...filters }
-    }),
+    set((state) => ({
+      filters: { ...state.filters, ...filters },
+    })),
 
-  resetFilters: () =>
-    set((state) => {
-      state.filters = { ...initialUIState.filters }
+  resetFilters: () => set({ filters: { ...initialUIState.filters } }),
+
+  resetUI: () =>
+    set({
+      ...initialUIState,
+      selectedItems: new Set(),
+      filters: { ...initialUIState.filters },
     }),
 })
