@@ -462,7 +462,13 @@ export function Tenders({ onSectionChange }: TendersProps) {
       return undefined
     }
 
-    const onUpdated = () => {
+    const onUpdated = (event?: Event) => {
+      // Fix #2: فحص skipRefresh flag لمنع reload غير ضروري
+      if (event instanceof CustomEvent && event.detail?.skipRefresh === true) {
+        console.log('⏭️ تخطي إعادة التحميل - skipRefresh flag موجود')
+        return
+      }
+
       // Fix #1: منع re-entrance (Event Loop Guard)
       if (isRefreshingRef.current) {
         console.log('⏭️ تخطي إعادة التحميل - جاري التحميل بالفعل')

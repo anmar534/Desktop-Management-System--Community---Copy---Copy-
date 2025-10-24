@@ -204,12 +204,15 @@ export const useTenderPricingStore = create<TenderPricingState>()(
             })
 
             const boqRepo = getBOQRepository()
-            // Use createOrUpdate instead of update
-            await boqRepo.createOrUpdate({
-              tenderId: currentTenderId,
-              items: updatedBOQ,
-              updatedAt: new Date().toISOString(),
-            })
+            // Use createOrUpdate with skipRefresh to prevent reload loop
+            await boqRepo.createOrUpdate(
+              {
+                tenderId: currentTenderId,
+                items: updatedBOQ,
+                updatedAt: new Date().toISOString(),
+              },
+              { skipRefresh: true }, // ← منع reload في TendersPage
+            )
 
             // 2. Update tender metadata
             const tenderRepo = getTenderRepository()
@@ -229,10 +232,13 @@ export const useTenderPricingStore = create<TenderPricingState>()(
               })
             }
 
-            // 3. Emit event
+            // 3. Emit event with skipRefresh flag
             window.dispatchEvent(
               new CustomEvent(APP_EVENTS.TENDER_UPDATED, {
-                detail: { tenderId: currentTenderId },
+                detail: {
+                  tenderId: currentTenderId,
+                  skipRefresh: true, // ← منع reload في TendersPage
+                },
               }),
             )
 
