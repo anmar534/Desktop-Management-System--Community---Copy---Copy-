@@ -11,14 +11,12 @@ import type {
   SubcontractorRow,
   PricingData,
   PricingPercentages,
-  ExecutionMethod,
   PricingViewItem,
 } from '@/shared/types/pricing'
 import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
 import type {
   QuantityItem,
   TenderWithPricingSources,
-  PricingViewName,
 } from '@/presentation/pages/Tenders/TenderPricing/types'
 // (Phase MVP Official/Draft) استيراد الهوك الجديد لإدارة المسودة والنسخة الرسمية
 import { useEditableTenderPricing } from '@/application/hooks/useEditableTenderPricing'
@@ -37,6 +35,7 @@ import { useTenderPricingBackup } from '@/presentation/pages/Tenders/TenderPrici
 import { usePricingRowOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingRowOperations'
 import { useSummaryOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useSummaryOperations'
 import { useItemNavigation } from '@/presentation/pages/Tenders/TenderPricing/hooks/useItemNavigation'
+import { usePricingEventHandlers } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingEventHandlers'
 import { AlertCircle } from 'lucide-react'
 import { useTenderPricingPersistence } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingPersistence'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
@@ -235,13 +234,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     }))
   }
 
-  const handleViewChange = useCallback(
-    (value: PricingViewName) => {
-      changeView(value)
-    },
-    [changeView],
-  )
-
   const [isLoaded, setIsLoaded] = useState(false)
 
   // Transform pricingData to include id property for domain pricing engine
@@ -294,6 +286,18 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       profit: defaultPercentages.profit,
     },
     completed: false,
+  })
+
+  // Event handlers hook - manages simple form event handlers
+  const {
+    handleViewChange,
+    handleExecutionMethodChange,
+    handlePercentageChange,
+    handleTechnicalNotesChange,
+  } = usePricingEventHandlers({
+    setCurrentPricing,
+    markDirty,
+    changeView,
   })
 
   const {
@@ -357,45 +361,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     }
     return (completedCount / quantityItems.length) * 100
   }, [completedCount, quantityItems.length])
-
-  const handleExecutionMethodChange = useCallback(
-    (value: ExecutionMethod) => {
-      setCurrentPricing((prev) => {
-        const next = { ...prev, executionMethod: value }
-        markDirty()
-        return next
-      })
-    },
-    [markDirty],
-  )
-
-  const handlePercentageChange = useCallback(
-    (key: keyof PricingPercentages, value: number) => {
-      setCurrentPricing((prev) => {
-        const next = {
-          ...prev,
-          additionalPercentages: {
-            ...prev.additionalPercentages,
-            [key]: Math.max(0, Math.min(100, value)),
-          },
-        }
-        markDirty()
-        return next
-      })
-    },
-    [markDirty],
-  )
-
-  const handleTechnicalNotesChange = useCallback(
-    (value: string) => {
-      setCurrentPricing((prev) => {
-        const next = { ...prev, technicalNotes: value }
-        markDirty()
-        return next
-      })
-    },
-    [markDirty],
-  )
 
   // تحميل بيانات التسعير الافتراضية عند فتح الصفحة لأول مرة
   useEffect(() => {
