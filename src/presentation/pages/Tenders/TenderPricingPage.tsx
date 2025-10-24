@@ -3,7 +3,7 @@ import { pricingService } from '@/application/services/pricingService'
 import { exportTenderPricingToExcel } from '@/presentation/pages/Tenders/TenderPricing/utils/exportUtils'
 import { formatTimestamp as formatTimestampUtil } from '@/presentation/pages/Tenders/TenderPricing/utils/dateUtils'
 import { parseQuantityItems } from '@/presentation/pages/Tenders/TenderPricing/utils/parseQuantityItems'
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import type {
   MaterialRow,
   LaborRow,
@@ -22,7 +22,7 @@ import type {
 // Phase 2 authoring engine adoption helpers (flag-guarded)
 import { isPricingEntry } from '@/shared/utils/pricing/pricingHelpers'
 import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
-import { applyDefaultsToPricingMap } from '@/shared/utils/defaultPercentagesPropagation'
+// REMOVED: applyDefaultsToPricingMap - no longer auto-applying after Draft removal
 import { EmptyState } from '@/presentation/components/layout/PageLayout'
 import { ConfirmationDialog } from '@/presentation/components/ui/confirmation-dialog'
 import { confirmationMessages } from '@/shared/config/confirmationMessages'
@@ -162,8 +162,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     operational: 5,
     profit: 15,
   })
-  // Track previous defaults to enable smart propagation (items that still matched old defaults only)
-  const previousDefaultsRef = useRef({ administrative: 5, operational: 5, profit: 15 })
+  // REMOVED: previousDefaultsRef - no longer auto-applying after Draft removal
   // حالات نصية وسيطة للسماح بالكتابة الحرة ثم الاعتماد عند الخروج من الحقل
   const [defaultPercentagesInput, setDefaultPercentagesInput] = useState({
     administrative: '5',
@@ -323,7 +322,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     tenderId: tender.id,
   })
 
-  const { notifyPricingUpdate, persistPricingAndBOQ, updateTenderStatus, debouncedSave } =
+  const { notifyPricingUpdate, persistPricingAndBOQ, updateTenderStatus } =
     useTenderPricingPersistence({
       tender,
       pricingData,
@@ -517,89 +516,21 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     markDirty,
   ])
 
-  // حفظ النسب الافتراضية عند تعديلها لضمان اعتمادها للبنود الجديدة والجلسات القادمة
-  const isSavingRef = useRef(false)
-
-  useEffect(() => {
-    if (!isLoaded) return
-
-    // Guard: منع re-entrance أثناء عملية الحفظ
-    if (isSavingRef.current) {
-      console.log('⏭️ [TenderPricingPage] تخطي الحفظ - جاري الحفظ بالفعل')
-      return
-    }
-
-    const previousDefaults = previousDefaultsRef.current
-    const defaultsChanged =
-      previousDefaults.administrative !== defaultPercentages.administrative ||
-      previousDefaults.operational !== defaultPercentages.operational ||
-      previousDefaults.profit !== defaultPercentages.profit
-
-    let mapForPersistence: Map<string, PricingData> = pricingData
-
-    const performSave = async () => {
-      isSavingRef.current = true
-      try {
-        if (defaultsChanged && pricingData.size > 0) {
-          const { updated, changedCount } = applyDefaultsToPricingMap(
-            pricingData,
-            previousDefaults,
-            defaultPercentages,
-          )
-          if (changedCount > 0) {
-            mapForPersistence = updated
-            setPricingData(updated)
-            await persistPricingAndBOQ(updated)
-            recordPricingAudit('info', 'defaults-propagated', { changedCount })
-          } else {
-            await persistPricingAndBOQ(pricingData)
-            recordPricingAudit('info', 'defaults-propagated', { changedCount: 0 }, 'skipped')
-          }
-        } else {
-          await persistPricingAndBOQ(pricingData)
-        }
-
-        previousDefaultsRef.current = { ...defaultPercentages }
-
-        await pricingService.saveTenderPricing(tender.id, {
-          pricing: Array.from(mapForPersistence.entries()),
-          defaultPercentages,
-          lastUpdated: new Date().toISOString(),
-        })
-      } finally {
-        isSavingRef.current = false
-      }
-    }
-
-    void performSave()
-    // (Legacy Snapshot System Removed 2025-09): حذف منطق إنشاء/ترحيل snapshot نهائياً.
-  }, [
-    defaultPercentages,
-    isLoaded,
-    persistPricingAndBOQ,
-    pricingData,
-    recordPricingAudit,
-    tender.id,
-  ])
+  // REMOVED: Auto-save useEffect for defaultPercentages - causes infinite loop
+  // كان هذا useEffect يحفظ تلقائياً عند تغيير النسب الافتراضية
+  // مما يسبب حلقة لانهائية بعد إزالة Draft System
+  //
+  // النسب الافتراضية سيتم حفظها الآن فقط عند:
+  // 1. الضغط على زر "حفظ" صراحةً
+  // 2. الضغط على زر "اعتماد" لتقديم العرض
 
   // ملاحظة: تم إزالة دالة تنسيق العملة غير المستخدمة بعد تبسيط بطاقات الملخص.
 
-  // تتبع آخر itemId لمنع auto-save عند التنقل بين البنود
-  const lastItemIdRef = useRef<string | undefined>(undefined)
-
-  // تشغيل الحفظ التلقائي عند تغيير البيانات - لكن ليس عند تحميل بند جديد
-  useEffect(() => {
-    if (!isLoaded || !currentItemId) return
-
-    // إذا تغير البند، تحديث الـ ref وتجاهل debouncedSave
-    if (lastItemIdRef.current !== currentItemId) {
-      lastItemIdRef.current = currentItemId
-      return // ← تجاهل debouncedSave عند تحميل بند جديد
-    }
-
-    // الآن فقط عند تعديل نفس البند
-    debouncedSave(currentPricing)
-  }, [currentPricing, debouncedSave, isLoaded, currentItemId])
+  // REMOVED: Auto-save useEffect - causes infinite loop after Draft System removal
+  // كان هذا useEffect يستدعي debouncedSave() عند كل تغيير في currentPricing
+  // مما يسبب حلقة لانهائية: change → save → event → reload → change again
+  //
+  // الحفظ الآن فقط عند الضغط على زر "حفظ" أو "اعتماد" صراحةً
 
   // Domain pricing integration (removed auto-save logic)
 
