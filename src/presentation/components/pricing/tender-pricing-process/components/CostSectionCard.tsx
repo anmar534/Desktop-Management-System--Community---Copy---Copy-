@@ -356,7 +356,8 @@ export const CostSectionCard: React.FC<CostSectionCardProps> = ({
                             }
                             placeholder="0"
                             className="h-7 text-xs text-center tabular-nums"
-                            step="0.01"
+                            step="1"
+                            min="0"
                           />
                         </td>
 
@@ -388,7 +389,8 @@ export const CostSectionCard: React.FC<CostSectionCardProps> = ({
                             }
                             placeholder="0.00"
                             className="h-7 text-xs text-center tabular-nums"
-                            step="0.01"
+                            step="1"
+                            min="0"
                           />
                         </td>
 

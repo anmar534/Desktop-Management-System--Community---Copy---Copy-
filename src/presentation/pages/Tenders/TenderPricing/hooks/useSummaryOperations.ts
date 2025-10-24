@@ -155,7 +155,16 @@ export function useSummaryOperations({
         const updatedRows = sectionRows.map((row) => {
           if (row.id !== rowId) return row
 
-          const updatedRow: typeof row = { ...row, [field]: value }
+          // Sanitize numeric values to prevent negatives
+          let sanitizedValue = value
+          if (field === 'quantity' || field === 'price' || field === 'wastePercentage') {
+            const numValue = Number(value)
+            if (!isNaN(numValue) && numValue < 0) {
+              sanitizedValue = 0
+            }
+          }
+
+          const updatedRow: typeof row = { ...row, [field]: sanitizedValue }
 
           // Auto-enable hasWaste when wastePercentage is entered for materials
           if (section === 'materials' && field === 'wastePercentage') {
