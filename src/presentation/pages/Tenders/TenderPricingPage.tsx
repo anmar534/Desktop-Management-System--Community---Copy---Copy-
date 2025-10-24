@@ -19,6 +19,7 @@ import type {
   QuantityItem,
   TenderWithPricingSources,
 } from '@/presentation/pages/Tenders/TenderPricing/types'
+import type { Tender } from '@/data/centralData'
 // Phase 2 authoring engine adoption helpers (flag-guarded)
 import { isPricingEntry } from '@/shared/utils/pricing/pricingHelpers'
 import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
@@ -35,7 +36,8 @@ import { useSummaryOperations } from '@/presentation/pages/Tenders/TenderPricing
 import { useItemNavigation } from '@/presentation/pages/Tenders/TenderPricing/hooks/useItemNavigation'
 import { usePricingEventHandlers } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingEventHandlers'
 import { AlertCircle } from 'lucide-react'
-import { useTenderPricingPersistence } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingPersistence'
+import { TenderPricingRepository } from '@/infrastructure/repositories/TenderPricingRepository.js'
+import { APP_EVENTS } from '@/events/bus.js'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { TenderPricingTabs } from '@/presentation/components/pricing/tender-pricing-process/views/TenderPricingTabs'
 import {
@@ -137,7 +139,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     loadPricing,
     savePricing,
     isDirty,
-    updateItemPricing: storeUpdateItemPricing,
     markDirty: storeMarkDirty,
   } = useTenderPricingStore()
 
@@ -286,7 +287,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   }, [domainPricing, quantityItems])
 
   const currentItem = quantityItems[currentItemIndex]
-  const currentItemId = currentItem?.id
   const [currentPricing, setCurrentPricing] = useState<PricingData>({
     materials: [],
     labor: [],
@@ -332,20 +332,56 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     tenderId: tender.id,
   })
 
-  const { notifyPricingUpdate, persistPricingAndBOQ, updateTenderStatus } =
-    useTenderPricingPersistence({
-      tender,
-      pricingData,
-      quantityItems,
-      defaultPercentages,
-      pricingViewItems,
-      domainPricing,
-      calculateProjectTotal,
-      isLoaded,
-      currentItemId,
-      setPricingData,
-      formatCurrencyValue,
-    })
+  // === Phase 2.3: Repository-based persistence replacing useTenderPricingPersistence hook ===
+  const tenderPricingRepository = useMemo(() => new TenderPricingRepository(), [])
+
+  const notifyPricingUpdate = useCallback(async () => {
+    // Dispatch event to notify other components of pricing updates
+    window.dispatchEvent(
+      new CustomEvent(APP_EVENTS.TENDER_UPDATED, {
+        detail: { tenderId: tender.id },
+      }),
+    )
+  }, [tender.id])
+
+  const persistPricingAndBOQ = useCallback(
+    async (updatedPricingData: Map<string, PricingData>) => {
+      await tenderPricingRepository.persistPricingAndBOQ(
+        tender.id,
+        updatedPricingData,
+        quantityItems,
+        defaultPercentages,
+      )
+      await notifyPricingUpdate()
+    },
+    [tenderPricingRepository, tender.id, quantityItems, defaultPercentages, notifyPricingUpdate],
+  )
+
+  const updateTenderStatus = useCallback(
+    async (newStatus?: string) => {
+      const completedCount = Array.from(pricingData.values()).filter(
+        (p) => p?.completed === true,
+      ).length
+      const totalValue = calculateProjectTotal()
+
+      // If newStatus provided, just use repository logic. Otherwise calculate from completedCount
+      if (newStatus === undefined) {
+        await tenderPricingRepository.updateTenderStatus(
+          tender.id,
+          completedCount,
+          quantityItems.length,
+          totalValue,
+        )
+      } else {
+        // Manual status override (not typical, but keeping for compatibility)
+        const tenderRepo = (
+          await import('@/application/services/serviceRegistry')
+        ).getTenderRepository()
+        await tenderRepo.update(tender.id, { status: newStatus as unknown as Tender['status'] })
+      }
+    },
+    [tenderPricingRepository, tender.id, quantityItems.length, pricingData, calculateProjectTotal],
+  )
 
   // Custom hook for backup management
   const { backupsList, createBackup, loadBackupsList, restoreBackup } = useTenderPricingBackup({
