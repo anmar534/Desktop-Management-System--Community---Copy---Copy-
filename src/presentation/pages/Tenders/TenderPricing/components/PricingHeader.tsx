@@ -124,7 +124,6 @@ export const PricingHeader: React.FC<PricingHeaderProps> = ({
             <Button
               size="sm"
               className="flex items-center gap-2 bg-success text-success-foreground hover:bg-success/90"
-              disabled={!isDirty}
             >
               <CheckCircle className="w-4 h-4" />
               حفظ

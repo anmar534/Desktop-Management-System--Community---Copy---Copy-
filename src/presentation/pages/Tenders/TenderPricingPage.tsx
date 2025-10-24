@@ -537,7 +537,8 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   // تحذير عند محاولة مغادرة الصفحة مع تغييرات غير محفوظة
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
+      // Check if user has entered any pricing data (not necessarily saved)
+      if (pricingData.size > 0) {
         const message = confirmationMessages.leaveDirty.description
         e.preventDefault()
         e.returnValue = message // لبعض المتصفحات
@@ -546,7 +547,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [isDirty])
+  }, [pricingData.size])
 
   // تحديث حالة المنافسة عند تحميل المكون لأول مرة فقط
   useEffect(() => {
