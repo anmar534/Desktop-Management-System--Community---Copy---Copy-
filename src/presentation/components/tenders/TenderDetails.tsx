@@ -133,8 +133,18 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
       unifiedSource: unified.source,
       items: unified.items.length,
       hasTotals: !!unified.totals,
+      totalsContent: unified.totals,
+      firstItem: unified.items[0],
+      itemsWithPrices: unified.items.filter((it: any) => it.unitPrice || it.totalPrice).length,
     })
-  }, [unified.status, unified.source, unified.items.length, unified.totals, tender?.id])
+  }, [
+    unified.status,
+    unified.source,
+    unified.items.length,
+    unified.totals,
+    unified.items,
+    tender?.id,
+  ])
 
   // إعداد بيانات المرفقات
   const attachmentsData = useMemo(() => {
