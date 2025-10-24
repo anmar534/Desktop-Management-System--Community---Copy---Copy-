@@ -52,6 +52,7 @@
     "file-saver": "2.0.5",
     "framer-motion": "12.23.12",
     "gantt-task-react": "0.3.9",
+    "immer": "10.1.3",
     "input-otp": "1.4.2",
     "keytar": "7.9.0",
     "lucide-react": "0.487.0",
@@ -74,7 +75,8 @@
     "tailwindcss": "3.4.10",
     "vaul": "1.1.2",
     "vite": "7.1.10",
-    "zod": "3.23.8"
+    "zod": "3.23.8",
+    "zustand": "5.0.8"
   },
   "devDependencies": {
     "@playwright/test": "1.48.0",
