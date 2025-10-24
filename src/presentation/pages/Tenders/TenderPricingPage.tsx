@@ -518,8 +518,16 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   ])
 
   // حفظ النسب الافتراضية عند تعديلها لضمان اعتمادها للبنود الجديدة والجلسات القادمة
+  const isSavingRef = useRef(false)
+
   useEffect(() => {
     if (!isLoaded) return
+
+    // Guard: منع re-entrance أثناء عملية الحفظ
+    if (isSavingRef.current) {
+      console.log('⏭️ [TenderPricingPage] تخطي الحفظ - جاري الحفظ بالفعل')
+      return
+    }
 
     const previousDefaults = previousDefaultsRef.current
     const defaultsChanged =
@@ -529,32 +537,41 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
     let mapForPersistence: Map<string, PricingData> = pricingData
 
-    if (defaultsChanged && pricingData.size > 0) {
-      const { updated, changedCount } = applyDefaultsToPricingMap(
-        pricingData,
-        previousDefaults,
-        defaultPercentages,
-      )
-      if (changedCount > 0) {
-        mapForPersistence = updated
-        setPricingData(updated)
-        void persistPricingAndBOQ(updated)
-        recordPricingAudit('info', 'defaults-propagated', { changedCount })
-      } else {
-        void persistPricingAndBOQ(pricingData)
-        recordPricingAudit('info', 'defaults-propagated', { changedCount: 0 }, 'skipped')
+    const performSave = async () => {
+      isSavingRef.current = true
+      try {
+        if (defaultsChanged && pricingData.size > 0) {
+          const { updated, changedCount } = applyDefaultsToPricingMap(
+            pricingData,
+            previousDefaults,
+            defaultPercentages,
+          )
+          if (changedCount > 0) {
+            mapForPersistence = updated
+            setPricingData(updated)
+            await persistPricingAndBOQ(updated)
+            recordPricingAudit('info', 'defaults-propagated', { changedCount })
+          } else {
+            await persistPricingAndBOQ(pricingData)
+            recordPricingAudit('info', 'defaults-propagated', { changedCount: 0 }, 'skipped')
+          }
+        } else {
+          await persistPricingAndBOQ(pricingData)
+        }
+
+        previousDefaultsRef.current = { ...defaultPercentages }
+
+        await pricingService.saveTenderPricing(tender.id, {
+          pricing: Array.from(mapForPersistence.entries()),
+          defaultPercentages,
+          lastUpdated: new Date().toISOString(),
+        })
+      } finally {
+        isSavingRef.current = false
       }
-    } else {
-      void persistPricingAndBOQ(pricingData)
     }
 
-    previousDefaultsRef.current = { ...defaultPercentages }
-
-    void pricingService.saveTenderPricing(tender.id, {
-      pricing: Array.from(mapForPersistence.entries()),
-      defaultPercentages,
-      lastUpdated: new Date().toISOString(),
-    })
+    void performSave()
     // (Legacy Snapshot System Removed 2025-09): حذف منطق إنشاء/ترحيل snapshot نهائياً.
   }, [
     defaultPercentages,
