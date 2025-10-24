@@ -18,7 +18,6 @@ import {
   ArrowRight,
   CheckCircle,
   Settings,
-  Layers,
   Save,
   RotateCcw,
   Download,
@@ -32,7 +31,6 @@ interface PricingHeaderProps {
   pricingData: Map<string, PricingData>
   quantityItemsCount: number
   onBack: () => void
-  onTemplateManagerOpen: () => void
   onSaveCurrentItem: () => void
   onCreateBackup: () => Promise<void>
   onRestoreBackupOpen: () => void
@@ -53,7 +51,6 @@ export const PricingHeader: React.FC<PricingHeaderProps> = ({
   pricingData,
   quantityItemsCount,
   onBack,
-  onTemplateManagerOpen,
   onSaveCurrentItem,
   onCreateBackup,
   onRestoreBackupOpen,
@@ -114,17 +111,6 @@ export const PricingHeader: React.FC<PricingHeaderProps> = ({
 
       {/* Toolbar */}
       <div className="flex items-center gap-2">
-        {/* Templates Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onTemplateManagerOpen}
-          className="flex items-center gap-2"
-        >
-          <Layers className="w-4 h-4" />
-          القوالب
-        </Button>
-
         {/* Approve Official Button */}
         <ConfirmationDialog
           title={confirmationMessages.approveOfficial.title}

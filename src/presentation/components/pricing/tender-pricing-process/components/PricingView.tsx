@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/presentation/components/ui/select'
-import { ScrollArea } from '@/presentation/components/ui/scroll-area'
 import { Textarea } from '@/presentation/components/ui/textarea'
 import { confirmationMessages } from '@/shared/config/confirmationMessages'
 import type {
@@ -207,241 +206,237 @@ export const PricingView: React.FC<PricingViewProps> = ({
   }
 
   return (
-    <ScrollArea className="h-[calc(100vh-300px)] overflow-auto">
-      <div className="space-y-4 p-1 pb-24" dir="rtl">
-        <Card className="border-info/30 bg-info/10">
-          <CardHeader className="p-3">
-            <CardTitle className="flex items-center justify-between text-base">
-              <div className="flex items-center gap-2">
-                <Calculator className="h-4 w-4 text-info" />
-                <span className="font-semibold">
-                  تسعير البند رقم {currentItem.itemNumber} ({currentItemIndex + 1} من {totalItems})
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={onNavigatePrev}
-                  disabled={!canNavigatePrev}
-                >
-                  البند السابق
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={onNavigateNext}
-                  disabled={!canNavigateNext}
-                >
-                  البند التالي
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-              <div className="md:col-span-2">
-                <p className="text-xs text-muted-foreground">وصف البند</p>
-                <p className="text-sm font-medium text-foreground" title={currentItem.description}>
-                  {currentItem.description}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">الوحدة</p>
-                <p className="text-sm font-semibold text-info">{currentItem.unit}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">الكمية</p>
-                <p className="text-sm font-bold text-success">
-                  {formatQuantity(currentItem.quantity)}
-                </p>
-              </div>
+    <div className="space-y-4 p-1 pb-24" dir="rtl">
+      <Card className="border-info/30 bg-info/10">
+        <CardHeader className="p-3">
+          <CardTitle className="flex items-center justify-between text-base">
+            <div className="flex items-center gap-2">
+              <Calculator className="h-4 w-4 text-info" />
+              <span className="font-semibold">
+                تسعير البند رقم {currentItem.itemNumber} ({currentItemIndex + 1} من {totalItems})
+              </span>
             </div>
-            {currentItem.specifications ? (
-              <div className="mt-3">
-                <p className="text-xs text-muted-foreground">المواصفات الفنية</p>
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  {currentItem.specifications}
-                </p>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="grid gap-3 p-3 md:grid-cols-4">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">طريقة التنفيذ</p>
-              <Select
-                value={currentPricing.executionMethod ?? 'ذاتي'}
-                onValueChange={(value) => onExecutionMethodChange(value as ExecutionMethod)}
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onNavigatePrev}
+                disabled={!canNavigatePrev}
               >
-                <SelectTrigger className="h-8">
-                  <SelectValue placeholder="اختر طريقة التنفيذ" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ذاتي">تنفيذ ذاتي</SelectItem>
-                  <SelectItem value="مقاول باطن">مقاول باطن</SelectItem>
-                  <SelectItem value="مختلط">مختلط</SelectItem>
-                </SelectContent>
-              </Select>
+                البند السابق
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onNavigateNext}
+                disabled={!canNavigateNext}
+              >
+                البند التالي
+              </Button>
             </div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+            <div className="md:col-span-2">
+              <p className="text-xs text-muted-foreground">وصف البند</p>
+              <p className="text-sm font-medium text-foreground" title={currentItem.description}>
+                {currentItem.description}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">الوحدة</p>
+              <p className="text-sm font-semibold text-info">{currentItem.unit}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">الكمية</p>
+              <p className="text-sm font-bold text-success">
+                {formatQuantity(currentItem.quantity)}
+              </p>
+            </div>
+          </div>
+          {currentItem.specifications ? (
+            <div className="mt-3">
+              <p className="text-xs text-muted-foreground">المواصفات الفنية</p>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {currentItem.specifications}
+              </p>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
 
-            {(['administrative', 'operational', 'profit'] as (keyof PricingPercentages)[]).map(
-              (key) => (
-                <div key={key} className="space-y-1">
-                  <p className="text-xs text-muted-foreground">
-                    {key === 'administrative' && 'النسبة الإدارية (%)'}
-                    {key === 'operational' && 'النسبة التشغيلية (%)'}
-                    {key === 'profit' && 'نسبة الربح (%)'}
-                  </p>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={currentPricing.additionalPercentages?.[key] ?? 0}
-                    onChange={(event) => onPercentageChange(key, Number(event.target.value) || 0)}
-                    className="h-8 text-center text-sm"
-                  />
-                </div>
-              ),
-            )}
-          </CardContent>
-        </Card>
+      <Card>
+        <CardContent className="grid gap-3 p-3 md:grid-cols-4">
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">طريقة التنفيذ</p>
+            <Select
+              value={currentPricing.executionMethod ?? 'ذاتي'}
+              onValueChange={(value) => onExecutionMethodChange(value as ExecutionMethod)}
+            >
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="اختر طريقة التنفيذ" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ذاتي">تنفيذ ذاتي</SelectItem>
+                <SelectItem value="مقاول باطن">مقاول باطن</SelectItem>
+                <SelectItem value="مختلط">مختلط</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <Card>
-          <CardContent className="grid gap-3 p-3 md:grid-cols-5">
-            <div className="rounded-lg border border-info/30 bg-info/10 p-3">
-              <p className="text-xs text-muted-foreground">إجمالي المواد</p>
-              <p className="text-sm font-semibold text-info">{formatCurrency(totals.materials)}</p>
+          {(['administrative', 'operational', 'profit'] as (keyof PricingPercentages)[]).map(
+            (key) => (
+              <div key={key} className="space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  {key === 'administrative' && 'النسبة الإدارية (%)'}
+                  {key === 'operational' && 'النسبة التشغيلية (%)'}
+                  {key === 'profit' && 'نسبة الربح (%)'}
+                </p>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={currentPricing.additionalPercentages?.[key] ?? 0}
+                  onChange={(event) => onPercentageChange(key, Number(event.target.value) || 0)}
+                  className="h-8 text-center text-sm"
+                />
+              </div>
+            ),
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="grid gap-3 p-3 md:grid-cols-5">
+          <div className="rounded-lg border border-info/30 bg-info/10 p-3">
+            <p className="text-xs text-muted-foreground">إجمالي المواد</p>
+            <p className="text-sm font-semibold text-info">{formatCurrency(totals.materials)}</p>
+          </div>
+          <div className="rounded-lg border border-success/30 bg-success/10 p-3">
+            <p className="text-xs text-muted-foreground">إجمالي العمالة</p>
+            <p className="text-sm font-semibold text-success">{formatCurrency(totals.labor)}</p>
+          </div>
+          <div className="rounded-lg border border-accent/30 bg-accent/10 p-3">
+            <p className="text-xs text-muted-foreground">إجمالي المعدات</p>
+            <p className="text-sm font-semibold text-accent">{formatCurrency(totals.equipment)}</p>
+          </div>
+          <div className="rounded-lg border border-secondary/30 bg-secondary/10 p-3">
+            <p className="text-xs text-muted-foreground">إجمالي المقاولين</p>
+            <p className="text-sm font-semibold text-secondary">
+              {formatCurrency(totals.subcontractors)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-muted/40 bg-muted/20 p-3">
+            <p className="text-xs text-muted-foreground">سعر الوحدة</p>
+            <p className="text-sm font-semibold text-foreground">{formatCurrency(unitPrice)}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-3">{SECTION_ORDER.map((section) => renderSection(section))}</div>
+
+      <Card>
+        <CardHeader className="p-3">
+          <div className="flex items-center gap-2 text-base font-semibold">
+            <FileText className="h-4 w-4 text-muted-foreground" />
+            الملاحظات الفنية
+          </div>
+        </CardHeader>
+        <CardContent className="p-3">
+          <Textarea
+            value={currentPricing.technicalNotes ?? ''}
+            onChange={(event) => onTechnicalNotesChange(event.target.value)}
+            rows={4}
+            placeholder="أضف أي ملاحظات فنية خاصة بهذا البند..."
+            className="text-sm"
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="p-3">
+          <div className="flex items-center gap-2 text-base font-semibold">
+            <BarChart3 className="h-5 w-5 text-success" />
+            الملخص المالي للبند
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3 p-3">
+          <div className="grid gap-2 md:grid-cols-2">
+            <div className="rounded-lg border border-muted/30 bg-muted/10 p-3">
+              <div className="flex items-center justify-between text-sm">
+                <span>التكاليف المباشرة</span>
+                <span className="font-semibold">{formatCurrency(totals.subtotal)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span>التكاليف الإدارية</span>
+                <span className="font-semibold">{formatCurrency(totals.administrative)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span>التكاليف التشغيلية</span>
+                <span className="font-semibold">{formatCurrency(totals.operational)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span>الربح</span>
+                <span className="font-semibold">{formatCurrency(totals.profit)}</span>
+              </div>
             </div>
             <div className="rounded-lg border border-success/30 bg-success/10 p-3">
-              <p className="text-xs text-muted-foreground">إجمالي العمالة</p>
-              <p className="text-sm font-semibold text-success">{formatCurrency(totals.labor)}</p>
-            </div>
-            <div className="rounded-lg border border-accent/30 bg-accent/10 p-3">
-              <p className="text-xs text-muted-foreground">إجمالي المعدات</p>
-              <p className="text-sm font-semibold text-accent">
-                {formatCurrency(totals.equipment)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-secondary/30 bg-secondary/10 p-3">
-              <p className="text-xs text-muted-foreground">إجمالي المقاولين</p>
-              <p className="text-sm font-semibold text-secondary">
-                {formatCurrency(totals.subcontractors)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-muted/40 bg-muted/20 p-3">
-              <p className="text-xs text-muted-foreground">سعر الوحدة</p>
-              <p className="text-sm font-semibold text-foreground">{formatCurrency(unitPrice)}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-3">{SECTION_ORDER.map((section) => renderSection(section))}</div>
-
-        <Card>
-          <CardHeader className="p-3">
-            <div className="flex items-center gap-2 text-base font-semibold">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              الملاحظات الفنية
-            </div>
-          </CardHeader>
-          <CardContent className="p-3">
-            <Textarea
-              value={currentPricing.technicalNotes ?? ''}
-              onChange={(event) => onTechnicalNotesChange(event.target.value)}
-              rows={4}
-              placeholder="أضف أي ملاحظات فنية خاصة بهذا البند..."
-              className="text-sm"
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="p-3">
-            <div className="flex items-center gap-2 text-base font-semibold">
-              <BarChart3 className="h-5 w-5 text-success" />
-              الملخص المالي للبند
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3 p-3">
-            <div className="grid gap-2 md:grid-cols-2">
-              <div className="rounded-lg border border-muted/30 bg-muted/10 p-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span>التكاليف المباشرة</span>
-                  <span className="font-semibold">{formatCurrency(totals.subtotal)}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span>التكاليف الإدارية</span>
-                  <span className="font-semibold">{formatCurrency(totals.administrative)}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span>التكاليف التشغيلية</span>
-                  <span className="font-semibold">{formatCurrency(totals.operational)}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span>الربح</span>
-                  <span className="font-semibold">{formatCurrency(totals.profit)}</span>
-                </div>
+              <div className="flex items-center justify-between text-sm">
+                <span>الإجمالي النهائي</span>
+                <span className="text-lg font-bold text-success">
+                  {formatCurrency(totals.total)}
+                </span>
               </div>
-              <div className="rounded-lg border border-success/30 bg-success/10 p-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span>الإجمالي النهائي</span>
-                  <span className="text-lg font-bold text-success">
-                    {formatCurrency(totals.total)}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span>سعر الوحدة</span>
-                  <span className="font-semibold">{formatCurrency(unitPrice)}</span>
-                </div>
+              <div className="mt-2 flex items-center justify-between text-sm">
+                <span>سعر الوحدة</span>
+                <span className="font-semibold">{formatCurrency(unitPrice)}</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        <ActionBar sticky position="bottom" align="center" elevated className="z-20">
-          <div className="flex flex-wrap items-center justify-center gap-3" dir="rtl">
-            <Button
-              onClick={onNavigatePrev}
-              disabled={!canNavigatePrev}
-              variant="outline"
-              className="flex items-center gap-2 px-4"
-            >
-              <ArrowRight className="h-4 w-4" />
-              البند السابق
-            </Button>
-
-            <ConfirmationDialog
-              title={confirmationMessages.saveItem.title}
-              description={confirmationMessages.saveItem.description}
-              confirmText={confirmationMessages.saveItem.confirmText}
-              cancelText={confirmationMessages.saveItem.cancelText}
-              variant="success"
-              icon="save"
-              onConfirm={onSave}
-              trigger={
-                <Button className="flex items-center gap-2 bg-success text-success-foreground hover:bg-success/90 px-6">
-                  <Save className="h-4 w-4" />
-                  حفظ تسعير البند
-                </Button>
-              }
-            />
-
-            <Button
-              onClick={onNavigateNext}
-              disabled={!canNavigateNext}
-              variant="outline"
-              className="flex items-center gap-2 px-4"
-            >
-              البند التالي
-              <ArrowRight className="h-4 w-4 rotate-180" />
-            </Button>
           </div>
-        </ActionBar>
-      </div>
-    </ScrollArea>
+        </CardContent>
+      </Card>
+
+      <ActionBar sticky position="bottom" align="center" elevated className="z-20">
+        <div className="flex flex-wrap items-center justify-center gap-3" dir="rtl">
+          <Button
+            onClick={onNavigatePrev}
+            disabled={!canNavigatePrev}
+            variant="outline"
+            className="flex items-center gap-2 px-4"
+          >
+            <ArrowRight className="h-4 w-4" />
+            البند السابق
+          </Button>
+
+          <ConfirmationDialog
+            title={confirmationMessages.saveItem.title}
+            description={confirmationMessages.saveItem.description}
+            confirmText={confirmationMessages.saveItem.confirmText}
+            cancelText={confirmationMessages.saveItem.cancelText}
+            variant="success"
+            icon="save"
+            onConfirm={onSave}
+            trigger={
+              <Button className="flex items-center gap-2 bg-success text-success-foreground hover:bg-success/90 px-6">
+                <Save className="h-4 w-4" />
+                حفظ تسعير البند
+              </Button>
+            }
+          />
+
+          <Button
+            onClick={onNavigateNext}
+            disabled={!canNavigateNext}
+            variant="outline"
+            className="flex items-center gap-2 px-4"
+          >
+            البند التالي
+            <ArrowRight className="h-4 w-4 rotate-180" />
+          </Button>
+        </div>
+      </ActionBar>
+    </div>
   )
 }

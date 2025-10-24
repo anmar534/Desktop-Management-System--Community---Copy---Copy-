@@ -270,7 +270,7 @@ export function useTenderPricingPersistence({
    * Simplified version - just logs BOQ data for now
    */
   const persistPricingAndBOQ = useCallback(
-    async (map: Map<string, PricingData>) => {
+    async (map: Map<string, PricingData>, options?: { skipEvent?: boolean }) => {
       const normalizeString = (value: unknown): string => {
         if (value == null) return ''
         return typeof value === 'string' ? value.trim() : String(value).trim()
@@ -497,10 +497,16 @@ export function useTenderPricingPersistence({
 
         await boqRepository.createOrUpdate(payload)
 
-        if (typeof window !== 'undefined') {
+        // إرسال event فقط إذا لم يُطلب تجاهله (لمنع loops في auto-save)
+        if (typeof window !== 'undefined' && !options?.skipEvent) {
           window.dispatchEvent(
             new CustomEvent('boqUpdated', {
-              detail: { tenderId: tender.id, totalValue, itemsCount: items.length },
+              detail: {
+                tenderId: tender.id,
+                totalValue,
+                itemsCount: items.length,
+                skipRefresh: true, // ← منع re-render في نفس الصفحة
+              },
             }),
           )
         }
@@ -614,8 +620,8 @@ export function useTenderPricingPersistence({
           defaultPercentages,
           lastUpdated: new Date().toISOString(),
         })
-        // تحديث لقطة BOQ المركزية فور أي تعديل تسعير
-        void persistPricingAndBOQ(newMap)
+        // تحديث لقطة BOQ المركزية فور أي تعديل تسعير - بدون إرسال event لمنع loop
+        void persistPricingAndBOQ(newMap, { skipEvent: true })
         // (Legacy Snapshot Removed) لم يعد يتم إنشاء snapshot تلقائي.
       }, 2000),
     [

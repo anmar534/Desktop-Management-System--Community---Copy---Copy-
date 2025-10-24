@@ -30,7 +30,6 @@ import { confirmationMessages } from '@/shared/config/confirmationMessages'
 import { toast } from 'sonner'
 import { useTenderPricingState } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingState'
 import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
-import { usePricingTemplates } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingTemplates'
 import { useTenderPricingBackup } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingBackup'
 import { usePricingRowOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingRowOperations'
 import { useSummaryOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useSummaryOperations'
@@ -47,7 +46,6 @@ import {
 } from '@/shared/utils/storage/auditLog'
 import { PricingHeader } from '@/presentation/pages/Tenders/TenderPricing/components/PricingHeader'
 import { RestoreBackupDialog } from '@/presentation/pages/Tenders/TenderPricing/components/RestoreBackupDialog'
-import { TemplateManagerDialog } from '@/presentation/pages/Tenders/TenderPricing/components/TemplateManagerDialog'
 
 export type { TenderWithPricingSources } from '@/presentation/pages/Tenders/TenderPricing/types'
 
@@ -151,7 +149,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     confirmLeave,
   } = useTenderPricingState({ editablePricing, onBack, tenderId: tender.id })
   const [restoreOpen, setRestoreOpen] = useState(false)
-  const [templateManagerOpen, setTemplateManagerOpen] = useState(false)
 
   const handleAttemptLeave = requestLeave
 
@@ -176,19 +173,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     () => parseQuantityItems(tender, unifiedItems, unifiedSource, unifiedStatus),
     [tender, unifiedItems, unifiedSource, unifiedStatus],
   )
-
-  // استخدام hook إدارة القوالب بدلاً من الـ handlers المكررة
-  const { handleTemplateApply, handleTemplateSave, handleTemplateUpdate, handleTemplateDelete } =
-    usePricingTemplates({
-      pricingData,
-      quantityItems,
-      defaultPercentages,
-      setPricingData,
-      setDefaultPercentages,
-      markDirty,
-      setTemplateManagerOpen,
-      tenderId: tender.id,
-    })
 
   const leaveConfirmationDialog = (
     <ConfirmationDialog
@@ -350,10 +334,10 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     getErrorMessage,
   })
 
-  const completedCount = useMemo(
-    () => Array.from(pricingData.values()).filter((value) => value?.completed).length,
-    [pricingData],
-  )
+  const completedCount = useMemo(() => {
+    // Count ONLY items explicitly marked as completed (saved items)
+    return Array.from(pricingData.values()).filter((value) => value?.completed === true).length
+  }, [pricingData])
 
   const completionPercentage = useMemo(() => {
     if (quantityItems.length === 0) {
@@ -524,11 +508,21 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
   // ملاحظة: تم إزالة دالة تنسيق العملة غير المستخدمة بعد تبسيط بطاقات الملخص.
 
-  // تشغيل الحفظ التلقائي عند تغيير البيانات
+  // تتبع آخر itemId لمنع auto-save عند التنقل بين البنود
+  const lastItemIdRef = useRef<string | undefined>(undefined)
+
+  // تشغيل الحفظ التلقائي عند تغيير البيانات - لكن ليس عند تحميل بند جديد
   useEffect(() => {
-    if (isLoaded && currentItemId) {
-      debouncedSave(currentPricing)
+    if (!isLoaded || !currentItemId) return
+
+    // إذا تغير البند، تحديث الـ ref وتجاهل debouncedSave
+    if (lastItemIdRef.current !== currentItemId) {
+      lastItemIdRef.current = currentItemId
+      return // ← تجاهل debouncedSave عند تحميل بند جديد
     }
+
+    // الآن فقط عند تعديل نفس البند
+    debouncedSave(currentPricing)
   }, [currentPricing, debouncedSave, isLoaded, currentItemId])
 
   // (Official/Draft MVP) حفظ مسودة تلقائي (debounced على مستوى الخريطة الكاملة)
@@ -637,30 +631,34 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     deleteRow,
     markDirty,
     updateTenderStatus,
+    pricingData,
+    setPricingData,
+    currentPricing,
   })
 
   // Item navigation hook - manages saving and navigation between items
-  const { saveCurrentItem, handleNavigatePrev, handleNavigateNext } = useItemNavigation({
-    currentItem,
-    currentItemIndex,
-    setCurrentItemIndex,
-    currentPricing,
-    setCurrentPricing,
-    pricingData,
-    setPricingData,
-    quantityItems,
-    isLoaded,
-    tenderId: tender.id,
-    tenderTitle,
-    defaultPercentages,
-    calculateTotals,
-    calculateProjectTotal,
-    formatCurrencyValue,
-    persistPricingAndBOQ,
-    notifyPricingUpdate,
-    updateTenderStatus,
-    recordPricingAudit,
-  })
+  const { saveCurrentItem, saveItemById, handleNavigatePrev, handleNavigateNext } =
+    useItemNavigation({
+      currentItem,
+      currentItemIndex,
+      setCurrentItemIndex,
+      currentPricing,
+      setCurrentPricing,
+      pricingData,
+      setPricingData,
+      quantityItems,
+      isLoaded,
+      tenderId: tender.id,
+      tenderTitle,
+      defaultPercentages,
+      calculateTotals,
+      calculateProjectTotal,
+      formatCurrencyValue,
+      persistPricingAndBOQ,
+      notifyPricingUpdate,
+      updateTenderStatus,
+      recordPricingAudit,
+    })
 
   // تصدير البيانات إلى Excel (using utility function)
   const exportPricingToExcel = useCallback(() => {
@@ -722,6 +720,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     addRowFromSummary,
     updateRowFromSummary,
     deleteRowFromSummary,
+    onSaveItem: saveItemById,
   } as const
 
   const pricingViewProps = {
@@ -767,7 +766,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
         pricingData={pricingData}
         quantityItemsCount={quantityItems.length}
         onBack={handleAttemptLeave}
-        onTemplateManagerOpen={() => setTemplateManagerOpen(true)}
         onSaveCurrentItem={saveCurrentItem}
         onCreateBackup={createBackup}
         onRestoreBackupOpen={() => {
@@ -803,16 +801,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
         technicalProps={technicalViewProps}
       />
       {leaveConfirmationDialog}
-
-      {/* Pricing Template Manager Dialog */}
-      <TemplateManagerDialog
-        open={templateManagerOpen}
-        onOpenChange={setTemplateManagerOpen}
-        onSelectTemplate={handleTemplateApply}
-        onCreateTemplate={handleTemplateSave}
-        onUpdateTemplate={handleTemplateUpdate}
-        onDeleteTemplate={handleTemplateDelete}
-      />
     </div>
   )
 }

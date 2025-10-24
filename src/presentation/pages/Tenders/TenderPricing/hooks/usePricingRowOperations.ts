@@ -291,6 +291,14 @@ export function usePricingRowOperations({
 
               if (type === 'materials') {
                 const materialRow = nextRow as MaterialRow
+
+                // Auto-enable hasWaste when wastePercentage is entered
+                if (field === 'wastePercentage') {
+                  const wasteValue = Number(sanitizedValue) || 0
+                  materialRow.hasWaste = wasteValue > 0
+                }
+
+                // Disable waste if hasWaste is turned off
                 if (field === 'hasWaste' && !sanitizedValue) {
                   materialRow.hasWaste = false
                   materialRow.wastePercentage = 0

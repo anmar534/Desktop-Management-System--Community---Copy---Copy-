@@ -10,7 +10,7 @@
 
 import { useCallback } from 'react'
 import { toast } from 'sonner'
-import type { PricingViewItem } from '@/shared/types/pricing'
+import type { PricingViewItem, PricingData } from '@/shared/types/pricing'
 import type { UsePricingRowOperationsReturn } from './usePricingRowOperations'
 
 type ActualPricingSection = 'materials' | 'labor' | 'equipment' | 'subcontractors'
@@ -23,6 +23,9 @@ interface UseSummaryOperationsParams {
   deleteRow: UsePricingRowOperationsReturn['deleteRow']
   markDirty: () => void
   updateTenderStatus: () => void
+  pricingData: Map<string, PricingData>
+  setPricingData: React.Dispatch<React.SetStateAction<Map<string, PricingData>>>
+  currentPricing: PricingData
 }
 
 export interface UseSummaryOperationsReturn {
@@ -55,49 +58,82 @@ const getSectionDisplayName = (section: ActualPricingSection): string => {
  */
 export function useSummaryOperations({
   pricingViewItems,
-  setCurrentItemIndex,
-  addRow,
-  updateRow,
-  deleteRow,
+  setCurrentItemIndex: _setCurrentItemIndex,
+  addRow: _addRow,
+  updateRow: _updateRow,
+  deleteRow: _deleteRow,
   markDirty,
   updateTenderStatus,
+  pricingData: _pricingData,
+  setPricingData,
+  currentPricing: _currentPricing,
 }: UseSummaryOperationsParams): UseSummaryOperationsReturn {
   /**
-   * Finds item index and switches to it if found
-   * @returns item index or -1 if not found
-   */
-  const switchToItem = useCallback(
-    (itemId: string): number => {
-      const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
-      if (itemIndex !== -1) {
-        setCurrentItemIndex(itemIndex)
-      }
-      return itemIndex
-    },
-    [pricingViewItems, setCurrentItemIndex],
-  )
-
-  /**
-   * Adds new row from summary view
+   * Adds new row from summary view - directly adds to pricingData without switching items
+   * This prevents unnecessary re-renders and flashing
    */
   const addRowFromSummary = useCallback(
     (itemId: string, section: ActualPricingSection) => {
-      const itemIndex = switchToItem(itemId)
-      if (itemIndex === -1) return
+      const itemIndex = pricingViewItems.findIndex((item) => item.id === itemId)
+      if (itemIndex === -1) {
+        toast.error('لم يتم العثور على البند')
+        return
+      }
 
-      // Add row using main row operations hook
-      addRow(section)
+      const currentItem = pricingViewItems[itemIndex]
 
-      // Additional actions for summary context
+      // Add row directly to pricingData
+      setPricingData((prev) => {
+        const itemPricing = prev.get(itemId) || {
+          materials: [],
+          labor: [],
+          equipment: [],
+          subcontractors: [],
+          technicalNotes: '',
+          additionalPercentages: {
+            administrative: 5,
+            operational: 5,
+            profit: 15,
+          },
+          completed: false,
+        }
+
+        const newRow = {
+          id: Date.now().toString(),
+          description: '',
+          unit: 'وحدة',
+          quantity:
+            (section === 'materials' || section === 'subcontractors') && currentItem
+              ? currentItem.quantity
+              : 1,
+          price: 0,
+          total: 0,
+          ...(section === 'materials' && {
+            name: '',
+            hasWaste: false,
+            wastePercentage: 10,
+          }),
+        }
+
+        const updated = new Map(prev)
+        updated.set(itemId, {
+          ...itemPricing,
+          [section]: [...itemPricing[section], newRow],
+        })
+
+        return updated
+      })
+
       updateTenderStatus()
-
+      markDirty()
       toast.success(`تم إضافة صف جديد في ${getSectionDisplayName(section)}`)
     },
-    [switchToItem, addRow, updateTenderStatus],
+    [pricingViewItems, setPricingData, updateTenderStatus, markDirty],
   )
 
   /**
-   * Updates row from summary view
+   * Updates row from summary view - directly updates pricingData without switching items
+   * This prevents unnecessary re-renders and flashing
    */
   const updateRowFromSummary = useCallback(
     (
@@ -107,38 +143,89 @@ export function useSummaryOperations({
       field: string,
       value: unknown,
     ) => {
-      const itemIndex = switchToItem(itemId)
-      if (itemIndex === -1) return
+      // Update directly in pricingData without switching items
+      setPricingData((prev) => {
+        const itemPricing = prev.get(itemId)
+        if (!itemPricing) return prev
 
-      // Update row using main row operations hook
-      // Type casting needed for generic field parameter
-      updateRow(
-        section,
-        rowId,
-        field as any, // Type will be validated in updateRow
-        value as any,
-      )
+        const updated = new Map(prev)
+        const sectionRows = itemPricing[section]
+
+        // Update the specific row
+        const updatedRows = sectionRows.map((row) => {
+          if (row.id !== rowId) return row
+
+          const updatedRow: typeof row = { ...row, [field]: value }
+
+          // Auto-enable hasWaste when wastePercentage is entered for materials
+          if (section === 'materials' && field === 'wastePercentage') {
+            const wasteValue = parseFloat(String(value)) || 0
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ;(updatedRow as any).hasWaste = wasteValue > 0
+          }
+
+          // Recalculate total for materials with waste
+          if (section === 'materials' && 'hasWaste' in updatedRow) {
+            const quantity = Number(updatedRow.quantity) || 0
+            const price = Number(updatedRow.price) || 0
+            const baseTotal = quantity * price
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if ((updatedRow as any).hasWaste && (updatedRow as any).wastePercentage) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const wasteMultiplier = 1 + Number((updatedRow as any).wastePercentage) / 100
+              updatedRow.total = baseTotal * wasteMultiplier
+            } else {
+              updatedRow.total = baseTotal
+            }
+          } else {
+            // Recalculate total for other sections
+            const quantity = Number(updatedRow.quantity) || 0
+            const price = Number(updatedRow.price) || 0
+            updatedRow.total = quantity * price
+          }
+
+          return updatedRow
+        })
+
+        updated.set(itemId, {
+          ...itemPricing,
+          [section]: updatedRows,
+        })
+
+        return updated
+      })
 
       // Mark dirty will trigger debounced save
       markDirty()
     },
-    [switchToItem, updateRow, markDirty],
+    [setPricingData, markDirty],
   )
 
   /**
-   * Deletes row from summary view
+   * Deletes row from summary view - directly deletes from pricingData without switching items
+   * This prevents unnecessary re-renders and flashing
    */
   const deleteRowFromSummary = useCallback(
     (itemId: string, section: ActualPricingSection, rowId: string) => {
-      const itemIndex = switchToItem(itemId)
-      if (itemIndex === -1) return
+      // Delete directly from pricingData
+      setPricingData((prev) => {
+        const itemPricing = prev.get(itemId)
+        if (!itemPricing) return prev
 
-      // Delete row using main row operations hook
-      deleteRow(section, rowId)
+        const updated = new Map(prev)
+        updated.set(itemId, {
+          ...itemPricing,
+          [section]: itemPricing[section].filter((row) => row.id !== rowId),
+        })
 
+        return updated
+      })
+
+      markDirty()
       toast.success('تم حذف الصف بنجاح')
     },
-    [switchToItem, deleteRow],
+    [setPricingData, markDirty],
   )
 
   return {

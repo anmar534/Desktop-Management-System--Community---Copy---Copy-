@@ -121,15 +121,15 @@ export function MaterialsSection({
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="text-xs font-medium text-muted-foreground bg-muted/50">
-                  <th className="p-2 text-right">الوصف</th>
-                  <th className="p-2 text-right">الكمية</th>
-                  <th className="p-2 text-right">الوحدة</th>
-                  <th className="p-2 text-right">السعر</th>
-                  <th className="p-2 text-center">هدر</th>
-                  <th className="p-2 text-right">نسبة الهدر</th>
-                  <th className="p-2 text-right">الإجمالي</th>
-                  <th className="p-2 text-center">إجراءات</th>
+                <tr className="text-[10px] font-medium text-muted-foreground bg-muted/50">
+                  <th className="p-1 text-right">الوصف</th>
+                  <th className="p-1 text-right">الكمية</th>
+                  <th className="p-1 text-right">الوحدة</th>
+                  <th className="p-1 text-right">السعر</th>
+                  <th className="p-1 text-center">هدر</th>
+                  <th className="p-1 text-right">نسبة الهدر</th>
+                  <th className="p-1 text-right">الإجمالي</th>
+                  <th className="p-1 text-center">إجراءات</th>
                 </tr>
               </thead>
               <tbody>

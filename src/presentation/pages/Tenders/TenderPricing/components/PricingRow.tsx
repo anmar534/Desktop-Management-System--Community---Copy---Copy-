@@ -49,50 +49,50 @@ export const PricingRow: React.FC<PricingRowProps> = ({
   return (
     <tr className={`border-b hover:bg-muted/50 ${className}`}>
       {/* Description */}
-      <td className="p-2">
+      <td className="p-1">
         <Input
           value={item.description ?? ''}
           onChange={(e) => onUpdate(index, 'description', e.target.value)}
           placeholder="الوصف"
           disabled={readOnly}
-          className="min-w-[200px]"
+          className="min-w-[200px] h-7 text-xs"
         />
       </td>
 
       {/* Quantity */}
-      <td className="p-2">
+      <td className="p-1">
         <Input
           type="number"
           value={item.quantity ?? ''}
           onChange={(e) => onUpdate(index, 'quantity', parseFloat(e.target.value) || 0)}
           placeholder="0"
           disabled={readOnly}
-          className="w-24 text-right"
+          className="w-24 text-right h-7 text-xs"
           min="0"
           step="0.01"
         />
       </td>
 
       {/* Unit */}
-      <td className="p-2">
+      <td className="p-1">
         <Input
           value={item.unit ?? ''}
           onChange={(e) => onUpdate(index, 'unit', e.target.value)}
           placeholder="الوحدة"
           disabled={readOnly}
-          className="w-20"
+          className="w-20 h-7 text-xs"
         />
       </td>
 
       {/* Price */}
-      <td className="p-2">
+      <td className="p-1">
         <Input
           type="number"
           value={item.price ?? ''}
           onChange={(e) => onUpdate(index, 'price', parseFloat(e.target.value) || 0)}
           placeholder="0"
           disabled={readOnly}
-          className="w-32 text-right"
+          className="w-32 text-right h-7 text-xs"
           min="0"
           step="0.01"
         />
@@ -101,21 +101,21 @@ export const PricingRow: React.FC<PricingRowProps> = ({
       {/* Waste (if applicable) */}
       {showWaste && (
         <>
-          <td className="p-2 text-center">
+          <td className="p-1 text-center">
             <Checkbox
               checked={item.hasWaste ?? false}
               onCheckedChange={(checked) => onUpdate(index, 'hasWaste', checked)}
               disabled={readOnly}
             />
           </td>
-          <td className="p-2">
+          <td className="p-1">
             <Input
               type="number"
               value={item.wastePercentage ?? ''}
               onChange={(e) => onUpdate(index, 'wastePercentage', parseFloat(e.target.value) || 0)}
               placeholder="0"
               disabled={readOnly || !item.hasWaste}
-              className="w-20 text-right"
+              className="w-20 text-right h-7 text-xs"
               min="0"
               max="100"
               step="0.1"
@@ -125,11 +125,11 @@ export const PricingRow: React.FC<PricingRowProps> = ({
       )}
 
       {/* Total */}
-      <td className="p-2 text-right font-medium">
+      <td className="p-1 text-right font-medium">
         <div className="flex flex-col">
-          <span>{formatCurrency(finalTotal)}</span>
+          <span className="text-xs">{formatCurrency(finalTotal)}</span>
           {item.hasWaste && wasteAmount > 0 && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-[10px] text-muted-foreground">
               + {formatCurrency(wasteAmount)} هدر
             </span>
           )}
@@ -137,7 +137,7 @@ export const PricingRow: React.FC<PricingRowProps> = ({
       </td>
 
       {/* Actions */}
-      <td className="p-2">
+      <td className="p-1">
         <div className="flex items-center gap-1">
           {onDuplicate && (
             <Button
@@ -145,9 +145,9 @@ export const PricingRow: React.FC<PricingRowProps> = ({
               size="sm"
               variant="ghost"
               disabled={readOnly}
-              className="h-8 w-8 p-0"
+              className="h-7 w-7 p-0"
             >
-              <Copy className="h-4 w-4" />
+              <Copy className="h-3 w-3" />
             </Button>
           )}
           <Button
@@ -155,9 +155,9 @@ export const PricingRow: React.FC<PricingRowProps> = ({
             size="sm"
             variant="ghost"
             disabled={readOnly}
-            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-3 w-3" />
           </Button>
         </div>
       </td>

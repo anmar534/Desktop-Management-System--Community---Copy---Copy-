@@ -25,19 +25,30 @@ export interface UnifiedTenderPricingResult {
   divergence?: { hasDivergence: boolean }
 }
 
-
 export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult {
   const tenderId = tender?.id
+
+  // استخراج legacy data مرة واحدة باستخدام useMemo
+  const legacyData = useMemo(() => {
+    return (
+      tender.quantityTable ||
+      tender.quantities ||
+      tender.items ||
+      tender.boqItems ||
+      tender.quantityItems ||
+      []
+    )
+  }, [tender.quantityTable, tender.quantities, tender.items, tender.boqItems, tender.quantityItems])
+
   // snapshot أزيل – لا حاجة لحالة منفصلة
   const [error, setError] = useState<any>(null)
   // version لإجبار إعادة التقييم عند وصول event من صفحة التسعير (حيث لا نعيد الحساب هنا)
   const [version, setVersion] = useState(0)
   const [loading, setLoading] = useState(false)
   const [boqData, setBoqData] = useState<BOQData | null>(null)
-  
 
   const refresh = useCallback(async () => {
-    setVersion(v => v + 1)
+    setVersion((v) => v + 1)
   }, [])
 
   const boqRepository = useRepository(getBOQRepository)
@@ -47,18 +58,34 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
       return undefined
     }
 
-    const handler = (event: CustomEvent<{ tenderId?: string }>) => {
+    const handler = (event: CustomEvent<{ tenderId?: string; skipRefresh?: boolean }>) => {
       if (event.detail?.tenderId === tenderId) {
-        console.log('[useUnifiedTenderPricing] BOQ updated for tender', tenderId, 'refreshing data (version increment)')
+        // تجاهل إعادة التحميل إذا جاء من نفس الصفحة (تحديث محلي)
+        if (event.detail?.skipRefresh) {
+          console.log(
+            '[useUnifiedTenderPricing] BOQ updated locally, skipping refresh to prevent flash',
+          )
+          return
+        }
+        console.log(
+          '[useUnifiedTenderPricing] BOQ updated for tender',
+          tenderId,
+          'refreshing data (version increment)',
+        )
         void refresh()
       }
     }
 
-  const eventNames: (typeof APP_EVENTS.BOQ_UPDATED | 'boqUpdated')[] = [APP_EVENTS.BOQ_UPDATED, 'boqUpdated']
-    eventNames.forEach(eventName => window.addEventListener(eventName, handler as EventListener))
+    const eventNames: (typeof APP_EVENTS.BOQ_UPDATED | 'boqUpdated')[] = [
+      APP_EVENTS.BOQ_UPDATED,
+      'boqUpdated',
+    ]
+    eventNames.forEach((eventName) => window.addEventListener(eventName, handler as EventListener))
 
     return () => {
-      eventNames.forEach(eventName => window.removeEventListener(eventName, handler as EventListener))
+      eventNames.forEach((eventName) =>
+        window.removeEventListener(eventName, handler as EventListener),
+      )
     }
   }, [refresh, tenderId])
 
@@ -100,26 +127,48 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
   }, [boqRepository, tenderId, version])
 
   const value = useMemo<UnifiedTenderPricingResult>(() => {
+    console.count('[useUnifiedTenderPricing] useMemo recalculation')
+
     if (!tenderId) {
-      return { status: 'empty', items: [], totals: null, meta: null, source: 'none', divergence: { hasDivergence: false }, refresh }
+      return {
+        status: 'empty',
+        items: [],
+        totals: null,
+        meta: null,
+        source: 'none',
+        divergence: { hasDivergence: false },
+        refresh,
+      }
     }
 
     if (loading) {
-      return { status: 'loading', items: [], totals: null, meta: null, source: 'none', refresh, divergence: { hasDivergence: false } }
+      return {
+        status: 'loading',
+        items: [],
+        totals: null,
+        meta: null,
+        source: 'none',
+        refresh,
+        divergence: { hasDivergence: false },
+      }
     }
 
     const central = boqData
     const centralItems: any[] = central?.items ?? []
-    const centralHasPricing = centralItems.some(i => (i.unitPrice || i.totalPrice || i.estimated?.unitPrice || i.estimated?.totalPrice))
+    const centralHasPricing = centralItems.some(
+      (i) => i.unitPrice || i.totalPrice || i.estimated?.unitPrice || i.estimated?.totalPrice,
+    )
     const centralQualityCheck = {
       hasItems: centralItems.length > 0,
       hasPricing: centralHasPricing,
-      hasValidTotals: centralItems.some(i => (i.totalPrice || i.estimated?.totalPrice || 0) > 0),
-      itemsWithZeroTotals: centralItems.filter(i => (i.totalPrice || i.estimated?.totalPrice || 0) === 0).length
+      hasValidTotals: centralItems.some((i) => (i.totalPrice || i.estimated?.totalPrice || 0) > 0),
+      itemsWithZeroTotals: centralItems.filter(
+        (i) => (i.totalPrice || i.estimated?.totalPrice || 0) === 0,
+      ).length,
     }
 
-    // التحقق من البيانات القديمة (legacy)
-    const legacy = tender.quantityTable || tender.quantities || tender.items || tender.boqItems || tender.quantityItems || []
+    // التحقق من البيانات القديمة (legacy) - استخدام legacyData المحسوب مسبقاً
+    const legacy = legacyData
     const legacyCount = Array.isArray(legacy) ? legacy.length : 0
 
     let chosen: any[] = []
@@ -131,7 +180,12 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
       chosen = centralItems.map((it, idx) => {
         const clean = (s: any) => (s == null ? '' : String(s).trim())
         const fallback = `البند ${idx + 1}`
-        const desc = clean(it.canonicalDescription) || clean(it.description) || clean(it.originalDescription) || clean(it.specifications) || fallback
+        const desc =
+          clean(it.canonicalDescription) ||
+          clean(it.description) ||
+          clean(it.originalDescription) ||
+          clean(it.specifications) ||
+          fallback
         const unit = clean(it.unit || it.uom) || 'وحدة'
         return {
           ...it,
@@ -144,12 +198,25 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
         }
       })
       source = 'central-boq'
-      console.log('[useUnifiedTenderPricing] Using central BOQ:', centralQualityCheck, 'central count:', centralItems.length, 'legacy count:', legacyCount)
+      console.log(
+        '[useUnifiedTenderPricing] Using central BOQ:',
+        centralQualityCheck,
+        'central count:',
+        centralItems.length,
+        'legacy count:',
+        legacyCount,
+      )
     } else {
       if (Array.isArray(legacy) && legacy.length > 0) {
         chosen = legacy
         source = 'legacy'
-        console.log('[useUnifiedTenderPricing] Using legacy data (more complete):', 'legacy count:', legacyCount, 'central count:', centralItems.length)
+        console.log(
+          '[useUnifiedTenderPricing] Using legacy data (more complete):',
+          'legacy count:',
+          legacyCount,
+          'central count:',
+          centralItems.length,
+        )
       }
     }
 
@@ -157,29 +224,74 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
     if (central?.totals) {
       totals = central.totals
     } else if (central) {
-      const fields = ['totalValue','vatAmount','vatRate','totalWithVat','profit','administrative','operational','adminOperational','profitPercentage','adminOperationalPercentage','administrativePercentage','operationalPercentage','baseSubtotal'] as const
-      const hasAny = fields.some(f => (central as any)[f] !== undefined)
+      const fields = [
+        'totalValue',
+        'vatAmount',
+        'vatRate',
+        'totalWithVat',
+        'profit',
+        'administrative',
+        'operational',
+        'adminOperational',
+        'profitPercentage',
+        'adminOperationalPercentage',
+        'administrativePercentage',
+        'operationalPercentage',
+        'baseSubtotal',
+      ] as const
+      const hasAny = fields.some((f) => (central as any)[f] !== undefined)
       if (hasAny) {
         totals = {}
-        for (const f of fields) if ((central as any)[f] !== undefined) (totals as any)[f] = (central as any)[f]
+        for (const f of fields)
+          if ((central as any)[f] !== undefined) (totals as any)[f] = (central as any)[f]
       }
     }
 
     if (!totals && chosen.length > 0) {
-      const totalValue = chosen.reduce((s, it) => s + (it.totalPrice || it.estimated?.totalPrice || 0), 0)
+      const totalValue = chosen.reduce(
+        (s, it) => s + (it.totalPrice || it.estimated?.totalPrice || 0),
+        0,
+      )
       totals = { totalValue }
     }
 
     const meta = central?.meta ?? null
 
     if (error) {
-      return { status: 'error', items: chosen, totals, meta, source, refresh, error, divergence: { hasDivergence: false } }
+      return {
+        status: 'error',
+        items: chosen,
+        totals,
+        meta,
+        source,
+        refresh,
+        error,
+        divergence: { hasDivergence: false },
+      }
     }
     if (chosen.length === 0) {
-      return { status: 'empty', items: [], totals: null, meta: null, source: 'none', refresh, divergence: { hasDivergence: false } }
+      return {
+        status: 'empty',
+        items: [],
+        totals: null,
+        meta: null,
+        source: 'none',
+        refresh,
+        divergence: { hasDivergence: false },
+      }
     }
-    return { status: 'ready', items: chosen, totals, meta, source, refresh, divergence: { hasDivergence: false } }
-  }, [boqData, error, loading, refresh, tender, tenderId])
+    return {
+      status: 'ready',
+      items: chosen,
+      totals,
+      meta,
+      source,
+      refresh,
+      divergence: { hasDivergence: false },
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boqData, error, loading, legacyData, tenderId])
+  // ملاحظة: refresh مُزال من dependencies لمنع إعادة الإنشاء المتكرر (useCallback بدون deps ثابت)
 
   return value
 }

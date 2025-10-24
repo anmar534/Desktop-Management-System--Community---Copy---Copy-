@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react'
 import {
   AlertCircle,
   Target,
@@ -13,63 +13,85 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronUp,
-  PieChart
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card';
-import { Badge } from '@/presentation/components/ui/badge';
-import { Button } from '@/presentation/components/ui/button';
-import { ScrollArea } from '@/presentation/components/ui/scroll-area';
-import type { PricingData } from '@/shared/types/pricing';
-import { CostSectionCard } from './CostSectionCard';
+  PieChart,
+  Save,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Badge } from '@/presentation/components/ui/badge'
+import { Button } from '@/presentation/components/ui/button'
+import { BackToTop } from '@/presentation/components/ui/back-to-top'
+import type { PricingData } from '@/shared/types/pricing'
+import { CostSectionCard } from './CostSectionCard'
 
-type PricingSection = 'materials' | 'labor' | 'equipment' | 'subcontractors';
+type PricingSection = 'materials' | 'labor' | 'equipment' | 'subcontractors'
 
 interface DefaultPercentages {
-  administrative: number;
-  operational: number;
-  profit: number;
+  administrative: number
+  operational: number
+  profit: number
 }
 
 interface SummaryViewProps {
   quantityItems: Array<{
-    id: string;
-    itemNumber: string;
-    description: string;
-    unit: string;
-    quantity: number;
-    specifications?: string;
-    [key: string]: unknown;
-  }>;
-  pricingData: Map<string, PricingData>;
-  defaultPercentages: DefaultPercentages;
+    id: string
+    itemNumber: string
+    description: string
+    unit: string
+    quantity: number
+    specifications?: string
+    [key: string]: unknown
+  }>
+  pricingData: Map<string, PricingData>
+  defaultPercentages: DefaultPercentages
   defaultPercentagesInput: {
-    administrative: string;
-    operational: string;
-    profit: string;
-  };
-  setDefaultPercentagesInput: React.Dispatch<React.SetStateAction<{
-    administrative: string;
-    operational: string;
-    profit: string;
-  }>>;
-  setDefaultPercentages: React.Dispatch<React.SetStateAction<DefaultPercentages>>;
-  applyDefaultPercentagesToExistingItems: () => void;
-  setCurrentItemIndex: (index: number) => void;
-  setCurrentView: (view: 'summary' | 'pricing' | 'technical') => void;
-  formatCurrencyValue: (value: number, options?: { minimumFractionDigits?: number; maximumFractionDigits?: number }) => string;
-  formatQuantity: (quantity: number) => string;
-  calculateProjectTotal: () => number;
-  calculateAveragePercentages: () => { administrative: number; operational: number; profit: number };
-  calculateTotalAdministrative: () => number;
-  calculateTotalOperational: () => number;
-  calculateTotalProfit: () => number;
-  calculateItemsTotal: () => number;
-  calculateVAT: () => number;
-  collapsedSections: Record<string, Record<string, boolean>>;
-  toggleCollapse: (itemId: string, section: PricingSection) => void;
-  addRowFromSummary: (itemId: string, type: 'materials' | 'labor' | 'equipment' | 'subcontractors') => void;
-  updateRowFromSummary: (itemId: string, type: 'materials' | 'labor' | 'equipment' | 'subcontractors', rowId: string, field: string, value: any) => void;
-  deleteRowFromSummary: (itemId: string, type: 'materials' | 'labor' | 'equipment' | 'subcontractors', rowId: string) => void;
+    administrative: string
+    operational: string
+    profit: string
+  }
+  setDefaultPercentagesInput: React.Dispatch<
+    React.SetStateAction<{
+      administrative: string
+      operational: string
+      profit: string
+    }>
+  >
+  setDefaultPercentages: React.Dispatch<React.SetStateAction<DefaultPercentages>>
+  applyDefaultPercentagesToExistingItems: () => void
+  setCurrentItemIndex: (index: number) => void
+  setCurrentView: (view: 'summary' | 'pricing' | 'technical') => void
+  formatCurrencyValue: (
+    value: number,
+    options?: { minimumFractionDigits?: number; maximumFractionDigits?: number },
+  ) => string
+  formatQuantity: (quantity: number) => string
+  calculateProjectTotal: () => number
+  calculateAveragePercentages: () => { administrative: number; operational: number; profit: number }
+  calculateTotalAdministrative: () => number
+  calculateTotalOperational: () => number
+  calculateTotalProfit: () => number
+  calculateItemsTotal: () => number
+  calculateVAT: () => number
+  collapsedSections: Record<string, Record<string, boolean>>
+  toggleCollapse: (itemId: string, section: PricingSection) => void
+  addRowFromSummary: (
+    itemId: string,
+    type: 'materials' | 'labor' | 'equipment' | 'subcontractors',
+  ) => void
+  updateRowFromSummary: (
+    itemId: string,
+    type: 'materials' | 'labor' | 'equipment' | 'subcontractors',
+    rowId: string,
+    field: string,
+    value: any,
+  ) => void
+  deleteRowFromSummary: (
+    itemId: string,
+    type: 'materials' | 'labor' | 'equipment' | 'subcontractors',
+    rowId: string,
+  ) => void
+  onSaveItem?: (itemId: string) => void
 }
 
 export const SummaryView: React.FC<SummaryViewProps> = ({
@@ -95,21 +117,30 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   toggleCollapse,
   addRowFromSummary,
   updateRowFromSummary,
-  deleteRowFromSummary
+  deleteRowFromSummary,
+  onSaveItem,
 }) => {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+  const totalPages = Math.ceil(quantityItems.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedItems = quantityItems.slice(startIndex, endIndex)
+
   // استخدام useMemo للحسابات المكلفة
-  const projectTotal = useMemo(() => calculateProjectTotal(), [calculateProjectTotal]);
-  const completedCount = useMemo(
-    () => Array.from(pricingData.values()).filter(value => value?.completed).length,
-    [pricingData]
-  );
+  const projectTotal = useMemo(() => calculateProjectTotal(), [calculateProjectTotal])
+  const completedCount = useMemo(() => {
+    // Count ONLY items explicitly marked as completed (saved items)
+    return Array.from(pricingData.values()).filter((value) => value?.completed === true).length
+  }, [pricingData])
   const completionPercentage = useMemo(
     () => (completedCount / quantityItems.length) * 100,
-    [completedCount, quantityItems.length]
-  );
+    [completedCount, quantityItems.length],
+  )
 
   return (
-    <ScrollArea className="h-[calc(100vh-100px)] overflow-auto">
+    <>
       <div className="space-y-3 p-2 pb-4" dir="rtl">
         {/* تحذير للبيانات التجريبية */}
         {quantityItems.length <= 5 && quantityItems[0]?.id === '1' && (
@@ -120,7 +151,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 <span className="font-medium">تحذير: يتم عرض بيانات تجريبية</span>
               </div>
               <p className="text-sm text-warning mt-1">
-                لم يتم العثور على جدول الكميات الحقيقي للمنافسة. يرجى التأكد من إرفاق ملف الكميات الصحيح.
+                لم يتم العثور على جدول الكميات الحقيقي للمنافسة. يرجى التأكد من إرفاق ملف الكميات
+                الصحيح.
               </p>
             </CardContent>
           </Card>
@@ -136,8 +168,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 <span className="text-sm font-medium">نسبة الإنجاز</span>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold text-info">{completionPercentage.toFixed(1)}%</div>
-                <div className="text-xs leading-tight text-muted-foreground">{completedCount} / {quantityItems.length} بند</div>
+                <div className="text-lg font-bold text-info">
+                  {completionPercentage.toFixed(1)}%
+                </div>
+                <div className="text-xs leading-tight text-muted-foreground">
+                  {completedCount} / {quantityItems.length} بند
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -153,7 +189,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 <div className="text-lg font-bold text-success">
                   {formatCurrencyValue(projectTotal, {
                     minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
+                    maximumFractionDigits: 0,
                   })}
                 </div>
                 <div className="text-xs leading-tight text-muted-foreground">إجمالي تقديري</div>
@@ -161,16 +197,21 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
             </CardContent>
           </Card>
 
-          {/* بطاقة البنود المسعّرة */}
+          {/* بطاقة ضريبة القيمة المضافة */}
           <Card className="border-warning/30 hover:shadow-sm transition-shadow">
             <CardContent className="p-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-warning" />
-                <span className="text-sm font-medium">البنود المسعّرة</span>
+                <span className="text-sm font-medium">ضريبة القيمة المضافة</span>
               </div>
               <div className="text-right">
-                <div className="text-lg font-bold text-warning">{pricingData.size}</div>
-                <div className="text-xs leading-tight text-muted-foreground">من أصل {quantityItems.length}</div>
+                <div className="text-lg font-bold text-warning">
+                  {formatCurrencyValue(projectTotal * 0.15, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
+                </div>
+                <div className="text-xs leading-tight text-muted-foreground">15% من الإجمالي</div>
               </div>
             </CardContent>
           </Card>
@@ -179,7 +220,11 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         {/* صف واحد: شريط النِسب + 3 بطاقات التكاليف */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-stretch">
           {/* ratios toolbar as first column */}
-          <div className="p-2 border border-border rounded-md bg-info/10 h-full overflow-hidden" role="region" aria-label="إدارة النسب الافتراضية">
+          <div
+            className="p-2 border border-border rounded-md bg-info/10 h-full overflow-hidden"
+            role="region"
+            aria-label="إدارة النسب الافتراضية"
+          >
             <div className="space-y-2">
               <div className="grid grid-cols-3 gap-2">
                 <div className="min-w-0">
@@ -188,12 +233,16 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     type="text"
                     inputMode="decimal"
                     value={defaultPercentagesInput.administrative}
-                    onChange={(e) => setDefaultPercentagesInput(p => ({ ...p, administrative: e.target.value }))}
+                    onChange={(e) =>
+                      setDefaultPercentagesInput((p) => ({ ...p, administrative: e.target.value }))
+                    }
                     onBlur={(e) => {
-                      const raw = e.target.value.replace(/,/g, '').trim();
-                      const num = Number(raw);
-                      const clamped = isNaN(num) ? defaultPercentages.administrative : Math.max(0, Math.min(100, num));
-                      setDefaultPercentages(prev => ({ ...prev, administrative: clamped }));
+                      const raw = e.target.value.replace(/,/g, '').trim()
+                      const num = Number(raw)
+                      const clamped = isNaN(num)
+                        ? defaultPercentages.administrative
+                        : Math.max(0, Math.min(100, num))
+                      setDefaultPercentages((prev) => ({ ...prev, administrative: clamped }))
                     }}
                     className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                     aria-label="النسبة الإدارية الافتراضية"
@@ -205,12 +254,16 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     type="text"
                     inputMode="decimal"
                     value={defaultPercentagesInput.operational}
-                    onChange={(e) => setDefaultPercentagesInput(p => ({ ...p, operational: e.target.value }))}
+                    onChange={(e) =>
+                      setDefaultPercentagesInput((p) => ({ ...p, operational: e.target.value }))
+                    }
                     onBlur={(e) => {
-                      const raw = e.target.value.replace(/,/g, '').trim();
-                      const num = Number(raw);
-                      const clamped = isNaN(num) ? defaultPercentages.operational : Math.max(0, Math.min(100, num));
-                      setDefaultPercentages(prev => ({ ...prev, operational: clamped }));
+                      const raw = e.target.value.replace(/,/g, '').trim()
+                      const num = Number(raw)
+                      const clamped = isNaN(num)
+                        ? defaultPercentages.operational
+                        : Math.max(0, Math.min(100, num))
+                      setDefaultPercentages((prev) => ({ ...prev, operational: clamped }))
                     }}
                     className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                     aria-label="النسبة التشغيلية الافتراضية"
@@ -222,12 +275,16 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     type="text"
                     inputMode="decimal"
                     value={defaultPercentagesInput.profit}
-                    onChange={(e) => setDefaultPercentagesInput(p => ({ ...p, profit: e.target.value }))}
+                    onChange={(e) =>
+                      setDefaultPercentagesInput((p) => ({ ...p, profit: e.target.value }))
+                    }
                     onBlur={(e) => {
-                      const raw = e.target.value.replace(/,/g, '').trim();
-                      const num = Number(raw);
-                      const clamped = isNaN(num) ? defaultPercentages.profit : Math.max(0, Math.min(100, num));
-                      setDefaultPercentages(prev => ({ ...prev, profit: clamped }));
+                      const raw = e.target.value.replace(/,/g, '').trim()
+                      const num = Number(raw)
+                      const clamped = isNaN(num)
+                        ? defaultPercentages.profit
+                        : Math.max(0, Math.min(100, num))
+                      setDefaultPercentages((prev) => ({ ...prev, profit: clamped }))
                     }}
                     className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                     aria-label="نسبة الربح الافتراضية"
@@ -235,7 +292,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 </div>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-muted-foreground whitespace-nowrap leading-tight">تُطبق على البنود الجديدة</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap leading-tight">
+                  تُطبق على البنود الجديدة
+                </span>
                 <button
                   onClick={applyDefaultPercentagesToExistingItems}
                   title="تطبيق على البنود الموجودة"
@@ -259,7 +318,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   <p className="text-xl font-bold text-destructive">
                     {formatCurrencyValue(calculateTotalAdministrative(), {
                       minimumFractionDigits: 0,
-                      maximumFractionDigits: 0
+                      maximumFractionDigits: 0,
                     })}
                   </p>
                 </div>
@@ -279,7 +338,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   <p className="text-xl font-bold text-warning">
                     {formatCurrencyValue(calculateTotalOperational(), {
                       minimumFractionDigits: 0,
-                      maximumFractionDigits: 0
+                      maximumFractionDigits: 0,
                     })}
                   </p>
                 </div>
@@ -299,7 +358,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   <p className="text-xl font-bold text-success">
                     {formatCurrencyValue(calculateTotalProfit(), {
                       minimumFractionDigits: 0,
-                      maximumFractionDigits: 0
+                      maximumFractionDigits: 0,
                     })}
                   </p>
                 </div>
@@ -309,109 +368,144 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           </Card>
         </div>
 
-        {/* شريط التقدم */}
-        <Card>
-          <CardHeader className="p-3 pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Target className="w-5 h-5 text-info" />
-              تقدم عملية التسعير
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 pt-2">
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs">
-                <span>تم إنجاز {completedCount} من {quantityItems.length} بند</span>
-                <span>{completionPercentage.toFixed(1)}%</span>
-              </div>
-              <div className="w-full bg-muted/30 rounded-full h-2 relative overflow-hidden">
-                {/* شريط التقدم بعرض ديناميكي */}
-                <div
-                  className="bg-gradient-to-r from-info to-success h-2 rounded-full transition-all duration-300 absolute top-0 left-0"
-                  {...{style: {width: `${Math.min(Math.max(completionPercentage, 0), 100)}%`}}}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* عرض جدول الكميات الأساسي */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Grid3X3 className="w-5 h-5 text-success" />
-              جدول كميات المنافسة
+              جدول كميات المنافسة ({quantityItems.length} بند)
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Pagination Top */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mb-3 px-2">
+                <div className="text-sm text-muted-foreground">
+                  عرض {startIndex + 1}-{Math.min(endIndex, quantityItems.length)} من{' '}
+                  {quantityItems.length} بند
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm">
+                    صفحة {currentPage} من {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <div className="overflow-auto border rounded-lg">
               <table className="w-full border-collapse">
-                <thead className="sticky top-0 bg-card z-10">
+                <thead className="sticky top-0 bg-card z-10 shadow-sm">
                   <tr className="bg-muted/20 border-b">
                     <th className="border border-border p-3 text-right font-semibold">رقم البند</th>
                     <th className="border border-border p-3 text-right font-semibold">وصف البند</th>
                     <th className="border border-border p-3 text-center font-semibold">الوحدة</th>
                     <th className="border border-border p-3 text-center font-semibold">الكمية</th>
-                    <th className="border border-border p-3 text-center font-semibold">سعر الوحدة</th>
-                    <th className="border border-border p-3 text-center font-semibold">القيمة الإجمالية</th>
-                    <th className="border border-border p-3 text-center font-semibold">حالة التسعير</th>
+                    <th className="border border-border p-3 text-center font-semibold">
+                      سعر الوحدة
+                    </th>
+                    <th className="border border-border p-3 text-center font-semibold">
+                      القيمة الإجمالية
+                    </th>
+                    <th className="border border-border p-3 text-center font-semibold">
+                      حالة التسعير
+                    </th>
                     <th className="border border-border p-3 text-center font-semibold">إجراءات</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {quantityItems.map((item, index) => {
-                    const itemPricing = pricingData.get(item.id);
-                    const isCompleted = !!itemPricing?.completed;
-                    
+                  {paginatedItems.map((item, index) => {
+                    const itemPricing = pricingData.get(item.id)
+                    const isCompleted = !!itemPricing?.completed
+
                     // حساب الإجماليات مع مراعاة الهدر للمواد
-                    const materialsTotal = itemPricing?.materials?.reduce((sum, m) => {
-                      if (m.hasWaste && m.wastePercentage) {
-                        const wastageMultiplier = 1 + (m.wastePercentage / 100);
-                        return sum + ((m.quantity ?? 0) * (m.price ?? 0) * wastageMultiplier);
-                      }
-                      return sum + (m.total ?? 0);
-                    }, 0) ?? 0;
-                    
-                    const laborTotal = itemPricing?.labor?.reduce((sum, l) => sum + (l.total ?? 0), 0) ?? 0;
-                    const equipmentTotal = itemPricing?.equipment?.reduce((sum, e) => sum + (e.total ?? 0), 0) ?? 0;
-                    const subcontractorsTotal = itemPricing?.subcontractors?.reduce((sum, s) => sum + (s.total ?? 0), 0) ?? 0;
-                    const subtotal = materialsTotal + laborTotal + equipmentTotal + subcontractorsTotal;
-                    const adminPercentage = itemPricing?.additionalPercentages?.administrative ?? defaultPercentages.administrative;
-                    const operationalPercentage = itemPricing?.additionalPercentages?.operational ?? defaultPercentages.operational;
-                    const profitPercentage = itemPricing?.additionalPercentages?.profit ?? defaultPercentages.profit;
-                    const administrative = subtotal * adminPercentage / 100;
-                    const operational = subtotal * operationalPercentage / 100;
-                    const profit = subtotal * profitPercentage / 100;
-                    const itemTotal = subtotal + administrative + operational + profit;
-                    const unitPrice = item.quantity ? itemTotal / item.quantity : 0;
-                    const isInProgress = itemTotal > 0;
-                    const isExpanded = !collapsedSections[item.id]?.all;
+                    const materialsTotal =
+                      itemPricing?.materials?.reduce((sum, m) => {
+                        if (m.hasWaste && m.wastePercentage) {
+                          const wastageMultiplier = 1 + m.wastePercentage / 100
+                          return sum + (m.quantity ?? 0) * (m.price ?? 0) * wastageMultiplier
+                        }
+                        return sum + (m.quantity ?? 0) * (m.price ?? 0)
+                      }, 0) ?? 0
+
+                    const laborTotal =
+                      itemPricing?.labor?.reduce((sum, l) => sum + (l.total ?? 0), 0) ?? 0
+                    const equipmentTotal =
+                      itemPricing?.equipment?.reduce((sum, e) => sum + (e.total ?? 0), 0) ?? 0
+                    const subcontractorsTotal =
+                      itemPricing?.subcontractors?.reduce((sum, s) => sum + (s.total ?? 0), 0) ?? 0
+                    const subtotal =
+                      materialsTotal + laborTotal + equipmentTotal + subcontractorsTotal
+                    const adminPercentage =
+                      itemPricing?.additionalPercentages?.administrative ??
+                      defaultPercentages.administrative
+                    const operationalPercentage =
+                      itemPricing?.additionalPercentages?.operational ??
+                      defaultPercentages.operational
+                    const profitPercentage =
+                      itemPricing?.additionalPercentages?.profit ?? defaultPercentages.profit
+                    const administrative = (subtotal * adminPercentage) / 100
+                    const operational = (subtotal * operationalPercentage) / 100
+                    const profit = (subtotal * profitPercentage) / 100
+                    const itemTotal = subtotal + administrative + operational + profit
+                    const unitPrice = item.quantity ? itemTotal / item.quantity : 0
+                    const isInProgress = itemTotal > 0
+                    const isExpanded = !collapsedSections[item.id]?.all
 
                     return (
                       <React.Fragment key={item.id}>
                         <tr
-                          className={`cursor-pointer hover:bg-muted/40 transition-colors ${isCompleted ? 'bg-success/10' : (isInProgress ? 'bg-warning/10' : 'bg-destructive/10')}`}
+                          className={`cursor-pointer hover:bg-muted/40 transition-colors ${isCompleted ? 'bg-success/10' : isInProgress ? 'bg-warning/10' : 'bg-destructive/10'}`}
                           onClick={() => toggleCollapse(item.id, 'all' as PricingSection)}
                         >
                           <td className="border border-border p-3 font-medium text-right">
                             <div className="flex items-center gap-2">
-                              {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronUp className="w-4 h-4" />
+                              )}
                               {item.itemNumber}
                             </div>
                           </td>
                           <td className="border border-border p-3 text-right">
                             <div>
                               <div className="font-medium">{item.description}</div>
-                              <div className="text-xs text-muted-foreground mt-1">{item.specifications}</div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {item.specifications}
+                              </div>
                             </div>
                           </td>
-                          <td className="border border-border p-3 text-center font-medium">{item.unit}</td>
+                          <td className="border border-border p-3 text-center font-medium">
+                            {item.unit}
+                          </td>
                           <td className="border border-border p-3 text-center font-bold">
-                            {item.quantity !== undefined && item.quantity !== null ? formatQuantity(item.quantity) : '-'}
+                            {item.quantity !== undefined && item.quantity !== null
+                              ? formatQuantity(item.quantity)
+                              : '-'}
                           </td>
                           <td className="border border-border p-3 text-center">
                             {isInProgress ? (
                               <span className="font-bold text-info">
-                                {formatCurrencyValue(unitPrice, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {formatCurrencyValue(unitPrice, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
                               </span>
                             ) : (
                               <span className="text-muted-foreground">-</span>
@@ -420,7 +514,10 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                           <td className="border border-border p-3 text-center">
                             {isInProgress ? (
                               <span className="font-bold text-success">
-                                {formatCurrencyValue(itemTotal, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                {formatCurrencyValue(itemTotal, {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0,
+                                })}
                               </span>
                             ) : (
                               <span className="text-muted-foreground">-</span>
@@ -443,18 +540,21 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                               </Badge>
                             )}
                           </td>
-                          <td className="border border-border p-3 text-center" onClick={(e) => e.stopPropagation()}>
+                          <td
+                            className="border border-border p-3 text-center"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => {
-                                setCurrentItemIndex(index);
-                                setCurrentView('pricing');
+                                setCurrentItemIndex(index)
+                                setCurrentView('pricing')
                               }}
                               className="flex items-center gap-1"
                             >
                               <Edit3 className="w-3 h-3" />
-                              {(isCompleted || isInProgress) ? 'تعديل' : 'تسعير'}
+                              {isCompleted || isInProgress ? 'تعديل' : 'تسعير'}
                             </Button>
                           </td>
                         </tr>
@@ -471,8 +571,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                   isCollapsed={!!collapsedSections[item.id]?.materials}
                                   onToggle={() => toggleCollapse(item.id, 'materials')}
                                   onAddRow={() => addRowFromSummary(item.id, 'materials')}
-                                  onUpdateRow={(rowId, field, value) => updateRowFromSummary(item.id, 'materials', rowId, field, value)}
-                                  onDeleteRow={(rowId) => deleteRowFromSummary(item.id, 'materials', rowId)}
+                                  onUpdateRow={(rowId, field, value) =>
+                                    updateRowFromSummary(item.id, 'materials', rowId, field, value)
+                                  }
+                                  onDeleteRow={(rowId) =>
+                                    deleteRowFromSummary(item.id, 'materials', rowId)
+                                  }
                                   formatCurrency={formatCurrencyValue}
                                 />
 
@@ -483,8 +587,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                   isCollapsed={!!collapsedSections[item.id]?.labor}
                                   onToggle={() => toggleCollapse(item.id, 'labor')}
                                   onAddRow={() => addRowFromSummary(item.id, 'labor')}
-                                  onUpdateRow={(rowId, field, value) => updateRowFromSummary(item.id, 'labor', rowId, field, value)}
-                                  onDeleteRow={(rowId) => deleteRowFromSummary(item.id, 'labor', rowId)}
+                                  onUpdateRow={(rowId, field, value) =>
+                                    updateRowFromSummary(item.id, 'labor', rowId, field, value)
+                                  }
+                                  onDeleteRow={(rowId) =>
+                                    deleteRowFromSummary(item.id, 'labor', rowId)
+                                  }
                                   formatCurrency={formatCurrencyValue}
                                 />
 
@@ -495,8 +603,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                   isCollapsed={!!collapsedSections[item.id]?.equipment}
                                   onToggle={() => toggleCollapse(item.id, 'equipment')}
                                   onAddRow={() => addRowFromSummary(item.id, 'equipment')}
-                                  onUpdateRow={(rowId, field, value) => updateRowFromSummary(item.id, 'equipment', rowId, field, value)}
-                                  onDeleteRow={(rowId) => deleteRowFromSummary(item.id, 'equipment', rowId)}
+                                  onUpdateRow={(rowId, field, value) =>
+                                    updateRowFromSummary(item.id, 'equipment', rowId, field, value)
+                                  }
+                                  onDeleteRow={(rowId) =>
+                                    deleteRowFromSummary(item.id, 'equipment', rowId)
+                                  }
                                   formatCurrency={formatCurrencyValue}
                                 />
 
@@ -507,115 +619,268 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                   isCollapsed={!!collapsedSections[item.id]?.subcontractors}
                                   onToggle={() => toggleCollapse(item.id, 'subcontractors')}
                                   onAddRow={() => addRowFromSummary(item.id, 'subcontractors')}
-                                  onUpdateRow={(rowId, field, value) => updateRowFromSummary(item.id, 'subcontractors', rowId, field, value)}
-                                  onDeleteRow={(rowId) => deleteRowFromSummary(item.id, 'subcontractors', rowId)}
+                                  onUpdateRow={(rowId, field, value) =>
+                                    updateRowFromSummary(
+                                      item.id,
+                                      'subcontractors',
+                                      rowId,
+                                      field,
+                                      value,
+                                    )
+                                  }
+                                  onDeleteRow={(rowId) =>
+                                    deleteRowFromSummary(item.id, 'subcontractors', rowId)
+                                  }
                                   formatCurrency={formatCurrencyValue}
                                 />
 
                                 {/* ملخص التكاليف النهائي */}
-                                {itemPricing && (() => {
-                                  // حساب الإجماليات مع مراعاة الهدر للمواد
-                                  const materialsTotal = itemPricing.materials.reduce((sum, m) => {
-                                    const wastageMultiplier = m.hasWaste ? 1 + ((m.wastePercentage ?? 0) / 100) : 1;
-                                    return sum + ((m.quantity ?? 0) * (m.price ?? 0) * wastageMultiplier);
-                                  }, 0);
+                                {itemPricing &&
+                                  (() => {
+                                    // حساب الإجماليات مع مراعاة الهدر للمواد
+                                    const materialsTotal = itemPricing.materials.reduce(
+                                      (sum, m) => {
+                                        const wastageMultiplier = m.hasWaste
+                                          ? 1 + (m.wastePercentage ?? 0) / 100
+                                          : 1
+                                        return (
+                                          sum +
+                                          (m.quantity ?? 0) * (m.price ?? 0) * wastageMultiplier
+                                        )
+                                      },
+                                      0,
+                                    )
 
-                                  const laborTotal = itemPricing.labor.reduce((sum, l) => sum + (l.total ?? 0), 0);
-                                  const equipmentTotal = itemPricing.equipment.reduce((sum, e) => sum + (e.total ?? 0), 0);
-                                  const subcontractorsTotal = itemPricing.subcontractors.reduce((sum, s) => sum + (s.total ?? 0), 0);
+                                    const laborTotal = itemPricing.labor.reduce(
+                                      (sum, l) => sum + (l.total ?? 0),
+                                      0,
+                                    )
+                                    const equipmentTotal = itemPricing.equipment.reduce(
+                                      (sum, e) => sum + (e.total ?? 0),
+                                      0,
+                                    )
+                                    const subcontractorsTotal = itemPricing.subcontractors.reduce(
+                                      (sum, s) => sum + (s.total ?? 0),
+                                      0,
+                                    )
 
-                                  const directCosts = materialsTotal + laborTotal + equipmentTotal + subcontractorsTotal;
-                                  const administrative = directCosts * ((itemPricing.additionalPercentages?.administrative ?? 0) / 100);
-                                  const operational = directCosts * ((itemPricing.additionalPercentages?.operational ?? 0) / 100);
-                                  const profit = directCosts * ((itemPricing.additionalPercentages?.profit ?? 0) / 100);
-                                  const totalCost = directCosts + administrative + operational + profit;
-                                  const unitPrice = item.quantity > 0 ? totalCost / item.quantity : 0;
+                                    const directCosts =
+                                      materialsTotal +
+                                      laborTotal +
+                                      equipmentTotal +
+                                      subcontractorsTotal
+                                    const administrative =
+                                      directCosts *
+                                      ((itemPricing.additionalPercentages?.administrative ?? 0) /
+                                        100)
+                                    const operational =
+                                      directCosts *
+                                      ((itemPricing.additionalPercentages?.operational ?? 0) / 100)
+                                    const profit =
+                                      directCosts *
+                                      ((itemPricing.additionalPercentages?.profit ?? 0) / 100)
+                                    const totalCost =
+                                      directCosts + administrative + operational + profit
+                                    const unitPrice =
+                                      item.quantity > 0 ? totalCost / item.quantity : 0
 
-                                  return (
-                                    <Card className="mt-6 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-                                      <CardContent className="p-5">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                          {/* النسب المئوية */}
-                                          <div className="space-y-3">
-                                            <h4 className="font-bold text-base text-foreground mb-3 flex items-center gap-2">
-                                              <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                              </svg>
-                                              النسب المئوية
-                                            </h4>
-                                            <div className="flex items-center justify-between text-sm py-2 px-3 bg-blue-50 rounded-lg border border-blue-200">
-                                              <span className="text-muted-foreground flex items-center gap-1">
-                                                <span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
-                                                إداري:
-                                              </span>
-                                              <span className="font-semibold tabular-nums">
-                                                {itemPricing.additionalPercentages?.administrative ?? 0}% = {formatCurrencyValue(administrative, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                              </span>
+                                    return (
+                                      <Card className="mt-6 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+                                        <CardContent className="p-5">
+                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {/* النسب المئوية */}
+                                            <div className="space-y-3">
+                                              <h4 className="font-bold text-base text-foreground mb-3 flex items-center gap-2">
+                                                <svg
+                                                  className="w-5 h-5 text-primary"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                                  />
+                                                </svg>
+                                                النسب المئوية
+                                              </h4>
+                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-blue-50 rounded-lg border border-blue-200">
+                                                <span className="text-muted-foreground flex items-center gap-1">
+                                                  <span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                                                  إداري:
+                                                </span>
+                                                <span className="font-semibold tabular-nums">
+                                                  {itemPricing.additionalPercentages
+                                                    ?.administrative ?? 0}
+                                                  % ={' '}
+                                                  {formatCurrencyValue(administrative, {
+                                                    minimumFractionDigits: 0,
+                                                    maximumFractionDigits: 0,
+                                                  })}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-orange-50 rounded-lg border border-orange-200">
+                                                <span className="text-muted-foreground flex items-center gap-1">
+                                                  <span className="inline-block w-2 h-2 rounded-full bg-orange-500"></span>
+                                                  تشغيلي:
+                                                </span>
+                                                <span className="font-semibold tabular-nums">
+                                                  {itemPricing.additionalPercentages?.operational ??
+                                                    0}
+                                                  % ={' '}
+                                                  {formatCurrencyValue(operational, {
+                                                    minimumFractionDigits: 0,
+                                                    maximumFractionDigits: 0,
+                                                  })}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-green-50 rounded-lg border border-green-200">
+                                                <span className="text-muted-foreground flex items-center gap-1">
+                                                  <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                                                  الربح:
+                                                </span>
+                                                <span className="font-semibold tabular-nums">
+                                                  {itemPricing.additionalPercentages?.profit ?? 0}%
+                                                  ={' '}
+                                                  {formatCurrencyValue(profit, {
+                                                    minimumFractionDigits: 0,
+                                                    maximumFractionDigits: 0,
+                                                  })}
+                                                </span>
+                                              </div>
                                             </div>
-                                            <div className="flex items-center justify-between text-sm py-2 px-3 bg-orange-50 rounded-lg border border-orange-200">
-                                              <span className="text-muted-foreground flex items-center gap-1">
-                                                <span className="inline-block w-2 h-2 rounded-full bg-orange-500"></span>
-                                                تشغيلي:
-                                              </span>
-                                              <span className="font-semibold tabular-nums">
-                                                {itemPricing.additionalPercentages?.operational ?? 0}% = {formatCurrencyValue(operational, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                              </span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-sm py-2 px-3 bg-green-50 rounded-lg border border-green-200">
-                                              <span className="text-muted-foreground flex items-center gap-1">
-                                                <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                                                الربح:
-                                              </span>
-                                              <span className="font-semibold tabular-nums">
-                                                {itemPricing.additionalPercentages?.profit ?? 0}% = {formatCurrencyValue(profit, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                              </span>
+
+                                            {/* ملخص التكاليف */}
+                                            <div className="space-y-3">
+                                              <h4 className="font-bold text-base text-foreground mb-3 flex items-center gap-2">
+                                                <svg
+                                                  className="w-5 h-5 text-success"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                  />
+                                                </svg>
+                                                ملخص التكاليف
+                                              </h4>
+                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-card rounded-lg border">
+                                                <span className="text-muted-foreground">
+                                                  التكاليف المباشرة:
+                                                </span>
+                                                <span className="font-semibold tabular-nums">
+                                                  {formatCurrencyValue(directCosts, {
+                                                    minimumFractionDigits: 0,
+                                                    maximumFractionDigits: 0,
+                                                  })}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-card rounded-lg border">
+                                                <span className="text-muted-foreground">
+                                                  إداري + تشغيلي:
+                                                </span>
+                                                <span className="font-semibold tabular-nums">
+                                                  {formatCurrencyValue(
+                                                    administrative + operational,
+                                                    {
+                                                      minimumFractionDigits: 0,
+                                                      maximumFractionDigits: 0,
+                                                    },
+                                                  )}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-card rounded-lg border">
+                                                <span className="text-muted-foreground">
+                                                  الربح:
+                                                </span>
+                                                <span className="font-semibold tabular-nums">
+                                                  {formatCurrencyValue(profit, {
+                                                    minimumFractionDigits: 0,
+                                                    maximumFractionDigits: 0,
+                                                  })}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center justify-between text-base py-3 px-3 bg-success/10 rounded-lg border-2 border-success/30">
+                                                <span className="font-bold text-success">
+                                                  إجمالي البند:
+                                                </span>
+                                                <span className="font-bold text-xl text-success tabular-nums">
+                                                  {formatCurrencyValue(totalCost, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                  })}
+                                                </span>
+                                              </div>
+                                              <div className="flex items-center justify-between text-base py-3 px-3 bg-primary/10 rounded-lg border-2 border-primary/30">
+                                                <span className="font-bold text-primary">
+                                                  سعر الوحدة:
+                                                </span>
+                                                <span className="font-bold text-xl text-primary tabular-nums">
+                                                  {formatCurrencyValue(unitPrice, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                  })}
+                                                </span>
+                                              </div>
+                                              {onSaveItem && (
+                                                <Button
+                                                  onClick={() => onSaveItem(item.id)}
+                                                  className="w-full mt-2 bg-success hover:bg-success/90"
+                                                  size="sm"
+                                                >
+                                                  <Save className="h-4 w-4 ml-2" />
+                                                  حفظ تسعير البند
+                                                </Button>
+                                              )}
                                             </div>
                                           </div>
-
-                                          {/* ملخص التكاليف */}
-                                          <div className="space-y-3">
-                                            <h4 className="font-bold text-base text-foreground mb-3 flex items-center gap-2">
-                                              <svg className="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                              </svg>
-                                              ملخص التكاليف
-                                            </h4>
-                                            <div className="flex items-center justify-between text-sm py-2 px-3 bg-card rounded-lg border">
-                                              <span className="text-muted-foreground">التكاليف المباشرة:</span>
-                                              <span className="font-semibold tabular-nums">{formatCurrencyValue(directCosts, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-sm py-2 px-3 bg-card rounded-lg border">
-                                              <span className="text-muted-foreground">إداري + تشغيلي:</span>
-                                              <span className="font-semibold tabular-nums">{formatCurrencyValue(administrative + operational, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-sm py-2 px-3 bg-card rounded-lg border">
-                                              <span className="text-muted-foreground">الربح:</span>
-                                              <span className="font-semibold tabular-nums">{formatCurrencyValue(profit, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-base py-3 px-3 bg-success/10 rounded-lg border-2 border-success/30">
-                                              <span className="font-bold text-success">إجمالي البند:</span>
-                                              <span className="font-bold text-xl text-success tabular-nums">{formatCurrencyValue(totalCost, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            </div>
-                                            <div className="flex items-center justify-between text-base py-3 px-3 bg-primary/10 rounded-lg border-2 border-primary/30">
-                                              <span className="font-bold text-primary">سعر الوحدة:</span>
-                                              <span className="font-bold text-xl text-primary tabular-nums">{formatCurrencyValue(unitPrice, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </CardContent>
-                                    </Card>
-                                  );
-                                })()}
+                                        </CardContent>
+                                      </Card>
+                                    )
+                                  })()}
                               </div>
                             </td>
                           </tr>
                         )}
                       </React.Fragment>
-                    );
+                    )
                   })}
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Bottom */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center mt-3 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  السابق
+                </Button>
+                <span className="text-sm px-3">
+                  صفحة {currentPage} من {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  التالي
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -636,29 +901,31 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     <span className="font-bold text-info">
                       {formatCurrencyValue(calculateItemsTotal(), {
                         minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
+                        maximumFractionDigits: 0,
                       })}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
                     <span className="font-medium">
-                      إجمالي التكاليف الإدارية ({calculateAveragePercentages().administrative.toFixed(1)}%):
+                      إجمالي التكاليف الإدارية (
+                      {calculateAveragePercentages().administrative.toFixed(1)}%):
                     </span>
                     <span className="font-bold text-warning">
                       {formatCurrencyValue(calculateTotalAdministrative(), {
                         minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
+                        maximumFractionDigits: 0,
                       })}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-accent/10 rounded-lg">
                     <span className="font-medium">
-                      إجمالي التكاليف التشغيلية ({calculateAveragePercentages().operational.toFixed(1)}%):
+                      إجمالي التكاليف التشغيلية (
+                      {calculateAveragePercentages().operational.toFixed(1)}%):
                     </span>
                     <span className="font-bold text-accent">
                       {formatCurrencyValue(calculateTotalOperational(), {
                         minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
+                        maximumFractionDigits: 0,
                       })}
                     </span>
                   </div>
@@ -669,7 +936,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     <span className="font-bold text-muted-foreground">
                       {formatCurrencyValue(calculateVAT(), {
                         minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
+                        maximumFractionDigits: 2,
                       })}
                     </span>
                   </div>
@@ -680,7 +947,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     <span className="font-bold text-warning">
                       {formatCurrencyValue(calculateTotalProfit(), {
                         minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
+                        maximumFractionDigits: 0,
                       })}
                     </span>
                   </div>
@@ -692,7 +959,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   <span className="font-bold text-xl text-success">
                     {formatCurrencyValue(calculateProjectTotal(), {
                       minimumFractionDigits: 0,
-                      maximumFractionDigits: 0
+                      maximumFractionDigits: 0,
                     })}
                   </span>
                 </div>
@@ -701,7 +968,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           </Card>
         )}
       </div>
-    </ScrollArea>
-  );
-};
-
+      <BackToTop />
+    </>
+  )
+}

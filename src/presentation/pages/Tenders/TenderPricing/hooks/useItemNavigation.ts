@@ -62,6 +62,7 @@ interface UseItemNavigationParams {
 
 export interface UseItemNavigationReturn {
   saveCurrentItem: () => void
+  saveItemById: (itemId: string) => void
   handleNavigatePrev: () => void
   handleNavigateNext: () => void
 }
@@ -94,7 +95,16 @@ export function useItemNavigation({
    * Saves current item with full validation and persistence
    */
   const saveCurrentItem = useCallback(() => {
-    if (!currentItem || !isLoaded) return
+    console.log('[useItemNavigation] saveCurrentItem called', {
+      hasCurrentItem: !!currentItem,
+      isLoaded,
+      currentItemId: currentItem?.id,
+    })
+
+    if (!currentItem || !isLoaded) {
+      console.warn('[useItemNavigation] saveCurrentItem aborted: no item or not loaded')
+      return
+    }
 
     const totals = calculateTotals()
 
@@ -105,6 +115,14 @@ export function useItemNavigation({
       currentPricing.equipment.length > 0 ||
       currentPricing.subcontractors.length > 0
 
+    console.log('[useItemNavigation] saveCurrentItem validation', {
+      hasData,
+      materials: currentPricing.materials.length,
+      labor: currentPricing.labor.length,
+      equipment: currentPricing.equipment.length,
+      subcontractors: currentPricing.subcontractors.length,
+    })
+
     if (!hasData) {
       toast.error('لا توجد بيانات للحفظ', {
         description: 'يرجى إضافة بيانات التسعير قبل الحفظ',
@@ -112,6 +130,8 @@ export function useItemNavigation({
       })
       return
     }
+
+    console.log('[useItemNavigation] saveCurrentItem proceeding with save...')
 
     // Mark item as completed on explicit save
     const itemToSave: PricingData = { ...currentPricing, completed: true }
@@ -183,21 +203,47 @@ export function useItemNavigation({
 
     // Save statistics grouped under STORAGE_KEYS.TENDER_STATS
     void (async () => {
-      const allStats = await loadFromStorage<TenderStatsRecord>(STORAGE_KEYS.TENDER_STATS, {})
-      allStats[tenderId] = statsPayload
-      await saveToStorage(STORAGE_KEYS.TENDER_STATS, allStats)
+      try {
+        let allStats = await loadFromStorage<TenderStatsRecord>(STORAGE_KEYS.TENDER_STATS, {})
+
+        // Fix: إذا كانت القيمة string بدلاً من object، نحولها أو نبدأ من جديد
+        if (typeof allStats === 'string') {
+          console.warn('[useItemNavigation] TENDER_STATS is string, parsing or resetting')
+          try {
+            allStats = JSON.parse(allStats) as TenderStatsRecord
+          } catch {
+            allStats = {}
+          }
+        }
+
+        // تأكد أن allStats هو object وليس null
+        if (!allStats || typeof allStats !== 'object' || Array.isArray(allStats)) {
+          allStats = {}
+        }
+
+        allStats[tenderId] = statsPayload
+        await saveToStorage(STORAGE_KEYS.TENDER_STATS, allStats)
+      } catch (error) {
+        console.error('[useItemNavigation] Failed to save tender stats:', error)
+        recordPricingAudit('error', 'save-tender-stats-failed', {
+          error: error instanceof Error ? error.message : 'unknown',
+        })
+      }
     })()
 
     // Show detailed success message
+    console.log('[useItemNavigation] Showing success toast...')
     toast.success('تم الحفظ بنجاح', {
       description: `تم حفظ تسعير البند رقم ${currentItem.itemNumber} - القيمة: ${formatCurrencyValue(totals.total)}`,
       duration: 4000,
     })
 
     // Notify other pages (like tender details)
+    console.log('[useItemNavigation] Notifying other pages...')
     notifyPricingUpdate()
 
     // Update tender status immediately after save
+    console.log('[useItemNavigation] Updating tender status...')
     updateTenderStatus()
     recordPricingAudit('info', 'status-updated-after-save', {
       itemId: currentItem.id,
@@ -225,26 +271,125 @@ export function useItemNavigation({
 
   /**
    * Navigate to previous item
+   * ملاحظة: تم إزالة auto-save لمنع loop - debouncedSave سيحفظ تلقائياً
    */
   const handleNavigatePrev = useCallback(() => {
     if (currentItemIndex > 0) {
-      saveCurrentItem()
+      // saveCurrentItem() ← مُزال لمنع loop والفلاش
       setCurrentItemIndex(currentItemIndex - 1)
     }
-  }, [currentItemIndex, saveCurrentItem, setCurrentItemIndex])
+  }, [currentItemIndex, setCurrentItemIndex])
 
   /**
    * Navigate to next item
+   * ملاحظة: تم إزالة auto-save لمنع loop - debouncedSave سيحفظ تلقائياً
    */
   const handleNavigateNext = useCallback(() => {
     if (currentItemIndex < quantityItems.length - 1) {
-      saveCurrentItem()
+      // saveCurrentItem() ← مُزال لمنع loop والفلاش
       setCurrentItemIndex(currentItemIndex + 1)
     }
-  }, [currentItemIndex, quantityItems.length, saveCurrentItem, setCurrentItemIndex])
+  }, [currentItemIndex, quantityItems.length, setCurrentItemIndex])
+
+  /**
+   * Saves a specific item by ID without changing currentItemIndex
+   * Used for saving from summary view
+   */
+  const saveItemById = useCallback(
+    (itemId: string) => {
+      const itemIndex = quantityItems.findIndex((item) => item.id === itemId)
+      if (itemIndex === -1) {
+        console.warn('[useItemNavigation] saveItemById: item not found', itemId)
+        return
+      }
+
+      const item = quantityItems[itemIndex]
+      const itemPricing = pricingData.get(itemId)
+
+      if (!itemPricing || !isLoaded) {
+        console.warn('[useItemNavigation] saveItemById: no pricing data or not loaded', itemId)
+        return
+      }
+
+      const hasData =
+        itemPricing.materials.length > 0 ||
+        itemPricing.labor.length > 0 ||
+        itemPricing.equipment.length > 0 ||
+        itemPricing.subcontractors.length > 0
+
+      if (!hasData) {
+        console.warn('[useItemNavigation] saveItemById: no data to save for item', itemId)
+        return
+      }
+
+      // Mark as completed and save
+      const itemToSave: PricingData = { ...itemPricing, completed: true }
+      const newMap = new Map(pricingData)
+      newMap.set(itemId, itemToSave)
+      setPricingData(newMap)
+
+      // Calculate totals for toast message
+      const itemTotals = {
+        materials: itemToSave.materials.reduce((sum, mat) => sum + (mat.total || 0), 0),
+        labor: itemToSave.labor.reduce((sum, lab) => sum + (lab.total || 0), 0),
+        equipment: itemToSave.equipment.reduce((sum, eq) => sum + (eq.total || 0), 0),
+        subcontractors: itemToSave.subcontractors.reduce((sum, sub) => sum + (sub.total || 0), 0),
+      }
+      const subtotal = Object.values(itemTotals).reduce((sum, val) => sum + val, 0)
+      const adminCost =
+        (subtotal *
+          (itemToSave.additionalPercentages?.administrative ?? defaultPercentages.administrative)) /
+        100
+      const operationalCost =
+        (subtotal *
+          (itemToSave.additionalPercentages?.operational ?? defaultPercentages.operational)) /
+        100
+      const profitCost =
+        (subtotal * (itemToSave.additionalPercentages?.profit ?? defaultPercentages.profit)) / 100
+      const totalCost = subtotal + adminCost + operationalCost + profitCost
+
+      // Save to database
+      void pricingService.saveTenderPricing(String(tenderId), {
+        pricing: Array.from(newMap.entries()),
+        defaultPercentages,
+        lastUpdated: new Date().toISOString(),
+      })
+
+      // Save BOQ with skipEvent to prevent loop
+      void (async () => {
+        try {
+          await persistPricingAndBOQ(newMap)
+        } catch (error) {
+          console.error('[useItemNavigation] saveItemById: BOQ save failed', error)
+        }
+      })()
+
+      toast.success('تم الحفظ بنجاح', {
+        description: `تم حفظ تسعير البند رقم ${item.itemNumber} - القيمة: ${formatCurrencyValue(totalCost)}`,
+        duration: 3000,
+      })
+
+      // Update tender status
+      setTimeout(() => {
+        updateTenderStatus()
+      }, 100)
+    },
+    [
+      quantityItems,
+      pricingData,
+      setPricingData,
+      isLoaded,
+      defaultPercentages,
+      tenderId,
+      persistPricingAndBOQ,
+      formatCurrencyValue,
+      updateTenderStatus,
+    ],
+  )
 
   return {
     saveCurrentItem,
+    saveItemById,
     handleNavigatePrev,
     handleNavigateNext,
   }
