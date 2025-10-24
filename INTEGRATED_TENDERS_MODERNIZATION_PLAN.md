@@ -3,13 +3,48 @@
 **Integrated Tenders Modernization Plan**
 
 **التاريخ:** 24 أكتوبر 2025  
-**آخر تحديث:** 24 أكتوبر 2025 - 19:45  
-**الحالة:** 🚀 قيد التنفيذ - **Week 4, Day 1-5 مكتمل بالكامل**  
+**آخر تحديث:** 24 أكتوبر 2025 - 21:00  
+**الحالة:** 🚀 قيد التنفيذ - **Week 5, Day 1 مكتمل**  
 **النهج:** دمج إعادة الهيكلة + إصلاحات التسعير + التحديث المعماري
 
 ---
 
-## 🎉 الإنجازات الجديدة (24 أكتوبر 2025)
+## 🎉 الإنجازات الأخيرة
+
+### ✅ Week 5, Day 1: Migration Start - استبدال useUnifiedTenderPricing ✅
+
+**التاريخ:** 24 أكتوبر 2025  
+**الوقت الفعلي:** 2 ساعات
+
+#### التغييرات المنفذة
+
+**TenderPricingPage.tsx:**
+
+- ❌ حذف: `useUnifiedTenderPricing` hook
+- ✅ إضافة: `useTenderPricingStore` + `useEffect` للتحميل
+- ✅ تحديث: `quantityItems` لاستخدام `boqItems` من Store
+- ✅ Fallback: يستخدم `parseQuantityItems` للتوافق الخلفي
+
+#### النتائج
+
+- **TypeScript Errors:** 0 ✅
+- **ESLint Warnings:** 0 ✅
+- **الأسطر المضافة:** 33
+- **الأسطر المحذوفة:** 9
+- **Commits:** 3 (580bbdd, 2d8ffa5, 31a02a4)
+
+#### الدروس المستفادة
+
+- ✅ Zustand Store يعمل بشكل ممتاز
+- ✅ boqItems تُحمّل من BOQ Repository بنجاح
+- ⚠️ useEditableTenderPricing معقد (Draft/Official system)
+- ⚠️ useTenderPricingPersistence يحتاج دراسة أعمق
+
+---
+
+## 📋 إعادة تقييم الخطة
+
+### الوضع الحالي (Week 5, Day 1 مكتمل)
 
 ### ✅ Week 4, Day 1-2: Quick Fixes مكتملة!
 
@@ -598,9 +633,54 @@ src/features/tenders/pricing/TenderPricingWizard/
 **الوقت المتوقع:** 2 أيام (بداية فقط)  
 **سيكتمل في:** Week 6
 
+### Week 5: Migration to Zustand (المعدّلة)
+
+**الحالة:** ⚠️ **تحت المراجعة - التعقيد أكبر من المتوقع**
+
+#### التحديات المكتشفة
+
+1. **useEditableTenderPricing:**
+
+   - يدير Draft/Official system معقد
+   - يستخدم pricingStorageAdapter مع localStorage
+   - يحتاج إعادة تصميم كاملة
+   - **القرار:** الإبقاء عليه مؤقتاً
+
+2. **useTenderPricingPersistence:**
+   - يعتمد على domainPricing, pricingViewItems
+   - يدير event listeners متعددة
+   - يتكامل مع 10+ dependencies
+   - **القرار:** يحتاج دراسة أعمق قبل الاستبدال
+
+#### الخطة المعدّلة - Week 5
+
+**✅ Day 1: مكتمل**
+
+- استبدال useUnifiedTenderPricing ✅
+- التكامل مع useTenderPricingStore ✅
+- 0 TypeScript errors ✅
+
+**📋 Day 2-3: إعادة تقييم**
+
+- مراجعة architecture الحالي
+- تحديد ما إذا كان Draft/Official ضروري
+- تخطيط استراتيجية مبسّطة
+- **الخيار 1:** دمج Draft system في Store
+- **الخيار 2:** إزالة Draft system كلياً
+- **الخيار 3:** الإبقاء على useEditableTenderPricing
+
+**🎯 الأولوية الجديدة:**
+بدلاً من migration كامل، سنركز على:
+
+1. ✅ تحسين TenderPricingStore (مكتمل)
+2. ✅ استبدال useUnifiedTenderPricing (مكتمل)
+3. 📋 تحسين الأداء (performance optimization)
+4. 📋 إضافة Integration Tests
+5. ⏳ Legacy cleanup (مؤجل لـ Week 6)
+
 ---
 
-### Week 6: Complete Phase 4 + Legacy Cleanup
+### Week 6: Complete Phase 4 + Legacy Cleanup (المعدّلة)
 
 #### **Day 1-3: إكمال TenderPricingWizard**
 
@@ -991,20 +1071,129 @@ export function useTenderOperations() {
 
 ---
 
-## 🚀 الخطوات التالية (Week 5 - Migration to Zustand)
+## 🚀 الخطوات التالية المحدثة (بعد Week 5, Day 1)
 
 ### 📋 الحالة الحالية
 
 **✅ مكتمل:**
 
 - Week 0-3: Baseline, Cleanup, TenderPricingPage, TenderDetails
-- Week 4 (كامل): Quick Fixes + Zustand Setup + TenderPricingStore
+- Week 4: Quick Fixes + Zustand Setup + TenderPricingStore
+- **Week 5, Day 1: استبدال useUnifiedTenderPricing ✅**
 
-**⏳ التالي: Week 5, Day 1-3 - Migrate TenderPricingPage**
+**📊 التقدم الإجمالي:** ~55% (5.2 من 9 أسابيع)
 
 ---
 
-### اليوم الأول (Week 5, Day 1)
+### 🎯 الأولويات الجديدة
+
+بناءً على الدروس المستفادة، سنغير الأولويات:
+
+#### الأولوية #1: تحسين الأداء (Week 5, Day 2-3)
+
+**الهدف:** استغلال Zustand Store الموجود لتحسين الأداء
+
+**المهام:**
+
+1. إضافة Memoization للـ selectors
+2. تحسين re-render optimization
+3. قياس الأداء قبل/بعد
+4. Performance benchmarks
+
+**الوقت المتوقع:** 2 أيام  
+**التأثير:** تحسين 20-30% في الأداء
+
+---
+
+#### الأولوية #2: Integration Tests (Week 5, Day 4-5)
+
+**الهدف:** ضمان استقرار النظام الحالي
+
+**المهام:**
+
+1. إنشاء test suite للـ TenderPricingStore
+2. اختبار loadPricing, savePricing
+3. اختبار selectors (getTotalValue, etc.)
+4. Mock BOQ Repository
+
+**الوقت المتوقع:** 2 أيام  
+**التأثير:** زيادة test coverage من ~40% → ~65%
+
+---
+
+#### الأولوية #3: Legacy Cleanup (Week 6)
+
+**الهدف:** تنظيف parseQuantityItems fallback
+
+**المهام:**
+
+1. التأكد من أن جميع Tenders لديها BOQ data
+2. حذف parseQuantityItems fallback
+3. تبسيط quantityItems computation
+4. حذف legacy data properties (مؤجل)
+
+**الوقت المتوقع:** 3 أيام
+
+---
+
+### 💡 القرارات المؤجلة
+
+**Draft/Official System:**
+
+- ✋ الإبقاء على useEditableTenderPricing كما هو
+- ❓ قرار مستقبلي: هل نحتاج Draft system؟
+- 📅 مراجعة في Month 2 بعد user feedback
+
+**useTenderPricingPersistence:**
+
+- ✋ الإبقاء عليه كما هو (معقد جداً)
+- ✅ يعمل بشكل جيد حالياً
+- 📅 إعادة تقييم فقط إذا ظهرت مشاكل
+
+---
+
+### 📅 الجدول الزمني المحدث
+
+| الأسبوع             | المهام                          | الحالة         |
+| ------------------- | ------------------------------- | -------------- |
+| Week 0-3            | Baseline + Refactoring          | ✅ مكتمل       |
+| Week 4              | Quick Fixes + Zustand Setup     | ✅ مكتمل       |
+| Week 5, Day 1       | استبدال useUnifiedTenderPricing | ✅ مكتمل       |
+| **Week 5, Day 2-3** | **Performance Optimization**    | ⏳ التالي      |
+| Week 5, Day 4-5     | Integration Tests               | 📋 مخطط        |
+| Week 6              | Legacy Cleanup + Testing        | 📋 مخطط        |
+| Week 7-9            | Phase 4-7 (مراجعة)              | 📋 تحت التقييم |
+
+---
+
+## 🎯 Ready for Next Steps?
+
+**الخيارات:**
+
+1. ✅ **المتابعة - Performance Optimization**
+
+   - إضافة useMemo للـ selectors
+   - تحسين re-renders
+   - قياس النتائج
+
+2. 🧪 **البدء بـ Integration Tests**
+
+   - إنشاء test infrastructure
+   - اختبار TenderPricingStore
+   - Mock repositories
+
+3. 🔍 **مراجعة شاملة**
+   - تحليل ما تم إنجازه
+   - تحديد الثغرات
+   - تحديث الخطة
+
+**أي خيار تفضل؟**
+
+---
+
+## القديم - Week 5 الخطوات الأصلية
+
+### اليوم الأول (Week 5, Day 1) ✅ مكتمل
 
 **الهدف:** استبدال `useUnifiedTenderPricing` بـ Zustand Store
 
