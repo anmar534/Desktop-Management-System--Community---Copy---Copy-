@@ -36,6 +36,25 @@ interface PricingData {
   }
 }
 
+interface PricingPercentages {
+  administrative: number
+  operational: number
+  profit: number
+}
+
+interface CurrentPricingData {
+  materials: unknown[]
+  labor: unknown[]
+  equipment: unknown[]
+  subcontractors: unknown[]
+  technicalNotes: string
+  additionalPercentages: PricingPercentages
+  completed: boolean
+  pricingMethod?: 'detailed' | 'direct'
+  directUnitPrice?: number
+  derivedPercentages?: PricingPercentages
+}
+
 interface TenderPricingState {
   // State
   currentTenderId: string | null
@@ -46,6 +65,11 @@ interface TenderPricingState {
   lastSaved: string | null
   error: Error | null
 
+  // Phase 4: Additional UI State
+  currentItemIndex: number
+  currentPricing: CurrentPricingData
+  defaultPercentages: PricingPercentages
+
   // Actions
   setCurrentTender: (tenderId: string) => void
   loadPricing: (tenderId: string) => Promise<void>
@@ -54,6 +78,17 @@ interface TenderPricingState {
   savePricing: () => Promise<void>
   resetDirty: () => void
   reset: () => void
+
+  // Phase 4: Additional Actions
+  setCurrentItemIndex: (index: number) => void
+  setCurrentPricing: (
+    pricing: CurrentPricingData | ((prev: CurrentPricingData) => CurrentPricingData),
+  ) => void
+  setDefaultPercentages: (percentages: PricingPercentages) => void
+  updateCurrentPricingField: <K extends keyof CurrentPricingData>(
+    field: K,
+    value: CurrentPricingData[K],
+  ) => void
 
   // Computed (via selectors)
   getTotalValue: () => number
@@ -70,6 +105,26 @@ const initialState = {
   isLoading: false,
   lastSaved: null,
   error: null,
+  // Phase 4: UI state
+  currentItemIndex: 0,
+  currentPricing: {
+    materials: [],
+    labor: [],
+    equipment: [],
+    subcontractors: [],
+    technicalNotes: '',
+    additionalPercentages: {
+      administrative: 15,
+      operational: 12,
+      profit: 8,
+    },
+    completed: false,
+  } as CurrentPricingData,
+  defaultPercentages: {
+    administrative: 15,
+    operational: 12,
+    profit: 8,
+  },
 }
 
 export const useTenderPricingStore = create<TenderPricingState>()(
@@ -276,6 +331,43 @@ export const useTenderPricingStore = create<TenderPricingState>()(
         reset: () => {
           set(initialState)
           console.log('[TenderPricingStore] Reset to initial state')
+        },
+
+        // Phase 4: UI State Actions
+        setCurrentItemIndex: (index: number) => {
+          set((state) => {
+            state.currentItemIndex = index
+          })
+        },
+
+        setCurrentPricing: (
+          pricing: CurrentPricingData | ((prev: CurrentPricingData) => CurrentPricingData),
+        ) => {
+          set((state) => {
+            if (typeof pricing === 'function') {
+              state.currentPricing = pricing(state.currentPricing)
+            } else {
+              state.currentPricing = pricing
+            }
+            state.isDirty = true
+          })
+        },
+
+        setDefaultPercentages: (percentages: PricingPercentages) => {
+          set((state) => {
+            state.defaultPercentages = percentages
+            state.isDirty = true
+          })
+        },
+
+        updateCurrentPricingField: <K extends keyof CurrentPricingData>(
+          field: K,
+          value: CurrentPricingData[K],
+        ) => {
+          set((state) => {
+            state.currentPricing[field] = value
+            state.isDirty = true
+          })
         },
 
         // Computed
