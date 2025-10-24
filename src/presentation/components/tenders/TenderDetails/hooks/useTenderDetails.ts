@@ -2,7 +2,7 @@
 // Manages tender state and data loading
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
+import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing.store'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { APP_EVENTS } from '@/events/bus'
 import type { CollapsedSections, TabValue, QuantityItem } from '../types'
@@ -89,7 +89,7 @@ export function useTenderDetails(tender: any) {
 
   // استخراج بيانات الكميات
   const quantityItems: QuantityItem[] = useMemo(() => {
-    return unified.items || []
+    return (unified.items || []) as QuantityItem[]
   }, [unified.items])
 
   // حسابات الإكمال

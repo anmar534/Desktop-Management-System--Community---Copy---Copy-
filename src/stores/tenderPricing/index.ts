@@ -17,10 +17,10 @@
 
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { createDataSlice } from './dataSlice'
-import { createUISlice } from './uiSlice'
-import { createEffectsSlice } from './effectsSlice'
-import type { TenderPricingState } from './types'
+import { createDataSlice } from './dataSlice.js'
+import { createUISlice } from './uiSlice.js'
+import { createEffectsSlice } from './effectsSlice.js'
+import type { TenderPricingState } from './types.js'
 
 /**
  * Main Tender Pricing Store
@@ -44,15 +44,15 @@ export const useTenderPricingStore = create<TenderPricingState>()(
 /**
  * Re-export selectors and computed values
  */
-export { selectors, computed } from './computed'
+export { selectors, computed } from './computed.js'
 
 /**
  * Re-export types
  */
-export type { TenderPricingState, TenderPricingSelector } from './types'
-export type { PricingItem, BOQItem, DataSlice } from './dataSlice'
-export type { FilterState, UISlice } from './uiSlice'
-export type { EffectsSlice } from './effectsSlice'
+export type { TenderPricingState, TenderPricingSelector, BOQItem, PricingItem } from './types.js'
+export type { PricingData, PricingPercentages, DataSlice } from './dataSlice.js'
+export type { FilterState, UISlice } from './uiSlice.js'
+export type { EffectsSlice } from './effectsSlice.js'
 
 /**
  * Utility: Get store instance (for non-React usage)

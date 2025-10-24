@@ -2,9 +2,10 @@
  * Tender Pricing Store - TypeScript Types
  */
 
-import type { DataSlice, BOQItem, PricingItem } from './dataSlice'
-import type { UISlice, FilterState } from './uiSlice'
-import type { EffectsSlice } from './effectsSlice'
+import type { DataSlice, PricingData, PricingPercentages } from './dataSlice.js'
+import type { UISlice, FilterState } from './uiSlice.js'
+import type { EffectsSlice } from './effectsSlice.js'
+import type { QuantityItem } from '@/presentation/pages/Tenders/TenderPricing/types'
 
 /**
  * Complete Tender Pricing State
@@ -20,4 +21,10 @@ export type TenderPricingSelector<T> = (state: TenderPricingState) => T
 /**
  * Re-export types from slices
  */
-export type { DataSlice, UISlice, EffectsSlice, BOQItem, PricingItem, FilterState }
+export type { DataSlice, UISlice, EffectsSlice, PricingData, PricingPercentages, FilterState }
+
+/**
+ * Type aliases for compatibility
+ */
+export type BOQItem = QuantityItem
+export type PricingItem = PricingData

@@ -25,7 +25,7 @@ import { FileUploadService } from '@/shared/utils/fileUploadService'
 // Removed normalizeAndEnrich / dedupePricingItems legacy enrichment utilities – unified hook supplies final items
 // Removed direct snapshot utilities & metrics – unified hook manages snapshot reading
 // Removed useTenderPricing (legacy hook) – unified hook is now sole source of truth here
-import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
+import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing.store'
 import { getStatusColor } from '@/shared/utils/ui/statusColors'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'

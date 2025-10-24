@@ -5,65 +5,51 @@
  */
 
 import type { StateCreator } from 'zustand'
+import type { PricingData, PricingPercentages } from '@/shared/types/pricing'
+import type { QuantityItem } from '@/presentation/pages/Tenders/TenderPricing/types'
 
-export interface PricingItem {
-  itemId: string
-  unitPrice: number | null
-  totalPrice: number | null
-  notes?: string
-  lastModified: Date
-}
-
-export interface BOQItem {
-  id: string
-  code: string
-  description: string
-  unit: string
-  quantity: number
-  // Additional BOQ fields as needed
-}
+// Re-export for convenience
+export type { PricingData, PricingPercentages }
 
 export interface DataSlice {
   // State
-  currentTenderId: string | null
-  pricingData: Map<string, PricingItem>
-  boqItems: BOQItem[]
+  tenderId: string | null
+  pricingData: Map<string, PricingData>
+  boqItems: QuantityItem[]
+  defaultPercentages: PricingPercentages | null
 
   // Actions
-  setCurrentTender: (tenderId: string | null) => void
-  setPricingData: (data: Map<string, PricingItem>) => void
-  setBOQItems: (items: BOQItem[]) => void
-  updateItemPricing: (itemId: string, unitPrice: number, totalPrice: number, notes?: string) => void
+  setTenderId: (tenderId: string | null) => void
+  setPricingData: (data: Map<string, PricingData>) => void
+  setBOQItems: (items: QuantityItem[]) => void
+  setDefaultPercentages: (percentages: PricingPercentages) => void
+  updateItemPricing: (itemId: string, pricing: PricingData) => void
   clearPricingData: () => void
   resetData: () => void
 }
 
 const initialDataState = {
-  currentTenderId: null,
-  pricingData: new Map<string, PricingItem>(),
+  tenderId: null,
+  pricingData: new Map<string, PricingData>(),
   boqItems: [],
+  defaultPercentages: null,
 }
 
 export const createDataSlice: StateCreator<DataSlice> = (set) => ({
   ...initialDataState,
 
-  setCurrentTender: (tenderId) => set({ currentTenderId: tenderId }),
+  setTenderId: (tenderId) => set({ tenderId }),
 
-  setPricingData: (data) => set({ pricingData: data }),
+  setPricingData: (data) => set({ pricingData: new Map(data) }),
 
   setBOQItems: (items) => set({ boqItems: items }),
 
-  updateItemPricing: (itemId, unitPrice, totalPrice, notes) =>
+  setDefaultPercentages: (percentages) => set({ defaultPercentages: percentages }),
+
+  updateItemPricing: (itemId, pricing) =>
     set((state) => {
       const newPricingData = new Map(state.pricingData)
-      const existing = newPricingData.get(itemId)
-      newPricingData.set(itemId, {
-        itemId,
-        unitPrice,
-        totalPrice,
-        notes: notes || existing?.notes,
-        lastModified: new Date(),
-      })
+      newPricingData.set(itemId, pricing)
       return { pricingData: newPricingData }
     }),
 
@@ -71,8 +57,9 @@ export const createDataSlice: StateCreator<DataSlice> = (set) => ({
 
   resetData: () =>
     set({
-      currentTenderId: null,
+      tenderId: null,
       pricingData: new Map(),
       boqItems: [],
+      defaultPercentages: null,
     }),
 })
