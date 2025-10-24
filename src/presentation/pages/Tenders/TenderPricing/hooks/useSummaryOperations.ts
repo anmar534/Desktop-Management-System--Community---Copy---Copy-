@@ -246,17 +246,35 @@ export function useSummaryOperations({
   const saveDirectPrice = useCallback(
     (itemId: string, unitPrice: number, quantity: number) => {
       setPricingData((prev) => {
-        const itemPricing = prev.get(itemId)
-        if (!itemPricing || quantity <= 0 || unitPrice <= 0) return prev
+        // Validate inputs
+        if (quantity <= 0 || unitPrice <= 0) {
+          toast.error('السعر والكمية يجب أن تكون أكبر من صفر')
+          return prev
+        }
+
+        // Get or create item pricing
+        const itemPricing = prev.get(itemId) || {
+          materials: [],
+          labor: [],
+          equipment: [],
+          subcontractors: [],
+          technicalNotes: '',
+          additionalPercentages: {
+            administrative: 5,
+            operational: 5,
+            profit: 15,
+          },
+          completed: false,
+        }
 
         // Calculate total price
         const totalPrice = unitPrice * quantity
 
         // Get default percentages for this item
         const percentages = itemPricing.additionalPercentages || {
-          administrative: 0,
-          operational: 0,
-          profit: 0,
+          administrative: 5,
+          operational: 5,
+          profit: 15,
         }
 
         // Calculate reverse pricing to get breakdown

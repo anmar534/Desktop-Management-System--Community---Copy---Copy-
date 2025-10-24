@@ -188,11 +188,42 @@ export const useTenderPricingCalculations = ({
       return pricingViewItems.reduce((sum, item) => sum + (item.breakdown?.administrative ?? 0), 0)
     }
     let totalAdministrative = 0
-    pricingViewItems.forEach((item) => {
-      totalAdministrative += item.breakdown?.administrative ?? 0
+    // Support both direct and detailed pricing
+    quantityItems.forEach((item) => {
+      const itemPricing = pricingData.get(item.id)
+      if (itemPricing) {
+        if (itemPricing.pricingMethod === 'direct' && itemPricing.directUnitPrice) {
+          // For direct pricing, calculate from reverse calculation
+          const percentages =
+            itemPricing.derivedPercentages ||
+            itemPricing.additionalPercentages ||
+            defaultPercentages
+          const totalPercentage =
+            percentages.administrative + percentages.operational + percentages.profit
+          const itemTotal = itemPricing.directUnitPrice * item.quantity
+          const subtotal = itemTotal / (1 + totalPercentage / 100)
+          totalAdministrative += (subtotal * percentages.administrative) / 100
+        } else {
+          // For detailed pricing, use breakdown from pricingData
+          const materialsTotal = itemPricing.materials.reduce((sum, mat) => {
+            const wastageMultiplier = mat.hasWaste ? 1 + (mat.wastePercentage ?? 0) / 100 : 1
+            return sum + (mat.quantity ?? 0) * (mat.price ?? 0) * wastageMultiplier
+          }, 0)
+          const laborTotal = itemPricing.labor.reduce((sum, lab) => sum + lab.total, 0)
+          const equipmentTotal = itemPricing.equipment.reduce((sum, eq) => sum + eq.total, 0)
+          const subcontractorsTotal = itemPricing.subcontractors.reduce(
+            (sum, sub) => sum + sub.total,
+            0,
+          )
+          const subtotal = materialsTotal + laborTotal + equipmentTotal + subcontractorsTotal
+          const adminPercentage =
+            itemPricing.additionalPercentages?.administrative ?? defaultPercentages.administrative
+          totalAdministrative += (subtotal * adminPercentage) / 100
+        }
+      }
     })
     return totalAdministrative
-  }, [pricingViewItems, domainPricing])
+  }, [quantityItems, pricingData, pricingViewItems, domainPricing, defaultPercentages])
 
   const calculateTotalOperational = useCallback(() => {
     if (
@@ -203,11 +234,42 @@ export const useTenderPricingCalculations = ({
       return pricingViewItems.reduce((sum, item) => sum + (item.breakdown?.operational ?? 0), 0)
     }
     let totalOperational = 0
-    pricingViewItems.forEach((item) => {
-      totalOperational += item.breakdown?.operational ?? 0
+    // Support both direct and detailed pricing
+    quantityItems.forEach((item) => {
+      const itemPricing = pricingData.get(item.id)
+      if (itemPricing) {
+        if (itemPricing.pricingMethod === 'direct' && itemPricing.directUnitPrice) {
+          // For direct pricing, calculate from reverse calculation
+          const percentages =
+            itemPricing.derivedPercentages ||
+            itemPricing.additionalPercentages ||
+            defaultPercentages
+          const totalPercentage =
+            percentages.administrative + percentages.operational + percentages.profit
+          const itemTotal = itemPricing.directUnitPrice * item.quantity
+          const subtotal = itemTotal / (1 + totalPercentage / 100)
+          totalOperational += (subtotal * percentages.operational) / 100
+        } else {
+          // For detailed pricing, use breakdown from pricingData
+          const materialsTotal = itemPricing.materials.reduce((sum, mat) => {
+            const wastageMultiplier = mat.hasWaste ? 1 + (mat.wastePercentage ?? 0) / 100 : 1
+            return sum + (mat.quantity ?? 0) * (mat.price ?? 0) * wastageMultiplier
+          }, 0)
+          const laborTotal = itemPricing.labor.reduce((sum, lab) => sum + lab.total, 0)
+          const equipmentTotal = itemPricing.equipment.reduce((sum, eq) => sum + eq.total, 0)
+          const subcontractorsTotal = itemPricing.subcontractors.reduce(
+            (sum, sub) => sum + sub.total,
+            0,
+          )
+          const subtotal = materialsTotal + laborTotal + equipmentTotal + subcontractorsTotal
+          const operationalPercentage =
+            itemPricing.additionalPercentages?.operational ?? defaultPercentages.operational
+          totalOperational += (subtotal * operationalPercentage) / 100
+        }
+      }
     })
     return totalOperational
-  }, [pricingViewItems, domainPricing])
+  }, [quantityItems, pricingData, pricingViewItems, domainPricing, defaultPercentages])
 
   const calculateTotalMaterials = useCallback(() => {
     let totalMaterials = 0

@@ -12,7 +12,10 @@ export class LocalBOQRepository implements IBOQRepository {
     return boqStorage.getByProjectId(projectId)
   }
 
-  async createOrUpdate(boq: Omit<BOQData, 'id'> & { id?: string }): Promise<BOQData> {
+  async createOrUpdate(
+    boq: Omit<BOQData, 'id'> & { id?: string },
+    options?: { skipRefresh?: boolean },
+  ): Promise<BOQData> {
     const record = await boqStorage.createOrUpdate(boq)
 
     // Log snapshot for debugging
@@ -27,6 +30,7 @@ export class LocalBOQRepository implements IBOQRepository {
       id: record.id,
       tenderId: record.tenderId,
       projectId: record.projectId,
+      skipRefresh: options?.skipRefresh,
     })
 
     return record

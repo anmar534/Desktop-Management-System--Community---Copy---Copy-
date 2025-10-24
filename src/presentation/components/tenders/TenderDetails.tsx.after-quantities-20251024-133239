@@ -1,0 +1,1760 @@
+// TenderDetails renders the full tender workspace with tabs, documents, and workflow.
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/consistent-indexed-object-style */
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
+import { Button } from '@/presentation/components/ui/button'
+import { Badge } from '@/presentation/components/ui/badge'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs'
+import { EmptyState } from '@/presentation/components/layout/PageLayout'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/presentation/components/ui/alert-dialog'
+import { TenderResultsManager } from '@/presentation/pages/Tenders/components/TenderResultsManager'
+import { TenderQuickResults } from '@/presentation/pages/Tenders/components/TenderQuickResults'
+import {
+  Calendar,
+  DollarSign,
+  ArrowRight,
+  Building2,
+  MapPin,
+  Eye,
+  FileText,
+  Paperclip,
+  Grid3X3,
+  Info,
+  Download,
+  ExternalLink,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Send,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { TenderStatusManager } from '@/presentation/pages/Tenders/components/TenderStatusManager'
+import { APP_EVENTS } from '@/events/bus'
+import { FileUploadService } from '@/shared/utils/fileUploadService'
+// (legacy pricingService import removed – unified hook supplies data)
+// Removed pricingDataSyncService (legacy dual-write path)
+// Removed normalizeAndEnrich / dedupePricingItems legacy enrichment utilities – unified hook supplies final items
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+// Removed direct snapshot utilities & metrics – unified hook manages snapshot reading
+// Removed useTenderPricing (legacy hook) – unified hook is now sole source of truth here
+import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
+import { getStatusColor } from '@/shared/utils/ui/statusColors'
+import { getTenderRepository } from '@/application/services/serviceRegistry'
+import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
+// Import extracted tabs
+import { GeneralInfoTab, QuantitiesTab, AttachmentsTab, TimelineTab, WorkflowTab } from './TenderDetails/tabs'
+/**
+ * Phase 1 Pricing Engine Adoption (READ PATH ONLY)
+ * ------------------------------------------------
+ * This component now supports an engine-based enrichment path guarded by PRICING_FLAGS.USE_ENGINE_DETAILS.
+ * Quick rollback: set PRICING_FLAGS.USE_ENGINE_DETAILS = false in pricingHelpers.ts to restore legacy reconstruction.
+ * Diff logging: enabled via PRICING_FLAGS.DIFF_LOGGING; threshold configurable (DIFF_THRESHOLD_PERCENT).
+ * Removal plan: once diffs remain stable (<0.5%) for a full release cycle, delete legacyReconstruct() and related code.
+ */
+// legacy normalizePricing utilities removed (buildPricingMap no longer needed after snapshot adoption)
+
+export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => void }) {
+  const [activeTab, setActiveTab] = useState('general')
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false)
+  const [localTender, setLocalTender] = useState(tender)
+  // تم إزالة جميع حالات وإعادة بناء snapshot القديمة – يتم الاعتماد بالكامل على useUnifiedTenderPricing
+  // حالات الطي للجداول المختلفة
+  const [collapsedSections, setCollapsedSections] = useState<{
+    [key: string]: {
+      materials: boolean
+      labor: boolean
+      equipment: boolean
+      subcontractors: boolean
+    }
+  }>({})
+
+  // دالة لتبديل حالة الطي لقسم معين في بند معين
+  const toggleCollapse = (
+    itemId: string,
+    section: 'materials' | 'labor' | 'equipment' | 'subcontractors',
+  ) => {
+    setCollapsedSections((prev) => ({
+      ...prev,
+      [itemId]: {
+        ...prev[itemId],
+        [section]: !prev[itemId]?.[section],
+      },
+    }))
+  }
+
+  // تحديث البيانات المحلية عند تغيير tender
+  useEffect(() => {
+    setLocalTender(tender)
+  }, [tender])
+
+  // أزيل مستمع pricingSnapshotUpdated (الـ unified hook يستمع بالفعل ويُحدِّث بياناته).
+
+  // الاستماع لأحداث تحديث المنافسة لتحديث البيانات المحلية (من المصدر المركزي)
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined
+    }
+
+    let cancelled = false
+    const repository = getTenderRepository()
+
+    const syncTender = async () => {
+      try {
+        const updated = await repository.getById(tender.id)
+        if (!cancelled && updated) {
+          setLocalTender(updated)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.warn('تعذر تحديث بيانات المنافسة بعد الحدث:', error)
+        }
+      }
+    }
+
+    void syncTender()
+
+    const handler = () => {
+      void syncTender()
+    }
+
+    window.addEventListener(APP_EVENTS.TENDER_UPDATED, handler as EventListener)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener(APP_EVENTS.TENDER_UPDATED, handler as EventListener)
+    }
+  }, [tender.id])
+
+  // أزيل مسار التحميل/إعادة بناء snapshot اليدوي – مصدر موحد فقط.
+
+  // أزيل مستمع pricingDataUpdated وإعادة بناء snapshot – الاعتماد على تزامن مركزي لاحق (إن لزم) عبر unified hook.
+
+  const unified = useUnifiedTenderPricing(tender)
+  const { formatCurrencyValue } = useCurrencyFormatter()
+  const quantityFormatter = useMemo(
+    () =>
+      new Intl.NumberFormat('ar-SA', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }),
+    [],
+  )
+  const formatQuantity = useCallback(
+    (value: number | null | undefined, options?: Intl.NumberFormatOptions) => {
+      const numeric = typeof value === 'number' ? value : Number(value ?? 0)
+      const safeValue = Number.isFinite(numeric) ? numeric : 0
+      if (!options) {
+        return quantityFormatter.format(safeValue)
+      }
+      return new Intl.NumberFormat('ar-SA', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+        ...options,
+      }).format(safeValue)
+    },
+    [quantityFormatter],
+  )
+  // تشخيص مبسط للمصدر الموحد فقط
+  useEffect(() => {
+    console.log('[TenderDetails] Unified pricing diagnostic', {
+      tenderId: tender?.id,
+      unifiedStatus: unified.status,
+      unifiedSource: unified.source,
+      items: unified.items.length,
+      hasTotals: !!unified.totals,
+    })
+  }, [unified.status, unified.source, unified.items.length, unified.totals, tender?.id])
+
+  if (!localTender) return null
+
+  // الجاهزية وفق المصدر المركزي
+  const isPricingCompleted =
+    (localTender?.pricedItems || 0) > 0 &&
+    (localTender?.totalItems || 0) > 0 &&
+    (localTender?.pricedItems || 0) >= (localTender?.totalItems || 0)
+  const isTechnicalFilesUploaded =
+    !!localTender?.technicalFilesUploaded ||
+    FileUploadService.getFilesByTender(tender.id).length > 0
+  const isReadyToSubmit = isPricingCompleted && isTechnicalFilesUploaded
+
+  // دالة لإظهار حوار التأكيد لتقديم العرض
+  const handleSubmitTender = () => {
+    setShowSubmitDialog(true)
+  }
+
+  // دالة لتأكيد تقديم العرض
+  const handleConfirmSubmit = async () => {
+    setShowSubmitDialog(false)
+
+    try {
+      const currentTender = localTender ?? tender
+      console.log('🚀 بدء عملية إرسال المنافسة:', currentTender.id)
+
+      const { tenderSubmissionService } = await import(
+        '@/application/services/tenderSubmissionService'
+      )
+      const result = await tenderSubmissionService.submit(currentTender)
+
+      setLocalTender(result.tender)
+
+      const { created, purchaseOrder, bookletExpense, counts } = result
+
+      console.log('✅ تم استكمال تدفق الإرسال', {
+        tenderId: result.tender.id,
+        purchaseOrderId: purchaseOrder.id,
+        bookletExpenseId: bookletExpense?.id ?? null,
+        created,
+        counts,
+      })
+
+      const summary: string[] = []
+      if (created.purchaseOrder) {
+        summary.push('تم إنشاء أمر شراء للمنافسة')
+      } else if (counts.after.ordersCount > 0) {
+        summary.push('أمر الشراء موجود مسبقاً')
+      }
+
+      if (bookletExpense) {
+        const amount = formatCurrencyValue(bookletExpense.amount, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+        if (created.bookletExpense) {
+          summary.push(`تم إنشاء مصروف الكراسة بقيمة ${amount}`)
+        } else {
+          summary.push(`مصروف الكراسة الحالي ${amount}`)
+        }
+      } else if (created.bookletExpense) {
+        summary.push('تم تسجيل مصروف الكراسة')
+      } else if (counts.after.expensesCount > 0) {
+        summary.push('مصروف الكراسة موجود مسبقاً')
+      }
+
+      if (summary.length === 0) {
+        summary.push('تم تحديث حالة المنافسة والإحصائيات بنجاح')
+      }
+
+      toast.success('تم تقديم العرض بنجاح', {
+        description: summary.join(' • '),
+      })
+    } catch (error) {
+      console.error('❌ خطأ في إرسال المنافسة:', error)
+      toast.error('حدث خطأ أثناء تقديم العرض')
+    }
+  }
+
+  // دالة لعرض جدول الكميات المُسعَّر
+  const renderQuantityTable = () => {
+    const finalQuantityData = unified.items || []
+    const hasPricingData = finalQuantityData.some(
+      (it: any) => typeof it.unitPrice === 'number' || typeof it.totalPrice === 'number',
+    )
+    const sourceLabelMap: Record<string, string> = {
+      'central-boq': 'النظام المركزي (BOQ)',
+      snapshot: 'لقطة التسعير (Snapshot)',
+      hook: 'هوك التسعير',
+      legacy: 'بيانات المنافسة الأساسية',
+      none: 'لا يوجد بيانات',
+    }
+    console.log(
+      '[TenderDetails] Unified hook source',
+      unified.source,
+      'items',
+      finalQuantityData.length,
+    )
+
+    return (
+      <div className="space-y-4" dir="rtl">
+        {unified.status === 'loading' && (
+          <div className="p-4 rounded-md bg-muted/40 text-sm text-muted-foreground border">
+            جاري تحميل بيانات التسعير...
+          </div>
+        )}
+        {unified.status === 'empty' && (
+          <EmptyState
+            icon={AlertCircle}
+            title="لا توجد بيانات تسعير"
+            description="لم يتم العثور على أسعار للبنود حتى الآن. قم باستيراد أو إدخال التسعير للمتابعة."
+            actionLabel="فتح صفحة التسعير"
+            onAction={() => window.open(`/pricing/${tender.id}`, '_blank')}
+          />
+        )}
+        {/* divergence UI removed */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">عدد البنود: {finalQuantityData.length}</p>
+          <div className="flex gap-2 items-center">
+            <Badge className="bg-info/10 text-info border-info/30">
+              {sourceLabelMap[unified.source]}
+            </Badge>
+            {hasPricingData && (
+              <Badge className="bg-success/10 text-success border-success/30">يتضمن أسعار</Badge>
+            )}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.open(`/pricing/${tender.id}`, '_blank')}
+              className="flex items-center gap-1"
+            >
+              <ExternalLink className="w-3 h-3" /> فتح صفحة التسعير
+            </Button>
+          </div>
+        </div>
+
+        {/* الجدول بنفس تصميم تبويب الملخص مع جداول التحليل */}
+        {unified.status !== 'loading' && (
+          <div className="overflow-x-auto border rounded-lg">
+            <table className="w-full min-w-[1200px] border-collapse">
+              <colgroup>
+                <col className="w-[8%]" />
+                <col className="w-[35%]" />
+                <col className="w-[8%]" />
+                <col className="w-[8%]" />
+                {hasPricingData && (
+                  <>
+                    <col className="w-[12%]" />
+                    <col className="w-[15%]" />
+                  </>
+                )}
+                <col className="w-[8%]" />
+                <col className="w-[6%]" />
+              </colgroup>
+              <thead className="sticky top-0 bg-background z-10">
+                <tr className="bg-muted/40 border-b border-border">
+                  <th className="border border-border p-2 text-right font-semibold text-sm">
+                    رقم البند
+                  </th>
+                  <th className="border border-border p-2 text-right font-semibold text-sm">
+                    وصف البند
+                  </th>
+                  <th className="border border-border p-2 text-center font-semibold text-sm">
+                    الوحدة
+                  </th>
+                  <th className="border border-border p-2 text-center font-semibold text-sm">
+                    الكمية
+                  </th>
+                  {hasPricingData && (
+                    <>
+                      <th className="border border-border p-2 text-center font-semibold text-sm">
+                        سعر الوحدة
+                      </th>
+                      <th className="border border-border p-2 text-center font-semibold text-sm">
+                        القيمة الإجمالية
+                      </th>
+                    </>
+                  )}
+                  <th className="border border-border p-2 text-center font-semibold text-sm">
+                    حالة التسعير
+                  </th>
+                  <th className="border border-border p-2 text-center font-semibold text-sm">
+                    إجراءات
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* معالجة مشكلة المفاتيح المكررة:
+                  في بعض الحالات تصلنا عناصر ببنفس id (مثلاً نتيجة دمج مصادر أو تكرار في التخزين)
+                  مما ينتج عنه تحذير React: Encountered two children with the same key
+                  الحل هنا: توليد مفتاح عرض renderKey فريد حتى لو تكرر id الأصلي */}
+                {(() => {
+                  const keyUsage: Record<string, number> = {}
+                  return finalQuantityData.map((item: any, index: number) => {
+                    const baseKey = item?.id != null ? String(item.id) : String(index)
+                    const occurrence = (keyUsage[baseKey] = (keyUsage[baseKey] || 0) + 1)
+                    const renderKey =
+                      occurrence === 1 ? baseKey : `${baseKey}__dup${occurrence - 1}`
+                    const isCompleted = !!(item.unitPrice && item.totalPrice && item.unitPrice > 0)
+                    const isInProgress = !!(item.unitPrice || item.totalPrice) && !isCompleted
+
+                    // تمت إزالة حقن البيانات التجريبية للحفاظ على البيانات الحقيقية فقط
+
+                    // إعادة التحقق من وجود بيانات التحليل بعد إضافة البيانات التجريبية
+                    const finalHasBreakdownData = !!(
+                      item.materials?.length > 0 ||
+                      item.labor?.length > 0 ||
+                      item.equipment?.length > 0 ||
+                      item.subcontractors?.length > 0 ||
+                      (item.breakdown &&
+                        (item.breakdown.materials > 0 ||
+                          item.breakdown.labor > 0 ||
+                          item.breakdown.equipment > 0 ||
+                          item.breakdown.subcontractors > 0 ||
+                          item.breakdown.administrative > 0 ||
+                          item.breakdown.operational > 0 ||
+                          item.breakdown.profit > 0))
+                    )
+
+                    console.log(
+                      `Item ${item.id || index}: finalHasBreakdownData = ${finalHasBreakdownData}`,
+                      {
+                        materials: item.materials?.length || 0,
+                        labor: item.labor?.length || 0,
+                        equipment: item.equipment?.length || 0,
+                        subcontractors: item.subcontractors?.length || 0,
+                        breakdown: item.breakdown,
+                      },
+                    )
+
+                    if (occurrence > 1 && occurrence === 2) {
+                      console.warn(
+                        '[TenderDetails] Duplicate item id detected, generating unique key:',
+                        {
+                          id: baseKey,
+                          renderKey,
+                          occurrence,
+                        },
+                      )
+                    }
+                    return (
+                      <React.Fragment key={renderKey}>
+                        <tr
+                          className={`hover:bg-muted/40 ${isCompleted ? 'bg-success/10' : isInProgress ? 'bg-warning/10' : 'bg-destructive/10'}`}
+                        >
+                          <td className="border border-border p-2 font-medium text-right text-sm">
+                            {item.itemNumber || item.number || String(index + 1).padStart(2, '0')}
+                          </td>
+                          <td className="border border-border p-2 text-right">
+                            <div>
+                              {/* الوصف القياسي */}
+                              <div className="font-medium text-sm whitespace-pre-line leading-relaxed">
+                                {item.canonicalDescription ||
+                                  item.description ||
+                                  item.desc ||
+                                  item.name ||
+                                  item.title ||
+                                  item.itemName ||
+                                  item.specifications ||
+                                  'غير محدد'}
+                              </div>
+                              {/* إذا كان الوصف الأصلي مختلفاً عن القياسي وأطول/أقصر نعرضه للمراجعة */}
+                              {item.canonicalDescription &&
+                                item.description &&
+                                item.canonicalDescription !== item.description && (
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    <span className="font-semibold">الوصف الأصلي:</span>{' '}
+                                    {item.description}
+                                  </div>
+                                )}
+                              {/* عرض المواصفات من مصادر متعددة */}
+                              {(item.specifications ||
+                                item.spec ||
+                                item.notes ||
+                                item.technicalNotes) && (
+                                <div className="text-xs text-muted-foreground mt-1 leading-relaxed whitespace-pre-line">
+                                  {item.specifications ||
+                                    item.spec ||
+                                    item.notes ||
+                                    item.technicalNotes}
+                                </div>
+                              )}
+                              {/* وصف تفصيلي */}
+                              {item.detailedDescription && (
+                                <div className="text-xs text-info mt-1 italic whitespace-pre-line">
+                                  {item.detailedDescription}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="border border-border p-2 text-center font-medium text-sm">
+                            {item.unit || item.uom || '-'}
+                          </td>
+                          <td className="border border-border p-2 text-center font-bold text-sm">
+                            {item.quantity !== undefined && item.quantity !== null
+                              ? formatQuantity(item.quantity)
+                              : '-'}
+                          </td>
+                          {hasPricingData && (
+                            <>
+                              <td className="border border-border p-2 text-center">
+                                {isCompleted || isInProgress ? (
+                                  <span className="font-bold text-info text-sm">
+                                    {formatCurrencyValue(item.unitPrice, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground text-sm opacity-80">
+                                    -
+                                  </span>
+                                )}
+                              </td>
+                              <td className="border border-border p-2 text-center">
+                                {isCompleted || isInProgress ? (
+                                  <span className="font-bold text-success text-sm">
+                                    {formatCurrencyValue(item.totalPrice, {
+                                      minimumFractionDigits: 0,
+                                      maximumFractionDigits: 0,
+                                    })}
+                                  </span>
+                                ) : (
+                                  <span className="text-muted-foreground text-sm opacity-80">
+                                    -
+                                  </span>
+                                )}
+                              </td>
+                            </>
+                          )}
+                          <td className="border border-border p-2 text-center">
+                            {isCompleted ? (
+                              <Badge className="bg-success/10 text-success border-success/30 text-xs">
+                                <CheckCircle className="w-3 h-3 ml-1" />
+                                تم التسعير
+                              </Badge>
+                            ) : isInProgress ? (
+                              <Badge className="bg-warning/10 text-warning border-warning/30 text-xs">
+                                قيد التسعير
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-destructive/10 text-destructive border-destructive/30 text-xs">
+                                <AlertCircle className="w-3 h-3 ml-1" />
+                                لم يتم التسعير
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="border border-border p-2 text-center">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                try {
+                                  // تخزين معرف البند المختار ليتم التقاطه في صفحة التسعير
+                                  safeLocalStorage.setItem('pricing:selectedItemId', item.id)
+                                  // بث حدث مخصص لكي تغيّر شاشة العطاءات العرض إلى وضع التسعير
+                                  const evt = new CustomEvent('openPricingForTender', {
+                                    detail: { tenderId: tender.id, itemId: item.id },
+                                  })
+                                  window.dispatchEvent(evt)
+                                  toast.info('فتح واجهة التسعير للبند المحدد', { duration: 2500 })
+                                } catch (e) {
+                                  console.error('فشل تفعيل مسار التحرير', e)
+                                  alert('تعذر فتح واجهة التسعير، يرجى المحاولة لاحقاً')
+                                }
+                              }}
+                              className="flex items-center gap-1 text-xs"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              {isCompleted || isInProgress ? 'تعديل' : 'تسعير'}
+                            </Button>
+                          </td>
+                        </tr>
+
+                        {/* جداول تحليل التكلفة تحت كل بند - مطابقة لتبويب الملخص */}
+                        {finalHasBreakdownData && (
+                          <tr className="bg-card">
+                            <td colSpan={hasPricingData ? 8 : 6} className="p-2 border-b">
+                              <div className="space-y-2">
+                                {/* عرض ملخص التكاليف إذا لم تكن الجداول التفصيلية موجودة */}
+                                {!item.materials?.length &&
+                                  !item.labor?.length &&
+                                  !item.equipment?.length &&
+                                  !item.subcontractors?.length &&
+                                  item.breakdown && (
+                                    <div className="bg-muted/40 p-3 rounded-lg border border-border">
+                                      <div className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-info rounded-full"></div>
+                                        ملخص تحليل التكلفة لهذا البند
+                                      </div>
+
+                                      {/* الإجماليات الأساسية */}
+                                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mb-3">
+                                        {item.breakdown.materials > 0 && (
+                                          <div className="bg-info/10 p-2 rounded border border-info/30">
+                                            <div className="text-info text-xs mb-1">المواد</div>
+                                            <div className="font-bold text-info">
+                                              {formatCurrencyValue(item.breakdown.materials, {
+                                                maximumFractionDigits: 0,
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {item.breakdown.labor > 0 && (
+                                          <div className="bg-success/10 p-2 rounded border border-success/30">
+                                            <div className="text-success text-xs mb-1">العمالة</div>
+                                            <div className="font-bold text-success">
+                                              {formatCurrencyValue(item.breakdown.labor, {
+                                                maximumFractionDigits: 0,
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {item.breakdown.equipment > 0 && (
+                                          <div className="bg-warning/10 p-2 rounded border border-warning/30">
+                                            <div className="text-warning text-xs mb-1">المعدات</div>
+                                            <div className="font-bold text-warning">
+                                              {formatCurrencyValue(item.breakdown.equipment, {
+                                                maximumFractionDigits: 0,
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {item.breakdown.subcontractors > 0 && (
+                                          <div className="bg-accent/10 p-2 rounded border border-accent/30">
+                                            <div className="text-accent text-xs mb-1">
+                                              مقاولو الباطن
+                                            </div>
+                                            <div className="font-bold text-accent">
+                                              {formatCurrencyValue(item.breakdown.subcontractors, {
+                                                maximumFractionDigits: 0,
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* النسب والتكاليف الإضافية */}
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs pt-2 border-t border-border">
+                                        {item.breakdown.administrative > 0 && (
+                                          <div className="bg-destructive/10 p-2 rounded border border-destructive/30">
+                                            <div className="text-destructive text-xs mb-1">
+                                              تكاليف إدارية
+                                            </div>
+                                            <div className="font-bold text-destructive">
+                                              {formatCurrencyValue(item.breakdown.administrative, {
+                                                maximumFractionDigits: 0,
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {item.breakdown.operational > 0 && (
+                                          <div className="bg-warning/10 p-2 rounded border border-warning/30">
+                                            <div className="text-warning text-xs mb-1">
+                                              تكاليف تشغيلية
+                                            </div>
+                                            <div className="font-bold text-warning">
+                                              {formatCurrencyValue(item.breakdown.operational, {
+                                                maximumFractionDigits: 0,
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {item.breakdown.profit > 0 && (
+                                          <div className="bg-success/10 p-2 rounded border border-success/30">
+                                            <div className="text-success text-xs mb-1">
+                                              هامش الربح
+                                            </div>
+                                            <div className="font-bold text-success">
+                                              {formatCurrencyValue(item.breakdown.profit, {
+                                                maximumFractionDigits: 0,
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* إجمالي البند */}
+                                      <div className="mt-3 pt-2 border-t border-border/60">
+                                        <div className="bg-muted p-2 rounded flex justify-between items-center">
+                                          <span className="text-foreground font-semibold text-sm">
+                                            إجمالي البند:
+                                          </span>
+                                          <span className="font-bold text-foreground text-sm">
+                                            {formatCurrencyValue(
+                                              (item.breakdown.materials || 0) +
+                                                (item.breakdown.labor || 0) +
+                                                (item.breakdown.equipment || 0) +
+                                                (item.breakdown.subcontractors || 0) +
+                                                (item.breakdown.administrative || 0) +
+                                                (item.breakdown.operational || 0) +
+                                                (item.breakdown.profit || 0),
+                                              { maximumFractionDigits: 0 },
+                                            )}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                {/* جدول المواد */}
+                                {item.materials?.length ? (
+                                  <div>
+                                    <div
+                                      className="flex items-center justify-between cursor-pointer hover:bg-info/10 p-2 rounded-md border border-info/30"
+                                      onClick={() =>
+                                        toggleCollapse(item.id || index.toString(), 'materials')
+                                      }
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 bg-info rounded-full"></div>
+                                        <div className="text-sm font-semibold text-info">
+                                          المواد والخامات ({item.materials.length} صنف)
+                                        </div>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-info border-info/30 text-xs bg-info/10"
+                                        >
+                                          إجمالي:{' '}
+                                          {formatCurrencyValue(
+                                            item.materials.reduce(
+                                              (sum: number, m: any) => sum + (m.total || 0),
+                                              0,
+                                            ),
+                                            { maximumFractionDigits: 0 },
+                                          )}
+                                        </Badge>
+                                      </div>
+                                      {collapsedSections[item.id || index.toString()]?.materials ? (
+                                        <ChevronUp className="w-5 h-5 text-info" />
+                                      ) : (
+                                        <ChevronDown className="w-5 h-5 text-info" />
+                                      )}
+                                    </div>
+                                    {!collapsedSections[item.id || index.toString()]?.materials && (
+                                      <div className="mt-2 overflow-x-auto border rounded-lg shadow-sm">
+                                        <table className="w-full text-xs bg-card">
+                                          <colgroup>
+                                            <col className="w-[40%]" />
+                                            <col className="w-[10%]" />
+                                            <col className="w-[12%]" />
+                                            <col className="w-[15%]" />
+                                            <col className="w-[15%]" />
+                                            <col className="w-[8%]" />
+                                          </colgroup>
+                                          <thead>
+                                            <tr className="text-foreground bg-info/20 border-b-2 border-info/30">
+                                              <th className="text-right p-2 font-semibold">
+                                                اسم المادة / الوصف التفصيلي
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                الوحدة
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                الكمية المطلوبة
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                سعر الوحدة (ر.س)
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                الإجمالي (ر.س)
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                ملاحظات
+                                              </th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {item.materials.map((m: any, mIndex: number) => (
+                                              <tr
+                                                key={m.id || mIndex}
+                                                className="odd:bg-card even:bg-muted/40 hover:bg-info/10 border-b border-border"
+                                              >
+                                                <td className="p-2 text-right">
+                                                  <div className="font-medium text-foreground">
+                                                    {m.name || m.description || 'مادة غير محددة'}
+                                                  </div>
+                                                  {m.specifications && (
+                                                    <div className="text-xs text-muted-foreground mt-1">
+                                                      {m.specifications}
+                                                    </div>
+                                                  )}
+                                                  {m.brand && (
+                                                    <div className="text-xs text-info mt-1">
+                                                      العلامة التجارية: {m.brand}
+                                                    </div>
+                                                  )}
+                                                </td>
+                                                <td className="p-2 text-center font-medium">
+                                                  {m.unit || m.uom || '-'}
+                                                </td>
+                                                <td className="p-2 text-center font-bold text-info">
+                                                  {typeof m.quantity === 'number'
+                                                    ? formatQuantity(m.quantity, {
+                                                        maximumFractionDigits: 2,
+                                                      })
+                                                    : m.quantity || '-'}
+                                                </td>
+                                                <td className="p-2 text-center font-medium text-success">
+                                                  {m.price !== undefined &&
+                                                  m.price !== null &&
+                                                  m.price !== ''
+                                                    ? formatCurrencyValue(m.price, {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                      })
+                                                    : '-'}
+                                                </td>
+                                                <td className="p-2 text-center font-bold text-success bg-success/10">
+                                                  {m.total !== undefined &&
+                                                  m.total !== null &&
+                                                  m.total !== ''
+                                                    ? formatCurrencyValue(m.total, {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                      })
+                                                    : '-'}
+                                                </td>
+                                                <td className="p-2 text-center text-xs text-muted-foreground">
+                                                  {m.notes || m.remarks || '-'}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                            <tr className="bg-info/20 border-t-2 border-info/30 font-bold">
+                                              <td colSpan={4} className="p-2 text-right text-info">
+                                                إجمالي تكلفة المواد:
+                                              </td>
+                                              <td className="p-2 text-center text-info bg-info/10">
+                                                {formatCurrencyValue(
+                                                  item.materials.reduce(
+                                                    (sum: number, m: any) => sum + (m.total || 0),
+                                                    0,
+                                                  ),
+                                                  {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                  },
+                                                )}
+                                              </td>
+                                              <td className="p-2"></td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : null}
+
+                                {/* جدول العمالة */}
+                                {item.labor?.length ? (
+                                  <div>
+                                    <div
+                                      className="flex items-center justify-between cursor-pointer hover:bg-success/10 p-2 rounded-md border border-success/30"
+                                      onClick={() =>
+                                        toggleCollapse(item.id || index.toString(), 'labor')
+                                      }
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 bg-success rounded-full"></div>
+                                        <div className="text-sm font-semibold text-success">
+                                          العمالة والأيدي العاملة ({item.labor.length} نوع)
+                                        </div>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-success border-success/30 text-xs bg-success/10"
+                                        >
+                                          إجمالي:{' '}
+                                          {formatCurrencyValue(
+                                            item.labor.reduce(
+                                              (sum: number, l: any) => sum + (l.total || 0),
+                                              0,
+                                            ),
+                                            { maximumFractionDigits: 0 },
+                                          )}
+                                        </Badge>
+                                      </div>
+                                      {collapsedSections[item.id || index.toString()]?.labor ? (
+                                        <ChevronUp className="w-5 h-5 text-success" />
+                                      ) : (
+                                        <ChevronDown className="w-5 h-5 text-success" />
+                                      )}
+                                    </div>
+                                    {!collapsedSections[item.id || index.toString()]?.labor && (
+                                      <div className="mt-2 overflow-x-auto border rounded-lg shadow-sm">
+                                        <table className="w-full text-xs bg-card">
+                                          <colgroup>
+                                            <col className="w-[40%]" />
+                                            <col className="w-[10%]" />
+                                            <col className="w-[12%]" />
+                                            <col className="w-[15%]" />
+                                            <col className="w-[15%]" />
+                                            <col className="w-[8%]" />
+                                          </colgroup>
+                                          <thead>
+                                            <tr className="text-foreground bg-success/20 border-b-2 border-success/30">
+                                              <th className="text-right p-2 font-semibold">
+                                                نوع العمالة / التخصص
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                الوحدة
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                عدد الساعات/الأيام
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                معدل الأجر (ر.س)
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                الإجمالي (ر.س)
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                ملاحظات
+                                              </th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {item.labor.map((l: any, lIndex: number) => (
+                                              <tr
+                                                key={l.id || lIndex}
+                                                className="odd:bg-card even:bg-muted/40 hover:bg-success/10 border-b border-border"
+                                              >
+                                                <td className="p-2 text-right">
+                                                  <div className="font-medium text-foreground">
+                                                    {l.description || l.type || 'عمالة غير محددة'}
+                                                  </div>
+                                                  {l.skill && (
+                                                    <div className="text-xs text-muted-foreground mt-1">
+                                                      المهارة: {l.skill}
+                                                    </div>
+                                                  )}
+                                                  {l.experience && (
+                                                    <div className="text-xs text-success mt-1">
+                                                      الخبرة: {l.experience}
+                                                    </div>
+                                                  )}
+                                                </td>
+                                                <td className="p-2 text-center font-medium">
+                                                  {l.unit || l.uom || 'ساعة'}
+                                                </td>
+                                                <td className="p-2 text-center font-bold text-success">
+                                                  {typeof l.quantity === 'number'
+                                                    ? formatQuantity(l.quantity, {
+                                                        maximumFractionDigits: 1,
+                                                      })
+                                                    : l.quantity || '-'}
+                                                </td>
+                                                <td className="p-2 text-center font-medium text-success">
+                                                  {l.price !== undefined &&
+                                                  l.price !== null &&
+                                                  l.price !== ''
+                                                    ? formatCurrencyValue(l.price, {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                      })
+                                                    : '-'}
+                                                </td>
+                                                <td className="p-2 text-center font-bold text-success bg-success/10">
+                                                  {l.total !== undefined &&
+                                                  l.total !== null &&
+                                                  l.total !== ''
+                                                    ? formatCurrencyValue(l.total, {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                      })
+                                                    : '-'}
+                                                </td>
+                                                <td className="p-2 text-center text-xs text-muted-foreground">
+                                                  {l.notes || l.remarks || '-'}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                            <tr className="bg-success/20 border-t-2 border-success/40 font-bold">
+                                              <td
+                                                colSpan={4}
+                                                className="p-2 text-right text-success"
+                                              >
+                                                إجمالي تكلفة العمالة:
+                                              </td>
+                                              <td className="p-2 text-center text-success bg-success/10">
+                                                {formatCurrencyValue(
+                                                  item.labor.reduce(
+                                                    (sum: number, l: any) => sum + (l.total || 0),
+                                                    0,
+                                                  ),
+                                                  {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                  },
+                                                )}
+                                              </td>
+                                              <td className="p-2"></td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : null}
+
+                                {/* جدول المعدات */}
+                                {item.equipment?.length ? (
+                                  <div>
+                                    <div
+                                      className="flex items-center justify-between cursor-pointer hover:bg-warning/10 p-2 rounded-md border border-warning/30"
+                                      onClick={() =>
+                                        toggleCollapse(item.id || index.toString(), 'equipment')
+                                      }
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 bg-warning rounded-full"></div>
+                                        <div className="text-sm font-semibold text-warning">
+                                          المعدات والآلات ({item.equipment.length} معدة)
+                                        </div>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-warning border-warning/30 text-xs bg-warning/10"
+                                        >
+                                          إجمالي:{' '}
+                                          {formatCurrencyValue(
+                                            item.equipment.reduce(
+                                              (sum: number, e: any) => sum + (e.total || 0),
+                                              0,
+                                            ),
+                                            { maximumFractionDigits: 0 },
+                                          )}
+                                        </Badge>
+                                      </div>
+                                      {collapsedSections[item.id || index.toString()]?.equipment ? (
+                                        <ChevronUp className="w-5 h-5 text-warning" />
+                                      ) : (
+                                        <ChevronDown className="w-5 h-5 text-warning" />
+                                      )}
+                                    </div>
+                                    {!collapsedSections[item.id || index.toString()]?.equipment && (
+                                      <div className="mt-2 overflow-x-auto border rounded-lg shadow-sm">
+                                        <table className="w-full text-xs bg-card">
+                                          <colgroup>
+                                            <col className="w-[40%]" />
+                                            <col className="w-[10%]" />
+                                            <col className="w-[12%]" />
+                                            <col className="w-[15%]" />
+                                            <col className="w-[15%]" />
+                                            <col className="w-[8%]" />
+                                          </colgroup>
+                                          <thead>
+                                            <tr className="text-foreground bg-warning/20 border-b-2 border-warning/30">
+                                              <th className="text-right p-2 font-semibold">
+                                                نوع المعدة / الوصف التقني
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                الوحدة
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                عدد الساعات/الأيام
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                تكلفة الساعة (ر.س)
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                الإجمالي (ر.س)
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                ملاحظات
+                                              </th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {item.equipment.map((e: any, eIndex: number) => (
+                                              <tr
+                                                key={e.id || eIndex}
+                                                className="odd:bg-card even:bg-muted/40 hover:bg-warning/10 border-b border-border"
+                                              >
+                                                <td className="p-2 text-right">
+                                                  <div className="font-medium text-foreground">
+                                                    {e.description || e.name || 'معدة غير محددة'}
+                                                  </div>
+                                                  {e.model && (
+                                                    <div className="text-xs text-muted-foreground mt-1">
+                                                      الطراز: {e.model}
+                                                    </div>
+                                                  )}
+                                                  {e.capacity && (
+                                                    <div className="text-xs text-warning mt-1">
+                                                      السعة: {e.capacity}
+                                                    </div>
+                                                  )}
+                                                </td>
+                                                <td className="p-2 text-center font-medium">
+                                                  {e.unit || e.uom || 'ساعة'}
+                                                </td>
+                                                <td className="p-2 text-center font-bold text-warning">
+                                                  {typeof e.quantity === 'number'
+                                                    ? formatQuantity(e.quantity, {
+                                                        maximumFractionDigits: 1,
+                                                      })
+                                                    : e.quantity || '-'}
+                                                </td>
+                                                <td className="p-2 text-center font-medium text-success">
+                                                  {e.price !== undefined &&
+                                                  e.price !== null &&
+                                                  e.price !== ''
+                                                    ? formatCurrencyValue(e.price, {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                      })
+                                                    : '-'}
+                                                </td>
+                                                <td className="p-2 text-center font-bold text-success bg-success/10">
+                                                  {e.total !== undefined &&
+                                                  e.total !== null &&
+                                                  e.total !== ''
+                                                    ? formatCurrencyValue(e.total, {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                      })
+                                                    : '-'}
+                                                </td>
+                                                <td className="p-2 text-center text-xs text-muted-foreground">
+                                                  {e.notes || e.remarks || '-'}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                            <tr className="bg-warning/20 border-t-2 border-warning/40 font-bold">
+                                              <td
+                                                colSpan={4}
+                                                className="p-2 text-right text-warning"
+                                              >
+                                                إجمالي تكلفة المعدات:
+                                              </td>
+                                              <td className="p-2 text-center text-warning bg-warning/10">
+                                                {formatCurrencyValue(
+                                                  item.equipment.reduce(
+                                                    (sum: number, e: any) => sum + (e.total || 0),
+                                                    0,
+                                                  ),
+                                                  {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                  },
+                                                )}
+                                              </td>
+                                              <td className="p-2"></td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : null}
+
+                                {/* جدول مقاولو الباطن */}
+                                {item.subcontractors?.length ? (
+                                  <div>
+                                    <div
+                                      className="flex items-center justify-between cursor-pointer hover:bg-accent/10 p-2 rounded-md border border-accent/30"
+                                      onClick={() =>
+                                        toggleCollapse(
+                                          item.id || index.toString(),
+                                          'subcontractors',
+                                        )
+                                      }
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 bg-accent rounded-full"></div>
+                                        <div className="text-sm font-semibold text-accent">
+                                          مقاولو الباطن والمتخصصون ({item.subcontractors.length}{' '}
+                                          مقاول)
+                                        </div>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-accent border-accent/30 text-xs bg-accent/10"
+                                        >
+                                          إجمالي:{' '}
+                                          {formatCurrencyValue(
+                                            item.subcontractors.reduce(
+                                              (sum: number, s: any) => sum + (s.total || 0),
+                                              0,
+                                            ),
+                                            { maximumFractionDigits: 0 },
+                                          )}
+                                        </Badge>
+                                      </div>
+                                      {collapsedSections[item.id || index.toString()]
+                                        ?.subcontractors ? (
+                                        <ChevronUp className="w-5 h-5 text-accent" />
+                                      ) : (
+                                        <ChevronDown className="w-5 h-5 text-accent" />
+                                      )}
+                                    </div>
+                                    {!collapsedSections[item.id || index.toString()]
+                                      ?.subcontractors && (
+                                      <div className="mt-2 overflow-x-auto border rounded-lg shadow-sm">
+                                        <table className="w-full text-xs bg-card">
+                                          <colgroup>
+                                            <col className="w-[40%]" />
+                                            <col className="w-[10%]" />
+                                            <col className="w-[12%]" />
+                                            <col className="w-[15%]" />
+                                            <col className="w-[15%]" />
+                                            <col className="w-[8%]" />
+                                          </colgroup>
+                                          <thead>
+                                            <tr className="text-foreground bg-accent/20 border-b-2 border-accent/30">
+                                              <th className="text-right p-2 font-semibold">
+                                                اسم المقاول / نوع الخدمة
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                الوحدة
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                الكمية المطلوبة
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                سعر الوحدة (ر.س)
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                الإجمالي (ر.س)
+                                              </th>
+                                              <th className="text-center p-2 font-semibold">
+                                                ملاحظات
+                                              </th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {item.subcontractors.map((s: any, sIndex: number) => (
+                                              <tr
+                                                key={s.id || sIndex}
+                                                className="odd:bg-card even:bg-muted/40 hover:bg-accent/10 border-b border-border"
+                                              >
+                                                <td className="p-2 text-right">
+                                                  <div className="font-medium text-foreground">
+                                                    {s.description ||
+                                                      s.name ||
+                                                      s.contractor ||
+                                                      'مقاول غير محدد'}
+                                                  </div>
+                                                  {s.specialty && (
+                                                    <div className="text-xs text-muted-foreground mt-1">
+                                                      التخصص: {s.specialty}
+                                                    </div>
+                                                  )}
+                                                  {s.company && (
+                                                    <div className="text-xs text-accent mt-1">
+                                                      الشركة: {s.company}
+                                                    </div>
+                                                  )}
+                                                </td>
+                                                <td className="p-2 text-center font-medium">
+                                                  {s.unit || s.uom || 'مقطوعية'}
+                                                </td>
+                                                <td className="p-2 text-center font-bold text-accent">
+                                                  {typeof s.quantity === 'number'
+                                                    ? formatQuantity(s.quantity, {
+                                                        maximumFractionDigits: 2,
+                                                      })
+                                                    : s.quantity || '-'}
+                                                </td>
+                                                <td className="p-2 text-center font-medium text-success">
+                                                  {s.price !== undefined &&
+                                                  s.price !== null &&
+                                                  s.price !== ''
+                                                    ? formatCurrencyValue(s.price, {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                      })
+                                                    : '-'}
+                                                </td>
+                                                <td className="p-2 text-center font-bold text-success bg-success/10">
+                                                  {s.total !== undefined &&
+                                                  s.total !== null &&
+                                                  s.total !== ''
+                                                    ? formatCurrencyValue(s.total, {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                      })
+                                                    : '-'}
+                                                </td>
+                                                <td className="p-2 text-center text-xs text-muted-foreground">
+                                                  {s.notes || s.remarks || '-'}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                            <tr className="bg-accent/20 border-t-2 border-accent/40 font-bold">
+                                              <td
+                                                colSpan={4}
+                                                className="p-2 text-right text-accent"
+                                              >
+                                                إجمالي تكلفة مقاولي الباطن:
+                                              </td>
+                                              <td className="p-2 text-center text-accent bg-accent/10">
+                                                {formatCurrencyValue(
+                                                  item.subcontractors.reduce(
+                                                    (sum: number, s: any) => sum + (s.total || 0),
+                                                    0,
+                                                  ),
+                                                  {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                  },
+                                                )}
+                                              </td>
+                                              <td className="p-2"></td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    )
+                  })
+                })()}
+              </tbody>
+              {hasPricingData && unified?.totals && (
+                <tfoot>
+                  <tr className="bg-muted font-bold">
+                    <td
+                      colSpan={hasPricingData ? 6 : 4}
+                      className="border border-border p-2 text-right text-sm"
+                    >
+                      الإجمالي العام (من صفحة التسعير):
+                    </td>
+                    <td className="border border-border p-2 text-center text-success text-sm font-bold">
+                      {formatCurrencyValue(unified.totals.totalValue ?? 0, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      })}
+                    </td>
+                    <td className="border border-border p-2"></td>
+                    <td className="border border-border p-2"></td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        )}
+
+        <div className="text-sm text-muted-foreground text-center mt-4">
+          إجمالي البنود: {finalQuantityData.length} • المصدر: {sourceLabelMap[unified.source]}
+        </div>
+      </div>
+    )
+  }
+
+  // دالة لعرض المرفقات
+  const renderAttachments = () => {
+    // 1. جلب المرفقات الأصلية من بيانات المنافسة
+    const originalAttachments = tender.attachments || []
+
+    // 2. جلب الملفات الفنية من خدمة رفع الملفات (من تبويب العرض الفني)
+    let technicalFiles: any[] = []
+
+    try {
+      technicalFiles = FileUploadService.getFilesByTender(tender.id).map((file) => ({
+        ...file,
+        source: 'technical',
+        type: 'technical',
+      })) as any[]
+    } catch (error) {
+      console.log('خطأ في قراءة الملفات الفنية:', error)
+    }
+
+    console.log('Checking for attachments for tender:', tender.id)
+    console.log('Original attachments:', originalAttachments)
+    console.log('Technical files found:', technicalFiles)
+
+    // 3. دمج المرفقات الأصلية مع الملفات الفنية
+    const allAttachments = [...originalAttachments, ...technicalFiles]
+
+    console.log('All attachments (original + technical):', allAttachments)
+
+    // إذا لم توجد مرفقات، استخدم بيانات افتراضية للعرض
+    if (allAttachments.length === 0) {
+      allAttachments.push(
+        {
+          name: 'كراسة الشروط والمواصفات.pdf',
+          type: 'specifications',
+          size: '2.5 MB',
+          uploadDate: '2024-08-15',
+          source: 'original',
+        },
+        {
+          name: 'جدول الكميات.xlsx',
+          type: 'quantity',
+          size: '1.2 MB',
+          uploadDate: '2024-08-15',
+          source: 'original',
+        },
+        {
+          name: 'المخططات المعمارية.dwg',
+          type: 'drawings',
+          size: '8.7 MB',
+          uploadDate: '2024-08-15',
+          source: 'original',
+        },
+        {
+          name: 'تقرير الموقع.pdf',
+          type: 'report',
+          size: '3.1 MB',
+          uploadDate: '2024-08-15',
+          source: 'original',
+        },
+        {
+          name: 'العرض الفني والمواصفات التقنية.pdf',
+          type: 'technical',
+          size: '4.8 MB',
+          uploadDate: '2024-08-20',
+          source: 'technical',
+        },
+      )
+    }
+
+    const getFileIcon = (type: string) => {
+      switch (type) {
+        case 'pdf':
+        case 'specifications':
+        case 'report':
+          return <FileText className="w-5 h-5 text-destructive" />
+        case 'excel':
+        case 'quantity':
+          return <Grid3X3 className="w-5 h-5 text-success" />
+        case 'dwg':
+        case 'drawings':
+          return <Building2 className="w-5 h-5 text-info" />
+        case 'technical':
+          return <CheckCircle className="w-5 h-5 text-accent" />
+        default:
+          return <FileText className="w-5 h-5 text-muted-foreground" />
+      }
+    }
+
+    const handlePreview = (attachment: any) => {
+      if (attachment.source === 'technical') {
+        alert(`معاينة الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
+      } else {
+        alert(`معاينة الملف: ${attachment.name}\n\nهذه الميزة ستكون متاحة قريباً`)
+      }
+    }
+
+    const handleDownload = (attachment: any) => {
+      if (attachment.source === 'technical') {
+        alert(`تحميل الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
+      } else {
+        alert(`تحميل الملف: ${attachment.name}\n\nهذه الميزة ستكون متاحة قريباً`)
+      }
+    }
+
+    return (
+      <div className="space-y-4">
+        {technicalFiles.length > 0 && (
+          <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
+            <div className="flex items-center gap-2 text-accent">
+              <CheckCircle className="w-5 h-5 text-accent" />
+              <p className="font-medium">الملفات الفنية من التسعير</p>
+            </div>
+            <p className="text-sm text-accent mt-1">
+              تم العثور على {technicalFiles.length} ملف فني تم رفعه من خلال صفحة التسعير.
+            </p>
+          </div>
+        )}
+
+        {allAttachments.map((attachment: any, index: number) => (
+          <Card key={index}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-muted rounded-lg">{getFileIcon(attachment.type)}</div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{attachment.name || `مرفق ${index + 1}`}</p>
+                      <Badge
+                        variant={attachment.source === 'technical' ? 'secondary' : 'outline'}
+                        className={
+                          attachment.source === 'technical'
+                            ? 'bg-accent/10 text-accent border-accent/30'
+                            : ''
+                        }
+                      >
+                        {attachment.source === 'technical' ? 'ملف فني' : 'مرفق أساسي'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {attachment.type && `نوع: ${attachment.type}`}
+                      {attachment.size && ` • حجم: ${attachment.size}`}
+                      {attachment.uploadDate && ` • تاريخ: ${attachment.uploadDate}`}
+                      {attachment.source === 'pricing' && ` • من التسعير`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => handlePreview(attachment)}
+                  >
+                    <Eye className="w-4 h-4" />
+                    معاينة
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => handleDownload(attachment)}
+                  >
+                    <Download className="w-4 h-4" />
+                    تحميل
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  // (import moved to top-level)
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'new':
+      case 'preparing':
+        return 'جديدة'
+      case 'under_action':
+      case 'active':
+        return 'تحت التنفيذ/التسعير'
+      case 'ready_to_submit':
+      case 'under_review':
+        return 'جاهزة للإرسال'
+      case 'pricing_in_progress':
+        return 'جاري التسعير'
+      case 'pricing_completed':
+        return 'تم التسعير'
+      case 'submitted':
+        return 'بانتظار النتائج'
+      case 'won':
+        return 'فائزة'
+      case 'lost':
+        return 'خاسرة'
+      case 'expired':
+        return 'منتهية'
+      case 'cancelled':
+        return 'تم إلغاؤها'
+      default:
+        return 'غير محدد'
+    }
+  }
+
+  return (
+    <div className="p-4 lg:p-6 min-h-screen bg-muted overflow-y-auto" dir="rtl">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={onBack} className="gap-2">
+              <ArrowRight className="h-4 w-4" /> العودة
+            </Button>
+            <div>
+              <h1 className="text-xl lg:text-2xl font-bold">{tender.name}</h1>
+              <p className="text-sm text-muted-foreground">
+                {tender.client || tender.ownerEntity || 'غير محدد'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* زر تقديم العرض - يظهر للمنافسات الجاهزة تماماً */}
+            {(tender.status === 'ready_to_submit' || isReadyToSubmit) && (
+              <Button
+                onClick={handleSubmitTender}
+                className="gap-2 bg-success text-success-foreground hover:bg-success/90"
+              >
+                <Send className="h-4 w-4" />
+                ارسال
+              </Button>
+            )}
+
+            {/* مدير حالات المنافسة - يظهر للحالات المناسبة */}
+            {tender.status === 'submitted' && <TenderStatusManager tender={tender} />}
+
+            <Badge className={`px-3 py-1 ${getStatusColor(tender.status)}`}>
+              {getStatusText(tender.status)}
+            </Badge>
+
+            {/* معلومات إضافية حول جاهزية المنافسة */}
+            {isReadyToSubmit && tender.status !== 'submitted' && (
+              <Badge className="bg-success/10 text-success border-success/30">جاهزة للإرسال</Badge>
+            )}
+            {isPricingCompleted && !isTechnicalFilesUploaded && tender.status !== 'submitted' && (
+              <Badge className="bg-warning/10 text-warning border-warning/30">
+                يحتاج ملفات فنية
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* سيتم عرض البطاقات الجديدة داخل تبويب جدول الكميات لضمان تطابق تصميم الصورة */}
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex justify-center mb-4">
+            <TabsList className="grid grid-cols-5 w-full max-w-4xl" dir="rtl">
+              <TabsTrigger value="general" className="text-sm flex items-center gap-2">
+                <Info className="w-4 h-4" />
+                معلومات عامة
+              </TabsTrigger>
+              <TabsTrigger value="quantity" className="text-sm flex items-center gap-2">
+                <Grid3X3 className="w-4 h-4" />
+                جدول الكميات
+              </TabsTrigger>
+              <TabsTrigger value="attachments" className="text-sm flex items-center gap-2">
+                <Paperclip className="w-4 h-4" />
+                المرفقات
+              </TabsTrigger>
+              <TabsTrigger value="workflow" className="text-sm flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                إدارة النتائج
+              </TabsTrigger>
+              <TabsTrigger value="timeline" className="text-sm flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                الجدول الزمني
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="pb-6">
+            <TabsContent value="general" className="mt-6" dir="rtl">
+              <GeneralInfoTab
+                tender={tender}
+                isReadyToSubmit={isReadyToSubmit}
+                isPricingCompleted={isPricingCompleted}
+                isTechnicalFilesUploaded={isTechnicalFilesUploaded}
+                formatCurrencyValue={formatCurrencyValue}
+              />
+            </TabsContent>
+
+            <TabsContent value="quantity" className="mt-6" dir="rtl">
+              <QuantitiesTab
+                tender={tender}
+                unified={unified}
+                formatCurrencyValue={formatCurrencyValue}
+                formatQuantity={formatQuantity}
+                collapsedSections={collapsedSections}
+                toggleCollapse={toggleCollapse}
+              />
+            </TabsContent>
+
+            <TabsContent value="attachments" className="mt-6" dir="rtl">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Paperclip className="h-5 w-5" />
+                    المرفقات والمستندات
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>{renderAttachments()}</CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="timeline" className="mt-6" dir="rtl">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    الجدول الزمني للمنافسة
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4 p-4 bg-info/10 rounded-lg">
+                      <div className="p-2 bg-info/20 rounded-full">
+                        <Calendar className="w-4 h-4 text-info" />
+                      </div>
+                      <div>
+                        <p className="font-medium">تاريخ النشر</p>
+                        <p className="text-sm text-muted-foreground">
+                          {tender.publishDate || 'غير محدد'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4 p-4 bg-warning/10 rounded-lg">
+                      <div className="p-2 bg-warning/20 rounded-full">
+                        <ExternalLink className="w-4 h-4 text-warning" />
+                      </div>
+                      <div>
+                        <p className="font-medium">آخر موعد للاستفسارات</p>
+                        <p className="text-sm text-muted-foreground">
+                          {tender.inquiryDeadline || 'غير محدد'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4 p-4 bg-destructive/10 rounded-lg">
+                      <div className="p-2 bg-destructive/20 rounded-full">
+                        <Clock className="w-4 h-4 text-destructive" />
+                      </div>
+                      <div>
+                        <p className="font-medium">آخر موعد للتقديم</p>
+                        <p className="text-sm text-muted-foreground">
+                          {tender.deadline || 'غير محدد'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4 p-4 bg-success/10 rounded-lg">
+                      <div className="p-2 bg-success/20 rounded-full">
+                        <CheckCircle className="w-4 h-4 text-success" />
+                      </div>
+                      <div>
+                        <p className="font-medium">تاريخ إعلان النتائج</p>
+                        <p className="text-sm text-muted-foreground">
+                          {tender.resultDate || 'غير محدد'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* تبويب إدارة النتائج */}
+            <TabsContent value="workflow" className="mt-6" dir="rtl">
+              <div className="space-y-6">
+                {/* طريقة إدخال النتائج السريعة */}
+                <TenderQuickResults
+                  tender={localTender}
+                  onUpdate={() => {
+                    // تحديث البيانات باستخدام نظام الأحداث
+                    void import('@/events/bus').then(({ APP_EVENTS, emit }) =>
+                      emit(APP_EVENTS.TENDER_UPDATED),
+                    )
+                  }}
+                />
+
+                {/* الطريقة التقليدية لإدارة النتائج */}
+                <TenderResultsManager
+                  tender={localTender}
+                  onUpdate={() => {
+                    // تحديث البيانات باستخدام نظام الأحداث
+                    void import('@/events/bus').then(({ APP_EVENTS, emit }) =>
+                      emit(APP_EVENTS.TENDER_UPDATED),
+                    )
+                  }}
+                />
+              </div>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
+
+      {/* حوار تأكيد تقديم العرض */}
+      <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-success" />
+              تأكيد تقديم العرض
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من تقديم العرض للمنافسة &quot;{tender.name}&quot;؟
+              <br />
+              سيتم تغيير حالة المنافسة إلى &quot;تم التقديم&quot; ولن يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmSubmit}
+              className="bg-success text-success-foreground hover:bg-success/90"
+            >
+              تأكيد الارسال
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}

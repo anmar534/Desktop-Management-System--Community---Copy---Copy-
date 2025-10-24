@@ -405,13 +405,52 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     let updatedCount = 0
 
     pricingData.forEach((itemPricing, itemId) => {
-      const updatedPricing: PricingData = {
+      const item = quantityItems.find((q) => q.id === itemId)
+      if (!item) return
+
+      // Update percentages for all items
+      let updatedPricing: PricingData = {
         ...itemPricing,
         additionalPercentages: {
           administrative: defaultPercentages.administrative,
           operational: defaultPercentages.operational,
           profit: defaultPercentages.profit,
         },
+      }
+
+      // If this is a direct pricing item, recalculate based on NEW percentages
+      // KEEPING SUBTOTAL CONSTANT, NOT TOTAL PRICE
+      if (itemPricing.pricingMethod === 'direct' && itemPricing.directUnitPrice) {
+        const oldPercentages = itemPricing.derivedPercentages ||
+          itemPricing.additionalPercentages || {
+            administrative: 0,
+            operational: 0,
+            profit: 0,
+          }
+
+        // Calculate original subtotal from old percentages
+        const oldTotalPercentage =
+          oldPercentages.administrative + oldPercentages.operational + oldPercentages.profit
+        const oldItemTotal = itemPricing.directUnitPrice * item.quantity
+        const subtotal = oldItemTotal / (1 + oldTotalPercentage / 100)
+
+        // Calculate NEW total based on subtotal + new percentages
+        const newTotalPercentage =
+          defaultPercentages.administrative +
+          defaultPercentages.operational +
+          defaultPercentages.profit
+        const newItemTotal = subtotal * (1 + newTotalPercentage / 100)
+        const newUnitPrice = item.quantity > 0 ? newItemTotal / item.quantity : 0
+
+        updatedPricing = {
+          ...updatedPricing,
+          directUnitPrice: newUnitPrice,
+          derivedPercentages: {
+            administrative: defaultPercentages.administrative,
+            operational: defaultPercentages.operational,
+            profit: defaultPercentages.profit,
+          },
+        }
       }
 
       updatedPricingData.set(itemId, updatedPricing)
@@ -443,7 +482,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     }
 
     toast.success(`تم تحديث النسب لـ ${updatedCount} بند`, {
-      description: 'تم تطبيق النسب الافتراضية الجديدة على جميع البنود الموجودة',
+      description: 'تم إعادة حساب الأسعار بناءً على النسب الجديدة مع الحفاظ على التكلفة الأساسية',
       duration: 4000,
     })
   }, [
@@ -452,6 +491,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     editablePricing,
     persistPricingAndBOQ,
     pricingData,
+    quantityItems,
     recordPricingAudit,
     setCurrentPricing,
     setPricingData,

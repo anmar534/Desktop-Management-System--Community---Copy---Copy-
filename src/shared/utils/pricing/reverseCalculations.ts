@@ -105,12 +105,11 @@ export const calculateReversePricing = (
 export const calculateTotalFromUnitPrice = (
   unitPrice: number,
   quantity: number,
-  percentages: PricingPercentages,
+  _percentages: PricingPercentages,
 ): number => {
   if (unitPrice <= 0 || quantity <= 0) return 0
 
   const itemTotal = unitPrice * quantity
-  const totalPercentage = percentages.administrative + percentages.operational + percentages.profit
 
   // السعر الإجمالي يشمل التكلفة الأساسية + النسب
   // لكن هنا السعر الإفرادي يُفترض أنه يشمل كل شيء

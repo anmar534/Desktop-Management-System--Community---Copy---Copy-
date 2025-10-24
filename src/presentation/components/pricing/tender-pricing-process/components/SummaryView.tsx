@@ -34,6 +34,8 @@ import {
 import type { PricingData } from '@/shared/types/pricing'
 import { CostSectionCard } from './CostSectionCard'
 import { DirectPriceInputDialog } from './DirectPriceInputDialog'
+import { usePricingCalculations } from '@/shared/hooks/usePricingCalculations'
+import { StatCard, StatCardGroup } from '@/presentation/components/pricing/shared'
 
 type PricingSection = 'materials' | 'labor' | 'equipment' | 'subcontractors'
 
@@ -94,7 +96,7 @@ interface SummaryViewProps {
     type: 'materials' | 'labor' | 'equipment' | 'subcontractors',
     rowId: string,
     field: string,
-    value: any,
+    value: string | number | boolean,
   ) => void
   deleteRowFromSummary: (
     itemId: string,
@@ -117,13 +119,13 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   setCurrentView,
   formatCurrencyValue,
   formatQuantity,
-  calculateProjectTotal,
-  calculateAveragePercentages,
-  calculateTotalAdministrative,
-  calculateTotalOperational,
-  calculateTotalProfit,
-  calculateItemsTotal,
-  calculateVAT,
+  calculateProjectTotal: _calculateProjectTotal,
+  calculateAveragePercentages: _calculateAveragePercentages,
+  calculateTotalAdministrative: _calculateTotalAdministrative,
+  calculateTotalOperational: _calculateTotalOperational,
+  calculateTotalProfit: _calculateTotalProfit,
+  calculateItemsTotal: _calculateItemsTotal,
+  calculateVAT: _calculateVAT,
   collapsedSections,
   toggleCollapse,
   addRowFromSummary,
@@ -132,6 +134,13 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   onSaveItem,
   onSaveDirectPrice,
 }) => {
+  // ✨ استخدام الـ hook الموحد للحسابات (Single Source of Truth)
+  const unifiedCalculations = usePricingCalculations({
+    quantityItems,
+    pricingData,
+    defaultPercentages,
+  })
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -147,8 +156,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
     itemIndex: number
   } | null>(null)
 
-  // استخدام useMemo للحسابات المكلفة
-  const projectTotal = useMemo(() => calculateProjectTotal(), [calculateProjectTotal])
+  // استخدام useMemo للحسابات
   const completedCount = useMemo(() => {
     // Count ONLY items explicitly marked as completed (saved items)
     return Array.from(pricingData.values()).filter((value) => value?.completed === true).length
@@ -177,64 +185,38 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           </Card>
         )}
 
-        {/* إحصائيات المشروع (في الأعلى) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* بطاقة نسبة الإنجاز */}
-          <Card className="border-info/30 hover:shadow-sm transition-shadow">
-            <CardContent className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-info" />
-                <span className="text-sm font-medium">نسبة الإنجاز</span>
-              </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-info">
-                  {completionPercentage.toFixed(1)}%
-                </div>
-                <div className="text-xs leading-tight text-muted-foreground">
-                  {completedCount} / {quantityItems.length} بند
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* إحصائيات المشروع (في الأعلى) - باستخدام StatCard الموحد */}
+        <StatCardGroup columns={3}>
+          <StatCard
+            title="نسبة الإنجاز"
+            value={`${completionPercentage.toFixed(1)}%`}
+            subtitle={`${completedCount} / ${quantityItems.length} بند`}
+            icon={<Target className="h-5 w-5" />}
+            variant="info"
+          />
 
-          {/* بطاقة القيمة الإجمالية التقديرية */}
-          <Card className="border-success/30 hover:shadow-sm transition-shadow">
-            <CardContent className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-success" />
-                <span className="text-sm font-medium">القيمة الإجمالية</span>
-              </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-success">
-                  {formatCurrencyValue(projectTotal, {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}
-                </div>
-                <div className="text-xs leading-tight text-muted-foreground">إجمالي تقديري</div>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="القيمة الإجمالية"
+            value={formatCurrencyValue(unifiedCalculations.totals.projectTotal, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+            subtitle="إجمالي تقديري"
+            icon={<DollarSign className="h-5 w-5" />}
+            variant="success"
+          />
 
-          {/* بطاقة ضريبة القيمة المضافة */}
-          <Card className="border-warning/30 hover:shadow-sm transition-shadow">
-            <CardContent className="p-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-warning" />
-                <span className="text-sm font-medium">ضريبة القيمة المضافة</span>
-              </div>
-              <div className="text-right">
-                <div className="text-lg font-bold text-warning">
-                  {formatCurrencyValue(projectTotal * 0.15, {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}
-                </div>
-                <div className="text-xs leading-tight text-muted-foreground">15% من الإجمالي</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          <StatCard
+            title="ضريبة القيمة المضافة"
+            value={formatCurrencyValue(unifiedCalculations.calculateVAT(), {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+            subtitle="15% من الإجمالي"
+            icon={<Calculator className="h-5 w-5" />}
+            variant="warning"
+          />
+        </StatCardGroup>
 
         {/* صف واحد: شريط النِسب + 3 بطاقات التكاليف */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-stretch">
@@ -326,65 +308,39 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
             </div>
           </div>
 
-          {/* administrative cost card */}
-          <Card className="hover:shadow-sm transition-shadow border-destructive/30 h-full">
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <div className="text-right">
-                  <p className="text-xs font-semibold text-destructive">
-                    التكاليف الإدارية ({calculateAveragePercentages().administrative.toFixed(1)}%)
-                  </p>
-                  <p className="text-xl font-bold text-destructive">
-                    {formatCurrencyValue(calculateTotalAdministrative(), {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </p>
-                </div>
-                <Settings className="h-6 w-6 text-destructive" />
-              </div>
-            </CardContent>
-          </Card>
+          {/* بطاقات التكاليف - باستخدام StatCard الموحد */}
+          <StatCard
+            title={`التكاليف الإدارية (${unifiedCalculations.averagePercentages.administrative.toFixed(1)}%)`}
+            value={formatCurrencyValue(unifiedCalculations.totals.administrative, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+            icon={<Settings className="h-6 w-6" />}
+            variant="destructive"
+            layout="vertical"
+          />
 
-          {/* operational cost card */}
-          <Card className="hover:shadow-sm transition-shadow border-warning/30 h-full">
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <div className="text-right">
-                  <p className="text-xs font-semibold text-warning">
-                    التكاليف التشغيلية ({calculateAveragePercentages().operational.toFixed(1)}%)
-                  </p>
-                  <p className="text-xl font-bold text-warning">
-                    {formatCurrencyValue(calculateTotalOperational(), {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </p>
-                </div>
-                <Building className="h-6 w-6 text-warning" />
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            title={`التكاليف التشغيلية (${unifiedCalculations.averagePercentages.operational.toFixed(1)}%)`}
+            value={formatCurrencyValue(unifiedCalculations.totals.operational, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+            icon={<Building className="h-6 w-6" />}
+            variant="warning"
+            layout="vertical"
+          />
 
-          {/* profit card */}
-          <Card className="hover:shadow-sm transition-shadow border-success/30 h-full">
-            <CardContent className="p-3">
-              <div className="flex items-center justify-between">
-                <div className="text-right">
-                  <p className="text-xs font-semibold text-success">
-                    إجمالي الأرباح ({calculateAveragePercentages().profit.toFixed(1)}%)
-                  </p>
-                  <p className="text-xl font-bold text-success">
-                    {formatCurrencyValue(calculateTotalProfit(), {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    })}
-                  </p>
-                </div>
-                <TrendingUp className="h-6 w-6 text-success" />
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard
+            title={`إجمالي الأرباح (${unifiedCalculations.averagePercentages.profit.toFixed(1)}%)`}
+            value={formatCurrencyValue(unifiedCalculations.totals.profit, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+            icon={<TrendingUp className="h-6 w-6" />}
+            variant="success"
+            layout="vertical"
+          />
         </div>
 
         {/* عرض جدول الكميات الأساسي */}
@@ -452,39 +408,14 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     const itemPricing = pricingData.get(item.id)
                     const isCompleted = !!itemPricing?.completed
 
-                    // حساب الإجماليات مع مراعاة الهدر للمواد
-                    const materialsTotal =
-                      itemPricing?.materials?.reduce((sum, m) => {
-                        if (m.hasWaste && m.wastePercentage) {
-                          const wastageMultiplier = 1 + m.wastePercentage / 100
-                          return sum + (m.quantity ?? 0) * (m.price ?? 0) * wastageMultiplier
-                        }
-                        return sum + (m.quantity ?? 0) * (m.price ?? 0)
-                      }, 0) ?? 0
-
-                    const laborTotal =
-                      itemPricing?.labor?.reduce((sum, l) => sum + (l.total ?? 0), 0) ?? 0
-                    const equipmentTotal =
-                      itemPricing?.equipment?.reduce((sum, e) => sum + (e.total ?? 0), 0) ?? 0
-                    const subcontractorsTotal =
-                      itemPricing?.subcontractors?.reduce((sum, s) => sum + (s.total ?? 0), 0) ?? 0
-                    const subtotal =
-                      materialsTotal + laborTotal + equipmentTotal + subcontractorsTotal
-                    const adminPercentage =
-                      itemPricing?.additionalPercentages?.administrative ??
-                      defaultPercentages.administrative
-                    const operationalPercentage =
-                      itemPricing?.additionalPercentages?.operational ??
-                      defaultPercentages.operational
-                    const profitPercentage =
-                      itemPricing?.additionalPercentages?.profit ?? defaultPercentages.profit
-                    const administrative = (subtotal * adminPercentage) / 100
-                    const operational = (subtotal * operationalPercentage) / 100
-                    const profit = (subtotal * profitPercentage) / 100
-                    const itemTotal = subtotal + administrative + operational + profit
-                    const unitPrice = item.quantity ? itemTotal / item.quantity : 0
+                    // ✅ استخدام الحسابات الموحدة من Hook (Single Source of Truth)
+                    const itemCalc = unifiedCalculations.getItemCalculation(item.id)
+                    const unitPrice = itemCalc?.unitPrice ?? 0
+                    const itemTotal = itemCalc?.total ?? 0
                     const isInProgress = itemTotal > 0
-                    const isExpanded = !collapsedSections[item.id]?.all
+
+                    // افتراضياً: الجداول مغلقة، يتم فتحها عند طلب المستخدم
+                    const isExpanded = collapsedSections[item.id]?.all === false
 
                     return (
                       <React.Fragment key={item.id}>
@@ -764,9 +695,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                                 </svg>
                                                 النسب المئوية
                                               </h4>
-                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-blue-50 rounded-lg border border-blue-200">
+                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-info/10 rounded-lg border border-info/30">
                                                 <span className="text-muted-foreground flex items-center gap-1">
-                                                  <span className="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+                                                  <span className="inline-block w-2 h-2 rounded-full bg-info"></span>
                                                   إداري:
                                                 </span>
                                                 <span className="font-semibold tabular-nums">
@@ -779,9 +710,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                                   })}
                                                 </span>
                                               </div>
-                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-orange-50 rounded-lg border border-orange-200">
+                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-warning/10 rounded-lg border border-warning/30">
                                                 <span className="text-muted-foreground flex items-center gap-1">
-                                                  <span className="inline-block w-2 h-2 rounded-full bg-orange-500"></span>
+                                                  <span className="inline-block w-2 h-2 rounded-full bg-warning"></span>
                                                   تشغيلي:
                                                 </span>
                                                 <span className="font-semibold tabular-nums">
@@ -794,9 +725,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                                   })}
                                                 </span>
                                               </div>
-                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-green-50 rounded-lg border border-green-200">
+                                              <div className="flex items-center justify-between text-sm py-2 px-3 bg-success/10 rounded-lg border border-success/30">
                                                 <span className="text-muted-foreground flex items-center gap-1">
-                                                  <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                                                  <span className="inline-block w-2 h-2 rounded-full bg-success"></span>
                                                   الربح:
                                                 </span>
                                                 <span className="font-semibold tabular-nums">
@@ -943,7 +874,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         </Card>
 
         {/* ملخص مالي */}
-        {projectTotal > 0 && (
+        {unifiedCalculations.totals.projectTotal > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -957,7 +888,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   <div className="flex justify-between items-center p-3 bg-info/10 rounded-lg">
                     <span className="font-medium">إجمالي قيمة البنود المُسعرة:</span>
                     <span className="font-bold text-info">
-                      {formatCurrencyValue(calculateItemsTotal(), {
+                      {formatCurrencyValue(unifiedCalculations.totals.items, {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
                       })}
@@ -966,22 +897,22 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
                     <span className="font-medium">
                       إجمالي التكاليف الإدارية (
-                      {calculateAveragePercentages().administrative.toFixed(1)}%):
+                      {unifiedCalculations.averagePercentages.administrative.toFixed(1)}%):
                     </span>
                     <span className="font-bold text-warning">
-                      {formatCurrencyValue(calculateTotalAdministrative(), {
+                      {formatCurrencyValue(unifiedCalculations.totals.administrative, {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
                       })}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-accent/10 rounded-lg">
+                  <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg border border-warning/30">
                     <span className="font-medium">
                       إجمالي التكاليف التشغيلية (
-                      {calculateAveragePercentages().operational.toFixed(1)}%):
+                      {unifiedCalculations.averagePercentages.operational.toFixed(1)}%):
                     </span>
-                    <span className="font-bold text-accent">
-                      {formatCurrencyValue(calculateTotalOperational(), {
+                    <span className="font-bold text-warning">
+                      {formatCurrencyValue(unifiedCalculations.totals.operational, {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
                       })}
@@ -992,7 +923,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   <div className="flex justify-between items-center p-3 bg-muted/20 rounded-lg">
                     <span className="font-medium">ضريبة القيمة المضافة (15%):</span>
                     <span className="font-bold text-muted-foreground">
-                      {formatCurrencyValue(calculateVAT(), {
+                      {formatCurrencyValue(unifiedCalculations.totals.vat, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -1000,10 +931,10 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   </div>
                   <div className="flex justify-between items-center p-3 bg-warning/15 rounded-lg">
                     <span className="font-medium">
-                      إجمالي الأرباح ({calculateAveragePercentages().profit.toFixed(1)}%):
+                      إجمالي الأرباح ({unifiedCalculations.averagePercentages.profit.toFixed(1)}%):
                     </span>
                     <span className="font-bold text-warning">
-                      {formatCurrencyValue(calculateTotalProfit(), {
+                      {formatCurrencyValue(unifiedCalculations.totals.profit, {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
                       })}
@@ -1015,7 +946,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 <div className="flex justify-between items-center p-4 bg-success/10 rounded-lg">
                   <span className="font-bold text-lg">القيمة الإجمالية النهائية:</span>
                   <span className="font-bold text-xl text-success">
-                    {formatCurrencyValue(calculateProjectTotal(), {
+                    {formatCurrencyValue(unifiedCalculations.totals.projectTotal, {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })}

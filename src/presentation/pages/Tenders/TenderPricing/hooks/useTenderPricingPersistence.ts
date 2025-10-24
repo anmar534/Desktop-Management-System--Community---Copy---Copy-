@@ -495,7 +495,7 @@ export function useTenderPricingPersistence({
           return
         }
 
-        await boqRepository.createOrUpdate(payload)
+        await boqRepository.createOrUpdate(payload, { skipRefresh: true })
 
         // إرسال event فقط إذا لم يُطلب تجاهله (لمنع loops في auto-save)
         if (typeof window !== 'undefined' && !options?.skipEvent) {

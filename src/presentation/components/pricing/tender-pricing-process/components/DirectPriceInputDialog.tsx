@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { DollarSign, Calculator, TrendingUp, Settings, Building, AlertCircle } from 'lucide-react'
 import {
   Dialog,
@@ -51,6 +51,16 @@ export const DirectPriceInputDialog: React.FC<DirectPriceInputDialogProps> = ({
     profit: number
   } | null>(null)
 
+  // Memoize percentages to prevent infinite loop
+  const percentages = useMemo(
+    () => ({
+      administrative: defaultPercentages.administrative,
+      operational: defaultPercentages.operational,
+      profit: defaultPercentages.profit,
+    }),
+    [defaultPercentages.administrative, defaultPercentages.operational, defaultPercentages.profit],
+  )
+
   // حساب الأسعار عند تغيير المدخلات
   const calculatePrices = useCallback(
     (input: string) => {
@@ -65,7 +75,7 @@ export const DirectPriceInputDialog: React.FC<DirectPriceInputDialogProps> = ({
       const result = calculateReversePricing({
         itemTotalPrice: totalPrice,
         quantity: itemQuantity,
-        defaultPercentages,
+        defaultPercentages: percentages,
       })
 
       setCalculationResult({
@@ -77,7 +87,7 @@ export const DirectPriceInputDialog: React.FC<DirectPriceInputDialogProps> = ({
         profit: result.profitCost,
       })
     },
-    [itemQuantity, defaultPercentages],
+    [itemQuantity, percentages],
   )
 
   // تحديث الحسابات عند تغيير المدخلات
@@ -106,184 +116,180 @@ export const DirectPriceInputDialog: React.FC<DirectPriceInputDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]" dir="rtl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-success" />
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh]" dir="rtl">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <DollarSign className="w-4 h-4 text-success" />
             إدخال السعر الإفرادي مباشرة
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs">
             أدخل السعر الإفرادي للبند مباشرة دون الحاجة لإدخال تفاصيل التكاليف
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* معلومات البند */}
-          <Card className="bg-muted/30">
-            <CardContent className="p-4 space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">رقم البند:</span>
-                <span className="text-sm font-semibold">{itemNumber}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">الوصف:</span>
-                <span className="text-sm font-medium text-right max-w-[300px] truncate">
-                  {itemDescription}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">الوحدة:</span>
-                <span className="text-sm font-semibold">{itemUnit}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">الكمية:</span>
-                <span className="text-sm font-bold text-info">{itemQuantity.toLocaleString()}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* إدخال السعر الإفرادي */}
-          <div className="space-y-2">
-            <Label htmlFor="unitPrice" className="text-base font-semibold">
-              السعر الإفرادي (ريال / {itemUnit})
-            </Label>
-            <div className="relative">
-              <Input
-                id="unitPrice"
-                type="number"
-                step="1"
-                min="0"
-                value={unitPriceInput}
-                onChange={(e) => setUnitPriceInput(e.target.value)}
-                placeholder="أدخل السعر الإفرادي"
-                className="text-lg font-bold text-center"
-                dir="ltr"
-              />
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                ر.س
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              السعر الإفرادي يشمل: التكاليف الأساسية + الإدارية ({defaultPercentages.administrative}
-              %) + التشغيلية ({defaultPercentages.operational}%) + الربح (
-              {defaultPercentages.profit}
-              %)
-            </p>
-          </div>
-
-          {/* نتائج الحسابات */}
-          {calculationResult && (
-            <Card className="border-success/30 bg-success/5">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b">
-                  <Calculator className="w-4 h-4 text-success" />
-                  <span className="text-sm font-semibold text-success">نتائج الحساب التلقائي</span>
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)] px-1">
+          <div className="space-y-3 py-2">
+            {/* معلومات البند */}
+            <Card className="bg-muted/30">
+              <CardContent className="p-3 space-y-1.5 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">رقم البند:</span>
+                  <span className="font-semibold">{itemNumber}</span>
                 </div>
-
-                {/* السعر الإجمالي */}
-                <div className="flex justify-between items-center bg-success/10 p-2 rounded">
-                  <span className="text-sm font-medium">السعر الإجمالي للبند:</span>
-                  <span className="text-lg font-bold text-success">
-                    {formatCurrency(calculationResult.totalPrice, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">الوصف:</span>
+                  <span className="font-medium text-right max-w-[250px] truncate">
+                    {itemDescription}
                   </span>
                 </div>
-
-                {/* التكلفة الأساسية */}
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">
-                    التكلفة الأساسية (Subtotal):
-                  </span>
-                  <span className="text-sm font-semibold">
-                    {formatCurrency(calculationResult.subtotal, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">الوحدة:</span>
+                  <span className="font-semibold">{itemUnit}</span>
                 </div>
-
-                {/* التكاليف الإدارية */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1">
-                    <Settings className="w-3 h-3 text-destructive" />
-                    <span className="text-xs text-muted-foreground">
-                      التكاليف الإدارية ({defaultPercentages.administrative}%):
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold text-destructive">
-                    {formatCurrency(calculationResult.administrative, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-
-                {/* التكاليف التشغيلية */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1">
-                    <Building className="w-3 h-3 text-warning" />
-                    <span className="text-xs text-muted-foreground">
-                      التكاليف التشغيلية ({defaultPercentages.operational}%):
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold text-warning">
-                    {formatCurrency(calculationResult.operational, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-
-                {/* الأرباح */}
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3 text-success" />
-                    <span className="text-xs text-muted-foreground">
-                      الأرباح ({defaultPercentages.profit}%):
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold text-success">
-                    {formatCurrency(calculationResult.profit, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">الكمية:</span>
+                  <span className="font-bold text-info">{itemQuantity.toLocaleString()}</span>
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* تحذير */}
-          <Card className="border-warning/30 bg-warning/5">
-            <CardContent className="p-3">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-warning mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-warning space-y-1">
-                  <p className="font-semibold">ملاحظة هامة:</p>
-                  <p>
-                    • استخدام هذه الطريقة يعني أنك لن تحتاج لإدخال تفاصيل التكاليف (مواد، عمالة،
-                    معدات)
-                  </p>
-                  <p>• النسب المعروضة مستخرجة بناءً على النسب الافتراضية المحددة في الإعدادات</p>
-                  <p>• يمكنك العودة للتسعير التفصيلي في أي وقت من خلال زر &ldquo;تعديل&rdquo;</p>
+            {/* إدخال السعر الإفرادي */}
+            <div className="space-y-1.5">
+              <Label htmlFor="unitPrice" className="text-sm font-semibold">
+                السعر الإفرادي (ريال / {itemUnit})
+              </Label>
+              <div className="relative">
+                <Input
+                  id="unitPrice"
+                  type="number"
+                  step="1"
+                  min="0"
+                  value={unitPriceInput}
+                  onChange={(e) => setUnitPriceInput(e.target.value)}
+                  placeholder="أدخل السعر الإفرادي"
+                  className="text-base font-bold text-center h-10"
+                  dir="ltr"
+                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                  ر.س
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <p className="text-[10px] text-muted-foreground">
+                يشمل: التكاليف + الإدارية ({defaultPercentages.administrative}%) + التشغيلية (
+                {defaultPercentages.operational}%) + الربح ({defaultPercentages.profit}%)
+              </p>
+            </div>
+
+            {/* نتائج الحسابات */}
+            {calculationResult && (
+              <Card className="border-success/30 bg-success/5">
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex items-center gap-2 pb-1.5 border-b text-xs">
+                    <Calculator className="w-3.5 h-3.5 text-success" />
+                    <span className="font-semibold text-success">نتائج الحساب</span>
+                  </div>
+
+                  {/* السعر الإجمالي */}
+                  <div className="flex justify-between items-center bg-success/10 p-2 rounded text-xs">
+                    <span className="font-medium">السعر الإجمالي:</span>
+                    <span className="text-base font-bold text-success">
+                      {formatCurrency(calculationResult.totalPrice, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+
+                  {/* التكلفة الأساسية */}
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-muted-foreground">التكلفة الأساسية:</span>
+                    <span className="font-semibold">
+                      {formatCurrency(calculationResult.subtotal, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+
+                  {/* التكاليف الإدارية */}
+                  <div className="flex justify-between items-center text-[11px]">
+                    <div className="flex items-center gap-1">
+                      <Settings className="w-3 h-3 text-destructive" />
+                      <span className="text-muted-foreground">
+                        إدارية ({defaultPercentages.administrative}%):
+                      </span>
+                    </div>
+                    <span className="font-semibold text-destructive">
+                      {formatCurrency(calculationResult.administrative, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+
+                  {/* التكاليف التشغيلية */}
+                  <div className="flex justify-between items-center text-[11px]">
+                    <div className="flex items-center gap-1">
+                      <Building className="w-3 h-3 text-warning" />
+                      <span className="text-muted-foreground">
+                        تشغيلية ({defaultPercentages.operational}%):
+                      </span>
+                    </div>
+                    <span className="font-semibold text-warning">
+                      {formatCurrency(calculationResult.operational, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+
+                  {/* الأرباح */}
+                  <div className="flex justify-between items-center text-[11px]">
+                    <div className="flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3 text-success" />
+                      <span className="text-muted-foreground">
+                        أرباح ({defaultPercentages.profit}%):
+                      </span>
+                    </div>
+                    <span className="font-semibold text-success">
+                      {formatCurrency(calculationResult.profit, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* تحذير */}
+            <Card className="border-warning/30 bg-warning/5">
+              <CardContent className="p-2.5">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 text-warning mt-0.5 flex-shrink-0" />
+                  <div className="text-[10px] text-warning space-y-0.5">
+                    <p className="font-semibold">ملاحظة:</p>
+                    <p>• لن تحتاج لإدخال تفاصيل التكاليف (مواد، عمالة، معدات)</p>
+                    <p>• النسب مستخرجة بناءً على الإعدادات الافتراضية</p>
+                    <p>• يمكن العودة للتسعير التفصيلي بزر &ldquo;تعديل&rdquo;</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="pt-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} size="sm">
             إلغاء
           </Button>
           <Button
             onClick={handleSave}
             disabled={!isValid}
             className="bg-success hover:bg-success/90"
+            size="sm"
           >
-            <DollarSign className="w-4 h-4 ml-1" />
+            <DollarSign className="w-3.5 h-3.5 ml-1" />
             حفظ السعر
           </Button>
         </DialogFooter>
