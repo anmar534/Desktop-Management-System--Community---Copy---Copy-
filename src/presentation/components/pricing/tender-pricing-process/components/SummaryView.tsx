@@ -17,13 +17,23 @@ import {
   Save,
   ChevronLeft,
   ChevronRight,
+  FileSpreadsheet,
+  Zap,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Badge } from '@/presentation/components/ui/badge'
 import { Button } from '@/presentation/components/ui/button'
 import { BackToTop } from '@/presentation/components/ui/back-to-top'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/presentation/components/ui/dropdown-menu'
 import type { PricingData } from '@/shared/types/pricing'
 import { CostSectionCard } from './CostSectionCard'
+import { DirectPriceInputDialog } from './DirectPriceInputDialog'
 
 type PricingSection = 'materials' | 'labor' | 'equipment' | 'subcontractors'
 
@@ -92,6 +102,7 @@ interface SummaryViewProps {
     rowId: string,
   ) => void
   onSaveItem?: (itemId: string) => void
+  onSaveDirectPrice?: (itemId: string, unitPrice: number) => void
 }
 
 export const SummaryView: React.FC<SummaryViewProps> = ({
@@ -119,6 +130,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   updateRowFromSummary,
   deleteRowFromSummary,
   onSaveItem,
+  onSaveDirectPrice,
 }) => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -127,6 +139,13 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
   const paginatedItems = quantityItems.slice(startIndex, endIndex)
+
+  // Direct price input dialog state
+  const [directPriceDialog, setDirectPriceDialog] = useState<{
+    open: boolean
+    itemId: string
+    itemIndex: number
+  } | null>(null)
 
   // استخدام useMemo للحسابات المكلفة
   const projectTotal = useMemo(() => calculateProjectTotal(), [calculateProjectTotal])
@@ -544,18 +563,57 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                             className="border border-border p-3 text-center"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setCurrentItemIndex(index)
-                                setCurrentView('pricing')
-                              }}
-                              className="flex items-center gap-1"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                              {isCompleted || isInProgress ? 'تعديل' : 'تسعير'}
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex items-center gap-1"
+                                >
+                                  <Edit3 className="w-3 h-3" />
+                                  {isCompleted || isInProgress ? 'تعديل' : 'تسعير'}
+                                  <ChevronDown className="w-3 h-3 mr-1" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setCurrentItemIndex(startIndex + index)
+                                    setCurrentView('pricing')
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <FileSpreadsheet className="w-4 h-4 ml-2" />
+                                  <div className="flex-1">
+                                    <div className="font-medium">تسعير تفصيلي</div>
+                                    <div className="text-xs text-muted-foreground">
+                                      إدخال تفاصيل التكاليف (مواد، عمالة، معدات)
+                                    </div>
+                                  </div>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setDirectPriceDialog({
+                                      open: true,
+                                      itemId: item.id,
+                                      itemIndex: startIndex + index,
+                                    })
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  <Zap className="w-4 h-4 ml-2 text-success" />
+                                  <div className="flex-1">
+                                    <div className="font-medium text-success">
+                                      إدخال السعر مباشرة
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      إدخال سعر الوحدة دون تفاصيل التكاليف
+                                    </div>
+                                  </div>
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </td>
                         </tr>
 
@@ -969,6 +1027,30 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         )}
       </div>
       <BackToTop />
+
+      {/* Direct Price Input Dialog */}
+      {directPriceDialog && (
+        <DirectPriceInputDialog
+          open={directPriceDialog.open}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDirectPriceDialog(null)
+            }
+          }}
+          itemNumber={quantityItems[directPriceDialog.itemIndex]?.itemNumber || ''}
+          itemDescription={quantityItems[directPriceDialog.itemIndex]?.description || ''}
+          itemUnit={quantityItems[directPriceDialog.itemIndex]?.unit || ''}
+          itemQuantity={quantityItems[directPriceDialog.itemIndex]?.quantity || 0}
+          defaultPercentages={defaultPercentages}
+          onSave={(unitPrice) => {
+            if (onSaveDirectPrice) {
+              onSaveDirectPrice(directPriceDialog.itemId, unitPrice)
+            }
+            setDirectPriceDialog(null)
+          }}
+          formatCurrency={formatCurrencyValue}
+        />
+      )}
     </>
   )
 }

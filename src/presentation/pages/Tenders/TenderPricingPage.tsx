@@ -623,18 +623,19 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   })
 
   // Summary operations hook - manages row operations from summary view
-  const { addRowFromSummary, updateRowFromSummary, deleteRowFromSummary } = useSummaryOperations({
-    pricingViewItems,
-    setCurrentItemIndex,
-    addRow,
-    updateRow,
-    deleteRow,
-    markDirty,
-    updateTenderStatus,
-    pricingData,
-    setPricingData,
-    currentPricing,
-  })
+  const { addRowFromSummary, updateRowFromSummary, deleteRowFromSummary, saveDirectPrice } =
+    useSummaryOperations({
+      pricingViewItems,
+      setCurrentItemIndex,
+      addRow,
+      updateRow,
+      deleteRow,
+      markDirty,
+      updateTenderStatus,
+      pricingData,
+      setPricingData,
+      currentPricing,
+    })
 
   // Item navigation hook - manages saving and navigation between items
   const { saveCurrentItem, saveItemById, handleNavigatePrev, handleNavigateNext } =
@@ -721,6 +722,12 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     updateRowFromSummary,
     deleteRowFromSummary,
     onSaveItem: saveItemById,
+    onSaveDirectPrice: (itemId: string, unitPrice: number) => {
+      const item = quantityItems.find((q) => q.id === itemId)
+      if (item) {
+        saveDirectPrice(itemId, unitPrice, item.quantity)
+      }
+    },
   } as const
 
   const pricingViewProps = {

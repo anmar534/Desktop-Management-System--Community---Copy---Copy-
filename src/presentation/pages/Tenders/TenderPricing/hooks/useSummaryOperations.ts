@@ -12,6 +12,7 @@ import { useCallback } from 'react'
 import { toast } from 'sonner'
 import type { PricingViewItem, PricingData } from '@/shared/types/pricing'
 import type { UsePricingRowOperationsReturn } from './usePricingRowOperations'
+import { calculateReversePricing } from '@/shared/utils/pricing/reverseCalculations'
 
 type ActualPricingSection = 'materials' | 'labor' | 'equipment' | 'subcontractors'
 
@@ -38,6 +39,7 @@ export interface UseSummaryOperationsReturn {
     value: unknown,
   ) => void
   deleteRowFromSummary: (itemId: string, section: ActualPricingSection, rowId: string) => void
+  saveDirectPrice: (itemId: string, unitPrice: number, quantity: number) => void
 }
 
 /**
@@ -237,9 +239,65 @@ export function useSummaryOperations({
     [setPricingData, markDirty],
   )
 
+  /**
+   * Save direct unit price for an item
+   * Calculates breakdown based on default percentages using reverse calculation
+   */
+  const saveDirectPrice = useCallback(
+    (itemId: string, unitPrice: number, quantity: number) => {
+      setPricingData((prev) => {
+        const itemPricing = prev.get(itemId)
+        if (!itemPricing || quantity <= 0 || unitPrice <= 0) return prev
+
+        // Calculate total price
+        const totalPrice = unitPrice * quantity
+
+        // Get default percentages for this item
+        const percentages = itemPricing.additionalPercentages || {
+          administrative: 0,
+          operational: 0,
+          profit: 0,
+        }
+
+        // Calculate reverse pricing to get breakdown
+        const reverseCalc = calculateReversePricing({
+          itemTotalPrice: totalPrice,
+          quantity,
+          defaultPercentages: percentages,
+        })
+
+        const updated = new Map(prev)
+        updated.set(itemId, {
+          ...itemPricing,
+          // Mark as direct pricing method
+          pricingMethod: 'direct',
+          directUnitPrice: unitPrice,
+          derivedPercentages: reverseCalc.derivedPercentages,
+          // Clear detailed cost rows since this is direct pricing
+          materials: [],
+          labor: [],
+          equipment: [],
+          subcontractors: [],
+          // Mark as completed
+          completed: true,
+        })
+
+        return updated
+      })
+
+      markDirty()
+      updateTenderStatus()
+      toast.success('تم حفظ السعر الإفرادي بنجاح', {
+        description: 'تم احتساب النسب تلقائياً بناءً على الإعدادات الافتراضية',
+      })
+    },
+    [setPricingData, markDirty, updateTenderStatus],
+  )
+
   return {
     addRowFromSummary,
     updateRowFromSummary,
     deleteRowFromSummary,
+    saveDirectPrice,
   }
 }

@@ -110,6 +110,15 @@ export const useTenderPricingCalculations = ({
       const itemPricing = pricingData.get(item.id)
       if (!itemPricing) return
 
+      // ✨ Handle direct pricing method
+      if (itemPricing.pricingMethod === 'direct' && itemPricing.directUnitPrice) {
+        // For direct pricing, simply multiply unit price by quantity
+        const totalPrice = itemPricing.directUnitPrice * item.quantity
+        projectTotal += totalPrice
+        return
+      }
+
+      // ✅ Handle detailed pricing method (legacy/default)
       const itemTotals = {
         // حساب المواد مع مراعاة نسبة الهدر ✅
         materials: itemPricing.materials.reduce((sum, mat) => {
@@ -254,6 +263,19 @@ export const useTenderPricingCalculations = ({
     quantityItems.forEach((item) => {
       const itemPricing = pricingData.get(item.id)
       if (itemPricing) {
+        // ✨ Handle direct pricing method
+        if (itemPricing.pricingMethod === 'direct' && itemPricing.directUnitPrice) {
+          const totalPrice = itemPricing.directUnitPrice * item.quantity
+          const percentages = itemPricing.derivedPercentages || defaultPercentages
+          const totalPercentage =
+            percentages.administrative + percentages.operational + percentages.profit
+          const subtotal = totalPrice / (1 + totalPercentage / 100)
+          const profit = (subtotal * percentages.profit) / 100
+          totalProfit += profit
+          return
+        }
+
+        // ✅ Handle detailed pricing method (legacy/default)
         const itemTotals = {
           // حساب المواد مع مراعاة نسبة الهدر ✅
           materials: itemPricing.materials.reduce((sum, mat) => {
@@ -273,7 +295,7 @@ export const useTenderPricingCalculations = ({
       }
     })
     return totalProfit
-  }, [quantityItems, pricingData, defaultPercentages.profit])
+  }, [quantityItems, pricingData, defaultPercentages])
 
   return {
     totals, // ✅ القيم المحسوبة مباشرة (محسّن باستخدام useMemo)
