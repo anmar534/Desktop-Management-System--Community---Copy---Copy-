@@ -61,9 +61,7 @@ export const STORAGE_KEYS = {
   INVENTORY_LOCATIONS: 'app_inventory_locations',
   INVENTORY_COUNTS: 'app_inventory_counts',
   INVENTORY_REPORTS: 'app_inventory_reports',
-  // طبقات التسعير الجديدة (فصل الرسمي عن المسودة)
-  PRICING_OFFICIAL: 'app_pricing_official',
-  PRICING_DRAFT: 'app_pricing_draft',
+
   RELATIONS: 'app_entity_relations',
   // Backups & Stats (new unified keys)
   TENDER_BACKUPS: 'app_tender_backups',
