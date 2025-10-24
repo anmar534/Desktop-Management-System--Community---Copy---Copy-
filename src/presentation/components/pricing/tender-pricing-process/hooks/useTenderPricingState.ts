@@ -1,14 +1,12 @@
 import { useCallback, useState } from 'react'
-import { recordAuditEvent } from '@/shared/utils/storage/auditLog'
 
-import type { EditableTenderPricingResult } from '@/application/hooks/useEditableTenderPricing'
 import type { PricingViewName } from '../types'
 import { isPricingViewName } from '../types'
 
 export type PricingView = PricingViewName
 
 interface UseTenderPricingStateOptions {
-  editablePricing: EditableTenderPricingResult
+  isDirty: boolean
   onBack: () => void
   tenderId?: string | number
 }
@@ -26,33 +24,19 @@ export interface TenderPricingState {
 }
 
 export const useTenderPricingState = ({
-  editablePricing,
+  isDirty,
   onBack,
   tenderId,
 }: UseTenderPricingStateOptions): TenderPricingState => {
   const [currentItemIndex, setCurrentItemIndex] = useState(0)
   const [currentView, setCurrentView] = useState<PricingView>('summary')
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false)
-  const auditKey = typeof tenderId === 'number' || typeof tenderId === 'string' ? String(tenderId) : 'unknown-tender'
 
+  // markDirty is now handled automatically by the Zustand store when updateItemPricing is called
   const markDirty = useCallback(() => {
-    try {
-      if (editablePricing.status === 'ready') {
-        editablePricing.markDirty?.()
-      }
-    } catch (error) {
-      void recordAuditEvent({
-        category: 'tender-pricing',
-        action: 'mark-dirty-failed',
-        key: auditKey,
-        level: 'warning',
-        status: 'error',
-        metadata: {
-          message: error instanceof Error ? error.message : 'unknown-error'
-        }
-      })
-    }
-  }, [editablePricing, auditKey])
+    // No-op: The store automatically marks as dirty when items are updated
+    console.log('[useTenderPricingState] markDirty called (handled by store)', tenderId)
+  }, [tenderId])
 
   const changeView = useCallback((value: string) => {
     if (isPricingViewName(value)) {
@@ -70,13 +54,13 @@ export const useTenderPricingState = ({
   }, [onBack])
 
   const requestLeave = useCallback(() => {
-    if (editablePricing.dirty || editablePricing.isDraftNewer) {
+    if (isDirty) {
       setIsLeaveDialogOpen(true)
       return
     }
 
     onBack()
-  }, [editablePricing.dirty, editablePricing.isDraftNewer, onBack])
+  }, [isDirty, onBack])
 
   return {
     currentItemIndex,
@@ -90,4 +74,3 @@ export const useTenderPricingState = ({
     confirmLeave,
   }
 }
-

@@ -1,5 +1,4 @@
 import React from 'react'
-import type { EditableTenderPricingResult } from '@/application/hooks/useEditableTenderPricing'
 import type { PricingData } from '@/shared/types/pricing'
 import type { TenderWithPricingSources } from '@/presentation/pages/Tenders/TenderPricing/types'
 import { Button } from '@/presentation/components/ui/button'
@@ -27,10 +26,11 @@ import { toast } from 'sonner'
 
 interface PricingHeaderProps {
   tender: TenderWithPricingSources
-  editablePricing: EditableTenderPricingResult
+  isDirty: boolean
   pricingData: Map<string, PricingData>
   quantityItemsCount: number
   onBack: () => void
+  onSave: () => Promise<void>
   onSaveCurrentItem: () => void
   onCreateBackup: () => Promise<void>
   onRestoreBackupOpen: () => void
@@ -47,10 +47,11 @@ interface PricingHeaderProps {
 
 export const PricingHeader: React.FC<PricingHeaderProps> = ({
   tender,
-  editablePricing,
+  isDirty,
   pricingData,
   quantityItemsCount,
   onBack,
+  onSave,
   onSaveCurrentItem,
   onCreateBackup,
   onRestoreBackupOpen,
@@ -82,28 +83,11 @@ export const PricingHeader: React.FC<PricingHeaderProps> = ({
           {tender.name || tender.title || 'منافسة جديدة'}
         </p>
 
-        {/* Status Badges */}
+        {/* Status Badge - Simplified: only show unsaved changes */}
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-          {editablePricing.source === 'official' && (
-            <Badge className="bg-success text-success-foreground hover:bg-success/90">
-              نسخة رسمية معتمدة
-            </Badge>
-          )}
-          {editablePricing.source === 'draft' && editablePricing.isDraftNewer && (
-            <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">
-              مسودة أحدث (غير معتمدة)
-            </Badge>
-          )}
-          {editablePricing.hasDraft &&
-            !editablePricing.isDraftNewer &&
-            editablePricing.source === 'official' && (
-              <Badge variant="secondary" className="bg-muted/30 text-muted-foreground">
-                مسودة محفوظة
-              </Badge>
-            )}
-          {editablePricing.dirty && (
+          {isDirty && (
             <Badge className="bg-destructive text-destructive-foreground hover:bg-destructive/90 animate-pulse">
-              تغييرات غير محفوظة رسمياً
+              تغييرات غير محفوظة
             </Badge>
           )}
         </div>
@@ -112,6 +96,7 @@ export const PricingHeader: React.FC<PricingHeaderProps> = ({
       {/* Toolbar */}
       <div className="flex items-center gap-2">
         {/* Approve Official Button */}
+        {/* Approve Button - Save to official */}
         <ConfirmationDialog
           title={confirmationMessages.approveOfficial.title}
           description={confirmationMessages.approveOfficial.description}
@@ -121,33 +106,28 @@ export const PricingHeader: React.FC<PricingHeaderProps> = ({
           icon="confirm"
           onConfirm={async () => {
             try {
-              await editablePricing.saveOfficial()
-              toast.success('تم اعتماد التسعير رسمياً', { duration: 2500 })
+              await onSave()
+              toast.success('تم حفظ التسعير بنجاح', { duration: 2500 })
             } catch (error) {
               recordAudit(
                 'error',
-                'official-save-failed',
+                'save-failed',
                 {
                   message: getErrorMessage(error),
                 },
                 'error',
               )
-              toast.error('فشل اعتماد النسخة الرسمية')
+              toast.error('فشل حفظ التسعير')
             }
           }}
           trigger={
             <Button
               size="sm"
               className="flex items-center gap-2 bg-success text-success-foreground hover:bg-success/90"
-              disabled={
-                editablePricing.status !== 'ready' ||
-                (!editablePricing.dirty &&
-                  !editablePricing.isDraftNewer &&
-                  editablePricing.source === 'official')
-              }
+              disabled={!isDirty}
             >
               <CheckCircle className="w-4 h-4" />
-              اعتماد
+              حفظ
             </Button>
           }
         />

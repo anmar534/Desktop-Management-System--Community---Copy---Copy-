@@ -19,8 +19,6 @@ import type {
   QuantityItem,
   TenderWithPricingSources,
 } from '@/presentation/pages/Tenders/TenderPricing/types'
-// (Phase MVP Official/Draft) استيراد الهوك الجديد لإدارة المسودة والنسخة الرسمية
-import { useEditableTenderPricing } from '@/application/hooks/useEditableTenderPricing'
 // Phase 2 authoring engine adoption helpers (flag-guarded)
 import { isPricingEntry } from '@/shared/utils/pricing/pricingHelpers'
 import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
@@ -133,10 +131,8 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   }, [])
   // using unified storage utils instead of useStorage
   const [pricingData, setPricingData] = useState<Map<string, PricingData>>(new Map())
-  // (Official/Draft MVP) دمج الهوك الجديد (قراءة فقط حالياً لعرض حالة الاعتماد)
-  const editablePricing = useEditableTenderPricing(tender)
   // Zustand Store: unified BOQ and pricing state
-  const { boqItems, loadPricing } = useTenderPricingStore()
+  const { boqItems, loadPricing, savePricing, isDirty } = useTenderPricingStore()
 
   // Load pricing data when component mounts or tender changes
   useEffect(() => {
@@ -155,7 +151,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     requestLeave,
     cancelLeaveRequest,
     confirmLeave,
-  } = useTenderPricingState({ editablePricing, onBack, tenderId: tender.id })
+  } = useTenderPricingState({ isDirty, onBack, tenderId: tender.id })
   const [restoreOpen, setRestoreOpen] = useState(false)
 
   const handleAttemptLeave = requestLeave
@@ -314,7 +310,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     calculateItemsTotal,
     calculateVAT,
     calculateProjectTotal,
-    buildDraftPricingItems,
     calculateTotalAdministrative,
     calculateTotalOperational,
     calculateTotalProfit,
@@ -493,7 +488,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     void persistPricingAndBOQ(updatedPricingData)
 
     try {
-      editablePricing.markDirty?.()
+      markDirty()
     } catch (error) {
       recordPricingAudit(
         'warning',
@@ -512,7 +507,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   }, [
     currentItem,
     defaultPercentages,
-    editablePricing,
     persistPricingAndBOQ,
     pricingData,
     quantityItems,
@@ -520,6 +514,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     setCurrentPricing,
     setPricingData,
     tender.id,
+    markDirty,
   ])
 
   // حفظ النسب الافتراضية عند تعديلها لضمان اعتمادها للبنود الجديدة والجلسات القادمة
@@ -589,69 +584,12 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     debouncedSave(currentPricing)
   }, [currentPricing, debouncedSave, isLoaded, currentItemId])
 
-  // (Official/Draft MVP) حفظ مسودة تلقائي (debounced على مستوى الخريطة الكاملة)
-  useEffect(() => {
-    if (!isLoaded) return
-    if (editablePricing.status !== 'ready') return
-    if (pricingData.size === 0) return
-    const t = setTimeout(() => {
-      try {
-        const items = buildDraftPricingItems()
-        const totals = { totalValue: calculateProjectTotal() }
-        if (editablePricing.saveDraft) {
-          void editablePricing.saveDraft(items, totals, 'auto')
-        }
-      } catch (e) {
-        recordPricingAudit(
-          'warning',
-          'autosave-draft-failed',
-          {
-            message: e instanceof Error ? e.message : 'unknown-error',
-          },
-          'error',
-        )
-      }
-    }, 1500)
-    return () => clearTimeout(t)
-  }, [
-    pricingData,
-    isLoaded,
-    editablePricing,
-    buildDraftPricingItems,
-    calculateProjectTotal,
-    recordPricingAudit,
-  ])
+  // Domain pricing integration (removed auto-save logic)
 
-  // (Official/Draft MVP) حفظ مسودة دوري كل 45 ثانية
+  // تحذير عند محاولة مغادرة الصفحة مع تغييرات غير محفوظة
   useEffect(() => {
-    if (!isLoaded) return
-    if (editablePricing.status !== 'ready') return
-    const interval = setInterval(() => {
-      try {
-        const items = buildDraftPricingItems()
-        const totals = { totalValue: calculateProjectTotal() }
-        if (editablePricing.saveDraft) {
-          void editablePricing.saveDraft(items, totals, 'auto')
-        }
-      } catch (e) {
-        recordPricingAudit(
-          'warning',
-          'autosave-draft-interval-failed',
-          {
-            message: e instanceof Error ? e.message : 'unknown-error',
-          },
-          'error',
-        )
-      }
-    }, 45000)
-    return () => clearInterval(interval)
-  }, [isLoaded, editablePricing, buildDraftPricingItems, calculateProjectTotal, recordPricingAudit])
-
-  // تحذير عند محاولة مغادرة الصفحة مع تغييرات غير معتمدة رسمياً
-  useEffect(() => {
-    if (editablePricing.status !== 'ready') return
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (editablePricing.dirty || editablePricing.isDraftNewer) {
+      if (isDirty) {
         const message = confirmationMessages.leaveDirty.description
         e.preventDefault()
         e.returnValue = message // لبعض المتصفحات
@@ -660,7 +598,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [editablePricing])
+  }, [isDirty])
 
   // تحديث حالة المنافسة عند تحميل المكون لأول مرة فقط
   useEffect(() => {
@@ -833,10 +771,11 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       {/* Header Component */}
       <PricingHeader
         tender={tender}
-        editablePricing={editablePricing}
+        isDirty={isDirty}
         pricingData={pricingData}
         quantityItemsCount={quantityItems.length}
         onBack={handleAttemptLeave}
+        onSave={savePricing}
         onSaveCurrentItem={saveCurrentItem}
         onCreateBackup={createBackup}
         onRestoreBackupOpen={() => {
