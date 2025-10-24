@@ -573,19 +573,23 @@ export function useTenderPricingPersistence({
       const tenderRepo = getTenderRepository()
       const newTenderStatus = pricingStatus === 'completed' ? 'ready_to_submit' : 'under_action'
 
-      await tenderRepo.update(tender.id, {
-        status: newTenderStatus,
-        pricedItems: completedCount,
-        totalItems: quantityItems.length,
-        totalValue: totalValue,
-        completionPercentage: completionPercentage,
-      })
+      await tenderRepo.update(
+        tender.id,
+        {
+          status: newTenderStatus,
+          pricedItems: completedCount,
+          totalItems: quantityItems.length,
+          totalValue: totalValue,
+          completionPercentage: completionPercentage,
+        },
+        { skipRefresh: true }, // ← منع reload في TendersPage
+      )
 
       // Emit event to notify UI components
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent(APP_EVENTS.TENDER_UPDATED, {
-            detail: { tenderId: tender.id },
+            detail: { tenderId: tender.id, skipRefresh: true },
           }),
         )
       }

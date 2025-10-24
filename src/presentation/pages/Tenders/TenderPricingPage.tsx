@@ -132,7 +132,14 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   // using unified storage utils instead of useStorage
   const [pricingData, setPricingData] = useState<Map<string, PricingData>>(new Map())
   // Zustand Store: unified BOQ and pricing state
-  const { boqItems, loadPricing, savePricing, isDirty } = useTenderPricingStore()
+  const {
+    boqItems,
+    loadPricing,
+    savePricing,
+    isDirty,
+    updateItemPricing: storeUpdateItemPricing,
+    markDirty: storeMarkDirty,
+  } = useTenderPricingStore()
 
   // Load pricing data when component mounts or tender changes
   useEffect(() => {
@@ -146,13 +153,16 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     setCurrentItemIndex,
     currentView,
     changeView,
-    markDirty,
+    markDirty: _markDirtyFromHook,
     isLeaveDialogOpen,
     requestLeave,
     cancelLeaveRequest,
     confirmLeave,
   } = useTenderPricingState({ isDirty, onBack, tenderId: tender.id })
   const [restoreOpen, setRestoreOpen] = useState(false)
+
+  // Use store's markDirty instead of the no-op one from hook
+  const markDirty = storeMarkDirty
 
   const handleAttemptLeave = requestLeave
 
@@ -549,19 +559,11 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [pricingData.size])
 
-  // تحديث حالة المنافسة عند تحميل المكون لأول مرة فقط
-  useEffect(() => {
-    if (!isLoaded) return
-
-    updateTenderStatus()
-    recordPricingAudit('info', 'pricing-session-started', {
-      tenderId: tender.id,
-    })
-    toast.info('تم بدء عملية التسعير', {
-      description: `تم تحديث حالة المنافسة "${tenderTitle}" إلى "تحت الإجراء"`,
-      duration: 3000,
-    })
-  }, [isLoaded, tender.id, tenderTitle, updateTenderStatus, recordPricingAudit])
+  // REMOVED: Auto-update tender status on load - causes unnecessary saves
+  // تحديث حالة المنافسة عند تحميل المكون كان يستدعي tenderRepo.update() بدون skipRefresh
+  // مما يسبب حفظ تلقائي وحلقة لانهائية
+  //
+  // الآن: حالة المنافسة تُحدّث فقط عند الضغط على "حفظ" أو "اعتماد"
 
   // Row operations hook - manages add, update, delete operations for pricing rows
   const { addRow, deleteRow, updateRow } = usePricingRowOperations({

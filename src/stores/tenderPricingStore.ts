@@ -50,6 +50,7 @@ interface TenderPricingState {
   setCurrentTender: (tenderId: string) => void
   loadPricing: (tenderId: string) => Promise<void>
   updateItemPricing: (itemId: string, pricing: Partial<PricingData>) => void
+  markDirty: () => void
   savePricing: () => Promise<void>
   resetDirty: () => void
   reset: () => void
@@ -174,6 +175,12 @@ export const useTenderPricingStore = create<TenderPricingState>()(
               quantity: updated.quantity,
               totalPrice: updated.totalPrice,
             })
+          })
+        },
+
+        markDirty: () => {
+          set((state) => {
+            state.isDirty = true
           })
         },
 

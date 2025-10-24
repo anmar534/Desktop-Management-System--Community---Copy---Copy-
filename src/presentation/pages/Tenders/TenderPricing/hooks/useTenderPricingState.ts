@@ -26,17 +26,15 @@ export interface TenderPricingState {
 export const useTenderPricingState = ({
   isDirty,
   onBack,
-  tenderId,
 }: UseTenderPricingStateOptions): TenderPricingState => {
   const [currentItemIndex, setCurrentItemIndex] = useState(0)
   const [currentView, setCurrentView] = useState<PricingView>('summary')
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false)
 
-  // markDirty is now handled automatically by the Zustand store when updateItemPricing is called
+  // markDirty is now handled by the Zustand store's markDirty() function
   const markDirty = useCallback(() => {
-    // No-op: The store automatically marks as dirty when items are updated
-    console.log('[useTenderPricingState] markDirty called (handled by store)', tenderId)
-  }, [tenderId])
+    // No-op: TenderPricingPage uses store's markDirty directly
+  }, [])
 
   const changeView = useCallback((value: string) => {
     if (isPricingViewName(value)) {
