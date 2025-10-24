@@ -463,6 +463,14 @@ export function Tenders({ onSectionChange }: TendersProps) {
     }
 
     const onUpdated = (event?: Event) => {
+      // Debug: Log event details to diagnose the issue
+      console.log('🔍 [TendersPage onUpdated] Event received:', {
+        hasEvent: !!event,
+        isCustomEvent: event instanceof CustomEvent,
+        detail: event instanceof CustomEvent ? event.detail : undefined,
+        skipRefresh: event instanceof CustomEvent ? event.detail?.skipRefresh : undefined,
+      })
+
       // Fix #2: فحص skipRefresh flag لمنع reload غير ضروري
       if (event instanceof CustomEvent && event.detail?.skipRefresh === true) {
         console.log('⏭️ تخطي إعادة التحميل - skipRefresh flag موجود')

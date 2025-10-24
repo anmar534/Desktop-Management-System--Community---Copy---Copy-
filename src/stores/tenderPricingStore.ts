@@ -19,7 +19,6 @@ import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { getBOQRepository } from '@/application/services/serviceRegistry'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
-import { APP_EVENTS } from '@/events/bus'
 import type { BOQData, BOQItem } from '@/shared/types/boq'
 
 // Types
@@ -214,7 +213,7 @@ export const useTenderPricingStore = create<TenderPricingState>()(
               { skipRefresh: true }, // ← منع reload في TendersPage
             )
 
-            // 2. Update tender metadata
+            // 2. Update tender metadata with skipRefresh
             const tenderRepo = getTenderRepository()
             const tender = await tenderRepo.getById(currentTenderId)
             if (tender) {
@@ -222,25 +221,22 @@ export const useTenderPricingStore = create<TenderPricingState>()(
               const pricedItems = get().getPricedItemsCount()
               const completionPercentage = get().getCompletionPercentage()
 
-              await tenderRepo.update(currentTenderId, {
-                ...tender,
-                totalValue,
-                pricedItems,
-                totalItems: boqItems.length,
-                completionPercentage,
-                status: completionPercentage === 100 ? 'ready_to_submit' : 'under_action',
-              })
+              await tenderRepo.update(
+                currentTenderId,
+                {
+                  ...tender,
+                  totalValue,
+                  pricedItems,
+                  totalItems: boqItems.length,
+                  completionPercentage,
+                  status: completionPercentage === 100 ? 'ready_to_submit' : 'under_action',
+                },
+                { skipRefresh: true }, // ← منع reload في TendersPage
+              )
             }
 
-            // 3. Emit event with skipRefresh flag
-            window.dispatchEvent(
-              new CustomEvent(APP_EVENTS.TENDER_UPDATED, {
-                detail: {
-                  tenderId: currentTenderId,
-                  skipRefresh: true, // ← منع reload في TendersPage
-                },
-              }),
-            )
+            // Note: No need to manually dispatch TENDER_UPDATED event here
+            // tender.local.ts update() method already emits it with skipRefresh flag
 
             set((state) => {
               state.isDirty = false
