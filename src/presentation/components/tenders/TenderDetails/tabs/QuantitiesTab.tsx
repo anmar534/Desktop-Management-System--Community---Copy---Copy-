@@ -1,19 +1,13 @@
 // QuantitiesTab Component
 // Bill of Quantities display with pricing cards and detailed cost analysis tables
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Button } from '@/presentation/components/ui/button'
 import { Badge } from '@/presentation/components/ui/badge'
 import { EmptyState } from '@/presentation/components/layout/PageLayout'
-import {
-  Grid3X3,
-  ExternalLink,
-  CheckCircle,
-  AlertCircle,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react'
+import { Grid3X3, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
 
@@ -22,7 +16,7 @@ interface QuantitiesTabProps {
   unified: any
   formatCurrencyValue: (value: number, options?: any) => string
   formatQuantity: (value: number, options?: any) => string
-  collapsedSections: Record<
+  collapsedSections?: Record<
     string,
     {
       materials: boolean
@@ -31,7 +25,7 @@ interface QuantitiesTabProps {
       subcontractors: boolean
     }
   >
-  toggleCollapse: (
+  toggleCollapse?: (
     itemId: string,
     section: 'materials' | 'labor' | 'equipment' | 'subcontractors',
   ) => void
@@ -42,8 +36,6 @@ export function QuantitiesTab({
   unified,
   formatCurrencyValue,
   formatQuantity,
-  collapsedSections,
-  toggleCollapse,
 }: QuantitiesTabProps) {
   const finalQuantityData = unified.items || []
   const hasPricingData = finalQuantityData.some(

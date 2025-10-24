@@ -2,7 +2,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Button } from '@/presentation/components/ui/button'
 import { Badge } from '@/presentation/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs'
@@ -16,23 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/presentation/components/ui/alert-dialog'
-import { TenderResultsManager } from '@/presentation/pages/Tenders/components/TenderResultsManager'
-import { TenderQuickResults } from '@/presentation/pages/Tenders/components/TenderQuickResults'
-import {
-  Calendar,
-  ArrowRight,
-  Building2,
-  Eye,
-  FileText,
-  Paperclip,
-  Grid3X3,
-  Info,
-  Download,
-  ExternalLink,
-  Clock,
-  CheckCircle,
-  Send,
-} from 'lucide-react'
+import { Calendar, ArrowRight, FileText, Paperclip, Grid3X3, Info, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { TenderStatusManager } from '@/presentation/pages/Tenders/components/TenderStatusManager'
 import { APP_EVENTS } from '@/events/bus'
@@ -47,7 +30,13 @@ import { getStatusColor } from '@/shared/utils/ui/statusColors'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 // Import extracted tabs
-import { GeneralInfoTab, QuantitiesTab } from './TenderDetails/tabs'
+import {
+  GeneralInfoTab,
+  QuantitiesTab,
+  AttachmentsTab,
+  TimelineTab,
+  WorkflowTab,
+} from './TenderDetails/tabs'
 /**
  * Phase 1 Pricing Engine Adoption (READ PATH ONLY)
  * ------------------------------------------------
@@ -63,29 +52,6 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
   const [localTender, setLocalTender] = useState(tender)
   // تم إزالة جميع حالات وإعادة بناء snapshot القديمة – يتم الاعتماد بالكامل على useUnifiedTenderPricing
-  // حالات الطي للجداول المختلفة
-  const [collapsedSections, setCollapsedSections] = useState<{
-    [key: string]: {
-      materials: boolean
-      labor: boolean
-      equipment: boolean
-      subcontractors: boolean
-    }
-  }>({})
-
-  // دالة لتبديل حالة الطي لقسم معين في بند معين
-  const toggleCollapse = (
-    itemId: string,
-    section: 'materials' | 'labor' | 'equipment' | 'subcontractors',
-  ) => {
-    setCollapsedSections((prev) => ({
-      ...prev,
-      [itemId]: {
-        ...prev[itemId],
-        [section]: !prev[itemId]?.[section],
-      },
-    }))
-  }
 
   // تحديث البيانات المحلية عند تغيير tender
   useEffect(() => {
@@ -170,6 +136,91 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
     })
   }, [unified.status, unified.source, unified.items.length, unified.totals, tender?.id])
 
+  // إعداد بيانات المرفقات
+  const attachmentsData = useMemo(() => {
+    const originalAttachments = tender.attachments || []
+    let technicalFiles: any[] = []
+
+    try {
+      technicalFiles = FileUploadService.getFilesByTender(tender.id).map((file) => ({
+        ...file,
+        source: 'technical',
+        type: 'technical',
+      })) as any[]
+    } catch (error) {
+      console.log('خطأ في قراءة الملفات الفنية:', error)
+    }
+
+    let allAttachments = [...originalAttachments, ...technicalFiles]
+
+    // إذا لم توجد مرفقات، استخدم بيانات افتراضية
+    if (allAttachments.length === 0) {
+      allAttachments = [
+        {
+          id: '1',
+          name: 'كراسة الشروط والمواصفات.pdf',
+          type: 'specifications',
+          size: '2.5 MB',
+          uploadDate: '2024-08-15',
+          source: 'original',
+        },
+        {
+          id: '2',
+          name: 'جدول الكميات.xlsx',
+          type: 'quantity',
+          size: '1.2 MB',
+          uploadDate: '2024-08-15',
+          source: 'original',
+        },
+        {
+          id: '3',
+          name: 'المخططات المعمارية.dwg',
+          type: 'drawings',
+          size: '8.7 MB',
+          uploadDate: '2024-08-15',
+          source: 'original',
+        },
+        {
+          id: '4',
+          name: 'تقرير الموقع.pdf',
+          type: 'report',
+          size: '3.1 MB',
+          uploadDate: '2024-08-15',
+          source: 'original',
+        },
+        {
+          id: '5',
+          name: 'العرض الفني والمواصفات التقنية.pdf',
+          type: 'technical',
+          size: '4.8 MB',
+          uploadDate: '2024-08-20',
+          source: 'technical',
+        },
+      ]
+    }
+
+    return {
+      allAttachments,
+      technicalFilesCount: technicalFiles.length,
+    }
+  }, [tender.attachments, tender.id])
+
+  const handlePreviewAttachment = useCallback((attachment: any) => {
+    if (attachment.source === 'technical') {
+      alert(`معاينة الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
+    } else {
+      alert(`معاينة الملف: ${attachment.name}\n\nهذه الميزة ستكون متاحة قريباً`)
+    }
+  }, [])
+
+  const handleDownloadAttachment = useCallback((attachment: any) => {
+    if (attachment.source === 'technical') {
+      alert(`تحميل الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
+    } else {
+      alert(`تحميل الملف: ${attachment.name}\n\nهذه الميزة ستكون متاحة قريباً`)
+    }
+  }, [])
+
   if (!localTender) return null
 
   // الجاهزية وفق المصدر المركزي
@@ -248,180 +299,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
     }
   }
 
-  // دالة لعرض المرفقات
-  const renderAttachments = () => {
-    // 1. جلب المرفقات الأصلية من بيانات المنافسة
-    const originalAttachments = tender.attachments || []
-
-    // 2. جلب الملفات الفنية من خدمة رفع الملفات (من تبويب العرض الفني)
-    let technicalFiles: any[] = []
-
-    try {
-      technicalFiles = FileUploadService.getFilesByTender(tender.id).map((file) => ({
-        ...file,
-        source: 'technical',
-        type: 'technical',
-      })) as any[]
-    } catch (error) {
-      console.log('خطأ في قراءة الملفات الفنية:', error)
-    }
-
-    console.log('Checking for attachments for tender:', tender.id)
-    console.log('Original attachments:', originalAttachments)
-    console.log('Technical files found:', technicalFiles)
-
-    // 3. دمج المرفقات الأصلية مع الملفات الفنية
-    const allAttachments = [...originalAttachments, ...technicalFiles]
-
-    console.log('All attachments (original + technical):', allAttachments)
-
-    // إذا لم توجد مرفقات، استخدم بيانات افتراضية للعرض
-    if (allAttachments.length === 0) {
-      allAttachments.push(
-        {
-          name: 'كراسة الشروط والمواصفات.pdf',
-          type: 'specifications',
-          size: '2.5 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          name: 'جدول الكميات.xlsx',
-          type: 'quantity',
-          size: '1.2 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          name: 'المخططات المعمارية.dwg',
-          type: 'drawings',
-          size: '8.7 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          name: 'تقرير الموقع.pdf',
-          type: 'report',
-          size: '3.1 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          name: 'العرض الفني والمواصفات التقنية.pdf',
-          type: 'technical',
-          size: '4.8 MB',
-          uploadDate: '2024-08-20',
-          source: 'technical',
-        },
-      )
-    }
-
-    const getFileIcon = (type: string) => {
-      switch (type) {
-        case 'pdf':
-        case 'specifications':
-        case 'report':
-          return <FileText className="w-5 h-5 text-destructive" />
-        case 'excel':
-        case 'quantity':
-          return <Grid3X3 className="w-5 h-5 text-success" />
-        case 'dwg':
-        case 'drawings':
-          return <Building2 className="w-5 h-5 text-info" />
-        case 'technical':
-          return <CheckCircle className="w-5 h-5 text-accent" />
-        default:
-          return <FileText className="w-5 h-5 text-muted-foreground" />
-      }
-    }
-
-    const handlePreview = (attachment: any) => {
-      if (attachment.source === 'technical') {
-        alert(`معاينة الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
-      } else {
-        alert(`معاينة الملف: ${attachment.name}\n\nهذه الميزة ستكون متاحة قريباً`)
-      }
-    }
-
-    const handleDownload = (attachment: any) => {
-      if (attachment.source === 'technical') {
-        alert(`تحميل الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
-      } else {
-        alert(`تحميل الملف: ${attachment.name}\n\nهذه الميزة ستكون متاحة قريباً`)
-      }
-    }
-
-    return (
-      <div className="space-y-4">
-        {technicalFiles.length > 0 && (
-          <div className="p-4 bg-accent/10 border border-accent/30 rounded-lg">
-            <div className="flex items-center gap-2 text-accent">
-              <CheckCircle className="w-5 h-5 text-accent" />
-              <p className="font-medium">الملفات الفنية من التسعير</p>
-            </div>
-            <p className="text-sm text-accent mt-1">
-              تم العثور على {technicalFiles.length} ملف فني تم رفعه من خلال صفحة التسعير.
-            </p>
-          </div>
-        )}
-
-        {allAttachments.map((attachment: any, index: number) => (
-          <Card key={index}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-muted rounded-lg">{getFileIcon(attachment.type)}</div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{attachment.name || `مرفق ${index + 1}`}</p>
-                      <Badge
-                        variant={attachment.source === 'technical' ? 'secondary' : 'outline'}
-                        className={
-                          attachment.source === 'technical'
-                            ? 'bg-accent/10 text-accent border-accent/30'
-                            : ''
-                        }
-                      >
-                        {attachment.source === 'technical' ? 'ملف فني' : 'مرفق أساسي'}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {attachment.type && `نوع: ${attachment.type}`}
-                      {attachment.size && ` • حجم: ${attachment.size}`}
-                      {attachment.uploadDate && ` • تاريخ: ${attachment.uploadDate}`}
-                      {attachment.source === 'pricing' && ` • من التسعير`}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => handlePreview(attachment)}
-                  >
-                    <Eye className="w-4 h-4" />
-                    معاينة
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => handleDownload(attachment)}
-                  >
-                    <Download className="w-4 h-4" />
-                    تحميل
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    )
-  }
-
-  // (import moved to top-level)
+  // Extracted to AttachmentsTab component
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -544,110 +422,29 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
                 unified={unified}
                 formatCurrencyValue={formatCurrencyValue}
                 formatQuantity={formatQuantity}
-                collapsedSections={collapsedSections}
-                toggleCollapse={toggleCollapse}
               />
             </TabsContent>
 
             <TabsContent value="attachments" className="mt-6" dir="rtl">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Paperclip className="h-5 w-5" />
-                    المرفقات والمستندات
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>{renderAttachments()}</CardContent>
-              </Card>
+              <AttachmentsTab
+                allAttachments={attachmentsData.allAttachments}
+                technicalFilesCount={attachmentsData.technicalFilesCount}
+                onPreview={handlePreviewAttachment}
+                onDownload={handleDownloadAttachment}
+              />
             </TabsContent>
 
             <TabsContent value="timeline" className="mt-6" dir="rtl">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    الجدول الزمني للمنافسة
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4 p-4 bg-info/10 rounded-lg">
-                      <div className="p-2 bg-info/20 rounded-full">
-                        <Calendar className="w-4 h-4 text-info" />
-                      </div>
-                      <div>
-                        <p className="font-medium">تاريخ النشر</p>
-                        <p className="text-sm text-muted-foreground">
-                          {tender.publishDate || 'غير محدد'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-4 p-4 bg-warning/10 rounded-lg">
-                      <div className="p-2 bg-warning/20 rounded-full">
-                        <ExternalLink className="w-4 h-4 text-warning" />
-                      </div>
-                      <div>
-                        <p className="font-medium">آخر موعد للاستفسارات</p>
-                        <p className="text-sm text-muted-foreground">
-                          {tender.inquiryDeadline || 'غير محدد'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-4 p-4 bg-destructive/10 rounded-lg">
-                      <div className="p-2 bg-destructive/20 rounded-full">
-                        <Clock className="w-4 h-4 text-destructive" />
-                      </div>
-                      <div>
-                        <p className="font-medium">آخر موعد للتقديم</p>
-                        <p className="text-sm text-muted-foreground">
-                          {tender.deadline || 'غير محدد'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-4 p-4 bg-success/10 rounded-lg">
-                      <div className="p-2 bg-success/20 rounded-full">
-                        <CheckCircle className="w-4 h-4 text-success" />
-                      </div>
-                      <div>
-                        <p className="font-medium">تاريخ إعلان النتائج</p>
-                        <p className="text-sm text-muted-foreground">
-                          {tender.resultDate || 'غير محدد'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <TimelineTab tender={tender} />
             </TabsContent>
 
             {/* تبويب إدارة النتائج */}
             <TabsContent value="workflow" className="mt-6" dir="rtl">
-              <div className="space-y-6">
-                {/* طريقة إدخال النتائج السريعة */}
-                <TenderQuickResults
-                  tender={localTender}
-                  onUpdate={() => {
-                    // تحديث البيانات باستخدام نظام الأحداث
-                    void import('@/events/bus').then(({ APP_EVENTS, emit }) =>
-                      emit(APP_EVENTS.TENDER_UPDATED),
-                    )
-                  }}
-                />
-
-                {/* الطريقة التقليدية لإدارة النتائج */}
-                <TenderResultsManager
-                  tender={localTender}
-                  onUpdate={() => {
-                    // تحديث البيانات باستخدام نظام الأحداث
-                    void import('@/events/bus').then(({ APP_EVENTS, emit }) =>
-                      emit(APP_EVENTS.TENDER_UPDATED),
-                    )
-                  }}
-                />
-              </div>
+              <WorkflowTab
+                tender={tender}
+                localTender={localTender}
+                setLocalTender={setLocalTender}
+              />
             </TabsContent>
           </div>
         </Tabs>
