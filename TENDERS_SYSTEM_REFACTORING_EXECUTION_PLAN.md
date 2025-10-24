@@ -901,7 +901,7 @@ src/presentation/pages/Tenders/TenderPricing/
 **التقدم:** 100% ✅
 **تاريخ البدء:** 2025-10-24
 **تاريخ الإنجاز:** 2025-10-24
-**Commits:** TBD (سيتم رفعها)
+**Commit:** 8ebc0a7
 
 ## الهدف
 
