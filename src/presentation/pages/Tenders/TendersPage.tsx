@@ -10,7 +10,6 @@ import {
   CheckCircle,
   XCircle,
   Calendar,
-  DollarSign,
 } from 'lucide-react'
 
 import type { Tender } from '@/data/centralData'
@@ -41,8 +40,9 @@ import {
   TenderDeleteDialog,
   TenderSubmitDialog,
 } from '@/presentation/components/tenders/TenderDialogs'
+import { TenderPerformanceCards } from '@/presentation/components/tenders/TenderPerformanceCards'
 
-import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'
+import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { TenderPricingPage, type TenderWithPricingSources } from './TenderPricingPage'
 import { TenderDetails } from '@/presentation/components/tenders/TenderDetails'
@@ -224,62 +224,6 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [tenderSummary],
   )
 
-  const tenderAnalysisCards = useMemo(
-    () => (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <DetailCard
-          title="أداء الميزانية"
-          value={`${tenderSummary.winRate.toFixed(1)}%`}
-          subtitle="معدل الفوز"
-          icon={DollarSign}
-          color="text-success"
-          bgColor="bg-success/10"
-          trend={{
-            direction: tenderSummary.winRate > 50 ? 'up' : 'down',
-            value: `${tenderSummary.winRate.toFixed(1)}%`,
-          }}
-        />
-        <DetailCard
-          title="أداء الجدولة"
-          value={`${((tenderSummary.won / Math.max(tenderSummary.submitted, 1)) * 100).toFixed(1)}%`}
-          subtitle="متقدم على الجدول"
-          icon={Calendar}
-          color="text-primary"
-          bgColor="bg-primary/10"
-          trend={{
-            direction: 'up',
-            value: '3.2%',
-          }}
-        />
-        <DetailCard
-          title="رضا العملاء"
-          value="96.2%"
-          subtitle="تقييم العملاء"
-          icon={CheckCircle}
-          color="text-info"
-          bgColor="bg-info/10"
-          trend={{
-            direction: 'up',
-            value: '0.8%+',
-          }}
-        />
-        <DetailCard
-          title="درجة الجودة"
-          value="94.5%"
-          subtitle="معايير الجودة العامة"
-          icon={Trophy}
-          color="text-accent"
-          bgColor="bg-accent/10"
-          trend={{
-            direction: 'up',
-            value: '2.1%+',
-          }}
-        />
-      </div>
-    ),
-    [tenderSummary],
-  )
-
   const headerExtraContent = useMemo(
     () => (
       <div className="space-y-4">
@@ -287,11 +231,11 @@ export function Tenders({ onSectionChange }: TendersProps) {
           {headerMetadata}
         </div>
         <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
-          {tenderAnalysisCards}
+          <TenderPerformanceCards tenderSummary={tenderSummary} />
         </div>
       </div>
     ),
-    [headerMetadata, tenderAnalysisCards],
+    [headerMetadata, tenderSummary],
   )
 
   if (currentView === 'pricing' && selectedTender) {

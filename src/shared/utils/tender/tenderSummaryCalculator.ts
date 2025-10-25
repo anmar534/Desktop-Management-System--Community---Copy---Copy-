@@ -91,8 +91,11 @@ export function computeTenderSummary(
   let readyToSubmitCount = 0
   let waitingResultsCount = 0
   let expiredCount = 0
+  let wonCount = 0
+  let lostCount = 0
   let totalDocumentValue = 0
   let documentBookletsCount = 0
+  let activeNonExpiredCount = 0 // العدد الكلي للمنافسات النشطة (غير المنتهية وغير الفائزة/الخاسرة)
 
   for (const tender of tenders) {
     if (!tender) {
@@ -104,7 +107,26 @@ export function computeTenderSummary(
     // Check if tender is expired first
     const expired = isTenderExpired(tender)
 
-    // Count by status
+    // Count expired tenders
+    if (expired) {
+      expiredCount += 1
+      continue // لا نحسب المنافسات المنتهية في أي عداد آخر
+    }
+
+    // Count won/lost tenders (these are final statuses, not affected by expiry)
+    if (status === 'won') {
+      wonCount += 1
+      continue
+    }
+    if (status === 'lost') {
+      lostCount += 1
+      continue
+    }
+
+    // Now count active (non-expired, non-won, non-lost) tenders
+    activeNonExpiredCount += 1
+
+    // Count by status (only for non-expired tenders)
     switch (status) {
       case 'new':
         newCount += 1
@@ -122,13 +144,8 @@ export function computeTenderSummary(
         break
     }
 
-    // Count expired tenders
-    if (expired) {
-      expiredCount += 1
-    }
-
     // Count urgent tenders (deadline within 7 days, NOT expired)
-    if (status && URGENT_STATUSES.has(status) && tender.deadline && !expired) {
+    if (status && URGENT_STATUSES.has(status) && tender.deadline) {
       const days = getDaysRemaining(tender.deadline)
       if (days <= 7 && days >= 0) {
         urgent += 1
@@ -152,18 +169,18 @@ export function computeTenderSummary(
     : 0
 
   return {
-    total: tenderMetrics.totalCount,
+    total: activeNonExpiredCount, // العدد الكلي = المنافسات النشطة فقط (بدون منتهية/فائز/خاسر)
     urgent,
     new: newCount,
     underAction: underActionCount,
     readyToSubmit: readyToSubmitCount,
     waitingResults: waitingResultsCount,
-    won: tenderMetrics.wonCount,
-    lost: tenderMetrics.lostCount,
+    won: wonCount,
+    lost: lostCount,
     expired: expiredCount,
     winRate,
     totalDocumentValue,
-    active: tenderMetrics.activeCount,
+    active: activeNonExpiredCount,
     submitted: tenderMetrics.submittedCount,
     averageWinChance,
     averageCycleDays: tenderPerformance.averageCycleDays,
