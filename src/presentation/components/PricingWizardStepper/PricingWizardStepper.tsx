@@ -219,7 +219,11 @@ export function PricingWizardStepper({
               aria-valuenow={progressPercentage}
               aria-valuemin={0}
               aria-valuemax={100}
-              style={{ '--progress-width': `${progressPercentage}%` } as React.CSSProperties}
+              style={
+                {
+                  '--progress-width': `${progressPercentage}%`,
+                } as React.CSSProperties
+              }
             />
           </div>
         </div>
@@ -244,7 +248,7 @@ export function PricingWizardStepper({
                 role="button"
                 tabIndex={clickable ? 0 : -1}
                 aria-current={status === 'current' ? 'step' : undefined}
-                aria-disabled={clickable ? undefined : true}
+                {...(!clickable ? { 'aria-disabled': 'true' } : {})}
               >
                 {/* Step indicator */}
                 <div className="pricing-wizard-stepper-step-indicator">

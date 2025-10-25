@@ -176,7 +176,9 @@ describe('useTenderAttachments', () => {
 
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
 
-      let uploadedAttachment: Awaited<ReturnType<typeof result.current.uploadAttachment>>
+      let uploadedAttachment:
+        | Awaited<ReturnType<typeof result.current.uploadAttachment>>
+        | undefined
       await act(async () => {
         uploadedAttachment = await result.current.uploadAttachment(file, 'technical')
       })

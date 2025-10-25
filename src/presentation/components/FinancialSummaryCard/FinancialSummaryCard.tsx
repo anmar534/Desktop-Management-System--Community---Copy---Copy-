@@ -197,8 +197,12 @@ export function FinancialSummaryCard({
     <div
       className={containerClasses}
       onClick={onClick}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
+      {...(onClick
+        ? {
+            role: 'button',
+            tabIndex: 0,
+          }
+        : {})}
     >
       {/* Header */}
       <div className="financial-summary-card-header">
