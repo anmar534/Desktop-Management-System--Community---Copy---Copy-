@@ -1,9 +1,7 @@
 // TendersPage shows the tenders dashboard, filters, and quick actions.
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Trophy, Trash2, Send, Search } from 'lucide-react'
 
-import { APP_EVENTS } from '@/events/bus'
-import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import type { Tender } from '@/data/centralData'
 
 // Utilities from shared/utils
@@ -48,16 +46,14 @@ import { EnhancedTenderCard } from '@/presentation/components/tenders/EnhancedTe
 
 import { useFinancialState } from '@/application/context'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
+import {
+  useTenderDetailNavigation,
+  useTenderUpdateListener,
+  useTenderPricingNavigation,
+} from '@/application/hooks/useTenderEventListeners'
 import type { TenderMetricsSummary } from '@/domain/contracts/metrics'
 import type { TenderMetrics as AggregatedTenderMetrics } from '@/domain/selectors/financialMetrics'
 import { resolveTenderPerformance } from '@/domain/utils/tenderPerformance'
-
-const OPEN_PRICING_EVENT = 'openPricingForTender' as const
-
-interface TenderEventDetail {
-  tenderId?: string
-  itemId?: string
-}
 
 interface TendersProps {
   onSectionChange: (section: string, tender?: Tender) => void
@@ -91,10 +87,6 @@ export function Tenders({ onSectionChange }: TendersProps) {
   const [selectedTender, setSelectedTender] = useState<Tender | null>(null)
   const [tenderToDelete, setTenderToDelete] = useState<Tender | null>(null)
   const [tenderToSubmit, setTenderToSubmit] = useState<Tender | null>(null)
-
-  // Refs to prevent Event Loop (Fix #1)
-  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const isRefreshingRef = useRef(false)
 
   const normalisedSearch = useMemo(() => normaliseSearchQuery(searchTerm), [searchTerm])
 
@@ -138,80 +130,18 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [tenderToSubmit],
   )
 
-  useEffect(() => {
-    const handler: EventListener = (event) => {
-      const detail = (event as CustomEvent<TenderEventDetail>).detail
-      const tenderId = detail?.tenderId
-      if (!tenderId) {
-        return
-      }
+  // Event listeners
+  useTenderDetailNavigation(tenders, (tender) => {
+    setSelectedTender(tender)
+    setCurrentView('details')
+  })
 
-      const targetTender = tenders.find((item) => item.id === tenderId)
-      if (!targetTender) {
-        return
-      }
+  useTenderPricingNavigation(tenders, (tender) => {
+    setSelectedTender(tender)
+    setCurrentView('pricing')
+  })
 
-      setSelectedTender(targetTender)
-      setCurrentView('details')
-    }
-
-    window.addEventListener(APP_EVENTS.OPEN_TENDER_DETAILS, handler)
-    return () => {
-      window.removeEventListener(APP_EVENTS.OPEN_TENDER_DETAILS, handler)
-    }
-  }, [tenders])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return undefined
-    }
-
-    const onUpdated = (event?: Event) => {
-      // Debug: Log event details to diagnose the issue
-      console.log('🔍 [TendersPage onUpdated] Event received:', {
-        hasEvent: !!event,
-        isCustomEvent: event instanceof CustomEvent,
-        detail: event instanceof CustomEvent ? event.detail : undefined,
-        skipRefresh: event instanceof CustomEvent ? event.detail?.skipRefresh : undefined,
-      })
-
-      // Fix #2: فحص skipRefresh flag لمنع reload غير ضروري
-      if (event instanceof CustomEvent && event.detail?.skipRefresh === true) {
-        console.log('⏭️ تخطي إعادة التحميل - skipRefresh flag موجود')
-        return
-      }
-
-      // Fix #1: منع re-entrance (Event Loop Guard)
-      if (isRefreshingRef.current) {
-        console.log('⏭️ تخطي إعادة التحميل - جاري التحميل بالفعل')
-        return
-      }
-
-      // Fix #1: debounce لتجميع multiple updates في 500ms
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current)
-      }
-
-      refreshTimeoutRef.current = setTimeout(() => {
-        isRefreshingRef.current = true
-        console.log('🔄 تم تحديث بيانات المناقصات - إعادة التحميل')
-        void refreshTenders().finally(() => {
-          isRefreshingRef.current = false
-        })
-      }, 500)
-    }
-
-    window.addEventListener(APP_EVENTS.TENDERS_UPDATED, onUpdated)
-    window.addEventListener(APP_EVENTS.TENDER_UPDATED, onUpdated)
-
-    return () => {
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current)
-      }
-      window.removeEventListener(APP_EVENTS.TENDERS_UPDATED, onUpdated)
-      window.removeEventListener(APP_EVENTS.TENDER_UPDATED, onUpdated)
-    }
-  }, [refreshTenders])
+  useTenderUpdateListener(refreshTenders)
 
   // Event handlers
   const handleDelete = useMemo(
@@ -298,37 +228,6 @@ export function Tenders({ onSectionChange }: TendersProps) {
     setCurrentView('list')
     setSelectedTender(null)
   }, [])
-
-  useEffect(() => {
-    const handler: EventListener = (event) => {
-      const detail = (event as CustomEvent<TenderEventDetail>).detail
-      const tenderId = detail?.tenderId
-      if (!tenderId) {
-        return
-      }
-
-      const targetTender = tenders.find((tenderItem) => tenderItem.id === tenderId)
-      if (!targetTender) {
-        return
-      }
-
-      setSelectedTender(targetTender)
-      setCurrentView('pricing')
-
-      if (detail?.itemId) {
-        try {
-          safeLocalStorage.setItem('pricing:selectedItemId', detail.itemId)
-        } catch (storageError) {
-          console.warn('تعذر حفظ معرف بند التسعير المحدد', storageError)
-        }
-      }
-    }
-
-    window.addEventListener(OPEN_PRICING_EVENT, handler)
-    return () => {
-      window.removeEventListener(OPEN_PRICING_EVENT, handler)
-    }
-  }, [tenders])
 
   if (currentView === 'pricing' && selectedTender) {
     const tenderForPricing: TenderWithPricingSources = { ...selectedTender }
