@@ -159,7 +159,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [onSectionChange, setSelectedTender],
   )
 
-  // شريط المعلومات العلوي - مثل صفحة المشاريع
+  // شريط المعلومات العلوي مع البطاقات التحليلية - مثل صفحة المشاريع
   const headerMetadata = useMemo(
     () => (
       <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
@@ -224,7 +224,6 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [tenderSummary],
   )
 
-  // البطاقات الأربعة - مثل صفحة المشاريع
   const tenderAnalysisCards = useMemo(
     () => (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -281,6 +280,20 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [tenderSummary],
   )
 
+  const headerExtraContent = useMemo(
+    () => (
+      <div className="space-y-4">
+        <div className="rounded-3xl border border-primary/20 bg-gradient-to-l from-primary/10 via-card/40 to-background p-5 shadow-sm">
+          {headerMetadata}
+        </div>
+        <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
+          {tenderAnalysisCards}
+        </div>
+      </div>
+    ),
+    [headerMetadata, tenderAnalysisCards],
+  )
+
   if (currentView === 'pricing' && selectedTender) {
     const tenderForPricing: TenderWithPricingSources = { ...selectedTender }
     return <TenderPricingPage tender={tenderForPricing} onBack={backToList} />
@@ -303,7 +316,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
         icon={Trophy}
         quickStats={[]}
         quickActions={quickActions}
-        headerExtra={headerMetadata}
+        headerExtra={headerExtraContent}
         showLastUpdate={false}
         showFilters={false}
         showSearch
@@ -314,8 +327,6 @@ export function Tenders({ onSectionChange }: TendersProps) {
           <TenderTabs tabs={tabsWithCounts} activeTab={activeTab} onTabChange={handleTabChange} />
         }
       >
-        {tenderAnalysisCards}
-
         {filteredTenders.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredTenders.map((tender, index) => (

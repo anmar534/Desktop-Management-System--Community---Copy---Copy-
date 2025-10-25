@@ -101,6 +101,9 @@ export function computeTenderSummary(
 
     const status = tender.status ?? ''
 
+    // Check if tender is expired first
+    const expired = isTenderExpired(tender)
+
     // Count by status
     switch (status) {
       case 'new':
@@ -120,12 +123,12 @@ export function computeTenderSummary(
     }
 
     // Count expired tenders
-    if (isTenderExpired(tender)) {
+    if (expired) {
       expiredCount += 1
     }
 
-    // Count urgent tenders (deadline within 7 days)
-    if (status && URGENT_STATUSES.has(status) && tender.deadline) {
+    // Count urgent tenders (deadline within 7 days, NOT expired)
+    if (status && URGENT_STATUSES.has(status) && tender.deadline && !expired) {
       const days = getDaysRemaining(tender.deadline)
       if (days <= 7 && days >= 0) {
         urgent += 1
