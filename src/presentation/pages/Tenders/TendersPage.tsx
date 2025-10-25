@@ -100,44 +100,20 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
   const tabsWithCounts = useMemo(() => createTabsWithCounts(tenderSummary), [tenderSummary])
 
-  const activeTabLabel = useMemo(
-    () => getActiveTabLabel(tabsWithCounts, activeTab),
-    [tabsWithCounts, activeTab],
-  )
-
   const filteredTenders = useMemo(
     () => computeFilteredTenders(tenders, normalisedSearch, activeTab),
     [tenders, normalisedSearch, activeTab],
   )
 
-  const hasAnyTenders = tenders.length > 0
-
-  const filterDescription = useMemo(
-    () => getFilterDescription(normalisedSearch, activeTabLabel),
-    [normalisedSearch, activeTabLabel],
-  )
-
   const quickActions = useMemo(() => createQuickActions(onSectionChange), [onSectionChange])
-
-  const headerExtraContent = useMemo(
-    () => <TenderMetricsDisplay summary={tenderSummary} />,
-    [tenderSummary],
-  )
 
   const handleTabChange = useCallback((tabId: TenderTabId) => {
     setActiveTab(tabId)
   }, [])
 
-  const tenderSubmissionPrice = useMemo(
-    () => (tenderToSubmit ? getTenderDocumentPrice(tenderToSubmit) : 0),
-    [tenderToSubmit],
-  )
-
   // Event listeners
   useTenderDetailNavigation(tenders, navigateToDetails)
-
   useTenderPricingNavigation(tenders, navigateToPricing)
-
   useTenderUpdateListener(refreshTenders)
 
   // Event handlers
@@ -146,46 +122,23 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [deleteTender],
   )
 
-  const handleConfirmDelete = useCallback(async () => {
-    if (tenderToDelete) {
-      await handleDelete(tenderToDelete)
-    }
-  }, [tenderToDelete, handleDelete])
-
   const handleSubmit = useMemo(
     () => createSubmitHandler(formatCurrencyValue, refreshTenders),
     [formatCurrencyValue, refreshTenders],
   )
-
-  const handleConfirmSubmit = useCallback(async () => {
-    if (!tenderToSubmit) return
-    try {
-      await handleSubmit(tenderToSubmit)
-      setTenderToSubmit(null)
-    } catch {
-      setTenderToSubmit(null)
-    }
-  }, [tenderToSubmit, handleSubmit])
 
   const handleRevert = useMemo(() => createRevertHandler(updateTender), [updateTender])
 
   const handleRevertStatus = useCallback(
     async (tender: Tender, newStatus: Tender['status']) => {
       if (tender.status === 'submitted' && newStatus === 'ready_to_submit') {
-        console.log('🗑️ التراجع من النتيجة للإرسال - حذف أوامر الشراء المرتبطة')
         const { purchaseOrderService } = await import('@/application/services/purchaseOrderService')
-        const { deletedOrdersCount, deletedExpensesCount } =
-          await purchaseOrderService.deleteTenderRelatedOrders(tender.id)
-        console.log(`✅ تم حذف ${deletedOrdersCount} أمر شراء و ${deletedExpensesCount} مصروف`)
+        await purchaseOrderService.deleteTenderRelatedOrders(tender.id)
       }
       await handleRevert({ ...tender, status: newStatus } as Tender)
     },
     [handleRevert],
   )
-
-  const handleSubmitTender = useCallback((tender: Tender) => {
-    setTenderToSubmit(tender)
-  }, [])
 
   const handleEditTender = useCallback(
     (tender: Tender) => {
@@ -217,7 +170,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
         icon={Trophy}
         quickStats={[]}
         quickActions={quickActions}
-        headerExtra={headerExtraContent}
+        headerExtra={<TenderMetricsDisplay summary={tenderSummary} />}
         showLastUpdate={false}
         showFilters={false}
         showSearch
@@ -237,19 +190,22 @@ export function Tenders({ onSectionChange }: TendersProps) {
                 index={index}
                 onOpenDetails={navigateToDetails}
                 onStartPricing={navigateToPricing}
-                onSubmitTender={handleSubmitTender}
+                onSubmitTender={setTenderToSubmit}
                 onEdit={handleEditTender}
-                onDelete={(value) => setTenderToDelete(value)}
+                onDelete={setTenderToDelete}
                 onOpenResults={navigateToResults}
                 onRevertStatus={handleRevertStatus}
                 formatCurrencyValue={formatCurrencyValue}
               />
             ))}
           </div>
-        ) : hasAnyTenders ? (
+        ) : tenders.length > 0 ? (
           <EmptyState
             title="لا توجد منافسات مطابقة"
-            description={filterDescription}
+            description={getFilterDescription(
+              normalisedSearch,
+              getActiveTabLabel(tabsWithCounts, activeTab),
+            )}
             icon={Search}
           />
         ) : (
@@ -265,15 +221,23 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
       <TenderDeleteDialog
         tender={tenderToDelete}
-        onConfirm={handleConfirmDelete}
+        onConfirm={async () => tenderToDelete && (await handleDelete(tenderToDelete))}
         onCancel={() => setTenderToDelete(null)}
       />
 
       <TenderSubmitDialog
         tender={tenderToSubmit}
-        submissionPrice={tenderSubmissionPrice}
+        submissionPrice={tenderToSubmit ? getTenderDocumentPrice(tenderToSubmit) : 0}
         formatCurrency={formatCurrencyValue}
-        onConfirm={handleConfirmSubmit}
+        onConfirm={async () => {
+          if (tenderToSubmit) {
+            try {
+              await handleSubmit(tenderToSubmit)
+            } finally {
+              setTenderToSubmit(null)
+            }
+          }
+        }}
         onCancel={() => setTenderToSubmit(null)}
       />
     </>
