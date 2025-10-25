@@ -2,7 +2,7 @@
 
 # Tenders System Improvement - Progress Tracker
 
-**آخر تحديث:** 2025-01-25 (Day -5 completed)  
+**آخر تحديث:** 2025-01-25 (Day -4 completed)  
 **الحالة:** 🟢 قيد التنفيذ
 
 ---
@@ -10,17 +10,17 @@
 ## 📊 الإحصائيات العامة
 
 ```
-التقدم الإجمالي: [██░░░░░░░░░░░░░░░░░░] 4% (1/26 يوم)
+التقدم الإجمالي: [████░░░░░░░░░░░░░░░░] 8% (2/26 يوم)
 
 الملفات المستهدفة: 0/5 ✅
 Stores المنشأة: 1/6 ✅
-Hooks المستخرجة: 0/38 ✅
+Hooks المستخرجة: 1/38 ✅ (useTenderBOQ)
 Components المستخرجة: 0/14 ✅
 useState المهاجرة: 0/35 ✅
 
 أسطر الكود:
 ├── Before: 4,784 LOC
-├── Current: 5,084 LOC (+300 LOC infrastructure)
+├── Current: 5,561 LOC (+777 LOC infrastructure)
 ├── Target: 1,380 LOC
 └── Progress: Infrastructure Phase
 
@@ -105,19 +105,75 @@ Build status: ✅ Success
 
 ---
 
-### ⏸️ Day -4: useTenderBOQ.ts (CRITICAL)
+### ✅ Day -4: useTenderBOQ.ts (CRITICAL) - COMPLETED
 
-**الحالة:** ⏸️ لم يبدأ  
-**التبعيات:** boqStore (Day -5)
+**الحالة:** ✅ مكتمل  
+**البداية:** 2025-01-25 08:20  
+**الانتهاء:** 2025-01-25 08:28  
+**المدة الفعلية:** ~8 دقائق  
+**التبعيات:** boqStore (Day -5) ✅
 
 #### المهام
 
-- [ ] إنشاء `src/application/hooks/useTenderBOQ.ts`
-- [ ] استخدام boqStore
-- [ ] Computed values (estimated\*)
-- [ ] Loading states
-- [ ] Error handling
-- [ ] Unit tests
+- [x] إنشاء `src/application/hooks/useTenderBOQ.ts`
+
+  - [x] Integration مع boqStore
+  - [x] Computed values بـ 'estimated' prefix (8 values)
+  - [x] Loading states (isLoading, isLoadingPriced, error)
+  - [x] Auto-load support مع options
+  - [x] Cache management integration
+  - [x] 7 actions (loadBOQ, updateBOQ, approveBOQ, etc.)
+  - [x] 8 computed values (totalQuantity, estimatedTotalCost, etc.)
+  - [x] JSDoc documentation شامل
+
+- [x] Unit Tests
+
+  - [x] 24 tests (all passing)
+  - [x] Initial state tests (3)
+  - [x] Auto-load tests (3)
+  - [x] Loading states tests (2)
+  - [x] Cache tests (2)
+  - [x] Actions tests (5)
+  - [x] Computed values tests (7)
+  - [x] Integration tests (2)
+
+- [x] Documentation
+  - [x] JSDoc شامل لكل function
+  - [x] Usage examples
+  - [x] ESTIMATED values notes
+
+#### المخرجات
+
+- [x] useTenderBOQ.ts (477 LOC) ✅
+- [x] Unit tests (367 LOC) ✅
+- [x] TypeScript: 0 errors ✅
+- [x] ESLint: 0 warnings ✅
+- [x] Test coverage: 24/24 passing ✅
+
+#### الملاحظات
+
+```
+✅ Centralized BOQ management hook ready
+✅ All computed values use 'estimated' prefix
+✅ Comprehensive test coverage (24 tests)
+✅ Zero TypeScript/ESLint errors
+✅ Ready for use in all pages
+```
+
+#### الإحصائيات
+
+```
+Files created: 2
+- src/application/hooks/useTenderBOQ.ts (477 LOC)
+- tests/application/hooks/useTenderBOQ.test.ts (367 LOC)
+
+Total LOC added: 844
+Test coverage: 100% (24/24 passing)
+Build status: ✅ Success
+Computed values: 8 (all with 'estimated' prefix)
+Actions: 7 (loadBOQ, updateBOQ, etc.)
+```
+
 - [ ] Documentation
 
 #### المخرجات
@@ -313,12 +369,66 @@ Build status: ✅ Success
 
 ## 📝 سجل التغييرات (Changelog)
 
-### 2025-10-25
+### 2025-01-25 - Day -4 COMPLETED ✅
 
-#### ⏳ بدأ العمل على boqStore.ts
+**Added:**
 
-- البداية: 10:00 AM
-- الحالة: قيد الإنشاء
+- ✅ `src/application/hooks/useTenderBOQ.ts` (477 LOC)
+  - Centralized BOQ management hook
+  - 8 computed values (all with 'estimated' prefix)
+  - 7 actions (loadBOQ, updateBOQ, approveBOQ, etc.)
+  - Loading states + error handling
+  - Auto-load support with options
+  - Integration with boqStore + centralDataService
+- ✅ `tests/application/hooks/useTenderBOQ.test.ts` (367 LOC)
+  - 24 unit tests (all passing)
+  - Complete coverage: state, actions, cache, computed values
+  - Integration tests
+
+**Tests:**
+
+- ✅ 24/24 tests passing
+- ✅ TypeScript: 0 errors
+- ✅ ESLint: 0 warnings
+
+**Statistics:**
+
+- Files created: 2
+- Total LOC added: 844
+- Time taken: ~8 minutes
+- Next: Day -3 (useFinancialCalculations.ts)
+
+---
+
+### 2025-01-25 - Day -5 COMPLETED ✅
+
+**Added:**
+
+- ✅ `src/stores/boqStore.ts` (343 LOC)
+  - Complete BOQ Store with cache management
+  - Map-based cache for optimal performance
+  - 3 actions, 5 selectors, 3 utilities
+  - Zustand + Immer + DevTools integration
+- ✅ `tests/stores/boqStore.test.ts` (356 LOC)
+  - 25 unit tests (all passing)
+  - Initial state, actions, selectors, utilities, integration tests
+  - 100% test coverage
+- ✅ Updated `src/stores/index.ts` (+13 LOC)
+  - Export boqStore and all types
+
+**Tests:**
+
+- ✅ 25/25 tests passing
+- ✅ TypeScript: 0 errors
+- ✅ ESLint: 0 warnings
+
+**Statistics:**
+
+- Files created: 2
+- Files modified: 1
+- Total LOC added: 712
+- Time taken: ~8 minutes
+- Next: Day -4 (useTenderBOQ.ts)
 
 ---
 
@@ -347,8 +457,8 @@ Commits: 0
 ### هذا الأسبوع (Week -1)
 
 - [x] Day -5: boqStore.ts ✅
-- [ ] Day -4: useTenderBOQ.ts (Next)
-- [ ] Day -3: useFinancialCalculations.ts
+- [x] Day -4: useTenderBOQ.ts ✅
+- [ ] Day -3: useFinancialCalculations.ts (Next)
 - [ ] Day -2: useTenderStatus.ts
 - [ ] Day -1: useTenderAttachments.ts
 
@@ -398,11 +508,15 @@ Commits: 0
 
 ```
 المتوقع: 26 يوم
-المستخدم: 1 يوم ✅
-المتبقي: 25 يوم
+المستخدم: 2 يوم ✅ (Day -5, Day -4)
+المتبقي: 24 يوم
+معدل التقدم: 100% (2/2 completed on time)
+```
+
 السرعة: - يوم/يوم
 
 Velocity: سيتم حسابها بعد أول 3 أيام
+
 ```
 
 ---
@@ -425,6 +539,7 @@ Velocity: سيتم حسابها بعد أول 3 أيام
 
 ---
 
-**آخر تحديث:** 2025-10-25 10:00 AM  
-**المحدث بواسطة:** GitHub Copilot  
+**آخر تحديث:** 2025-10-25 10:00 AM
+**المحدث بواسطة:** GitHub Copilot
 **الحالة:** 🟢 Active Development
+```
