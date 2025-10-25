@@ -1,8 +1,6 @@
 // TendersPage shows the tenders dashboard, filters, and quick actions.
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
-import { toast } from 'sonner'
-import type { LucideIcon } from 'lucide-react'
-import { Trophy, Plus, FileText, Calculator, Trash2, Send, Search } from 'lucide-react'
+import { Trophy, Trash2, Send, Search } from 'lucide-react'
 
 import { APP_EVENTS } from '@/events/bus'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
@@ -21,6 +19,12 @@ import {
   getActiveTabLabel,
   getFilterDescription,
 } from '@/shared/utils/tender/tenderTabHelpers'
+import { createQuickActions } from '@/shared/utils/tender/tenderQuickActions'
+import {
+  createDeleteHandler,
+  createSubmitHandler,
+  createRevertHandler,
+} from '@/shared/utils/tender/tenderEventHandlers'
 
 // Components
 import { TenderMetricsDisplay } from '@/presentation/components/tenders/TenderMetricsDisplay'
@@ -58,35 +62,6 @@ interface TenderEventDetail {
 interface TendersProps {
   onSectionChange: (section: string, tender?: Tender) => void
 }
-
-const createQuickActions = (
-  onSectionChange: (section: string, tender?: Tender) => void,
-): Array<{
-  label: string
-  icon: LucideIcon
-  onClick: () => void
-  variant?: 'default' | 'outline'
-  primary?: boolean
-}> => [
-  {
-    label: 'معالج التسعير',
-    icon: Calculator,
-    onClick: () => onSectionChange('tender-pricing-wizard'),
-    variant: 'outline',
-  },
-  {
-    label: 'تقارير المنافسات',
-    icon: FileText,
-    onClick: () => onSectionChange('reports'),
-    variant: 'outline',
-  },
-  {
-    label: 'منافسة جديدة',
-    icon: Plus,
-    onClick: () => onSectionChange('new-tender'),
-    primary: true,
-  },
-]
 
 export function Tenders({ onSectionChange }: TendersProps) {
   const { tenders: tendersState, metrics } = useFinancialState()
@@ -238,12 +213,48 @@ export function Tenders({ onSectionChange }: TendersProps) {
     }
   }, [refreshTenders])
 
+  // Event handlers
+  const handleDelete = useMemo(
+    () => createDeleteHandler(deleteTender, () => setTenderToDelete(null)),
+    [deleteTender],
+  )
+
   const handleConfirmDelete = useCallback(async () => {
     if (tenderToDelete) {
-      await deleteTender(tenderToDelete.id)
-      setTenderToDelete(null)
+      await handleDelete(tenderToDelete)
     }
-  }, [tenderToDelete, deleteTender])
+  }, [tenderToDelete, handleDelete])
+
+  const handleSubmit = useMemo(
+    () => createSubmitHandler(formatCurrencyValue, refreshTenders),
+    [formatCurrencyValue, refreshTenders],
+  )
+
+  const handleConfirmSubmit = useCallback(async () => {
+    if (!tenderToSubmit) return
+    try {
+      await handleSubmit(tenderToSubmit)
+      setTenderToSubmit(null)
+    } catch {
+      setTenderToSubmit(null)
+    }
+  }, [tenderToSubmit, handleSubmit])
+
+  const handleRevert = useMemo(() => createRevertHandler(updateTender), [updateTender])
+
+  const handleRevertStatus = useCallback(
+    async (tender: Tender, newStatus: Tender['status']) => {
+      if (tender.status === 'submitted' && newStatus === 'ready_to_submit') {
+        console.log('🗑️ التراجع من النتيجة للإرسال - حذف أوامر الشراء المرتبطة')
+        const { purchaseOrderService } = await import('@/application/services/purchaseOrderService')
+        const { deletedOrdersCount, deletedExpensesCount } =
+          await purchaseOrderService.deleteTenderRelatedOrders(tender.id)
+        console.log(`✅ تم حذف ${deletedOrdersCount} أمر شراء و ${deletedExpensesCount} مصروف`)
+      }
+      await handleRevert({ ...tender, status: newStatus } as Tender)
+    },
+    [handleRevert],
+  )
 
   const handleStartPricing = useCallback((tender: Tender) => {
     setSelectedTender(tender)
@@ -258,107 +269,6 @@ export function Tenders({ onSectionChange }: TendersProps) {
     setSelectedTender(tender)
     setCurrentView('results')
   }, [])
-
-  const handleRevertStatus = useCallback(
-    async (tender: Tender, newStatus: Tender['status']) => {
-      try {
-        if (tender.status === 'submitted' && newStatus === 'ready_to_submit') {
-          console.log('🗑️ التراجع من النتيجة للإرسال - حذف أوامر الشراء المرتبطة')
-
-          const { purchaseOrderService } = await import(
-            '@/application/services/purchaseOrderService'
-          )
-          const { deletedOrdersCount, deletedExpensesCount } =
-            await purchaseOrderService.deleteTenderRelatedOrders(tender.id)
-
-          console.log(`✅ تم حذف ${deletedOrdersCount} أمر شراء و ${deletedExpensesCount} مصروف`)
-        }
-
-        await updateTender({
-          ...tender,
-          status: newStatus,
-          lastUpdate: new Date().toISOString(),
-          lastAction:
-            (tender.status === 'won' || tender.status === 'lost') && newStatus === 'submitted'
-              ? 'تراجع من النتيجة النهائية - عودة لحالة مُرسلة'
-              : newStatus === 'ready_to_submit'
-                ? 'تراجع عن الإرسال - عودة لحالة جاهز للإرسال'
-                : newStatus === 'under_action'
-                  ? 'تراجع للتسعير والتعديل'
-                  : 'تراجع عن الحالة',
-        } as Tender)
-
-        toast.success('تم التراجع بنجاح', {
-          description: `تم إعادة المنافسة "${tender.name}" إلى الحالة السابقة`,
-          duration: 3000,
-        })
-      } catch (error) {
-        console.error('خطأ في التراجع:', error)
-        toast.error('فشل في التراجع عن الحالة')
-      }
-    },
-    [updateTender],
-  )
-
-  const handleConfirmSubmit = useCallback(async () => {
-    if (!tenderToSubmit) return
-
-    try {
-      console.log('🚀 [Tenders] بدء تدفق تقديم المنافسة:', tenderToSubmit.id)
-      const { tenderSubmissionService } = await import(
-        '@/application/services/tenderSubmissionService'
-      )
-      const result = await tenderSubmissionService.submit(tenderToSubmit)
-
-      setTenderToSubmit(null)
-      await refreshTenders()
-
-      const { created, purchaseOrder, bookletExpense, counts } = result
-
-      console.log('✅ [Tenders] تم تحديث المنافسة وإجراءاتها المرتبطة', {
-        tenderId: result.tender.id,
-        purchaseOrderId: purchaseOrder.id,
-        bookletExpenseId: bookletExpense?.id ?? null,
-        createdFlags: created,
-        counts,
-      })
-
-      const summaryParts: string[] = []
-      if (created.purchaseOrder) {
-        summaryParts.push('تم إنشاء أمر شراء للمنافسة')
-      } else if (counts.after.ordersCount > 0) {
-        summaryParts.push('أمر الشراء موجود مسبقاً')
-      }
-
-      if (bookletExpense) {
-        const formattedBookletExpense = formatCurrencyValue(bookletExpense.amount, {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        })
-        if (created.bookletExpense) {
-          summaryParts.push(`تم إنشاء مصروف الكراسة بقيمة ${formattedBookletExpense}`)
-        } else {
-          summaryParts.push(`مصروف الكراسة الحالي ${formattedBookletExpense}`)
-        }
-      } else if (created.bookletExpense) {
-        summaryParts.push('تم تسجيل مصروف الكراسة')
-      } else if (counts.after.expensesCount > 0) {
-        summaryParts.push('مصروف الكراسة موجود مسبقاً')
-      }
-
-      if (summaryParts.length === 0) {
-        summaryParts.push('تم تحديث حالة المنافسة والإحصائيات بنجاح')
-      }
-
-      toast.success('تم تقديم العرض بنجاح', {
-        description: summaryParts.join(' • '),
-      })
-    } catch (error) {
-      console.error('Error submitting tender:', error)
-      toast.error('حدث خطأ أثناء تقديم العرض')
-      setTenderToSubmit(null)
-    }
-  }, [formatCurrencyValue, refreshTenders, tenderToSubmit])
 
   const handleOpenDetails = useCallback((tender: Tender) => {
     setSelectedTender(tender)
