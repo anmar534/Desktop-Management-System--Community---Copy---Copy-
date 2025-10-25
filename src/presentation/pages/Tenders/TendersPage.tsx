@@ -51,6 +51,7 @@ import {
   useTenderUpdateListener,
   useTenderPricingNavigation,
 } from '@/application/hooks/useTenderEventListeners'
+import { useTenderViewNavigation } from '@/application/hooks/useTenderViewNavigation'
 import type { TenderMetricsSummary } from '@/domain/contracts/metrics'
 import type { TenderMetrics as AggregatedTenderMetrics } from '@/domain/selectors/financialMetrics'
 import { resolveTenderPerformance } from '@/domain/utils/tenderPerformance'
@@ -81,10 +82,18 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
   const { formatCurrencyValue } = useCurrencyFormatter()
 
+  const {
+    currentView,
+    selectedTender,
+    setSelectedTender,
+    backToList,
+    navigateToPricing,
+    navigateToDetails,
+    navigateToResults,
+  } = useTenderViewNavigation()
+
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<TenderTabId>('all')
-  const [currentView, setCurrentView] = useState<'list' | 'pricing' | 'details' | 'results'>('list')
-  const [selectedTender, setSelectedTender] = useState<Tender | null>(null)
   const [tenderToDelete, setTenderToDelete] = useState<Tender | null>(null)
   const [tenderToSubmit, setTenderToSubmit] = useState<Tender | null>(null)
 
@@ -131,15 +140,9 @@ export function Tenders({ onSectionChange }: TendersProps) {
   )
 
   // Event listeners
-  useTenderDetailNavigation(tenders, (tender) => {
-    setSelectedTender(tender)
-    setCurrentView('details')
-  })
+  useTenderDetailNavigation(tenders, navigateToDetails)
 
-  useTenderPricingNavigation(tenders, (tender) => {
-    setSelectedTender(tender)
-    setCurrentView('pricing')
-  })
+  useTenderPricingNavigation(tenders, navigateToPricing)
 
   useTenderUpdateListener(refreshTenders)
 
@@ -186,67 +189,29 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [handleRevert],
   )
 
-  const handleStartPricing = useCallback((tender: Tender) => {
-    setSelectedTender(tender)
-    setCurrentView('pricing')
-  }, [])
-
   const handleSubmitTender = useCallback((tender: Tender) => {
     setTenderToSubmit(tender)
   }, [])
 
-  const handleOpenResults = useCallback((tender: Tender) => {
-    setSelectedTender(tender)
-    setCurrentView('results')
-  }, [])
-
-  const handleOpenDetails = useCallback((tender: Tender) => {
-    setSelectedTender(tender)
-    setCurrentView('details')
-  }, [])
-
   const handleEditTender = useCallback(
     (tender: Tender) => {
-      console.log('[TendersPage][handleEditTender] Editing tender:', tender)
-      console.log('[TendersPage][handleEditTender] tender.id:', tender.id)
-      console.log(
-        '[TendersPage][handleEditTender] tender.quantities:',
-        (tender as unknown as Record<string, unknown>).quantities,
-      )
-      console.log(
-        '[TendersPage][handleEditTender] tender.quantityTable:',
-        (tender as unknown as Record<string, unknown>).quantityTable,
-      )
-
       setSelectedTender(tender)
       onSectionChange('new-tender', tender)
     },
-    [onSectionChange],
+    [onSectionChange, setSelectedTender],
   )
-
-  const handleBackToList = useCallback(() => {
-    setCurrentView('list')
-    setSelectedTender(null)
-  }, [])
 
   if (currentView === 'pricing' && selectedTender) {
     const tenderForPricing: TenderWithPricingSources = { ...selectedTender }
-    return <TenderPricingPage tender={tenderForPricing} onBack={handleBackToList} />
+    return <TenderPricingPage tender={tenderForPricing} onBack={backToList} />
   }
 
   if (currentView === 'results' && selectedTender) {
-    return (
-      <TenderResultsManager
-        tender={selectedTender}
-        onUpdate={() => {
-          handleBackToList()
-        }}
-      />
-    )
+    return <TenderResultsManager tender={selectedTender} onUpdate={backToList} />
   }
 
   if (currentView === 'details' && selectedTender) {
-    return <TenderDetails tender={selectedTender} onBack={handleBackToList} />
+    return <TenderDetails tender={selectedTender} onBack={backToList} />
   }
 
   return (
@@ -276,12 +241,12 @@ export function Tenders({ onSectionChange }: TendersProps) {
                 key={tender.id}
                 tender={tender}
                 index={index}
-                onOpenDetails={handleOpenDetails}
-                onStartPricing={handleStartPricing}
+                onOpenDetails={navigateToDetails}
+                onStartPricing={navigateToPricing}
                 onSubmitTender={handleSubmitTender}
                 onEdit={handleEditTender}
                 onDelete={(value) => setTenderToDelete(value)}
-                onOpenResults={handleOpenResults}
+                onOpenResults={navigateToResults}
                 onRevertStatus={handleRevertStatus}
                 formatCurrencyValue={formatCurrencyValue}
               />
