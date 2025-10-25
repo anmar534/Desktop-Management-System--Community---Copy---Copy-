@@ -118,10 +118,12 @@ export function matchesTabFilter(tender: Tender, tab: TenderTabId): boolean {
 
   switch (tab) {
     case 'all':
-      return true
+      // "الكل" لا يعرض المنافسات المنتهية (expired)
+      // المنتهية تظهر فقط في تبويب "منتهية"
+      return !expired
 
     case 'urgent': {
-      if (!status || !URGENT_STATUSES.has(status) || !tender.deadline) {
+      if (!status || !URGENT_STATUSES.has(status) || !tender.deadline || expired) {
         return false
       }
       const days = getDaysRemaining(tender.deadline)
@@ -129,13 +131,15 @@ export function matchesTabFilter(tender: Tender, tab: TenderTabId): boolean {
     }
 
     case 'new':
-      return status === 'new'
+      return status === 'new' && !expired
 
     case 'under_action':
-      return status === 'under_action' || status === 'ready_to_submit'
+      // "تحت الإجراء" لا يعرض المنافسات التي تجاوزت الموعد النهائي
+      // المنافسات التي تجاوزت الموعد تعتبر منتهية
+      return (status === 'under_action' || status === 'ready_to_submit') && !expired
 
     case 'waiting_results':
-      return status === 'submitted'
+      return status === 'submitted' && !expired
 
     case 'won':
       return status === 'won'

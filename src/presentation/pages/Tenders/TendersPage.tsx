@@ -1,6 +1,17 @@
 // TendersPage shows the tenders dashboard, filters, and quick actions.
 import { useState, useMemo, useCallback } from 'react'
-import { Trophy, Search } from 'lucide-react'
+import {
+  Trophy,
+  Search,
+  ListChecks,
+  AlertTriangle,
+  FileText,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Calendar,
+  DollarSign,
+} from 'lucide-react'
 
 import type { Tender } from '@/data/centralData'
 
@@ -25,14 +36,14 @@ import {
 } from '@/shared/utils/tender/tenderEventHandlers'
 
 // Components
-import { TenderMetricsDisplay } from '@/presentation/components/tenders/TenderMetricsDisplay'
 import { TenderTabs } from '@/presentation/components/tenders/TenderTabs'
 import {
   TenderDeleteDialog,
   TenderSubmitDialog,
 } from '@/presentation/components/tenders/TenderDialogs'
 
-import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
+import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'
+import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { TenderPricingPage, type TenderWithPricingSources } from './TenderPricingPage'
 import { TenderDetails } from '@/presentation/components/tenders/TenderDetails'
 import { TenderResultsManager } from './components/TenderResultsManager'
@@ -148,6 +159,128 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [onSectionChange, setSelectedTender],
   )
 
+  // شريط المعلومات العلوي - مثل صفحة المشاريع
+  const headerMetadata = useMemo(
+    () => (
+      <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
+        <StatusBadge
+          status="default"
+          label={`الكل ${tenderSummary.total}`}
+          icon={ListChecks}
+          size="sm"
+          className="shadow-none"
+        />
+        <StatusBadge
+          status={tenderSummary.urgent > 0 ? 'warning' : 'default'}
+          label={`عاجل ${tenderSummary.urgent}`}
+          icon={AlertTriangle}
+          size="sm"
+          className="shadow-none"
+        />
+        <StatusBadge
+          status={tenderSummary.new > 0 ? 'info' : 'default'}
+          label={`جديد ${tenderSummary.new}`}
+          icon={FileText}
+          size="sm"
+          className="shadow-none"
+        />
+        <StatusBadge
+          status={tenderSummary.underAction > 0 ? 'info' : 'default'}
+          label={`تحت الإجراء ${tenderSummary.underAction}`}
+          icon={Clock}
+          size="sm"
+          className="shadow-none"
+        />
+        <StatusBadge
+          status={tenderSummary.waitingResults > 0 ? 'warning' : 'default'}
+          label={`بانتظار النتائج ${tenderSummary.waitingResults}`}
+          icon={Calendar}
+          size="sm"
+          className="shadow-none"
+        />
+        <StatusBadge
+          status={tenderSummary.won > 0 ? 'success' : 'default'}
+          label={`فائز ${tenderSummary.won}`}
+          icon={CheckCircle}
+          size="sm"
+          className="shadow-none"
+        />
+        <StatusBadge
+          status={tenderSummary.lost > 0 ? 'error' : 'default'}
+          label={`خاسر ${tenderSummary.lost}`}
+          icon={XCircle}
+          size="sm"
+          className="shadow-none"
+        />
+        <StatusBadge
+          status="info"
+          label={`معدل الفوز ${tenderSummary.winRate.toFixed(1)}%`}
+          icon={Trophy}
+          size="sm"
+          className="shadow-none"
+        />
+      </div>
+    ),
+    [tenderSummary],
+  )
+
+  // البطاقات الأربعة - مثل صفحة المشاريع
+  const tenderAnalysisCards = useMemo(
+    () => (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <DetailCard
+          title="أداء الميزانية"
+          value={`${tenderSummary.winRate.toFixed(1)}%`}
+          subtitle="معدل الفوز"
+          icon={DollarSign}
+          color="text-success"
+          bgColor="bg-success/10"
+          trend={{
+            direction: tenderSummary.winRate > 50 ? 'up' : 'down',
+            value: `${tenderSummary.winRate.toFixed(1)}%`,
+          }}
+        />
+        <DetailCard
+          title="أداء الجدولة"
+          value={`${((tenderSummary.won / Math.max(tenderSummary.submitted, 1)) * 100).toFixed(1)}%`}
+          subtitle="متقدم على الجدول"
+          icon={Calendar}
+          color="text-primary"
+          bgColor="bg-primary/10"
+          trend={{
+            direction: 'up',
+            value: '3.2%',
+          }}
+        />
+        <DetailCard
+          title="رضا العملاء"
+          value="96.2%"
+          subtitle="تقييم العملاء"
+          icon={CheckCircle}
+          color="text-info"
+          bgColor="bg-info/10"
+          trend={{
+            direction: 'up',
+            value: '0.8%+',
+          }}
+        />
+        <DetailCard
+          title="درجة الجودة"
+          value="94.5%"
+          subtitle="معايير الجودة العامة"
+          icon={Trophy}
+          color="text-accent"
+          bgColor="bg-accent/10"
+          trend={{
+            direction: 'up',
+            value: '2.1%+',
+          }}
+        />
+      </div>
+    ),
+    [tenderSummary],
+  )
+
   if (currentView === 'pricing' && selectedTender) {
     const tenderForPricing: TenderWithPricingSources = { ...selectedTender }
     return <TenderPricingPage tender={tenderForPricing} onBack={backToList} />
@@ -170,7 +303,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
         icon={Trophy}
         quickStats={[]}
         quickActions={quickActions}
-        headerExtra={<TenderMetricsDisplay summary={tenderSummary} />}
+        headerExtra={headerMetadata}
         showLastUpdate={false}
         showFilters={false}
         showSearch
@@ -181,6 +314,8 @@ export function Tenders({ onSectionChange }: TendersProps) {
           <TenderTabs tabs={tabsWithCounts} activeTab={activeTab} onTabChange={handleTabChange} />
         }
       >
+        {tenderAnalysisCards}
+
         {filteredTenders.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredTenders.map((tender, index) => (
