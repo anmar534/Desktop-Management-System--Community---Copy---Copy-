@@ -138,9 +138,15 @@ describe('BOQTable', () => {
     })
 
     it('should handle null/undefined values', () => {
-      const dataWithNull = [{ ...mockData[0], quantity: null, unitPrice: undefined }]
+      const dataWithNull: Partial<MockBOQItem>[] = [
+        {
+          ...mockData[0],
+          quantity: null as unknown as number,
+          unitPrice: undefined as unknown as number,
+        },
+      ]
 
-      render(<BOQTable data={dataWithNull} columns={basicColumns} />)
+      render(<BOQTable data={dataWithNull as MockBOQItem[]} columns={basicColumns} />)
 
       const cells = screen.getAllByText('-')
       expect(cells.length).toBeGreaterThan(0)
@@ -153,7 +159,8 @@ describe('BOQTable', () => {
         {
           key: 'code',
           label: 'الرمز',
-          render: (value) => <strong data-testid="custom-code">{value}</strong>,
+          render: (value) =>
+            (<strong data-testid="custom-code">{String(value)}</strong>) as React.ReactNode,
         },
       ]
 
@@ -165,7 +172,7 @@ describe('BOQTable', () => {
     })
 
     it('should receive row and index in custom render', () => {
-      const renderFn = vi.fn((value, row, index) => `${value} (${index})`)
+      const renderFn = vi.fn((_value, __row, index) => `${_value} (${index})`)
       const columns: BOQColumn<MockBOQItem>[] = [{ key: 'code', label: 'الرمز', render: renderFn }]
 
       render(<BOQTable data={mockData} columns={columns} />)
@@ -323,7 +330,7 @@ describe('BOQTable', () => {
       )
 
       const headerCheckbox = container.querySelector('input[type="checkbox"]')!
-      expect(headerCheckbox?.indeterminate).toBe(true)
+      expect((headerCheckbox as HTMLInputElement).indeterminate).toBe(true)
     })
 
     it('should use default getRowKey (index) if not provided', async () => {

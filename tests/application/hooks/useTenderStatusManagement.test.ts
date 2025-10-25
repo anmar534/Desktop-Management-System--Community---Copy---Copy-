@@ -25,6 +25,7 @@ const createMockTender = (overrides: Partial<Tender> = {}): Tender => ({
   status: 'new',
   phase: 'bidding',
   deadline: '2025-12-31',
+  submissionDate: '2025-12-31',
   client: 'عميل اختباري',
   value: 500000,
   category: 'construction',

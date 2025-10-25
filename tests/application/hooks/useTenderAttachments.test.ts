@@ -176,15 +176,17 @@ describe('useTenderAttachments', () => {
 
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
 
-      let uploadedAttachment
+      let uploadedAttachment: Awaited<ReturnType<typeof result.current.uploadAttachment>>
       await act(async () => {
         uploadedAttachment = await result.current.uploadAttachment(file, 'technical')
       })
 
       expect(FileUploadService.uploadFile).toHaveBeenCalledWith(file, tender.id)
       expect(uploadedAttachment).toBeDefined()
-      expect(uploadedAttachment?.source).toBe('technical')
-      expect(uploadedAttachment?.attachmentType).toBe('technical')
+      if (uploadedAttachment) {
+        expect(uploadedAttachment.source).toBe('technical')
+        expect(uploadedAttachment.attachmentType).toBe('technical')
+      }
     })
 
     it('should set uploading state during upload', async () => {
@@ -197,7 +199,7 @@ describe('useTenderAttachments', () => {
 
       const file = new File(['content'], 'test.pdf', { type: 'application/pdf' })
 
-      let uploadPromise
+      let uploadPromise: Promise<unknown>
       act(() => {
         uploadPromise = result.current.uploadAttachment(file)
       })
