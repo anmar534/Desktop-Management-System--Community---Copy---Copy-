@@ -24,8 +24,19 @@ import {
 
 import { APP_EVENTS } from '@/events/bus'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
-import { getDaysRemaining, isTenderExpired } from '@/shared/utils/tender/tenderProgressCalculator'
 import type { Tender } from '@/data/centralData'
+
+// Utilities from shared/utils
+import {
+  type TenderTabId,
+  getTenderDocumentPrice,
+  normaliseSearchQuery,
+  computeFilteredTenders,
+} from '@/shared/utils/tender/tenderFilters'
+import {
+  computeTenderSummary,
+  type TenderSummary,
+} from '@/shared/utils/tender/tenderSummaryCalculator'
 
 import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'
 import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
@@ -52,41 +63,9 @@ import { resolveTenderPerformance } from '@/domain/utils/tenderPerformance'
 
 const OPEN_PRICING_EVENT = 'openPricingForTender' as const
 
-type TenderTabId =
-  | 'all'
-  | 'urgent'
-  | 'new'
-  | 'under_action'
-  | 'waiting_results'
-  | 'won'
-  | 'lost'
-  | 'expired'
-
 interface TenderEventDetail {
   tenderId?: string
   itemId?: string
-}
-
-interface TenderSummary {
-  total: number
-  urgent: number
-  new: number
-  underAction: number
-  readyToSubmit: number
-  waitingResults: number
-  won: number
-  lost: number
-  expired: number
-  winRate: number
-  totalDocumentValue: number
-  active: number
-  submitted: number
-  averageWinChance: number
-  averageCycleDays: number | null
-  submittedValue: number
-  wonValue: number
-  lostValue: number
-  documentBookletsCount: number
 }
 
 interface TenderTabDefinition {
@@ -111,185 +90,8 @@ const BASE_TAB_DEFINITIONS: readonly TenderTabDefinition[] = [
   { id: 'expired', label: 'منتهية', icon: AlertCircle, badgeStatus: 'overdue' },
 ]
 
-const URGENT_STATUSES = new Set(['new', 'under_action', 'ready_to_submit'])
-const DOCUMENT_VALUE_STATUSES = new Set(['submitted', 'ready_to_submit', 'won', 'lost'])
-
-const parseNumericValue = (value?: number | string | null): number => {
-  if (value === null || value === undefined) {
-    return 0
-  }
-
-  if (typeof value === 'number') {
-    return Number.isNaN(value) ? 0 : value
-  }
-
-  const parsed = Number.parseFloat(value)
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
-const getTenderDocumentPrice = (tender: Tender): number => {
-  const price = parseNumericValue(tender.documentPrice)
-  return price > 0 ? price : parseNumericValue(tender.bookletPrice)
-}
-
-const normaliseSearchQuery = (value: string): string => value.trim().toLowerCase()
-
-const matchesSearchQuery = (tender: Tender, query: string): boolean => {
-  if (!query) {
-    return true
-  }
-
-  return [tender.name, tender.client].some((field) => field?.toLowerCase().includes(query))
-}
-
-const matchesTabFilter = (tender: Tender, tab: TenderTabId): boolean => {
-  const status = tender.status ?? ''
-  const expired = isTenderExpired(tender)
-
-  switch (tab) {
-    case 'all':
-      return !expired
-    case 'urgent': {
-      if (expired || !URGENT_STATUSES.has(status)) {
-        return false
-      }
-      const days = getDaysRemaining(tender.deadline)
-      return days <= 7 && days >= 0
-    }
-    case 'new':
-      return !expired && status === 'new'
-    case 'under_action':
-      return !expired && (status === 'under_action' || status === 'ready_to_submit')
-    case 'waiting_results':
-      return !expired && status === 'submitted'
-    case 'won':
-      return !expired && status === 'won'
-    case 'lost':
-      return !expired && status === 'lost'
-    case 'expired':
-      return expired
-    default:
-      return true
-  }
-}
-
-const getDaysRemainingValue = (deadline?: string): number => {
-  const days = getDaysRemaining(deadline ?? '')
-  return Number.isFinite(days) ? days : Number.POSITIVE_INFINITY
-}
-
-const sortTenders = (tab: TenderTabId) => {
-  if (tab === 'expired') {
-    return (a: Tender, b: Tender) => {
-      const timeA = new Date(a.deadline ?? 0).getTime()
-      const timeB = new Date(b.deadline ?? 0).getTime()
-      return timeB - timeA
-    }
-  }
-
-  return (a: Tender, b: Tender) =>
-    getDaysRemainingValue(a.deadline) - getDaysRemainingValue(b.deadline)
-}
-
-const computeFilteredTenders = (
-  tenders: readonly Tender[],
-  query: string,
-  activeTab: TenderTabId,
-): Tender[] => {
-  const comparator = sortTenders(activeTab)
-  return tenders
-    .filter((tender) => matchesSearchQuery(tender, query) && matchesTabFilter(tender, activeTab))
-    .sort(comparator)
-}
-
-const computeTenderSummary = (
-  tenders: readonly Tender[],
-  tenderMetrics: AggregatedTenderMetrics,
-  tenderPerformance: TenderMetricsSummary,
-): TenderSummary => {
-  let urgent = 0
-  let newCount = 0
-  let underActionCount = 0
-  let readyToSubmitCount = 0
-  let waitingResultsCount = 0
-  let expiredCount = 0
-  let totalDocumentValue = 0
-  let documentBookletsCount = 0
-
-  for (const tender of tenders) {
-    if (!tender) {
-      continue
-    }
-
-    const status = tender.status ?? ''
-
-    switch (status) {
-      case 'new':
-        newCount += 1
-        break
-      case 'under_action':
-        underActionCount += 1
-        break
-      case 'ready_to_submit':
-        readyToSubmitCount += 1
-        break
-      case 'submitted':
-        waitingResultsCount += 1
-        break
-      default:
-        break
-    }
-
-    if (isTenderExpired(tender)) {
-      expiredCount += 1
-    }
-
-    if (status && URGENT_STATUSES.has(status) && tender.deadline) {
-      const days = getDaysRemaining(tender.deadline)
-      if (days <= 7 && days >= 0) {
-        urgent += 1
-      }
-    }
-
-    if (DOCUMENT_VALUE_STATUSES.has(status)) {
-      const documentPrice = getTenderDocumentPrice(tender)
-      totalDocumentValue += documentPrice
-      if (documentPrice > 0) {
-        documentBookletsCount += 1
-      }
-    }
-  }
-
-  const winRate = Number.isFinite(tenderPerformance.winRate) ? tenderPerformance.winRate : 0
-  const averageWinChance = Number.isFinite(tenderMetrics.averageWinChance)
-    ? tenderMetrics.averageWinChance
-    : 0
-
-  return {
-    total: tenderMetrics.totalCount,
-    urgent,
-    new: newCount,
-    underAction: underActionCount,
-    readyToSubmit: readyToSubmitCount,
-    waitingResults: waitingResultsCount,
-    won: tenderMetrics.wonCount,
-    lost: tenderMetrics.lostCount,
-    expired: expiredCount,
-    winRate,
-    totalDocumentValue,
-    active: tenderMetrics.activeCount,
-    submitted: tenderMetrics.submittedCount,
-    averageWinChance,
-    averageCycleDays: tenderPerformance.averageCycleDays,
-    submittedValue: tenderPerformance.submittedValue,
-    wonValue: tenderPerformance.wonValue,
-    lostValue: tenderPerformance.lostValue,
-    documentBookletsCount,
-  }
-}
-
 const createTabsWithCounts = (
-  summary: TenderSummary,
+  summary: import('@/shared/utils/tender/tenderSummaryCalculator').TenderSummary,
 ): Array<TenderTabDefinition & { count: number }> => {
   return BASE_TAB_DEFINITIONS.map((tab) => {
     switch (tab.id) {
@@ -777,8 +579,8 @@ export function Tenders({ onSectionChange }: TendersProps) {
               تأكيد الحذف
             </AlertDialogTitle>
             <AlertDialogDescription>
-              هل أنت متأكد من حذف المنافسة "{tenderToDelete?.name}"؟ هذا الإجراء لا يمكن التراجع
-              عنه.
+              هل أنت متأكد من حذف المنافسة &quot;{tenderToDelete?.name}&quot;؟ هذا الإجراء لا يمكن
+              التراجع عنه.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -805,13 +607,13 @@ export function Tenders({ onSectionChange }: TendersProps) {
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2">
-                <p>هل أنت متأكد من تقديم العرض للمنافسة "{tenderToSubmit?.name}"؟</p>
+                <p>هل أنت متأكد من تقديم العرض للمنافسة &quot;{tenderToSubmit?.name}&quot;؟</p>
 
                 {tenderSubmissionPrice > 0 ? (
                   <div className="rounded-lg border border-info/30 bg-info/10 p-3">
                     <p className="text-sm text-info font-medium">سيتم تلقائياً:</p>
                     <ul className="mt-1 space-y-1 text-xs text-info opacity-90">
-                      <li>• تحديث حالة المنافسة إلى "بانتظار النتائج"</li>
+                      <li>• تحديث حالة المنافسة إلى &ldquo;بانتظار النتائج&rdquo;</li>
                       <li>
                         • إضافة مصروف كراسة المنافسة ({formatCurrencyValue(tenderSubmissionPrice)})
                       </li>
@@ -821,7 +623,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
                 ) : (
                   <div className="rounded-lg border border-border bg-muted/20 p-3">
                     <p className="text-sm text-muted-foreground">
-                      سيتم تحديث حالة المنافسة إلى "بانتظار النتائج"
+                      سيتم تحديث حالة المنافسة إلى &ldquo;بانتظار النتائج&rdquo;
                     </p>
                   </div>
                 )}
