@@ -5,7 +5,6 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Trophy,
   Plus,
-  DollarSign,
   Clock,
   AlertTriangle,
   AlertCircle,
@@ -13,13 +12,10 @@ import {
   XCircle,
   Eye,
   FileText,
-  TrendingUp,
   Calculator,
-  Files,
   Trash2,
   Send,
   Search,
-  ListChecks,
 } from 'lucide-react'
 
 import { APP_EVENTS } from '@/events/bus'
@@ -33,12 +29,12 @@ import {
   normaliseSearchQuery,
   computeFilteredTenders,
 } from '@/shared/utils/tender/tenderFilters'
-import {
-  computeTenderSummary,
-  type TenderSummary,
-} from '@/shared/utils/tender/tenderSummaryCalculator'
+import { computeTenderSummary } from '@/shared/utils/tender/tenderSummaryCalculator'
 
-import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'
+// Components
+import { TenderMetricsDisplay } from '@/presentation/components/tenders/TenderMetricsDisplay'
+
+import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
 import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
 import {
   AlertDialog,
@@ -223,8 +219,8 @@ export function Tenders({ onSectionChange }: TendersProps) {
   const quickActions = useMemo(() => createQuickActions(onSectionChange), [onSectionChange])
 
   const headerExtraContent = useMemo(
-    () => <TenderHeaderSummary summary={tenderSummary} formatCurrencyValue={formatCurrencyValue} />,
-    [tenderSummary, formatCurrencyValue],
+    () => <TenderMetricsDisplay summary={tenderSummary} />,
+    [tenderSummary],
   )
 
   const handleTabChange = useCallback((tabId: TenderTabId) => {
@@ -642,110 +638,6 @@ export function Tenders({ onSectionChange }: TendersProps) {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
-}
-
-interface TenderHeaderSummaryProps {
-  summary: TenderSummary
-  formatCurrencyValue: (value: number, options?: Intl.NumberFormatOptions) => string
-}
-
-function TenderHeaderSummary({ summary, formatCurrencyValue }: TenderHeaderSummaryProps) {
-  return (
-    <div className="space-y-4">
-      <div className="rounded-3xl border border-primary/20 bg-gradient-to-l from-primary/10 via-card/40 to-background p-5 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
-          <StatusBadge
-            status="default"
-            label={`الكل ${summary.total}`}
-            icon={ListChecks}
-            size="sm"
-            className="shadow-none"
-          />
-          <StatusBadge
-            status={summary.urgent > 0 ? 'warning' : 'info'}
-            label={`عاجلة ${summary.urgent}`}
-            icon={AlertTriangle}
-            size="sm"
-            className="shadow-none"
-          />
-          <StatusBadge
-            status="info"
-            label={`نشطة ${summary.active}/${summary.total}`}
-            icon={Clock}
-            size="sm"
-            className="shadow-none"
-          />
-          <StatusBadge
-            status="success"
-            label={`مقدمة ${formatCurrencyValue(summary.submittedValue, { notation: 'compact' })}`}
-            icon={TrendingUp}
-            size="sm"
-            className="shadow-none"
-          />
-          <StatusBadge
-            status="info"
-            label={`الكراسات ${formatCurrencyValue(summary.totalDocumentValue, { notation: 'compact' })}`}
-            icon={Files}
-            size="sm"
-            className="shadow-none"
-          />
-        </div>
-      </div>
-
-      <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <DetailCard
-            title="معدل الفوز"
-            value={`${summary.winRate.toFixed(1)}%`}
-            subtitle="نسبة المنافسات الفائزة"
-            icon={Trophy}
-            color="text-success"
-            bgColor="bg-success/10"
-            trend={{
-              value: `${Math.round(summary.averageWinChance)}% احتمال متوسط`,
-              direction: summary.averageWinChance >= summary.winRate ? 'up' : 'down',
-            }}
-          />
-          <DetailCard
-            title="القيمة الإجمالية"
-            value={formatCurrencyValue(summary.wonValue)}
-            subtitle="إجمالي قيمة المنافسات الفائزة"
-            icon={DollarSign}
-            color="text-primary"
-            bgColor="bg-primary/10"
-            trend={{
-              value: formatCurrencyValue(summary.submittedValue, { notation: 'compact' }),
-              direction: 'up',
-            }}
-          />
-          <DetailCard
-            title="المنافسات النشطة"
-            value={`${summary.underAction + summary.readyToSubmit}`}
-            subtitle="تحتاج متابعة وإجراء"
-            icon={Clock}
-            color="text-warning"
-            bgColor="bg-warning/10"
-            trend={{
-              value: `${summary.urgent} عاجلة`,
-              direction: summary.urgent > 5 ? 'down' : 'stable',
-            }}
-          />
-          <DetailCard
-            title="إجمالي قيمة الكراسات"
-            value={formatCurrencyValue(summary.totalDocumentValue)}
-            subtitle="تكلفة الكراسات للمنافسات المرسلة والمتوجة"
-            icon={Files}
-            color="text-warning"
-            bgColor="bg-warning/10"
-            trend={{
-              value: `${summary.documentBookletsCount} كراسة مرسلة`,
-              direction: summary.documentBookletsCount > 0 ? 'up' : 'stable',
-            }}
-          />
-        </div>
-      </div>
-    </div>
   )
 }
 
