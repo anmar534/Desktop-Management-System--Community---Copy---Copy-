@@ -5,7 +5,7 @@ import type { Tender } from '@/data/centralData'
 import { FileUploadService } from '../fileUploadService'
 import { safeLocalStorage, STORAGE_KEYS } from '@/shared/utils/storage/storage'
 
-type TenderStatus = Tender['status'];
+type TenderStatus = Tender['status']
 
 interface StoredPricingEntry {
   pricing?: readonly unknown[] | null
@@ -18,7 +18,7 @@ const TERMINAL_STATUSES: readonly TenderStatus[] = [
   'cancelled',
   'won',
   'lost',
-  'submitted'
+  'submitted',
 ]
 
 const hasPricingEntries = (entry?: StoredPricingEntry): boolean => {
@@ -103,7 +103,7 @@ const getPricingCounts = (tender: Tender): { totalItems: number; pricedItems: nu
 
   return {
     totalItems,
-    pricedItems: clamp(pricedItems, 0, totalItems)
+    pricedItems: clamp(pricedItems, 0, totalItems),
   }
 }
 
@@ -124,7 +124,7 @@ const hasSubmittedStatus = (status: TenderStatus): boolean => {
  * 70% للتسعير (حسب عدد البنود المُسعَّرة)
  * 20% لرفع ملفات العرض الفني
  * 10% لتقديم المنافسة
- * 
+ *
  * @param tender - بيانات المنافسة
  * @returns نسبة التقدم من 0 إلى 100
  */
@@ -151,7 +151,7 @@ export const calculateTenderProgress = (tender: Tender): number => {
  * حساب نسبة التقدم في التسعير (70% من الإجمالي)
  * - يفضل الحقول المركزية داخل الكيان
  * - كرجوع: يستخدم التخزين الموحد عبر electron-store (STORAGE_KEYS.PRICING_DATA)
- * 
+ *
  * @param tender - بيانات المنافسة
  * @returns نسبة التقدم في التسعير (0 إلى 70)
  */
@@ -198,7 +198,7 @@ export const calculateTechnicalFilesProgressPreferCentral = (tender: Tender): nu
 
 /**
  * حساب نسبة التقدم في التسعير (70% من الإجمالي)
- * 
+ *
  * @param tender - بيانات المنافسة
  * @returns نسبة التقدم في التسعير (0 إلى 70)
  */
@@ -210,7 +210,7 @@ export const calculatePricingProgress = (tender: Tender): number => {
 
 /**
  * تحديث حالة المنافسة تلقائياً بناءً على التقدم من التخزين الموحد
- * 
+ *
  * @param tender - بيانات المنافسة
  * @returns الحالة المحدثة
  */
@@ -222,7 +222,7 @@ export const updateTenderStatusBasedOnProgress = (tender: Tender): Tender['statu
 
   const pricingProgress = calculatePricingProgressPreferCentral(tender)
   const technicalFilesProgress = calculateTechnicalFilesProgressPreferCentral(tender)
-  
+
   // جاهزة للتقديم: تم التسعير كاملاً + ملفات العرض الفني
   if (pricingProgress === 70 && technicalFilesProgress === 20) {
     return 'ready_to_submit'
@@ -239,7 +239,7 @@ export const updateTenderStatusBasedOnProgress = (tender: Tender): Tender['statu
 
 /**
  * الحصول على وصف الحالة باللغة العربية
- * 
+ *
  * @param status - حالة المنافسة
  * @returns الوصف باللغة العربية
  */
@@ -252,7 +252,7 @@ export const getTenderStatusDescription = (status: Tender['status']): string => 
     won: 'فائزة',
     lost: 'خاسرة',
     expired: 'منتهية',
-    cancelled: 'ملغاة'
+    cancelled: 'ملغاة',
   }
 
   return descriptions[status] ?? 'حالة غير معروفة'
@@ -260,18 +260,33 @@ export const getTenderStatusDescription = (status: Tender['status']): string => 
 
 /**
  * فحص ما إذا كانت المنافسة منتهية (لا تحسب في الإحصائيات)
- * 
+ *
+ * المنافسة تعتبر منتهية فقط إذا:
+ * 1. تم إلغاؤها صراحة (status = 'expired' أو 'cancelled')
+ * 2. انتهى موعد تقديمها ولم يتم إرسالها
+ *
+ * ⚠️ المنافسات المرسلة (submitted, won, lost) لا تعتبر منتهية حتى لو انتهى الموعد
+ *
  * @param tender - بيانات المنافسة
  * @returns true إذا كانت منتهية
  */
 export const isTenderExpired = (tender: Tender): boolean => {
-  // المنافسات المنتهية صراحة
-  if (tender.status === 'expired' || tender.status === 'cancelled') {
+  const status = tender.status
+
+  // المنافسات الملغاة صراحة
+  if (status === 'expired' || status === 'cancelled') {
     return true
   }
 
-  // فحص انتهاء المدة للمنافسات النشطة
-  if (['new', 'under_action', 'ready_to_submit'].includes(tender.status)) {
+  // المنافسات المرسلة أو التي لها نتيجة نهائية لا تعتبر منتهية
+  // بغض النظر عن موعد انتهائها
+  if (status === 'submitted' || status === 'won' || status === 'lost') {
+    return false
+  }
+
+  // فحص انتهاء المدة للمنافسات التي لم يتم إرسالها بعد
+  // (new, under_action, ready_to_submit)
+  if (status === 'new' || status === 'under_action' || status === 'ready_to_submit') {
     const deadline = toDateOrNull(tender.deadline)
     if (!deadline) {
       return false
@@ -287,7 +302,7 @@ export const isTenderExpired = (tender: Tender): boolean => {
 
 /**
  * حساب الأيام المتبقية
- * 
+ *
  * @param deadline - الموعد النهائي
  * @returns عدد الأيام المتبقية
  */
