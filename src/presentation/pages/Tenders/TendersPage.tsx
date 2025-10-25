@@ -1,6 +1,6 @@
 // TendersPage shows the tenders dashboard, filters, and quick actions.
 import { useState, useMemo, useCallback } from 'react'
-import { Trophy, Trash2, Send, Search } from 'lucide-react'
+import { Trophy, Search } from 'lucide-react'
 
 import type { Tender } from '@/data/centralData'
 
@@ -27,18 +27,12 @@ import {
 // Components
 import { TenderMetricsDisplay } from '@/presentation/components/tenders/TenderMetricsDisplay'
 import { TenderTabs } from '@/presentation/components/tenders/TenderTabs'
+import {
+  TenderDeleteDialog,
+  TenderSubmitDialog,
+} from '@/presentation/components/tenders/TenderDialogs'
 
 import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/presentation/components/ui/alert-dialog'
 import { TenderPricingPage, type TenderWithPricingSources } from './TenderPricingPage'
 import { TenderDetails } from '@/presentation/components/tenders/TenderDetails'
 import { TenderResultsManager } from './components/TenderResultsManager'
@@ -269,79 +263,19 @@ export function Tenders({ onSectionChange }: TendersProps) {
         )}
       </PageLayout>
 
-      <AlertDialog
-        open={!!tenderToDelete}
-        onOpenChange={(open) => !open && setTenderToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
-              تأكيد الحذف
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              هل أنت متأكد من حذف المنافسة &quot;{tenderToDelete?.name}&quot;؟ هذا الإجراء لا يمكن
-              التراجع عنه.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              حذف
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TenderDeleteDialog
+        tender={tenderToDelete}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setTenderToDelete(null)}
+      />
 
-      <AlertDialog
-        open={!!tenderToSubmit}
-        onOpenChange={(open) => !open && setTenderToSubmit(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5 text-success" />
-              تأكيد تقديم العرض
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-2">
-                <p>هل أنت متأكد من تقديم العرض للمنافسة &quot;{tenderToSubmit?.name}&quot;؟</p>
-
-                {tenderSubmissionPrice > 0 ? (
-                  <div className="rounded-lg border border-info/30 bg-info/10 p-3">
-                    <p className="text-sm text-info font-medium">سيتم تلقائياً:</p>
-                    <ul className="mt-1 space-y-1 text-xs text-info opacity-90">
-                      <li>• تحديث حالة المنافسة إلى &ldquo;بانتظار النتائج&rdquo;</li>
-                      <li>
-                        • إضافة مصروف كراسة المنافسة ({formatCurrencyValue(tenderSubmissionPrice)})
-                      </li>
-                      <li>• تحديث إحصائيات المنافسات المقدمة</li>
-                    </ul>
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-border bg-muted/20 p-3">
-                    <p className="text-sm text-muted-foreground">
-                      سيتم تحديث حالة المنافسة إلى &ldquo;بانتظار النتائج&rdquo;
-                    </p>
-                  </div>
-                )}
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>إلغاء</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmSubmit}
-              className="bg-success text-success-foreground hover:bg-success/90"
-            >
-              تأكيد التقديم
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <TenderSubmitDialog
+        tender={tenderToSubmit}
+        submissionPrice={tenderSubmissionPrice}
+        formatCurrency={formatCurrencyValue}
+        onConfirm={handleConfirmSubmit}
+        onCancel={() => setTenderToSubmit(null)}
+      />
     </>
   )
 }
