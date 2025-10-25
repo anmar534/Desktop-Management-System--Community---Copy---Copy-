@@ -2,21 +2,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import type { LucideIcon } from 'lucide-react'
-import {
-  Trophy,
-  Plus,
-  Clock,
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Eye,
-  FileText,
-  Calculator,
-  Trash2,
-  Send,
-  Search,
-} from 'lucide-react'
+import { Trophy, Plus, FileText, Calculator, Trash2, Send, Search } from 'lucide-react'
 
 import { APP_EVENTS } from '@/events/bus'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
@@ -30,12 +16,17 @@ import {
   computeFilteredTenders,
 } from '@/shared/utils/tender/tenderFilters'
 import { computeTenderSummary } from '@/shared/utils/tender/tenderSummaryCalculator'
+import {
+  createTabsWithCounts,
+  getActiveTabLabel,
+  getFilterDescription,
+} from '@/shared/utils/tender/tenderTabHelpers'
 
 // Components
 import { TenderMetricsDisplay } from '@/presentation/components/tenders/TenderMetricsDisplay'
+import { TenderTabs } from '@/presentation/components/tenders/TenderTabs'
 
 import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
-import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,68 +55,8 @@ interface TenderEventDetail {
   itemId?: string
 }
 
-interface TenderTabDefinition {
-  id: TenderTabId
-  label: string
-  icon: LucideIcon
-  badgeStatus: StatusBadgeProps['status']
-}
-
 interface TendersProps {
   onSectionChange: (section: string, tender?: Tender) => void
-}
-
-const BASE_TAB_DEFINITIONS: readonly TenderTabDefinition[] = [
-  { id: 'all', label: 'الكل', icon: Trophy, badgeStatus: 'default' },
-  { id: 'urgent', label: 'العاجلة', icon: AlertTriangle, badgeStatus: 'overdue' },
-  { id: 'new', label: 'الجديدة', icon: Plus, badgeStatus: 'notStarted' },
-  { id: 'under_action', label: 'تحت الإجراء', icon: Clock, badgeStatus: 'onTrack' },
-  { id: 'waiting_results', label: 'بانتظار النتائج', icon: Eye, badgeStatus: 'info' },
-  { id: 'won', label: 'فائزة', icon: CheckCircle, badgeStatus: 'success' },
-  { id: 'lost', label: 'خاسرة', icon: XCircle, badgeStatus: 'error' },
-  { id: 'expired', label: 'منتهية', icon: AlertCircle, badgeStatus: 'overdue' },
-]
-
-const createTabsWithCounts = (
-  summary: import('@/shared/utils/tender/tenderSummaryCalculator').TenderSummary,
-): Array<TenderTabDefinition & { count: number }> => {
-  return BASE_TAB_DEFINITIONS.map((tab) => {
-    switch (tab.id) {
-      case 'all':
-        return { ...tab, count: summary.total }
-      case 'urgent':
-        return { ...tab, count: summary.urgent }
-      case 'new':
-        return { ...tab, count: summary.new }
-      case 'under_action':
-        return { ...tab, count: summary.underAction + summary.readyToSubmit }
-      case 'waiting_results':
-        return { ...tab, count: summary.waitingResults }
-      case 'won':
-        return { ...tab, count: summary.won }
-      case 'lost':
-        return { ...tab, count: summary.lost }
-      case 'expired':
-        return { ...tab, count: summary.expired }
-      default:
-        return { ...tab, count: 0 }
-    }
-  })
-}
-
-const getActiveTabLabel = (
-  tabs: Array<TenderTabDefinition & { count: number }>,
-  activeTab: TenderTabId,
-): string => {
-  return tabs.find((tab) => tab.id === activeTab)?.label ?? 'الكل'
-}
-
-const getFilterDescription = (query: string, activeTabLabel: string): string => {
-  if (query.length > 0) {
-    return 'لا توجد منافسات تطابق البحث الحالي. جرّب تعديل عبارة البحث أو إعادة التعيين.'
-  }
-
-  return `لا توجد منافسات ضمن تبويب "${activeTabLabel}" حاليًا. جرّب تغيير التبويب أو إعادة ضبط المرشحات.`
 }
 
 const createQuickActions = (
@@ -638,56 +569,5 @@ export function Tenders({ onSectionChange }: TendersProps) {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
-}
-
-interface TenderTabsProps {
-  tabs: Array<TenderTabDefinition & { count: number }>
-  activeTab: TenderTabId
-  onTabChange: (tabId: TenderTabId) => void
-}
-
-function TenderTabs({ tabs, activeTab, onTabChange }: TenderTabsProps) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-border/40 bg-card/80 p-4 shadow-sm backdrop-blur">
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className={`group flex flex-col items-center justify-center gap-1 rounded-xl border px-3 py-2 transition-all duration-200 ${
-                isActive
-                  ? 'border-primary/60 bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                  : 'border-transparent bg-transparent text-muted-foreground hover:border-primary/20 hover:bg-muted/40 hover:text-foreground'
-              }`}
-            >
-              <div className="flex items-center gap-2 text-xs font-semibold">
-                <tab.icon
-                  className={`h-4 w-4 ${
-                    isActive
-                      ? 'text-primary-foreground'
-                      : 'text-muted-foreground group-hover:text-primary'
-                  }`}
-                />
-                <span>{tab.label}</span>
-              </div>
-              <StatusBadge
-                status={isActive ? tab.badgeStatus : 'default'}
-                label={String(tab.count)}
-                size="sm"
-                showIcon={false}
-                className={`h-5 min-w-[24px] justify-center px-2 py-0.5 text-xs shadow-none ${
-                  isActive
-                    ? 'bg-primary/15 text-primary-foreground border-primary/40'
-                    : 'bg-muted/30'
-                }`}
-              />
-            </button>
-          )
-        })}
-      </div>
-    </div>
   )
 }
