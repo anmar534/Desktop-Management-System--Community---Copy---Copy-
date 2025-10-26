@@ -280,7 +280,7 @@ export const isTenderFormValid = (formData: {
     formData.name,
     formData.ownerEntity,
     formData.location,
-    formData.projectDuration,
+    formData.projectDuration, // Now just the number is sufficient
     formData.bookletPrice,
     formData.deadline,
   ]

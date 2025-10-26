@@ -11,7 +11,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
-import { Trophy, Save, ArrowRight, FileText, Upload } from 'lucide-react'
+import { Trophy, Save, ArrowRight, FileText } from 'lucide-react'
 import { PageLayout } from '@/presentation/components/layout/PageLayout'
 import { TenderBasicInfoSection } from '@/presentation/components/tenders/TenderBasicInfoSection'
 import { QuantityTableSection } from '@/presentation/components/tenders/QuantityTableSection'
@@ -27,6 +27,7 @@ import {
   createQuantitiesState,
   createInitialAttachments,
   normalizeQuantities,
+  formatProjectDuration,
   DEFAULT_TENDER_VALUES,
   type TenderFormData,
   type TenderDraft,
@@ -106,9 +107,17 @@ export function NewTenderForm({ onSave, onBack, existingTender }: NewTenderFormP
       const typeInput = formData.type.trim()
       const resolvedType =
         typeInput.length > 0 ? typeInput : (existingTender?.type ?? DEFAULT_TENDER_VALUES.type)
-      const projectDurationInput = formData.projectDuration.trim()
+
+      // Format project duration with unit (e.g., "12 شهر")
+      const formattedProjectDuration = formatProjectDuration(
+        formData.projectDuration,
+        formData.projectDurationUnit,
+      )
       const resolvedProjectDuration =
-        projectDurationInput.length > 0 ? projectDurationInput : existingTender?.projectDuration
+        formattedProjectDuration.length > 0
+          ? formattedProjectDuration
+          : existingTender?.projectDuration
+
       const descriptionInput = formData.description.trim()
       const resolvedDescription =
         descriptionInput.length > 0 ? descriptionInput : existingTender?.description

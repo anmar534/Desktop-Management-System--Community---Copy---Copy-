@@ -7,15 +7,23 @@
  * @module presentation/components/tenders/TenderBasicInfoSection
  */
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 import { Input } from '@/presentation/components/ui/input'
 import { Label } from '@/presentation/components/ui/label'
 import { Textarea } from '@/presentation/components/ui/textarea'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { InlineAlert } from '@/presentation/components/ui/inline-alert'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/presentation/components/ui/select'
 import { Building2, MapPin, Clock, DollarSign, Calendar } from 'lucide-react'
-import type { TenderFormData } from '@/shared/utils/tender/tenderFormDefaults'
+import type { TenderFormData, ProjectDurationUnit } from '@/shared/utils/tender/tenderFormDefaults'
+import { getDurationUnitLabel } from '@/shared/utils/tender/tenderFormDefaults'
 import {
   parseNumericValue,
   calculateDaysRemaining,
@@ -167,14 +175,33 @@ export function TenderBasicInfoSection({
               مدة المشروع
               <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="projectDuration"
-              placeholder="مثال: 12 شهر"
-              value={formData.projectDuration}
-              onChange={(e) => handleInputChange('projectDuration', e.target.value)}
-              className="bg-background"
-              required
-            />
+            <div className="flex gap-2">
+              <Input
+                id="projectDuration"
+                type="number"
+                placeholder="12"
+                value={formData.projectDuration}
+                onChange={(e) => handleInputChange('projectDuration', e.target.value)}
+                className="bg-background flex-1"
+                required
+                min="1"
+              />
+              <Select
+                value={formData.projectDurationUnit}
+                onValueChange={(value) =>
+                  handleInputChange('projectDurationUnit', value as ProjectDurationUnit)
+                }
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="day">{getDurationUnitLabel('day')}</SelectItem>
+                  <SelectItem value="month">{getDurationUnitLabel('month')}</SelectItem>
+                  <SelectItem value="year">{getDurationUnitLabel('year')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* سعر الكراسة - إلزامي */}

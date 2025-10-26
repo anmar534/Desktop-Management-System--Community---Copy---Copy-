@@ -49,6 +49,11 @@ export type TenderDraft = Omit<DataTender, 'id'> & {
 export type ExistingTender = Partial<TenderDraft>
 
 /**
+ * Project duration unit type
+ */
+export type ProjectDurationUnit = 'day' | 'month' | 'year'
+
+/**
  * Tender form data interface
  */
 export interface TenderFormData {
@@ -56,6 +61,7 @@ export interface TenderFormData {
   ownerEntity: string
   location: string
   projectDuration: string
+  projectDurationUnit: ProjectDurationUnit
   bookletPrice: string
   deadline: string
   type: string
@@ -93,17 +99,45 @@ export const createEmptyQuantityRow = (): QuantityItem => ({
  * @param tender - Existing tender data or null
  * @returns Initialized form data
  */
-export const buildFormData = (tender?: ExistingTender | null): TenderFormData => ({
-  name: tender?.name ?? tender?.title ?? '',
-  ownerEntity: tender?.client ?? '',
-  location: tender?.location ?? '',
-  projectDuration: tender?.projectDuration ?? '',
-  bookletPrice: toInputString(tender?.bookletPrice ?? tender?.documentPrice ?? ''),
-  deadline: formatDateForInput(tender?.deadline),
-  type: tender?.type ?? '',
-  estimatedValue: toInputString(tender?.totalValue ?? tender?.value ?? ''),
-  description: tender?.description ?? '',
-})
+export const buildFormData = (tender?: ExistingTender | null): TenderFormData => {
+  // Parse existing projectDuration to extract number and unit
+  const existingDuration = tender?.projectDuration ?? ''
+  let durationValue = ''
+  let durationUnit: ProjectDurationUnit = 'month' // default
+
+  if (existingDuration) {
+    // Try to parse "12 شهر" or "6 month" format
+    const regex = /^(\d+)\s*(يوم|شهر|سنة|day|month|year|أيام|أشهر|سنوات)/i
+    const match = regex.exec(existingDuration)
+    if (match) {
+      durationValue = match[1]
+      const unitStr = match[2].toLowerCase()
+      if (unitStr.includes('يوم') || unitStr === 'day') {
+        durationUnit = 'day'
+      } else if (unitStr.includes('سنة') || unitStr === 'year') {
+        durationUnit = 'year'
+      } else {
+        durationUnit = 'month'
+      }
+    } else {
+      // If no match, keep as-is in the field
+      durationValue = existingDuration
+    }
+  }
+
+  return {
+    name: tender?.name ?? tender?.title ?? '',
+    ownerEntity: tender?.client ?? '',
+    location: tender?.location ?? '',
+    projectDuration: durationValue,
+    projectDurationUnit: durationUnit,
+    bookletPrice: toInputString(tender?.bookletPrice ?? tender?.documentPrice ?? ''),
+    deadline: formatDateForInput(tender?.deadline),
+    type: tender?.type ?? '',
+    estimatedValue: toInputString(tender?.totalValue ?? tender?.value ?? ''),
+    description: tender?.description ?? '',
+  }
+}
 
 /**
  * Create quantities state from existing tender or empty row
@@ -212,3 +246,39 @@ export const DEFAULT_TENDER_VALUES = {
   winChance: 50,
   competition: 'منافسة عادية',
 } as const
+
+/**
+ * Get label for project duration unit in Arabic
+ *
+ * @param unit - Duration unit
+ * @param count - Number for plural forms (optional)
+ * @returns Arabic label
+ */
+export const getDurationUnitLabel = (unit: ProjectDurationUnit, count?: number): string => {
+  const labels: Record<ProjectDurationUnit, { singular: string; plural: string }> = {
+    day: { singular: 'يوم', plural: 'أيام' },
+    month: { singular: 'شهر', plural: 'أشهر' },
+    year: { singular: 'سنة', plural: 'سنوات' },
+  }
+
+  if (count !== undefined && count > 1) {
+    return labels[unit].plural
+  }
+  return labels[unit].singular
+}
+
+/**
+ * Format project duration for display/save
+ *
+ * @param value - Duration number
+ * @param unit - Duration unit
+ * @returns Formatted string like "12 شهر"
+ */
+export const formatProjectDuration = (value: string, unit: ProjectDurationUnit): string => {
+  if (!value.trim()) {
+    return ''
+  }
+  const numValue = Number.parseInt(value, 10)
+  const unitLabel = getDurationUnitLabel(unit, numValue)
+  return `${value} ${unitLabel}`
+}
