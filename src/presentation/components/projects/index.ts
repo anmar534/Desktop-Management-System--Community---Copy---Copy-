@@ -8,6 +8,10 @@ export { default as ProjectsList } from './ProjectsList'
 // export { default as ProjectDetails } from './ProjectDetails' // TODO: Create this component
 export { default as ProjectForm } from './ProjectForm'
 
+// Week 1 Components
+export { ProjectCard, type ProjectCardProps } from './ProjectCard'
+export { ProjectListItem, type ProjectListItemProps } from './ProjectListItem'
+
 // Default export - Using enhanced ProjectsView from pages
 export {
   ProjectsView as default,
