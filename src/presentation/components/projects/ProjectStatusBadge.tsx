@@ -1,70 +1,45 @@
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { ProjectStatus } from '@/types/project.types';
+import React, { memo } from 'react'
+import { Badge } from '@/presentation/components/ui/badge'
+import { cn } from '@/presentation/components/ui/utils'
+import type { Status } from '@/shared/types/contracts'
+import { getStatusColor } from '@/shared/utils/ui/statusColors'
 
 /**
  * Status Badge Component Props
  */
 export interface ProjectStatusBadgeProps {
   /** Project status */
-  status: ProjectStatus;
+  status: Status | string
   /** Show icon alongside text */
-  showIcon?: boolean;
+  showIcon?: boolean
   /** Custom className for styling */
-  className?: string;
+  className?: string
   /** Size variant */
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg'
+  /** Render badge with subtle background (text only) */
+  subtle?: boolean
 }
 
-/**
- * Status configuration mapping
- */
-const statusConfig: Record<
-  ProjectStatus,
-  {
-    label: string;
-    variant: 'default' | 'secondary' | 'destructive' | 'outline';
-    className: string;
-    icon?: string;
-  }
-> = {
-  active: {
-    label: 'نشط',
-    variant: 'default',
-    className: 'bg-green-500/10 text-green-700 border-green-200 dark:text-green-400',
-    icon: '●',
-  },
-  completed: {
-    label: 'مكتمل',
-    variant: 'secondary',
-    className: 'bg-blue-500/10 text-blue-700 border-blue-200 dark:text-blue-400',
-    icon: '✓',
-  },
-  delayed: {
-    label: 'متأخر',
-    variant: 'destructive',
-    className: 'bg-red-500/10 text-red-700 border-red-200 dark:text-red-400',
-    icon: '⚠',
-  },
-  onHold: {
-    label: 'معلق',
-    variant: 'outline',
-    className: 'bg-yellow-500/10 text-yellow-700 border-yellow-200 dark:text-yellow-400',
-    icon: '⏸',
-  },
-  cancelled: {
-    label: 'ملغى',
-    variant: 'outline',
-    className: 'bg-gray-500/10 text-gray-700 border-gray-200 dark:text-gray-400',
-    icon: '✕',
-  },
-  planning: {
-    label: 'تخطيط',
-    variant: 'outline',
-    className: 'bg-purple-500/10 text-purple-700 border-purple-200 dark:text-purple-400',
-    icon: '📋',
-  },
-};
+type KnownStatus = Status | 'in_progress' | 'on_hold' | 'archived' | 'draft' | 'pending'
+
+interface StatusMeta {
+  label: string
+  icon?: string
+}
+
+const STATUS_METADATA: Record<KnownStatus, StatusMeta> = {
+  active: { label: 'نشط', icon: '●' },
+  completed: { label: 'مكتمل', icon: '✓' },
+  delayed: { label: 'متأخر', icon: '⚠' },
+  paused: { label: 'معلق', icon: '⏸' },
+  planning: { label: 'تخطيط', icon: '📋' },
+  cancelled: { label: 'ملغى', icon: '✕' },
+  in_progress: { label: 'قيد التنفيذ', icon: '⚙' },
+  on_hold: { label: 'قيد الانتظار', icon: '⏳' },
+  archived: { label: 'مؤرشف', icon: '🗂' },
+  draft: { label: 'مسودة', icon: '✎' },
+  pending: { label: 'قيد المراجعة', icon: '⏱' },
+}
 
 /**
  * Size class mapping
@@ -73,57 +48,75 @@ const sizeClasses = {
   sm: 'text-xs px-2 py-0.5',
   md: 'text-sm px-2.5 py-1',
   lg: 'text-base px-3 py-1.5',
-};
+}
+
+const normalizeStatus = (status: string | Status): string => {
+  const raw = status?.toString().trim() || 'planning'
+  return raw
+    .replace(/([a-z])([A-Z])/g, '$1_$2')
+    .replace(/[-\s]+/g, '_')
+    .toLowerCase()
+}
+
+const getMetadata = (status: string | Status): StatusMeta => {
+  const normalized = normalizeStatus(status) as KnownStatus
+  return STATUS_METADATA[normalized] ?? { label: normalized }
+}
+
+const getBadgeTestId = (status: string | Status): string =>
+  normalizeStatus(status).replace(/_+/g, '-')
 
 /**
  * ProjectStatusBadge Component
- * 
+ *
  * Displays a styled badge for project status with color-coded variants.
  * Supports icons and multiple sizes.
- * 
- * @example
- * ```tsx
- * <ProjectStatusBadge status="active" showIcon size="md" />
- * <ProjectStatusBadge status="delayed" />
- * ```
  */
-export const ProjectStatusBadge: React.FC<ProjectStatusBadgeProps> = ({
-  status,
-  showIcon = false,
-  className = '',
-  size = 'md',
-}) => {
-  const config = statusConfig[status] || statusConfig.planning;
-  const sizeClass = sizeClasses[size];
+export const ProjectStatusBadge: React.FC<ProjectStatusBadgeProps> = memo(
+  ({ status, showIcon = false, className = '', size = 'md', subtle = false }) => {
+    const normalizedStatus = normalizeStatus(status)
+    const { label, icon } = getMetadata(normalizedStatus)
+    const toneClasses = subtle ? 'text-muted-foreground' : getStatusColor(normalizedStatus)
+    const sizeClass = sizeClasses[size]
 
-  return (
-    <Badge
-      variant={config.variant}
-      className={`${config.className} ${sizeClass} ${className} border font-medium`}
-      data-testid={`status-badge-${status}`}
-    >
-      {showIcon && config.icon && (
-        <span className="mr-1" aria-hidden="true">
-          {config.icon}
-        </span>
-      )}
-      <span>{config.label}</span>
-    </Badge>
-  );
-};
+    return (
+      <Badge
+        variant="outline"
+        className={cn(
+          'border font-medium capitalize tracking-tight transition-colors duration-150',
+          toneClasses,
+          sizeClass,
+          showIcon ? 'pl-2.5 pr-3' : 'px-2.5',
+          className,
+        )}
+        data-testid={`status-badge-${getBadgeTestId(normalizedStatus)}`}
+        aria-label={`حالة المشروع: ${label}`}
+      >
+        {showIcon && icon && (
+          <span className="mr-1" aria-hidden="true">
+            {icon}
+          </span>
+        )}
+        <span>{label}</span>
+      </Badge>
+    )
+  },
+)
+
+ProjectStatusBadge.displayName = 'ProjectStatusBadge'
 
 /**
  * Get status label for display
  */
-export const getStatusLabel = (status: ProjectStatus): string => {
-  return statusConfig[status]?.label || status;
-};
+export const getStatusLabel = (status: Status | string): string => {
+  return getMetadata(status).label
+}
 
 /**
  * Get status color class
  */
-export const getStatusColorClass = (status: ProjectStatus): string => {
-  return statusConfig[status]?.className || statusConfig.planning.className;
-};
+export const getStatusColorClass = (status: Status | string): string => {
+  return getStatusColor(normalizeStatus(status))
+}
 
-export default ProjectStatusBadge;
+export default ProjectStatusBadge
