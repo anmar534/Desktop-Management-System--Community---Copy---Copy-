@@ -3,7 +3,7 @@
  * مكون معالج إنشاء المشاريع من المناقصات
  */
 
-import type React from 'react';
+import type React from 'react'
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
@@ -15,23 +15,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox'
 import { Progress } from '../ui/progress'
 import { Separator } from '../ui/separator'
-import { 
-  ArrowRight, 
-  ArrowLeft, 
-  Check, 
-  FileText, 
-  DollarSign, 
-  Calendar, 
-  Users, 
+import {
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  FileText,
+  DollarSign,
+  Calendar,
+  Users,
   Target,
   AlertTriangle,
   CheckCircle,
   Copy,
-  Download
+  Download,
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
-// import { zodResolver } from '@hookform/resolvers/zod'
-// import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { enhancedProjectService } from '@/services/enhancedProjectService'
 import type { CreateProjectRequest } from '../../types/projects'
 import { toast } from 'sonner'
@@ -80,29 +80,29 @@ const wizardSchema = z.object({
   name: z.string().min(1, 'اسم المشروع مطلوب'),
   nameEn: z.string().optional(),
   description: z.string().min(1, 'وصف المشروع مطلوب'),
-  
+
   // التواريخ
   startDate: z.date({ required_error: 'تاريخ البداية مطلوب' }),
   endDate: z.date({ required_error: 'تاريخ النهاية مطلوب' }),
-  
+
   // الميزانية
   totalBudget: z.number().min(1, 'الميزانية الإجمالية مطلوبة'),
   contingencyPercentage: z.number().min(0).max(100).default(10),
-  
+
   // الفريق
   projectManager: z.string().min(1, 'مدير المشروع مطلوب'),
   teamMembers: z.array(z.string()).default([]),
-  
+
   // الإعدادات
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
   category: z.string().min(1, 'فئة المشروع مطلوبة'),
   tags: z.array(z.string()).default([]),
-  
+
   // خيارات التكامل
   importBoq: z.boolean().default(true),
   createTasks: z.boolean().default(true),
   setupMilestones: z.boolean().default(true),
-  enableTracking: z.boolean().default(true)
+  enableTracking: z.boolean().default(true),
 })
 
 type WizardFormData = z.infer<typeof wizardSchema>
@@ -111,7 +111,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
   tenderId,
   onComplete,
   onCancel,
-  className = ''
+  className = '',
 }) => {
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -130,8 +130,8 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
       setupMilestones: true,
       enableTracking: true,
       teamMembers: [],
-      tags: []
-    }
+      tags: [],
+    },
   })
 
   useEffect(() => {
@@ -164,7 +164,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
             unit: 'م3',
             unitPrice: 150,
             totalPrice: 150000,
-            category: 'earthwork'
+            category: 'earthwork',
           },
           {
             id: '2',
@@ -173,7 +173,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
             unit: 'م3',
             unitPrice: 800,
             totalPrice: 2000000,
-            category: 'concrete'
+            category: 'concrete',
           },
           {
             id: '3',
@@ -182,47 +182,47 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
             unit: 'م2',
             unitPrice: 400,
             totalPrice: 2000000,
-            category: 'masonry'
-          }
+            category: 'masonry',
+          },
         ],
         requirements: [
           'الحصول على تراخيص البناء',
           'تطبيق معايير السلامة والأمان',
           'استخدام مواد بناء عالية الجودة',
-          'الالتزام بالمواصفات البيئية'
+          'الالتزام بالمواصفات البيئية',
         ],
         deliverables: [
           'المخططات التنفيذية المعتمدة',
           'تقارير الجودة والسلامة',
           'شهادات الإنجاز والتسليم',
-          'دليل الصيانة والتشغيل'
+          'دليل الصيانة والتشغيل',
         ],
         timeline: [
           {
             phase: 'التخطيط والتصميم',
             duration: 60,
-            dependencies: []
+            dependencies: [],
           },
           {
             phase: 'أعمال الحفر والأساسات',
             duration: 90,
-            dependencies: ['التخطيط والتصميم']
+            dependencies: ['التخطيط والتصميم'],
           },
           {
             phase: 'الهيكل الإنشائي',
             duration: 180,
-            dependencies: ['أعمال الحفر والأساسات']
+            dependencies: ['أعمال الحفر والأساسات'],
           },
           {
             phase: 'التشطيبات والمرافق',
             duration: 120,
-            dependencies: ['الهيكل الإنشائي']
-          }
-        ]
+            dependencies: ['الهيكل الإنشائي'],
+          },
+        ],
       }
 
       setTenderData(mockTender)
-      
+
       // تعبئة النموذج ببيانات المناقصة
       form.setValue('name', mockTender.title)
       form.setValue('nameEn', mockTender.titleEn)
@@ -231,7 +231,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
       form.setValue('endDate', new Date(mockTender.endDate))
       form.setValue('totalBudget', mockTender.value)
       form.setValue('category', mockTender.category)
-      
     } catch (error) {
       console.error('خطأ في تحميل بيانات المناقصة:', error)
       toast.error('فشل في تحميل بيانات المناقصة')
@@ -271,55 +270,62 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
           spent: 0,
           remaining: data.totalBudget,
           contingency: (data.totalBudget * data.contingencyPercentage) / 100,
-          currency: tenderData?.currency || 'SAR'
+          currency: tenderData?.currency || 'SAR',
         },
         team: {
           projectManager: data.projectManager,
-          members: data.teamMembers.map(id => ({
+          members: data.teamMembers.map((id) => ({
             id,
             name: `عضو ${id}`,
             role: 'team_member',
-            email: `member${id}@company.com`
-          }))
+            email: `member${id}@company.com`,
+          })),
         },
-        phases: tenderData?.timeline.map(phase => ({
-          id: Date.now().toString() + Math.random().toString(36).substr(2),
-          name: phase.phase,
-          description: `مرحلة ${phase.phase}`,
-          startDate: data.startDate.toISOString(),
-          endDate: new Date(data.startDate.getTime() + phase.duration * 24 * 60 * 60 * 1000).toISOString(),
-          status: 'planned',
-          progress: 0,
-          budget: data.totalBudget / (tenderData?.timeline.length || 1),
-          deliverables: [],
-          dependencies: phase.dependencies
-        })) || [],
-        milestones: data.setupMilestones ? [
-          {
-            id: '1',
-            title: 'بداية المشروع',
-            description: 'نقطة انطلاق المشروع',
-            targetDate: data.startDate.toISOString(),
-            status: 'pending',
-            progress: 0
-          },
-          {
-            id: '2',
-            title: 'منتصف المشروع',
-            description: 'مراجعة منتصف المشروع',
-            targetDate: new Date((data.startDate.getTime() + data.endDate.getTime()) / 2).toISOString(),
-            status: 'pending',
-            progress: 0
-          },
-          {
-            id: '3',
-            title: 'إنهاء المشروع',
-            description: 'تسليم المشروع النهائي',
-            targetDate: data.endDate.toISOString(),
-            status: 'pending',
-            progress: 0
-          }
-        ] : [],
+        phases:
+          tenderData?.timeline.map((phase) => ({
+            id: Date.now().toString() + Math.random().toString(36).substr(2),
+            name: phase.phase,
+            description: `مرحلة ${phase.phase}`,
+            startDate: data.startDate.toISOString(),
+            endDate: new Date(
+              data.startDate.getTime() + phase.duration * 24 * 60 * 60 * 1000,
+            ).toISOString(),
+            status: 'planned',
+            progress: 0,
+            budget: data.totalBudget / (tenderData?.timeline.length || 1),
+            deliverables: [],
+            dependencies: phase.dependencies,
+          })) || [],
+        milestones: data.setupMilestones
+          ? [
+              {
+                id: '1',
+                title: 'بداية المشروع',
+                description: 'نقطة انطلاق المشروع',
+                targetDate: data.startDate.toISOString(),
+                status: 'pending',
+                progress: 0,
+              },
+              {
+                id: '2',
+                title: 'منتصف المشروع',
+                description: 'مراجعة منتصف المشروع',
+                targetDate: new Date(
+                  (data.startDate.getTime() + data.endDate.getTime()) / 2,
+                ).toISOString(),
+                status: 'pending',
+                progress: 0,
+              },
+              {
+                id: '3',
+                title: 'إنهاء المشروع',
+                description: 'تسليم المشروع النهائي',
+                targetDate: data.endDate.toISOString(),
+                status: 'pending',
+                progress: 0,
+              },
+            ]
+          : [],
         risks: [
           {
             id: '1',
@@ -328,8 +334,8 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
             probability: 'medium',
             impact: 'high',
             status: 'active',
-            mitigation: 'التقديم المبكر للتراخيص ومتابعة الجهات المختصة'
-          }
+            mitigation: 'التقديم المبكر للتراخيص ومتابعة الجهات المختصة',
+          },
         ],
         metadata: {
           tenderId: tenderId,
@@ -337,19 +343,18 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
           boqImported: data.importBoq,
           tasksCreated: data.createTasks,
           milestonesSetup: data.setupMilestones,
-          trackingEnabled: data.enableTracking
-        }
+          trackingEnabled: data.enableTracking,
+        },
       }
 
       // إنشاء المشروع
       const project = await enhancedProjectService.createProject(projectRequest)
       setCreatedProjectId(project.id)
-      
+
       // الانتقال للخطوة الأخيرة
       setCurrentStep(totalSteps)
-      
+
       toast.success('تم إنشاء المشروع بنجاح!')
-      
     } catch (error) {
       console.error('خطأ في إنشاء المشروع:', error)
       toast.error('فشل في إنشاء المشروع')
@@ -362,33 +367,45 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
     return new Intl.NumberFormat('ar-SA', {
       style: 'currency',
       currency: 'SAR',
-      minimumFractionDigits: 0
+      minimumFractionDigits: 0,
     }).format(amount)
   }
 
   const getStepTitle = (step: number) => {
     switch (step) {
-      case 1: return 'معلومات المناقصة'
-      case 2: return 'تفاصيل المشروع'
-      case 3: return 'الميزانية والجدولة'
-      case 4: return 'الفريق والإعدادات'
-      case 5: return 'المراجعة والإنشاء'
-      default: return ''
+      case 1:
+        return 'معلومات المناقصة'
+      case 2:
+        return 'تفاصيل المشروع'
+      case 3:
+        return 'الميزانية والجدولة'
+      case 4:
+        return 'الفريق والإعدادات'
+      case 5:
+        return 'المراجعة والإنشاء'
+      default:
+        return ''
     }
   }
 
   const StepIndicator: React.FC<{ step: number; isActive: boolean; isCompleted: boolean }> = ({
     step,
     isActive,
-    isCompleted
+    isCompleted,
   }) => (
     <div className="flex items-center">
-      <div className={`
+      <div
+        className={`
         w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-        ${isCompleted ? 'bg-green-500 text-white' : 
-          isActive ? 'bg-primary text-primary-foreground' : 
-          'bg-muted text-muted-foreground'}
-      `}>
+        ${
+          isCompleted
+            ? 'bg-green-500 text-white'
+            : isActive
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-muted-foreground'
+        }
+      `}
+      >
         {isCompleted ? <Check className="w-4 h-4" /> : step}
       </div>
       <div className="mr-3">
@@ -410,9 +427,9 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
               الخطوة {currentStep} من {totalSteps}
             </Badge>
           </div>
-          
+
           <Progress value={(currentStep / totalSteps) * 100} className="mb-4" />
-          
+
           <div className="flex items-center justify-between">
             {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
               <StepIndicator
@@ -456,22 +473,27 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                   <p className="text-sm font-medium">{tenderData.location}</p>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div>
                 <Label>وصف المناقصة</Label>
                 <p className="text-sm text-muted-foreground">{tenderData.description}</p>
               </div>
-              
+
               {tenderData.boq.length > 0 && (
                 <div>
                   <Label>جدول الكميات (BOQ)</Label>
                   <div className="mt-2 space-y-2">
                     {tenderData.boq.slice(0, 3).map((item) => (
-                      <div key={item.id} className="flex justify-between items-center p-2 bg-muted rounded">
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-center p-2 bg-muted rounded"
+                      >
                         <span className="text-sm">{item.description}</span>
-                        <span className="text-sm font-medium">{formatCurrency(item.totalPrice)}</span>
+                        <span className="text-sm font-medium">
+                          {formatCurrency(item.totalPrice)}
+                        </span>
                       </div>
                     ))}
                     {tenderData.boq.length > 3 && (
@@ -499,16 +521,12 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="name">اسم المشروع *</Label>
-                  <Input
-                    id="name"
-                    {...form.register('name')}
-                    placeholder="أدخل اسم المشروع"
-                  />
+                  <Input id="name" {...form.register('name')} placeholder="أدخل اسم المشروع" />
                   {form.formState.errors.name && (
                     <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <Label htmlFor="nameEn">الاسم بالإنجليزية</Label>
                   <Input
@@ -518,7 +536,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                   />
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="description">وصف المشروع *</Label>
                 <Textarea
@@ -528,10 +546,12 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                   rows={4}
                 />
                 {form.formState.errors.description && (
-                  <p className="text-sm text-red-500">{form.formState.errors.description.message}</p>
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.description.message}
+                  </p>
                 )}
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="priority">الأولوية</Label>
@@ -547,7 +567,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="category">فئة المشروع *</Label>
                   <Select onValueChange={(value) => form.setValue('category', value)}>
@@ -589,10 +609,12 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                     {...form.register('startDate', { valueAsDate: true })}
                   />
                   {form.formState.errors.startDate && (
-                    <p className="text-sm text-red-500">{form.formState.errors.startDate.message}</p>
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.startDate.message}
+                    </p>
                   )}
                 </div>
-                
+
                 <div>
                   <Label htmlFor="endDate">تاريخ النهاية *</Label>
                   <Input
@@ -605,7 +627,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                   )}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="totalBudget">الميزانية الإجمالية *</Label>
@@ -616,10 +638,12 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                     placeholder="0"
                   />
                   {form.formState.errors.totalBudget && (
-                    <p className="text-sm text-red-500">{form.formState.errors.totalBudget.message}</p>
+                    <p className="text-sm text-red-500">
+                      {form.formState.errors.totalBudget.message}
+                    </p>
                   )}
                 </div>
-                
+
                 <div>
                   <Label htmlFor="contingencyPercentage">نسبة الطوارئ (%)</Label>
                   <Input
@@ -632,7 +656,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                   />
                 </div>
               </div>
-              
+
               {tenderData && (
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <h4 className="font-medium mb-2">ملخص الميزانية</h4>
@@ -644,7 +668,11 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                     <div>
                       <span>ميزانية الطوارئ:</span>
                       <span className="font-medium mr-2">
-                        {formatCurrency((form.watch('totalBudget') || 0) * (form.watch('contingencyPercentage') || 0) / 100)}
+                        {formatCurrency(
+                          ((form.watch('totalBudget') || 0) *
+                            (form.watch('contingencyPercentage') || 0)) /
+                            100,
+                        )}
                       </span>
                     </div>
                   </div>
@@ -677,12 +705,14 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                   </SelectContent>
                 </Select>
                 {form.formState.errors.projectManager && (
-                  <p className="text-sm text-red-500">{form.formState.errors.projectManager.message}</p>
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.projectManager.message}
+                  </p>
                 )}
               </div>
-              
+
               <Separator />
-              
+
               <div>
                 <h4 className="font-medium mb-3">خيارات التكامل</h4>
                 <div className="space-y-3">
@@ -696,7 +726,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                       استيراد جدول الكميات من المناقصة
                     </Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="createTasks"
@@ -707,7 +737,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                       إنشاء المهام تلقائياً من المراحل
                     </Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="setupMilestones"
@@ -718,7 +748,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                       إعداد المعالم الرئيسية
                     </Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="enableTracking"
@@ -757,9 +787,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                     تم إنشاء المشروع وربطه بالمناقصة. يمكنك الآن البدء في إدارة المشروع.
                   </p>
                   <div className="flex justify-center gap-2">
-                    <Button onClick={() => onComplete?.(createdProjectId)}>
-                      عرض المشروع
-                    </Button>
+                    <Button onClick={() => onComplete?.(createdProjectId)}>عرض المشروع</Button>
                     <Button variant="outline" onClick={() => window.location.reload()}>
                       إنشاء مشروع آخر
                     </Button>
@@ -776,7 +804,9 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                       </div>
                       <div>
                         <span>الميزانية:</span>
-                        <span className="font-medium mr-2">{formatCurrency(form.watch('totalBudget') || 0)}</span>
+                        <span className="font-medium mr-2">
+                          {formatCurrency(form.watch('totalBudget') || 0)}
+                        </span>
                       </div>
                       <div>
                         <span>تاريخ البداية:</span>
@@ -792,7 +822,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <AlertTriangle className="w-4 h-4" />
                     تأكد من صحة جميع البيانات قبل إنشاء المشروع
@@ -815,7 +845,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
               <ArrowLeft className="w-4 h-4 mr-2" />
               {currentStep === 1 ? 'إلغاء' : 'السابق'}
             </Button>
-            
+
             {currentStep < totalSteps ? (
               <Button type="button" onClick={nextStep} disabled={loading}>
                 التالي
@@ -834,5 +864,3 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
 }
 
 export default ProjectCreationWizard
-
-

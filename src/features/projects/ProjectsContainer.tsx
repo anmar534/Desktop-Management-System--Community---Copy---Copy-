@@ -1,4 +1,4 @@
-import ProjectsView, { type ProjectsViewProps } from '@/presentation/components/Projects'
+import ProjectsView, { type ProjectsViewProps } from '@/presentation/components/projects'
 import { useFinancialState } from '@/application/context'
 
 interface ProjectsContainerProps {
@@ -7,11 +7,7 @@ interface ProjectsContainerProps {
 
 export function ProjectsContainer({ onSectionChange }: ProjectsContainerProps) {
   const { projects: projectsState } = useFinancialState()
-  const {
-    projects,
-    deleteProject,
-    updateProject,
-  } = projectsState
+  const { projects, deleteProject, updateProject } = projectsState
 
   return (
     <ProjectsView
@@ -24,4 +20,3 @@ export function ProjectsContainer({ onSectionChange }: ProjectsContainerProps) {
 }
 
 export default ProjectsContainer
-

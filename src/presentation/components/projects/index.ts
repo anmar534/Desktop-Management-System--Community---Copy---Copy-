@@ -5,11 +5,14 @@
 
 export { default as ProjectsManager } from './ProjectsManager'
 export { default as ProjectsList } from './ProjectsList'
-export { default as ProjectDetails } from './ProjectDetails'
+// export { default as ProjectDetails } from './ProjectDetails' // TODO: Create this component
 export { default as ProjectForm } from './ProjectForm'
 
 // Default export - Using enhanced ProjectsView from pages
-export { ProjectsView as default } from '@/presentation/pages/Projects/ProjectsPage'
+export {
+  ProjectsView as default,
+  type ProjectsViewProps,
+} from '@/presentation/pages/Projects/ProjectsPage'
 
 // Re-export types for convenience
 export type {
