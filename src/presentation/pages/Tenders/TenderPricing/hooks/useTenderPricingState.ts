@@ -1,0 +1,74 @@
+import { useCallback, useState } from 'react'
+
+import type { PricingViewName } from '@/presentation/pages/Tenders/TenderPricing/types'
+import { isPricingViewName } from '@/presentation/pages/Tenders/TenderPricing/types'
+
+export type PricingView = PricingViewName
+
+interface UseTenderPricingStateOptions {
+  isDirty: boolean
+  onBack: () => void
+  tenderId?: string | number
+}
+
+export interface TenderPricingState {
+  currentItemIndex: number
+  setCurrentItemIndex: (index: number) => void
+  currentView: PricingView
+  changeView: (value: string) => void
+  markDirty: () => void
+  isLeaveDialogOpen: boolean
+  requestLeave: () => void
+  cancelLeaveRequest: () => void
+  confirmLeave: () => void
+}
+
+export const useTenderPricingState = ({
+  isDirty,
+  onBack,
+}: UseTenderPricingStateOptions): TenderPricingState => {
+  const [currentItemIndex, setCurrentItemIndex] = useState(0)
+  const [currentView, setCurrentView] = useState<PricingView>('summary')
+  const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false)
+
+  // markDirty is now handled by the Zustand store's markDirty() function
+  const markDirty = useCallback(() => {
+    // No-op: TenderPricingPage uses store's markDirty directly
+  }, [])
+
+  const changeView = useCallback((value: string) => {
+    if (isPricingViewName(value)) {
+      setCurrentView(value)
+    }
+  }, [])
+
+  const cancelLeaveRequest = useCallback(() => {
+    setIsLeaveDialogOpen(false)
+  }, [])
+
+  const confirmLeave = useCallback(() => {
+    setIsLeaveDialogOpen(false)
+    onBack()
+  }, [onBack])
+
+  const requestLeave = useCallback(() => {
+    if (isDirty) {
+      setIsLeaveDialogOpen(true)
+      return
+    }
+
+    onBack()
+  }, [isDirty, onBack])
+
+  return {
+    currentItemIndex,
+    setCurrentItemIndex,
+    currentView,
+    changeView,
+    markDirty,
+    isLeaveDialogOpen,
+    requestLeave,
+    cancelLeaveRequest,
+    confirmLeave,
+  }
+}

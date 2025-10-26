@@ -4,10 +4,14 @@
  * واستخدامه في كل من TenderPricingProcess و TenderDetails لضمان مصدر واحد للحقيقة.
  */
 import type { DefaultPercentages } from './pricingService'
-import { buildPricingMap } from '@/utils/normalizePricing'
-import type { NormalizedPricingItem } from '@/utils/normalizePricing'
-import type { PricingItemInput, PricingResource, RawPricingInput } from '@/utils/pricingHelpers'
-import { getPricingConfig } from '@/utils/pricingConstants'
+import { buildPricingMap } from '@/shared/utils/pricing/normalizePricing'
+import type { NormalizedPricingItem } from '@/shared/utils/pricing/normalizePricing'
+import type {
+  PricingItemInput,
+  PricingResource,
+  RawPricingInput,
+} from '@/shared/utils/pricing/pricingHelpers'
+import { getPricingConfig } from '@/shared/constants/pricingConstants'
 
 export interface ItemBreakdown {
   materials: number
@@ -45,12 +49,13 @@ const resolveFallback = (fallback?: DefaultPercentages): DefaultPercentages =>
 
 export function getEffectivePercentages(
   entry: PercentageCarrier | undefined,
-  fallback?: DefaultPercentages
+  fallback?: DefaultPercentages,
 ): DefaultPercentages {
   const base = resolveFallback(fallback)
   const source = entry?.additionalPercentages ?? entry?.defaultPercentages ?? {}
   return {
-    administrative: typeof source.administrative === 'number' ? source.administrative : base.administrative,
+    administrative:
+      typeof source.administrative === 'number' ? source.administrative : base.administrative,
     operational: typeof source.operational === 'number' ? source.operational : base.operational,
     profit: typeof source.profit === 'number' ? source.profit : base.profit,
   }
@@ -71,7 +76,10 @@ const sumResourceTotals = (resources: PricingResource[] | undefined): number => 
   }, 0)
 }
 
-export function computeBreakdown(entry: NormalizedPricingItem, percentages: DefaultPercentages): ItemBreakdown {
+export function computeBreakdown(
+  entry: NormalizedPricingItem,
+  percentages: DefaultPercentages,
+): ItemBreakdown {
   const materials = sumResourceTotals(entry.materials)
   const labor = sumResourceTotals(entry.labor)
   const equipment = sumResourceTotals(entry.equipment)
@@ -81,13 +89,23 @@ export function computeBreakdown(entry: NormalizedPricingItem, percentages: Defa
   const operational = subtotal * (percentages.operational / 100)
   const profit = subtotal * (percentages.profit / 100)
   const total = subtotal + administrative + operational + profit
-  return { materials, labor, equipment, subcontractors, administrative, operational, profit, subtotal, total }
+  return {
+    materials,
+    labor,
+    equipment,
+    subcontractors,
+    administrative,
+    operational,
+    profit,
+    subtotal,
+    total,
+  }
 }
 
 export function enrichPricingItems(
   rawPricing: RawPricingInput,
   originalItems: PricingItemInput[],
-  defaults?: DefaultPercentages
+  defaults?: DefaultPercentages,
 ): EnrichedPricingItem[] {
   type PricingMapSource = Parameters<typeof buildPricingMap>[0]
   const pricingMap = buildPricingMap(rawPricing as PricingMapSource)
@@ -111,7 +129,7 @@ export function enrichPricingItems(
   const deriveBetterDescription = (
     entry: NormalizedPricingItem | undefined,
     original: PricingItemInput,
-    fallbackIdx: number
+    fallbackIdx: number,
   ): string => {
     if (entry && !isPlaceholderDescription(entry.description)) return entry.description
     // try richer fields from original
@@ -128,7 +146,7 @@ export function enrichPricingItems(
   }
   const deriveBetterUnit = (
     entry: NormalizedPricingItem | undefined,
-    original: PricingItemInput
+    original: PricingItemInput,
   ): string => {
     if (entry && !isWeakUnit(entry.unit)) return entry.unit
     const candidate = original.unit ?? (original as Record<string, unknown>).uom
@@ -150,18 +168,25 @@ export function enrichPricingItems(
         equipment: [],
         subcontractors: [],
         breakdown: {
-          materials: 0, labor: 0, equipment: 0, subcontractors: 0,
-          administrative: 0, operational: 0, profit: 0, subtotal: 0, total: 0
+          materials: 0,
+          labor: 0,
+          equipment: 0,
+          subcontractors: 0,
+          administrative: 0,
+          operational: 0,
+          profit: 0,
+          subtotal: 0,
+          total: 0,
         },
         adminPercentage: effectiveDefaults.administrative,
         operationalPercentage: effectiveDefaults.operational,
         profitPercentage: effectiveDefaults.profit,
         isPriced: false,
-        itemNumber: original.itemNumber ?? String(idx).padStart(2,'0'),
+        itemNumber: original.itemNumber ?? String(idx).padStart(2, '0'),
         additionalPercentages: { ...effectiveDefaults },
         totalPrice: 0,
         finalPrice: 0,
-        __raw: original
+        __raw: original,
       }
       result.push(fallbackItem)
       continue
@@ -179,7 +204,7 @@ export function enrichPricingItems(
       description: patchedDescription,
       unit: patchedUnit,
       quantity,
-      itemNumber: original.itemNumber ?? String(idx).padStart(2,'0'),
+      itemNumber: original.itemNumber ?? String(idx).padStart(2, '0'),
       unitPrice: +unitPrice.toFixed(2),
       totalPrice: +(unitPrice * quantity).toFixed(2),
       breakdown,
@@ -191,20 +216,22 @@ export function enrichPricingItems(
       labor: entry.labor ?? [],
       equipment: entry.equipment ?? [],
       subcontractors: entry.subcontractors ?? [],
-      finalPrice: +(unitPrice * quantity).toFixed(2)
+      finalPrice: +(unitPrice * quantity).toFixed(2),
     }
     result.push(enrichedItem)
   }
   // عناصر ليس لها أصل في الجدول الأصلي
   for (const [id, entry] of pricingMap.entries()) {
-    if (result.find(r => r.id === id)) continue
+    if (result.find((r) => r.id === id)) continue
     idx++
     const percentages = getEffectivePercentages(entry, effectiveDefaults)
     const breakdown = computeBreakdown(entry, percentages)
     const quantity = entry.quantity ?? 0
     const unitPrice = breakdown.total
-    const patchedDescription = isPlaceholderDescription(entry.description) ? (entry.description || `البند ${idx}`) : entry.description
-    const patchedUnit = isWeakUnit(entry.unit) ? (entry.unit || 'وحدة') : entry.unit
+    const patchedDescription = isPlaceholderDescription(entry.description)
+      ? entry.description || `البند ${idx}`
+      : entry.description
+    const patchedUnit = isWeakUnit(entry.unit) ? entry.unit || 'وحدة' : entry.unit
     const enrichedOrphan: EnrichedPricingItem = {
       ...entry,
       description: patchedDescription,
@@ -222,7 +249,7 @@ export function enrichPricingItems(
       labor: entry.labor ?? [],
       equipment: entry.equipment ?? [],
       subcontractors: entry.subcontractors ?? [],
-      finalPrice: +(unitPrice * quantity).toFixed(2)
+      finalPrice: +(unitPrice * quantity).toFixed(2),
     }
     result.push(enrichedOrphan)
   }
@@ -238,12 +265,19 @@ export function aggregateTotals(items: EnrichedPricingItem[]) {
     totalWithVat: +(totalValue * (1 + cfg.vatRate)).toFixed(2),
     profit: items.reduce((s, it) => s + (it.breakdown?.profit || 0), 0),
     administrative: items.reduce((s, it) => s + (it.breakdown?.administrative || 0), 0),
-    operational: items.reduce((s, it) => s + (it.breakdown?.operational || 0), 0)
+    operational: items.reduce((s, it) => s + (it.breakdown?.operational || 0), 0),
   }
   const adminOperational = totals.administrative + totals.operational
-  const profitPercentage = totalValue > 0 ? +( (totals.profit / totalValue) * 100 ).toFixed(4) : 0
-  const adminOperationalPercentage = totalValue > 0 ? +( (adminOperational / totalValue) * 100 ).toFixed(4) : 0
-  return { ...totals, adminOperational, vatRate: cfg.vatRate, profitPercentage, adminOperationalPercentage }
+  const profitPercentage = totalValue > 0 ? +((totals.profit / totalValue) * 100).toFixed(4) : 0
+  const adminOperationalPercentage =
+    totalValue > 0 ? +((adminOperational / totalValue) * 100).toFixed(4) : 0
+  return {
+    ...totals,
+    adminOperational,
+    vatRate: cfg.vatRate,
+    profitPercentage,
+    adminOperationalPercentage,
+  }
 }
 
 // Export a version tag to help tests ensure latest engine logic loaded

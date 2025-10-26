@@ -3,13 +3,7 @@
  * Sprint 5.3: تطوير APIs للتكامل الخارجي
  */
 
-import type { 
-  ApiResponse, 
-  ApiRequest, 
-  ApiError,
-  AuthToken,
-  RateLimitInfo 
-} from './types'
+import type { ApiResponse, ApiRequest, ApiError, AuthToken, RateLimitInfo } from './types'
 import { API_CONFIG, API_ERROR_CODES } from './config'
 
 // ============================================================================
@@ -21,7 +15,7 @@ export class ApiClient {
   private token: string | null = null
   private rateLimitInfo: RateLimitInfo | null = null
 
-  constructor(baseUrl: string = '') {
+  constructor(baseUrl = '') {
     this.baseUrl = baseUrl || API_CONFIG.basePath
   }
 
@@ -71,15 +65,27 @@ export class ApiClient {
     return this.request<T>('GET', path, options)
   }
 
-  async post<T>(path: string, data?: unknown, options?: Partial<ApiRequest>): Promise<ApiResponse<T>> {
+  async post<T>(
+    path: string,
+    data?: unknown,
+    options?: Partial<ApiRequest>,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>('POST', path, { ...options, body: data })
   }
 
-  async put<T>(path: string, data?: unknown, options?: Partial<ApiRequest>): Promise<ApiResponse<T>> {
+  async put<T>(
+    path: string,
+    data?: unknown,
+    options?: Partial<ApiRequest>,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>('PUT', path, { ...options, body: data })
   }
 
-  async patch<T>(path: string, data?: unknown, options?: Partial<ApiRequest>): Promise<ApiResponse<T>> {
+  async patch<T>(
+    path: string,
+    data?: unknown,
+    options?: Partial<ApiRequest>,
+  ): Promise<ApiResponse<T>> {
     return this.request<T>('PATCH', path, { ...options, body: data })
   }
 
@@ -94,7 +100,7 @@ export class ApiClient {
   private async request<T>(
     method: string,
     path: string,
-    options?: Partial<ApiRequest>
+    options?: Partial<ApiRequest>,
   ): Promise<ApiResponse<T>> {
     const url = this.buildUrl(path, options?.query)
     const headers = this.buildHeaders(options?.headers)
@@ -110,7 +116,7 @@ export class ApiClient {
 
     try {
       const response = await fetch(url, requestOptions)
-      
+
       // Update rate limit info from response headers
       this.updateRateLimitInfo(response.headers)
 
@@ -120,7 +126,7 @@ export class ApiClient {
       }
 
       const data = await response.json()
-      
+
       return {
         success: true,
         data: data as T,
@@ -142,7 +148,7 @@ export class ApiClient {
 
   private buildUrl(path: string, query?: Record<string, string | number | boolean>): string {
     const url = new URL(path, this.baseUrl)
-    
+
     if (query) {
       Object.entries(query).forEach(([key, value]) => {
         url.searchParams.append(key, String(value))
@@ -155,7 +161,7 @@ export class ApiClient {
   private buildHeaders(customHeaders?: Record<string, string>): Headers {
     const headers = new Headers({
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
       'Accept-Language': 'ar,en',
     })
 
@@ -273,7 +279,7 @@ export const apiClient = new ApiClient()
 
 export async function setAuthToken(token: AuthToken): Promise<void> {
   apiClient.setToken(token.accessToken)
-  
+
   // Store token in secure storage if available
   if (window.electronAPI?.secureStore) {
     await window.electronAPI.secureStore.set('auth_token', JSON.stringify(token))
@@ -282,7 +288,7 @@ export async function setAuthToken(token: AuthToken): Promise<void> {
 
 export async function clearAuthToken(): Promise<void> {
   apiClient.clearToken()
-  
+
   // Clear token from secure storage if available
   if (window.electronAPI?.secureStore) {
     await window.electronAPI.secureStore.delete('auth_token')
@@ -292,10 +298,9 @@ export async function clearAuthToken(): Promise<void> {
 export async function getStoredAuthToken(): Promise<AuthToken | null> {
   if (window.electronAPI?.secureStore) {
     const tokenStr = await window.electronAPI.secureStore.get('auth_token')
-    if (tokenStr) {
+    if (tokenStr && typeof tokenStr === 'string') {
       return JSON.parse(tokenStr) as AuthToken
     }
   }
   return null
 }
-

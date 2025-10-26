@@ -1,6 +1,10 @@
-import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
-import type { EntityRelationSnapshot, IRelationRepository, LinkTenderOptions } from '../relations.repository'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
+import type {
+  EntityRelationSnapshot,
+  IRelationRepository,
+  LinkTenderOptions,
+} from '../relations.repository'
 import type { ProjectPurchaseRelation, TenderProjectRelation } from '../types'
 
 const defaultSnapshot: EntityRelationSnapshot = {
@@ -8,21 +12,31 @@ const defaultSnapshot: EntityRelationSnapshot = {
   projectPurchase: [],
 }
 
-const createLink = (tenderId: string, projectId: string, options?: LinkTenderOptions): TenderProjectRelation => ({
+const createLink = (
+  tenderId: string,
+  projectId: string,
+  options?: LinkTenderOptions,
+): TenderProjectRelation => ({
   tenderId,
   projectId,
   createdAt: new Date().toISOString(),
   isAutoCreated: options?.isAutoCreated ?? false,
 })
 
-const createProjectPurchaseLink = (projectId: string, purchaseOrderId: string): ProjectPurchaseRelation => ({
+const createProjectPurchaseLink = (
+  projectId: string,
+  purchaseOrderId: string,
+): ProjectPurchaseRelation => ({
   projectId,
   purchaseOrderId,
   createdAt: new Date().toISOString(),
 })
 
 const readSnapshot = (): EntityRelationSnapshot => {
-  const snapshot = safeLocalStorage.getItem<EntityRelationSnapshot>(STORAGE_KEYS.RELATIONS, defaultSnapshot)
+  const snapshot = safeLocalStorage.getItem<EntityRelationSnapshot>(
+    STORAGE_KEYS.RELATIONS,
+    defaultSnapshot,
+  )
   if (!snapshot || typeof snapshot !== 'object') {
     return { ...defaultSnapshot }
   }
@@ -45,10 +59,14 @@ export class LocalRelationRepository implements IRelationRepository {
     writeSnapshot(snapshot)
   }
 
-  linkTenderToProject(tenderId: string, projectId: string, options?: LinkTenderOptions): TenderProjectRelation {
+  linkTenderToProject(
+    tenderId: string,
+    projectId: string,
+    options?: LinkTenderOptions,
+  ): TenderProjectRelation {
     const snapshot = readSnapshot()
     const existing = snapshot.tenderProject.find(
-      relation => relation.tenderId === tenderId && relation.projectId === projectId,
+      (relation) => relation.tenderId === tenderId && relation.projectId === projectId,
     )
 
     if (existing) {
@@ -63,7 +81,9 @@ export class LocalRelationRepository implements IRelationRepository {
 
   unlinkTender(tenderId: string): void {
     const snapshot = readSnapshot()
-    const nextRelations = snapshot.tenderProject.filter(relation => relation.tenderId !== tenderId)
+    const nextRelations = snapshot.tenderProject.filter(
+      (relation) => relation.tenderId !== tenderId,
+    )
     if (nextRelations.length === snapshot.tenderProject.length) {
       return
     }
@@ -73,8 +93,12 @@ export class LocalRelationRepository implements IRelationRepository {
 
   unlinkProject(projectId: string): void {
     const snapshot = readSnapshot()
-    const updatedTenderLinks = snapshot.tenderProject.filter(relation => relation.projectId !== projectId)
-    const updatedPurchaseLinks = snapshot.projectPurchase.filter(relation => relation.projectId !== projectId)
+    const updatedTenderLinks = snapshot.tenderProject.filter(
+      (relation) => relation.projectId !== projectId,
+    )
+    const updatedPurchaseLinks = snapshot.projectPurchase.filter(
+      (relation) => relation.projectId !== projectId,
+    )
     const changed =
       updatedTenderLinks.length !== snapshot.tenderProject.length ||
       updatedPurchaseLinks.length !== snapshot.projectPurchase.length
@@ -90,13 +114,13 @@ export class LocalRelationRepository implements IRelationRepository {
 
   getProjectIdByTenderId(tenderId: string): string | null {
     const snapshot = readSnapshot()
-    const relation = snapshot.tenderProject.find(link => link.tenderId === tenderId)
+    const relation = snapshot.tenderProject.find((link) => link.tenderId === tenderId)
     return relation?.projectId ?? null
   }
 
   getTenderIdByProjectId(projectId: string): string | null {
     const snapshot = readSnapshot()
-    const relation = snapshot.tenderProject.find(link => link.projectId === projectId)
+    const relation = snapshot.tenderProject.find((link) => link.projectId === projectId)
     return relation?.tenderId ?? null
   }
 
@@ -107,7 +131,8 @@ export class LocalRelationRepository implements IRelationRepository {
   linkProjectToPurchaseOrder(projectId: string, purchaseOrderId: string): ProjectPurchaseRelation {
     const snapshot = readSnapshot()
     const existing = snapshot.projectPurchase.find(
-      relation => relation.projectId === projectId && relation.purchaseOrderId === purchaseOrderId,
+      (relation) =>
+        relation.projectId === projectId && relation.purchaseOrderId === purchaseOrderId,
     )
 
     if (existing) {
@@ -122,7 +147,7 @@ export class LocalRelationRepository implements IRelationRepository {
 
   unlinkProjectPurchase(projectId: string, purchaseOrderId?: string): void {
     const snapshot = readSnapshot()
-    const nextRelations = snapshot.projectPurchase.filter(relation => {
+    const nextRelations = snapshot.projectPurchase.filter((relation) => {
       if (relation.projectId !== projectId) {
         return true
       }
@@ -140,8 +165,8 @@ export class LocalRelationRepository implements IRelationRepository {
   getPurchaseOrderIdsByProjectId(projectId: string): string[] {
     const snapshot = readSnapshot()
     return snapshot.projectPurchase
-      .filter(link => link.projectId === projectId)
-      .map(link => link.purchaseOrderId)
+      .filter((link) => link.projectId === projectId)
+      .map((link) => link.purchaseOrderId)
   }
 
   getAllProjectPurchaseLinks(): ProjectPurchaseRelation[] {

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { safeLocalStorage } from '@/utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import type { Tender } from '@/data/centralData'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 import { useRepository } from '@/application/services/RepositoryProvider'
@@ -15,7 +15,7 @@ import {
   type NavigationBreadcrumb,
   type NavigationNode,
   type NavigationPermission,
-  type NavigationQuickAction
+  type NavigationQuickAction,
 } from '@/application/navigation/navigationSchema'
 
 export type {
@@ -23,7 +23,7 @@ export type {
   NavigationBreadcrumb,
   NavigationNode,
   NavigationPermission,
-  NavigationQuickAction
+  NavigationQuickAction,
 } from '@/application/navigation/navigationSchema'
 
 const STORAGE_KEY = 'ui_active_section'
@@ -68,23 +68,32 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   const permissionSet = useMemo(() => new Set<NavigationPermission>(permissions), [permissions])
 
   const accessibleNodes = useMemo<NavigationNode[]>(() => {
-    const filtered = NAVIGATION_SCHEMA.filter(node => nodeAccessible(node, permissionSet))
+    const filtered = NAVIGATION_SCHEMA.filter((node) => nodeAccessible(node, permissionSet))
     if (filtered.length > 0) {
       return filtered
     }
-    const fallbackNode = NAVIGATION_SCHEMA.find(node => !node.requires) ?? NAVIGATION_SCHEMA[0]
+    const fallbackNode = NAVIGATION_SCHEMA.find((node) => !node.requires) ?? NAVIGATION_SCHEMA[0]
     return fallbackNode ? [fallbackNode] : []
   }, [permissionSet])
 
-  const orderedSections = useMemo(() => [...accessibleNodes].sort((a, b) => a.order - b.order), [accessibleNodes])
-  const accessibleSectionSet = useMemo(() => new Set<AppSection>(orderedSections.map(node => node.id)), [orderedSections])
-  const accessibleMap = useMemo(() => new Map<AppSection, NavigationNode>(orderedSections.map(node => [node.id, node])), [orderedSections])
+  const orderedSections = useMemo(
+    () => [...accessibleNodes].sort((a, b) => a.order - b.order),
+    [accessibleNodes],
+  )
+  const accessibleSectionSet = useMemo(
+    () => new Set<AppSection>(orderedSections.map((node) => node.id)),
+    [orderedSections],
+  )
+  const accessibleMap = useMemo(
+    () => new Map<AppSection, NavigationNode>(orderedSections.map((node) => [node.id, node])),
+    [orderedSections],
+  )
 
   const firstAccessibleSection = orderedSections[0]?.id ?? DEFAULT_NAVIGATION_SECTION
 
   const sidebarNodes = useMemo(
-    () => orderedSections.filter(node => !node.hideFromMenu),
-    [orderedSections]
+    () => orderedSections.filter((node) => !node.hideFromMenu),
+    [orderedSections],
   )
 
   const [routeState, setRouteState] = useState<RouteState>(() => {
@@ -92,22 +101,18 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') {
       return { section: storedSection, params: {} }
     }
-    return parseHashRoute(
-      window.location.hash,
-      accessibleSectionSet,
-      storedSection
-    )
+    return parseHashRoute(window.location.hash, accessibleSectionSet, storedSection)
   })
   const [tenderToEdit, setTenderToEdit] = useState<Tender | null>(null)
 
   useEffect(() => {
-    setRouteState(prev => {
+    setRouteState((prev) => {
       if (accessibleSectionSet.has(prev.section)) {
         return prev
       }
       return {
         section: firstAccessibleSection,
-        params: {}
+        params: {},
       }
     })
   }, [accessibleSectionSet, firstAccessibleSection])
@@ -117,7 +122,12 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') {
       return
     }
-    const nextHash = buildHashRoute(routeState.section, routeState.params, accessibleSectionSet, firstAccessibleSection)
+    const nextHash = buildHashRoute(
+      routeState.section,
+      routeState.params,
+      accessibleSectionSet,
+      firstAccessibleSection,
+    )
     if (window.location.hash !== nextHash) {
       ignoreNextHashChangeRef.current = true
       window.location.hash = nextHash
@@ -134,8 +144,12 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
         ignoreNextHashChangeRef.current = false
         return
       }
-      const parsed = parseHashRoute(window.location.hash, accessibleSectionSet, firstAccessibleSection)
-      setRouteState(prev => {
+      const parsed = parseHashRoute(
+        window.location.hash,
+        accessibleSectionSet,
+        firstAccessibleSection,
+      )
+      setRouteState((prev) => {
         if (prev.section === parsed.section && shallowEqualRecord(prev.params, parsed.params)) {
           return prev
         }
@@ -179,49 +193,61 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     }
   }, [routeState.params.tenderId, tenderRepository, tenderToEdit])
 
-  const navigate = useCallback((section: AppSection, options?: NavigationOptions) => {
-    const normalizedSection = normalizeSection(section, accessibleSectionSet, firstAccessibleSection)
-    const tenderCandidate = options?.tender ?? null
-    const explicitTenderId = options?.tenderId ?? tenderCandidate?.id ?? null
-    const paramsOverride = options?.params ?? {}
+  const navigate = useCallback(
+    (section: AppSection, options?: NavigationOptions) => {
+      console.log('[NavigationProvider][navigate] section:', section)
+      console.log('[NavigationProvider][navigate] options:', options)
+      console.log('[NavigationProvider][navigate] options.tender:', options?.tender)
 
-    setTenderToEdit(tenderCandidate)
+      const normalizedSection = normalizeSection(
+        section,
+        accessibleSectionSet,
+        firstAccessibleSection,
+      )
+      const tenderCandidate = options?.tender ?? null
+      const explicitTenderId = options?.tenderId ?? tenderCandidate?.id ?? null
+      const paramsOverride = options?.params ?? {}
 
-    setRouteState(prev => {
-      const nextParams: RouteParams = { ...prev.params }
+      console.log('[NavigationProvider][navigate] Setting tenderToEdit to:', tenderCandidate)
+      setTenderToEdit(tenderCandidate)
 
-      if (explicitTenderId) {
-        nextParams.tenderId = explicitTenderId
-      } else {
-        delete nextParams.tenderId
-      }
+      setRouteState((prev) => {
+        const nextParams: RouteParams = { ...prev.params }
 
-      Object.entries(paramsOverride).forEach(([key, rawValue]) => {
-        if (key === 'tenderId') {
-          return
-        }
-        const value = rawValue === undefined || rawValue === null ? '' : String(rawValue)
-        if (!value) {
-          delete nextParams[key]
+        if (explicitTenderId) {
+          nextParams.tenderId = explicitTenderId
         } else {
-          nextParams[key] = value
+          delete nextParams.tenderId
+        }
+
+        Object.entries(paramsOverride).forEach(([key, rawValue]) => {
+          if (key === 'tenderId') {
+            return
+          }
+          const value = rawValue === undefined || rawValue === null ? '' : String(rawValue)
+          if (!value) {
+            delete nextParams[key]
+          } else {
+            nextParams[key] = value
+          }
+        })
+
+        if (prev.section === normalizedSection && shallowEqualRecord(prev.params, nextParams)) {
+          return prev
+        }
+
+        return {
+          section: normalizedSection,
+          params: nextParams,
         }
       })
-
-      if (prev.section === normalizedSection && shallowEqualRecord(prev.params, nextParams)) {
-        return prev
-      }
-
-      return {
-        section: normalizedSection,
-        params: nextParams
-      }
-    })
-  }, [accessibleSectionSet, firstAccessibleSection])
+    },
+    [accessibleSectionSet, firstAccessibleSection],
+  )
 
   const clearTender = useCallback(() => {
     setTenderToEdit(null)
-    setRouteState(prev => {
+    setRouteState((prev) => {
       if (!prev.params.tenderId) {
         return prev
       }
@@ -232,18 +258,21 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
       }
       return {
         section: prev.section,
-        params: nextParams
+        params: nextParams,
       }
     })
   }, [])
 
   const params = useMemo<RouteParams>(() => ({ ...routeState.params }), [routeState.params])
   const tenderId = params.tenderId ?? null
-  const activeNode = useMemo(() => accessibleMap.get(routeState.section) ?? null, [accessibleMap, routeState.section])
+  const activeNode = useMemo(
+    () => accessibleMap.get(routeState.section) ?? null,
+    [accessibleMap, routeState.section],
+  )
 
   const breadcrumbs = useMemo(() => {
     const rawBreadcrumbs = resolveSectionBreadcrumbs(routeState.section)
-    return rawBreadcrumbs.map(crumb => {
+    return rawBreadcrumbs.map((crumb) => {
       if (!crumb.section) {
         return crumb
       }
@@ -258,40 +287,47 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
     if (!activeNode?.quickActions) {
       return []
     }
-    return activeNode.quickActions.filter(action =>
-      !action.requires || action.requires.every(permission => permissionSet.has(permission))
+    return activeNode.quickActions.filter(
+      (action) =>
+        !action.requires || action.requires.every((permission) => permissionSet.has(permission)),
     )
   }, [activeNode, permissionSet])
 
-  const hasPermission = useCallback((permission: NavigationPermission) => permissionSet.has(permission), [permissionSet])
+  const hasPermission = useCallback(
+    (permission: NavigationPermission) => permissionSet.has(permission),
+    [permissionSet],
+  )
 
-  const value = useMemo<NavigationContextValue>(() => ({
-    activeSection: routeState.section,
-    activeNode,
-    breadcrumbs,
-    quickActions,
-    sidebarNodes,
-    availableSections: orderedSections,
-    tenderToEdit,
-    tenderId,
-    params,
-    hasPermission,
-    navigate,
-    clearTender
-  }), [
-    routeState.section,
-    activeNode,
-    breadcrumbs,
-    quickActions,
-    sidebarNodes,
-    orderedSections,
-    tenderToEdit,
-    tenderId,
-    params,
-    hasPermission,
-    navigate,
-    clearTender
-  ])
+  const value = useMemo<NavigationContextValue>(
+    () => ({
+      activeSection: routeState.section,
+      activeNode,
+      breadcrumbs,
+      quickActions,
+      sidebarNodes,
+      availableSections: orderedSections,
+      tenderToEdit,
+      tenderId,
+      params,
+      hasPermission,
+      navigate,
+      clearTender,
+    }),
+    [
+      routeState.section,
+      activeNode,
+      breadcrumbs,
+      quickActions,
+      sidebarNodes,
+      orderedSections,
+      tenderToEdit,
+      tenderId,
+      params,
+      hasPermission,
+      navigate,
+      clearTender,
+    ],
+  )
 
   return <NavigationContext.Provider value={value}>{children}</NavigationContext.Provider>
 }
@@ -330,14 +366,14 @@ function shallowEqualRecord(a: RouteParams, b: RouteParams): boolean {
   if (keysA.length !== keysB.length) {
     return false
   }
-  return keysA.every(key => b[key] === a[key])
+  return keysA.every((key) => b[key] === a[key])
 }
 
 function buildHashRoute(
   section: AppSection,
   params: RouteParams,
   accessibleSections: ReadonlySet<AppSection>,
-  fallbackSection: AppSection
+  fallbackSection: AppSection,
 ): string {
   const serialized = recordToSearchParams(params).toString()
   const normalized = normalizeSection(section, accessibleSections, fallbackSection)
@@ -347,7 +383,7 @@ function buildHashRoute(
 function parseHashRoute(
   hash: string | null | undefined,
   accessibleSections: ReadonlySet<AppSection>,
-  fallbackSection: AppSection
+  fallbackSection: AppSection,
 ): RouteState {
   if (!hash) {
     return { section: fallbackSection, params: {} }
@@ -362,11 +398,14 @@ function parseHashRoute(
   const params = paramsToRecord(new URLSearchParams(query))
   return {
     section,
-    params
+    params,
   }
 }
 
-function getStoredSection(accessibleSections: ReadonlySet<AppSection>, fallbackSection: AppSection): AppSection {
+function getStoredSection(
+  accessibleSections: ReadonlySet<AppSection>,
+  fallbackSection: AppSection,
+): AppSection {
   try {
     const stored = safeLocalStorage.getItem<AppSection | string>(STORAGE_KEY, fallbackSection)
     return normalizeSection(stored, accessibleSections, fallbackSection)
@@ -378,7 +417,7 @@ function getStoredSection(accessibleSections: ReadonlySet<AppSection>, fallbackS
 function normalizeSection(
   section: string | null | undefined,
   accessibleSections: ReadonlySet<AppSection>,
-  fallbackSection: AppSection
+  fallbackSection: AppSection,
 ): AppSection {
   if (section && isNavigationSection(section) && accessibleSections.has(section)) {
     return section
@@ -388,7 +427,10 @@ function normalizeSection(
 
 function resolveInitialPermissions(): NavigationPermission[] {
   try {
-    const stored = safeLocalStorage.getItem<(NavigationPermission | string)[] | null>(PERMISSIONS_STORAGE_KEY, null)
+    const stored = safeLocalStorage.getItem<(NavigationPermission | string)[] | null>(
+      PERMISSIONS_STORAGE_KEY,
+      null,
+    )
     if (Array.isArray(stored)) {
       const filtered = stored.filter(isNavigationPermission)
       if (filtered.length > 0) {
@@ -401,9 +443,12 @@ function resolveInitialPermissions(): NavigationPermission[] {
   return collectNavigationPermissionsFromSchema()
 }
 
-function nodeAccessible(node: NavigationNode, permissionSet: ReadonlySet<NavigationPermission>): boolean {
+function nodeAccessible(
+  node: NavigationNode,
+  permissionSet: ReadonlySet<NavigationPermission>,
+): boolean {
   if (!node.requires || node.requires.length === 0) {
     return true
   }
-  return node.requires.every(permission => permissionSet.has(permission))
+  return node.requires.every((permission) => permissionSet.has(permission))
 }

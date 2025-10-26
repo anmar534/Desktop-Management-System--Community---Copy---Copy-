@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Pre-commit hook for Desktop Management System
+# Runs lint-staged to check code quality before commit
+
+echo "🔍 Running pre-commit checks..."
+
+npx lint-staged
+
+# If lint-staged fails, prevent commit
+if [ $? -ne 0 ]; then
+  echo "❌ Pre-commit checks failed. Please fix the issues above."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"
+exit 0

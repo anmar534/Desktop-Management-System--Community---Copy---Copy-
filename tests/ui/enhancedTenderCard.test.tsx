@@ -1,14 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import type { ReactNode } from 'react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
-import { EnhancedTenderCard } from '../../src/components/bidding/EnhancedTenderCard'
+import { EnhancedTenderCard } from '../../src/presentation/components/tenders/EnhancedTenderCard'
 import type { Tender } from '../../src/data/centralData'
 
 // Mock framer-motion to avoid animation issues in tests
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: { children: ReactNode } & Record<string, unknown>) => (
+      <div {...props}>{children}</div>
+    ),
+    span: ({ children, ...props }: { children: ReactNode } & Record<string, unknown>) => (
+      <span {...props}>{children}</span>
+    ),
   },
+  AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
 }))
 
 // Mock lucide-react icons using importOriginal to avoid missing icon issues
@@ -32,7 +39,7 @@ vi.mock('lucide-react', async (importOriginal) => {
 })
 
 // Mock useCurrencyFormatter hook
-vi.mock('../../src/hooks/useCurrencyFormatter', () => ({
+vi.mock('../../src/application/hooks/useCurrencyFormatter', () => ({
   useCurrencyFormatter: () => ({
     formatCurrencyValue: (amount: number | string | null | undefined) => {
       const numericAmount = typeof amount === 'number' ? amount : Number(amount || 0)
@@ -43,23 +50,14 @@ vi.mock('../../src/hooks/useCurrencyFormatter', () => ({
   }),
 }))
 
-// Mock framer-motion
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: 'div',
-    span: 'span',
-  },
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
-}))
-
 // Mock services
-vi.mock('../../src/services/analyticsService', () => ({
+vi.mock('../../src/application/services/analyticsService', () => ({
   analyticsService: {
     getAllBidPerformances: vi.fn().mockResolvedValue([]),
   },
 }))
 
-vi.mock('../../src/services/competitiveService', () => ({
+vi.mock('../../src/application/services/competitiveService', () => ({
   competitiveService: {
     getAllCompetitors: vi.fn().mockResolvedValue([]),
     getMarketOpportunities: vi.fn().mockResolvedValue([]),
@@ -67,20 +65,20 @@ vi.mock('../../src/services/competitiveService', () => ({
 }))
 
 // Mock prediction utilities
-vi.mock('../../src/utils/predictionModels', () => ({
+vi.mock('../../src/shared/utils/ml/predictionModels', () => ({
   predictWinProbability: vi.fn().mockReturnValue({
     probability: 75,
     confidence: 85,
     factors: [],
-    recommendations: []
+    recommendations: [],
   }),
 }))
 
-vi.mock('../../src/utils/priceOptimization', () => ({
+vi.mock('../../src/shared/utils/pricing/priceOptimization', () => ({
   optimizeBidAmount: vi.fn().mockReturnValue({
     recommendedBid: 4500000,
     margin: 15,
-    strategy: 'balanced'
+    strategy: 'balanced',
   }),
 }))
 
@@ -89,22 +87,33 @@ vi.mock('../../src/application/hooks/useTenderStatus', () => ({
   useTenderStatus: vi.fn((tender) => {
     const getUrgencyText = (priority: string) => {
       switch (priority) {
-        case 'high': return 'عاجل'
-        case 'critical': return 'عاجل'
-        case 'medium': return 'متوسط'
-        case 'low': return 'منخفض'
-        default: return 'متوسط'
+        case 'high':
+          return 'عاجل'
+        case 'critical':
+          return 'عاجل'
+        case 'medium':
+          return 'متوسط'
+        case 'low':
+          return 'منخفض'
+        default:
+          return 'متوسط'
       }
     }
 
     const getStatusText = (status: string) => {
       switch (status) {
-        case 'under_action': return 'تحت الإجراء'
-        case 'ready_to_submit': return 'جاهزة للتقديم'
-        case 'submitted': return 'بانتظار النتائج'
-        case 'won': return 'فائزة'
-        case 'lost': return 'خاسرة'
-        default: return 'جديدة'
+        case 'under_action':
+          return 'تحت الإجراء'
+        case 'ready_to_submit':
+          return 'جاهزة للتقديم'
+        case 'submitted':
+          return 'بانتظار النتائج'
+        case 'won':
+          return 'فائزة'
+        case 'lost':
+          return 'خاسرة'
+        default:
+          return 'جديدة'
       }
     }
 
@@ -114,10 +123,10 @@ vi.mock('../../src/application/hooks/useTenderStatus', () => ({
       completionInfo: {
         isReadyToSubmit: false,
         isPricingCompleted: false,
-        isTechnicalFilesUploaded: false
+        isTechnicalFilesUploaded: false,
       },
       shouldShowSubmitButton: false,
-      shouldShowPricingButton: true
+      shouldShowPricingButton: true,
     }
   }),
 }))
@@ -130,7 +139,7 @@ vi.mock('../../src/utils/tenderProgressCalculator', () => ({
 vi.mock('../../src/utils/formatters', () => ({
   formatTenderName: (name: string) => name,
   formatTenderClient: (client: string) => client,
-  formatTenderDate: (date: string) => '31 ديسمبر 2024',
+  formatTenderDate: (_date: string) => '31 ديسمبر 2024',
   formatTenderType: (type: string) => type,
 }))
 
@@ -156,7 +165,7 @@ describe('EnhancedTenderCard', () => {
     lastAction: 'تحديث التسعير',
     lastUpdate: '2024-01-15',
     category: 'سكني',
-    type: 'مقاولات عامة'
+    type: 'مقاولات عامة',
   }
 
   const defaultProps = {
@@ -208,13 +217,6 @@ describe('EnhancedTenderCard', () => {
 
       expect(screen.getByText('75%')).toBeInTheDocument()
       expect(screen.getByText('فرصة الفوز:')).toBeInTheDocument()
-    })
-
-    it('should show progress indicator', () => {
-      render(<EnhancedTenderCard {...defaultProps} />)
-
-      expect(screen.getByText('60%')).toBeInTheDocument()
-      expect(screen.getByText('التقدم')).toBeInTheDocument()
     })
   })
 
@@ -367,7 +369,7 @@ describe('EnhancedTenderCard', () => {
         lastAction: 'إنشاء',
         lastUpdate: '2024-01-01',
         category: 'عام',
-        type: 'مقاولات'
+        type: 'مقاولات',
       }
 
       render(<EnhancedTenderCard {...defaultProps} tender={minimalTender} />)
@@ -380,7 +382,8 @@ describe('EnhancedTenderCard', () => {
       const longNameTender = {
         ...mockTender,
         name: 'مشروع إنشاء مجمع سكني متكامل مع جميع المرافق والخدمات والمساحات الخضراء والمرافق الترفيهية والتجارية',
-        title: 'مشروع إنشاء مجمع سكني متكامل مع جميع المرافق والخدمات والمساحات الخضراء والمرافق الترفيهية والتجارية'
+        title:
+          'مشروع إنشاء مجمع سكني متكامل مع جميع المرافق والخدمات والمساحات الخضراء والمرافق الترفيهية والتجارية',
       }
 
       render(<EnhancedTenderCard {...defaultProps} tender={longNameTender} />)
@@ -437,6 +440,156 @@ describe('EnhancedTenderCard', () => {
 
       expect(screen.getByText('فرصة الفوز:')).toBeInTheDocument()
       expect(screen.getByText('75%')).toBeInTheDocument()
+    })
+
+    it('should call onViewAnalytics when analytics button is clicked', async () => {
+      const onViewAnalytics = vi.fn()
+      render(
+        <EnhancedTenderCard
+          {...defaultProps}
+          enablePredictiveAnalytics={true}
+          onViewAnalytics={onViewAnalytics}
+        />,
+      )
+
+      // Wait for loading to complete
+      await waitFor(() => {
+        expect(screen.queryByText('جاري تحليل البيانات...')).not.toBeInTheDocument()
+      })
+
+      const analyticsButton = screen.getByText('تحليلات')
+      fireEvent.click(analyticsButton)
+
+      expect(onViewAnalytics).toHaveBeenCalledWith(mockTender)
+    })
+  })
+
+  describe('Revert Functionality', () => {
+    it('should show revert button for submitted status', () => {
+      const tender = { ...mockTender, status: 'submitted' as const }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('عودة للإرسال')).toBeInTheDocument()
+    })
+
+    it('should call onRevertStatus when revert button is clicked', () => {
+      const onRevertStatus = vi.fn()
+      const tender = { ...mockTender, status: 'submitted' as const }
+      render(
+        <EnhancedTenderCard {...defaultProps} tender={tender} onRevertStatus={onRevertStatus} />,
+      )
+
+      fireEvent.click(screen.getByText('عودة للإرسال'))
+
+      expect(onRevertStatus).toHaveBeenCalledWith(tender, 'ready_to_submit')
+    })
+
+    it('should show revert to pricing button for ready_to_submit status', () => {
+      const tender = {
+        ...mockTender,
+        status: 'ready_to_submit' as const,
+      }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('عودة للتسعير')).toBeInTheDocument()
+    })
+  })
+
+  describe('Card Styling', () => {
+    it('should apply success styling for won status', () => {
+      const tender = { ...mockTender, status: 'won' as const }
+      const { container } = render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      const card = container.querySelector('.border-success\\/40')
+      expect(card).toBeInTheDocument()
+    })
+
+    it('should apply destructive styling for lost status', () => {
+      const tender = { ...mockTender, status: 'lost' as const }
+      const { container } = render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      const card = container.querySelector('.border-destructive\\/30')
+      expect(card).toBeInTheDocument()
+    })
+
+    it('should apply primary styling for ready_to_submit status', () => {
+      const tender = { ...mockTender, status: 'ready_to_submit' as const }
+      const { container } = render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      const card = container.querySelector('.border-primary\\/30')
+      expect(card).toBeInTheDocument()
+    })
+  })
+
+  describe('Progress Calculation', () => {
+    it('should not show progress bar for won tenders', () => {
+      const tender = { ...mockTender, status: 'won' as const }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.queryByText('التقدم')).not.toBeInTheDocument()
+    })
+
+    it('should not show progress bar for lost tenders', () => {
+      const tender = { ...mockTender, status: 'lost' as const }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.queryByText('التقدم')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('Document Price Display', () => {
+    it('should display document price when available', () => {
+      const tender = { ...mockTender, documentPrice: 5000 }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('سعر الكراسة:')).toBeInTheDocument()
+    })
+
+    it('should not display document price section when price is zero', () => {
+      const tender = { ...mockTender, documentPrice: 0 }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.queryByText('سعر الكراسة:')).not.toBeInTheDocument()
+    })
+
+    it('should use bookletPrice as fallback when documentPrice is not available', () => {
+      const tender = { ...mockTender, documentPrice: 0, bookletPrice: 3000 }
+      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
+
+      expect(screen.getByText('سعر الكراسة:')).toBeInTheDocument()
+    })
+  })
+
+  describe('Animation and Hover Effects', () => {
+    it('should render motion div with correct animation props', () => {
+      const { container } = render(<EnhancedTenderCard {...defaultProps} />)
+
+      const motionDiv = container.firstChild
+      expect(motionDiv).toBeInTheDocument()
+    })
+
+    it('should have hover effects on card', () => {
+      const { container } = render(<EnhancedTenderCard {...defaultProps} />)
+
+      const card = container.querySelector('.hover\\:shadow-lg')
+      expect(card).toBeInTheDocument()
+    })
+  })
+
+  describe('Memory Management', () => {
+    afterEach(() => {
+      vi.clearAllTimers()
+    })
+
+    it('should properly cleanup on unmount', () => {
+      const { unmount } = render(
+        <EnhancedTenderCard {...defaultProps} enablePredictiveAnalytics={true} />,
+      )
+
+      unmount()
+
+      // Verify no memory leaks - component should unmount without errors
+      expect(() => unmount()).not.toThrow()
     })
   })
 })

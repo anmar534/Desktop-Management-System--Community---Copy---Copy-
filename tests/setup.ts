@@ -3,25 +3,48 @@
  * Global test setup for Vitest with React Testing Library
  */
 
-import { expect, afterEach } from 'vitest'
+import { expect, afterEach, beforeEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import * as matchers from '@testing-library/jest-dom/matchers'
+import { enableMapSet } from 'immer'
+import { StorageManager } from '@/infrastructure/storage/core/StorageManager'
+import { LocalStorageAdapter } from '@/infrastructure/storage/adapters/LocalStorageAdapter'
+
+// Enable Immer MapSet plugin for Zustand stores that use Map
+enableMapSet()
 
 // Extend Vitest's expect with Testing Library matchers
 expect.extend(matchers)
 
+// Setup StorageManager before each test
+beforeEach(() => {
+  // Reset and initialize StorageManager with LocalStorageAdapter
+  StorageManager.resetInstance()
+  const manager = StorageManager.getInstance()
+  manager.setAdapter(new LocalStorageAdapter())
+})
+
 // Cleanup after each test case
 afterEach(() => {
   cleanup()
+  // Reset StorageManager after each test
+  StorageManager.resetInstance()
 })
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
+  root = null
+  rootMargin = ''
+  scrollMargin = ''
+  thresholds = []
   constructor() {}
   disconnect() {}
   observe() {}
   unobserve() {}
-}
+  takeRecords() {
+    return []
+  }
+} as any
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
@@ -34,7 +57,7 @@ global.ResizeObserver = class ResizeObserver {
 // Mock matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: vi.fn().mockImplementation(query => ({
+  value: vi.fn().mockImplementation((query) => ({
     matches: false,
     media: query,
     onchange: null,
@@ -44,6 +67,57 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: vi.fn(),
     dispatchEvent: vi.fn(),
   })),
+})
+
+// Mock console history for tests
+interface WindowWithMocks extends Window {
+  __consoleHistory?: string[]
+  __errors?: string[]
+}
+
+;(window as WindowWithMocks).__consoleHistory = []
+;(window as WindowWithMocks).__errors = []
+
+const origLog = console.log
+const origError = console.error
+
+console.log = (...args: any[]) => {
+  ;(window as WindowWithMocks).__consoleHistory?.push(args.join(' '))
+  origLog(...args)
+}
+
+console.error = (...args: any[]) => {
+  ;(window as WindowWithMocks).__errors?.push(args.join(' '))
+  origError(...args)
+}
+
+// Mock electron-store
+vi.mock('electron-store', () => {
+  return {
+    default: class ElectronStore {
+      private store = new Map<string, any>()
+
+      get(key: string) {
+        return this.store.get(key)
+      }
+
+      set(key: string, value: any) {
+        this.store.set(key, value)
+      }
+
+      delete(key: string) {
+        this.store.delete(key)
+      }
+
+      clear() {
+        this.store.clear()
+      }
+
+      has(key: string) {
+        return this.store.has(key)
+      }
+    },
+  }
 })
 
 // Mock scrollTo
@@ -160,8 +234,8 @@ console.error = (...args: any[]) => {
   if (
     typeof args[0] === 'string' &&
     (args[0].includes('Warning: ReactDOM.render is deprecated') ||
-     args[0].includes('Warning: validateDOMNesting') ||
-     args[0].includes('Warning: Each child in a list should have a unique "key" prop'))
+      args[0].includes('Warning: validateDOMNesting') ||
+      args[0].includes('Warning: Each child in a list should have a unique "key" prop'))
   ) {
     return
   }
@@ -173,7 +247,7 @@ console.warn = (...args: any[]) => {
   if (
     typeof args[0] === 'string' &&
     (args[0].includes('Warning: componentWillReceiveProps') ||
-     args[0].includes('Warning: componentWillMount'))
+      args[0].includes('Warning: componentWillMount'))
   ) {
     return
   }
@@ -182,6 +256,7 @@ console.warn = (...args: any[]) => {
 
 // Global test utilities
 declare global {
+  // eslint-disable-next-line no-var
   var vi: typeof import('vitest').vi
 }
 

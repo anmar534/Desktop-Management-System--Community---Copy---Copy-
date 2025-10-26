@@ -16,9 +16,7 @@ interface RateLimitEntry {
   firstRequest: number
 }
 
-interface RateLimitStore {
-  [key: string]: RateLimitEntry
-}
+type RateLimitStore = Record<string, RateLimitEntry>
 
 // ============================================================================
 // Rate Limiter Class
@@ -39,7 +37,7 @@ export class RateLimiter {
    */
   async checkLimit(
     key: string,
-    config: RateLimitConfig = RATE_LIMIT_CONFIG.default
+    config: RateLimitConfig = RATE_LIMIT_CONFIG.default,
   ): Promise<{ allowed: boolean; info: RateLimitInfo }> {
     const now = Date.now()
     const entry = this.store[key]
@@ -151,7 +149,7 @@ export class RateLimiter {
    * Get all active rate limit entries
    * الحصول على جميع إدخالات حد المعدل النشطة
    */
-  getActiveEntries(): Array<{ key: string; entry: RateLimitEntry }> {
+  getActiveEntries(): { key: string; entry: RateLimitEntry }[] {
     const now = Date.now()
     return Object.entries(this.store)
       .filter(([, entry]) => now <= entry.resetTime)
@@ -194,7 +192,7 @@ export class RateLimiter {
       }
     }
 
-    keysToDelete.forEach(key => delete this.store[key])
+    keysToDelete.forEach((key) => delete this.store[key])
   }
 
   /**
@@ -221,10 +219,7 @@ export const rateLimiter = new RateLimiter()
  * Generate rate limit key from request
  * إنشاء مفتاح حد المعدل من الطلب
  */
-export function generateRateLimitKey(
-  identifier: string,
-  endpoint?: string
-): string {
+export function generateRateLimitKey(identifier: string, endpoint?: string): string {
   if (endpoint) {
     return `${identifier}:${endpoint}`
   }
@@ -238,7 +233,7 @@ export function generateRateLimitKey(
 export async function checkUserRateLimit(
   userId: string,
   endpoint?: string,
-  config?: RateLimitConfig
+  config?: RateLimitConfig,
 ): Promise<{ allowed: boolean; info: RateLimitInfo }> {
   const key = generateRateLimitKey(userId, endpoint)
   return rateLimiter.checkLimit(key, config)
@@ -251,10 +246,10 @@ export async function checkUserRateLimit(
 export async function checkApiKeyRateLimit(
   apiKeyId: string,
   endpoint?: string,
-  customLimit?: number
+  customLimit?: number,
 ): Promise<{ allowed: boolean; info: RateLimitInfo }> {
   const key = generateRateLimitKey(apiKeyId, endpoint)
-  
+
   const config: RateLimitConfig = customLimit
     ? {
         windowMs: 60 * 1000, // 1 minute
@@ -272,7 +267,7 @@ export async function checkApiKeyRateLimit(
 export async function checkIpRateLimit(
   ipAddress: string,
   endpoint?: string,
-  config?: RateLimitConfig
+  config?: RateLimitConfig,
 ): Promise<{ allowed: boolean; info: RateLimitInfo }> {
   const key = generateRateLimitKey(ipAddress, endpoint)
   return rateLimiter.checkLimit(key, config)
@@ -313,4 +308,3 @@ export function createRateLimitError(info: RateLimitInfo): {
     retryAfter: info.retryAfter,
   }
 }
-

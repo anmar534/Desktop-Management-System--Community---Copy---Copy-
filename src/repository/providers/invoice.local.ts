@@ -1,12 +1,13 @@
 import type { IInvoiceRepository } from '@/repository/invoice.repository'
 import type { Invoice, InvoiceItem } from '@/data/centralData'
-import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 
 const generateId = () => `invoice_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 const generateItemId = () => `invoice_item_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
-const generateInvoiceNumber = () => `INV-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
+const generateInvoiceNumber = () =>
+  `INV-${new Date().getFullYear()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
 
 const cloneItem = (item: InvoiceItem): InvoiceItem => {
   const quantity = Number(item.quantity ?? 0)
@@ -24,7 +25,9 @@ const cloneItem = (item: InvoiceItem): InvoiceItem => {
 
 const normalizeInvoice = (invoice: Partial<Invoice> & Pick<Invoice, 'id'>): Invoice => {
   const items = Array.isArray(invoice.items) ? invoice.items.map(cloneItem) : []
-  const subtotal = Number.isFinite(invoice.subtotal) ? Number(invoice.subtotal) : items.reduce((sum, item) => sum + item.total, 0)
+  const subtotal = Number.isFinite(invoice.subtotal)
+    ? Number(invoice.subtotal)
+    : items.reduce((sum, item) => sum + item.total, 0)
   const tax = Number.isFinite(invoice.tax) ? Number(invoice.tax) : 0
   const total = Number.isFinite(invoice.total) ? Number(invoice.total) : subtotal + tax
 
@@ -46,13 +49,16 @@ const normalizeInvoice = (invoice: Partial<Invoice> & Pick<Invoice, 'id'>): Invo
     items,
     notes: invoice.notes ?? '',
     createdAt: invoice.createdAt ?? new Date().toISOString(),
-    paidAt: invoice.status === 'paid' ? invoice.paidAt ?? new Date().toISOString() : invoice.paidAt,
+    paidAt:
+      invoice.status === 'paid' ? (invoice.paidAt ?? new Date().toISOString()) : invoice.paidAt,
   }
 }
 
 const loadAll = (): Invoice[] => {
   const stored = safeLocalStorage.getItem<Invoice[]>(STORAGE_KEYS.FINANCIAL_INVOICES, [])
-  return Array.isArray(stored) ? stored.map(invoice => normalizeInvoice({ ...invoice, id: invoice.id ?? generateId() })) : []
+  return Array.isArray(stored)
+    ? stored.map((invoice) => normalizeInvoice({ ...invoice, id: invoice.id ?? generateId() }))
+    : []
 }
 
 const persist = (invoices: Invoice[]): void => {
@@ -68,7 +74,7 @@ export class LocalInvoiceRepository implements IInvoiceRepository {
 
   async getById(id: string): Promise<Invoice | null> {
     const invoices = loadAll()
-    const invoice = invoices.find(item => item.id === id)
+    const invoice = invoices.find((item) => item.id === id)
     return invoice ? normalizeInvoice(invoice) : null
   }
 
@@ -83,7 +89,7 @@ export class LocalInvoiceRepository implements IInvoiceRepository {
 
   async upsert(invoice: Invoice): Promise<Invoice> {
     const invoices = loadAll()
-    const index = invoices.findIndex(item => item.id === invoice.id)
+    const index = invoices.findIndex((item) => item.id === invoice.id)
     const normalized = normalizeInvoice({ ...invoice, id: invoice.id ?? generateId() })
 
     if (index >= 0) {
@@ -99,7 +105,7 @@ export class LocalInvoiceRepository implements IInvoiceRepository {
 
   async update(id: string, updates: Partial<Invoice>): Promise<Invoice | null> {
     const invoices = loadAll()
-    const index = invoices.findIndex(item => item.id === id)
+    const index = invoices.findIndex((item) => item.id === id)
 
     if (index === -1) {
       return null
@@ -114,7 +120,7 @@ export class LocalInvoiceRepository implements IInvoiceRepository {
 
   async delete(id: string): Promise<boolean> {
     const invoices = loadAll()
-    const filtered = invoices.filter(item => item.id !== id)
+    const filtered = invoices.filter((item) => item.id !== id)
     if (filtered.length === invoices.length) {
       return false
     }
@@ -129,7 +135,7 @@ export class LocalInvoiceRepository implements IInvoiceRepository {
 
     for (const invoice of invoices) {
       const normalized = normalizeInvoice({ ...invoice, id: invoice.id ?? generateId() })
-      const index = current.findIndex(item => item.id === normalized.id)
+      const index = current.findIndex((item) => item.id === normalized.id)
       if (index >= 0) {
         current[index] = normalized
       } else {

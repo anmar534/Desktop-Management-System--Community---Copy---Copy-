@@ -3,17 +3,17 @@
  * واجهة مستودع المهام
  */
 
-import { 
-  Task, 
-  CreateTaskRequest, 
-  UpdateTaskRequest, 
-  TaskFilters, 
-  TaskSortOptions, 
+import type {
+  Task,
+  CreateTaskRequest,
+  UpdateTaskRequest,
+  TaskFilters,
+  TaskSortOptions,
   TaskStatistics,
   TaskDependency,
   TaskComment,
   TaskAttachment,
-  TaskTimeEntry
+  TaskTimeEntry,
 } from '../types/tasks'
 
 export interface TaskRepository {
@@ -110,7 +110,10 @@ export interface TaskRepository {
   /**
    * تحديث سجل وقت المهمة
    */
-  updateTaskTimeEntry(timeEntryId: string, updates: Partial<Omit<TaskTimeEntry, 'id' | 'taskId' | 'createdAt'>>): Promise<TaskTimeEntry>
+  updateTaskTimeEntry(
+    timeEntryId: string,
+    updates: Partial<Omit<TaskTimeEntry, 'id' | 'taskId' | 'createdAt'>>,
+  ): Promise<TaskTimeEntry>
 
   /**
    * حذف سجل وقت المهمة
@@ -190,7 +193,9 @@ export interface TaskRepository {
   /**
    * حساب تواريخ المشروع
    */
-  calculateProjectDates(projectId: string): Promise<{ startDate: string; endDate: string; duration: number }>
+  calculateProjectDates(
+    projectId: string,
+  ): Promise<{ startDate: string; endDate: string; duration: number }>
 
   /**
    * تحديث تقدم المشروع بناءً على المهام

@@ -46,18 +46,14 @@ export interface WebhookLog {
   createdAt: string
 }
 
-export type WebhookDeliveryStatus = 
-  | 'pending'
-  | 'delivered'
-  | 'failed'
-  | 'retrying'
+export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed' | 'retrying'
 
 // ============================================================================
 // Webhook Service Class
 // ============================================================================
 
 export class WebhookService {
-  private webhooks: Map<string, Webhook> = new Map()
+  private webhooks = new Map<string, Webhook>()
   private deliveryQueue: WebhookDelivery[] = []
   private isProcessing = false
 
@@ -93,7 +89,7 @@ export class WebhookService {
     const response = await apiClient.get<Webhook[]>('/webhooks')
 
     if (response.success && response.data) {
-      response.data.forEach(webhook => {
+      response.data.forEach((webhook) => {
         this.webhooks.set(webhook.id, webhook)
       })
       return response.data
@@ -131,7 +127,7 @@ export class WebhookService {
 
     // Find all webhooks subscribed to this event
     const subscribedWebhooks = Array.from(this.webhooks.values()).filter(
-      webhook => webhook.isActive && webhook.events.includes(event)
+      (webhook) => webhook.isActive && webhook.events.includes(event),
     )
 
     // Queue deliveries
@@ -202,7 +198,7 @@ export class WebhookService {
         delivery.status = 'delivered'
         delivery.statusCode = response.status
         delivery.deliveredAt = new Date().toISOString()
-        
+
         // Log successful delivery
         await this.logDelivery(delivery, 'delivered')
       } else {
@@ -214,10 +210,7 @@ export class WebhookService {
 
       // Retry if not exceeded max retries
       if (delivery.attempts < webhook.retryPolicy.maxRetries) {
-        const delay = this.calculateRetryDelay(
-          delivery.attempts,
-          webhook.retryPolicy
-        )
+        const delay = this.calculateRetryDelay(delivery.attempts, webhook.retryPolicy)
 
         setTimeout(() => {
           this.deliveryQueue.push(delivery)
@@ -265,7 +258,7 @@ export class WebhookService {
    */
   private async logDelivery(
     delivery: WebhookDelivery,
-    status: WebhookDeliveryStatus
+    status: WebhookDeliveryStatus,
   ): Promise<void> {
     const log: WebhookLog = {
       id: this.generateDeliveryId(),
@@ -294,7 +287,7 @@ export class WebhookService {
       event?: string
       startDate?: string
       endDate?: string
-    }
+    },
   ): Promise<WebhookLog[]> {
     const response = await apiClient.get<WebhookLog[]>('/webhooks/logs', {
       query: { webhookId, ...filters } as Record<string, string>,
@@ -309,7 +302,7 @@ export class WebhookService {
    */
   async handleIncomingWebhook(
     source: 'hr' | 'crm' | 'accounting',
-    payload: WebhookPayload
+    payload: WebhookPayload,
   ): Promise<void> {
     console.log(`Incoming webhook from ${source}:`, payload.event)
 
@@ -333,11 +326,7 @@ export class WebhookService {
    * Verify webhook signature
    * التحقق من توقيع webhook
    */
-  verifySignature(
-    payload: WebhookPayload,
-    signature: string,
-    secret: string
-  ): boolean {
+  verifySignature(payload: WebhookPayload, signature: string, secret: string): boolean {
     const expectedSignature = this.generateSignature(payload, secret)
     return signature === expectedSignature
   }
@@ -422,4 +411,3 @@ export const WEBHOOK_EVENTS = {
   DEAL_WON: 'deal.won',
   DEAL_LOST: 'deal.lost',
 } as const
-

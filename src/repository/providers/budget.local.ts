@@ -1,13 +1,16 @@
 import type { IBudgetRepository } from '@/repository/budget.repository'
 import type { Budget, BudgetCategory } from '@/data/centralData'
-import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 
 const generateId = () => `budget_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
-const generateCategoryId = () => `budget_category_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+const generateCategoryId = () =>
+  `budget_category_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 
-const normalizeCategory = (category: Partial<BudgetCategory> & Pick<BudgetCategory, 'id'>): BudgetCategory => ({
+const normalizeCategory = (
+  category: Partial<BudgetCategory> & Pick<BudgetCategory, 'id'>,
+): BudgetCategory => ({
   id: category.id,
   name: category.name ?? '',
   allocatedAmount: Number(category.allocatedAmount ?? 0),
@@ -17,11 +20,15 @@ const normalizeCategory = (category: Partial<BudgetCategory> & Pick<BudgetCatego
 
 const normalizeBudget = (budget: Partial<Budget> & Pick<Budget, 'id'>): Budget => {
   const categories = Array.isArray(budget.categories)
-    ? budget.categories.map(cat => normalizeCategory({ ...cat, id: cat?.id ?? generateCategoryId() }))
+    ? budget.categories.map((cat) =>
+        normalizeCategory({ ...cat, id: cat?.id ?? generateCategoryId() }),
+      )
     : []
 
   const totalAmount = Number(budget.totalAmount ?? 0)
-  const spentAmount = Number(budget.spentAmount ?? categories.reduce((sum, cat) => sum + cat.spentAmount, 0))
+  const spentAmount = Number(
+    budget.spentAmount ?? categories.reduce((sum, cat) => sum + cat.spentAmount, 0),
+  )
   const utilization = totalAmount > 0 ? Math.round((spentAmount / totalAmount) * 100) : 0
 
   return {
@@ -44,7 +51,9 @@ const normalizeBudget = (budget: Partial<Budget> & Pick<Budget, 'id'>): Budget =
 
 const loadAll = (): Budget[] => {
   const stored = safeLocalStorage.getItem<Budget[]>(STORAGE_KEYS.FINANCIAL_BUDGETS, [])
-  return Array.isArray(stored) ? stored.map(budget => normalizeBudget({ ...budget, id: budget.id ?? generateId() })) : []
+  return Array.isArray(stored)
+    ? stored.map((budget) => normalizeBudget({ ...budget, id: budget.id ?? generateId() }))
+    : []
 }
 
 const persist = (budgets: Budget[]): void => {
@@ -60,7 +69,7 @@ export class LocalBudgetRepository implements IBudgetRepository {
 
   async getById(id: string): Promise<Budget | null> {
     const budgets = loadAll()
-    const budget = budgets.find(item => item.id === id)
+    const budget = budgets.find((item) => item.id === id)
     return budget ? normalizeBudget(budget) : null
   }
 
@@ -75,7 +84,7 @@ export class LocalBudgetRepository implements IBudgetRepository {
 
   async upsert(budget: Budget): Promise<Budget> {
     const budgets = loadAll()
-    const index = budgets.findIndex(item => item.id === budget.id)
+    const index = budgets.findIndex((item) => item.id === budget.id)
     const normalized = normalizeBudget({ ...budget, id: budget.id ?? generateId() })
 
     if (index >= 0) {
@@ -91,7 +100,7 @@ export class LocalBudgetRepository implements IBudgetRepository {
 
   async update(id: string, updates: Partial<Budget>): Promise<Budget | null> {
     const budgets = loadAll()
-    const index = budgets.findIndex(item => item.id === id)
+    const index = budgets.findIndex((item) => item.id === id)
 
     if (index === -1) {
       return null
@@ -106,7 +115,7 @@ export class LocalBudgetRepository implements IBudgetRepository {
 
   async delete(id: string): Promise<boolean> {
     const budgets = loadAll()
-    const filtered = budgets.filter(item => item.id !== id)
+    const filtered = budgets.filter((item) => item.id !== id)
     if (filtered.length === budgets.length) {
       return false
     }
@@ -121,7 +130,7 @@ export class LocalBudgetRepository implements IBudgetRepository {
 
     for (const budget of budgets) {
       const normalized = normalizeBudget({ ...budget, id: budget.id ?? generateId() })
-      const index = current.findIndex(item => item.id === normalized.id)
+      const index = current.findIndex((item) => item.id === normalized.id)
       if (index >= 0) {
         current[index] = normalized
       } else {

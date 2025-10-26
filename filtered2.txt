@@ -1,0 +1,1075 @@
+# اي ر در زص د دد - Projects System Modernization Plan
+
+**دزد:** 2025-10-26  
+**دصدر:** ا  ز  
+**در دزر:** 4-5 ثدذ
+
+---
+
+## ا د دز
+
+### د دخ
+
+ز زص د حدر دد ذدزد  دشر دددز دسذزر دز ز زذد ذشدص  د دددز  دز :
+
+- زص دد دزد **Zustand Stores**
+- ز ددز در (Component Decomposition)
+- دزدش Custom Hooks دذر حدر ددزد
+- ز  ث ددز ح ث  250 
+- ص دزد ددز  دزر
+- د زر دزذددز >85%
+
+### دزدخش دزر
+
+```
+ددز دصدر:
+ظظظ EnhancedProjectDetails.tsx: ~656  ( - ACTIVE ظ)
+ظظظ Projects.tsx: ~900  (ACTIVE ظ)
+ظظظ NewProjectForm.tsx: ~600  (ACTIVE ظ)
+ظظظ ProjectDetails.tsx: ~494  (DEPRECATED ظإ  ز - ز ص)
+ظظظ ProjectForm.tsx: ~300 
+
+د ذ دز:
+ظظظ ProjectDetailsPage.tsx: <240  (-63%  EnhancedProjectDetails)
+ظظظ ProjectsPage.tsx: <190  (-79%)
+ظظظ NewProjectForm.tsx: <140  (-77%)
+ظظظ ظإ ProjectDetails.tsx: DELETE (  ز)
+ظظظ Infrastructure: ~8,300  (stores, hooks, components)
+```
+
+---
+
+## ا زص د دددز - در دصدر ددشصر
+
+### دشر دذر  د دددز
+
+#### ظ Phase 1: زص دذر دصدر
+
+```
+ذ دزص:
+ظظظ TendersPage.tsx: 999 
+ظظظ NewTenderForm.tsx: 1,102 
+ظظظ TenderPricingPage.tsx: 739 
+ظظظ TenderPricingWizard: ~500 
+
+دزشر: ~3,340   4 دز
+```
+
+#### ظ Phase 2: دزدش دذر دزصزر (Infrastructure)
+
+**Week -1: BOQ Infrastructure**
+
+- `boqStore.ts` (343 LOC) - حدر شد ددز
+- Tests: 25 unit tests
+
+**Week 0: Page-Specific Stores (4 Stores)**
+
+1. `tenderListStore.ts` - حدر دخر دددز
+2. `tenderDetailsStore.ts` - حدر زد ددر
+3. `pricingWizardStore.ts` - حدر دش دز
+4. `documentUploadStore.ts` - حدر  دزدز
+
+**Week 1: Component Extraction (14 Components)**
+
+- BOQTable, PricingSummary, CostBreakdown
+- FinancialSummaryCard, EnhancedTenderCard
+- TenderStatusBadge, TenderActionsMenu, etc.
+
+**Week 1: Custom Hooks (15 Hooks)**
+
+- `useTenderViewNavigation` - دز ذ دصدز
+- `useTenderEventListeners` - ددزد ثصدس
+- `useTenderStatus` - صدذدز دصدر
+- `useTenderBOQ` - حدر شد ددز
+- `useTenderAttachments` - حدر ددز
+- `useTenderStatusManagement` - حدر صددز ددر
+- `useFinancialCalculations` - دصدذدز ددر
+- Plus 8 more hooks...
+
+#### ظ Phase 3: Page Refactoring (Week 2)
+
+**ذ:**
+
+```typescript
+// TendersPage.tsx - 999 lines
+export function TendersPage() {
+  const [tenders, setTenders] = useState([])
+  const [filters, setFilters] = useState({})
+  const [sorting, setSorting] = useState({})
+  // ... 900+ lines of logic
+}
+```
+
+**ذ:**
+
+```typescript
+// TendersPage.tsx - 244 lines (-76%)
+export function TendersPage() {
+  const { tenders, filters, sorting } = useTenderListStore()
+  const navigation = useTenderViewNavigation()
+  const status = useTenderStatus()
+  // ... clean, minimal logic
+}
+```
+
+**دزشر:**
+
+- TendersPage: 999ظْ244 LOC (-76%)
+- NewTenderForm: 1,102ظْ219 LOC (-80%)
+- TenderPricingPage: 739ظْ685 LOC (-7%)
+
+#### ظ Phase 4: Testing & Quality (Week 3)
+
+**Test Coverage:**
+
+```
+Unit Tests: 566 tests
+ظظظ Hooks: 172 tests
+ظظظ Stores: 179 tests
+ظظظ Components: 215 tests
+
+Integration Tests: 50 tests
+ظظظ Store-Repository: 22 tests
+ظظظ Cross-Store Events: 16 tests
+ظظظ Workflows: 12 tests
+
+Total: 818 tests (99.9% passing)
+Coverage: ~85%
+```
+
+### دزدخش دصر
+
+```
+ظ Reduction: 3,340 ظْ 1,148 LOC (-66%  دصدز)
+ظ Infrastructure: ~15,500 LOC (دذ حدر ددزد)
+ظ Tests: 818 passing (99.9%)
+ظ Coverage: ~85%
+ظ TypeScript Errors: 0
+ظ ESLint Warnings: 0
+ظ Build: Success
+```
+
+---
+
+## ا زص د دد دصد
+
+### ددز دخر
+
+#### 1. `EnhancedProjectDetails.tsx` (~656 ) ا CRITICAL - ACTIVE
+
+**دصدر:** ظ ز د  `ProjectsPage.tsx`
+
+**دد:**
+
+```
+ظإ ذ ذد (656 ) - د: <240 
+ظ ز Custom Hooks ذد (useProjectData, useProjectCosts, useBOQSync)
+ظ ز Tab Components ر
+ظ زد  د دددز دزدز
+ظأبي د د صز  ذ د Logic دد
+ظأبي  زص ثس ذدزد د  د Hooks
+```
+
+**دصز:**
+
+- دز د دثدر
+- دزد دزر (ProjectCostView)
+- در ددر
+- دش د
+- دزدز دزذر
+- دزدز ددز
+- ش دزص
+
+#### 1.1 `ProjectDetails.tsx` (~494 ) ظإ DEPRECATED -  ز
+
+**دصدر:** ظإ د ز  ث د  دد
+
+**دد:**
+
+```
+ظإ    ز
+ظإ د صز  Custom Hooks
+ظإ ذر Monolithic ر
+ظإ زد ص  دثر
+ظإ  
+```
+
+**دحشدة:** اّي ز ص ث  ث
+
+#### 2. `Projects.tsx` (~900 ) ااب HIGH
+
+**دد:**
+
+```
+ظإ ش ذ list view + routing logic
+ظإ useState حدر دصدر
+ظإ زد  د filtering/sorting
+ظإ د ش separation of concerns
+```
+
+#### 3. `NewProjectForm.tsx` (~600 ) ااة MEDIUM
+
+**دد:**
+
+```
+ظإ Form logic   validation
+ظإ د ز store
+ظإ زد  د form handling
+```
+
+#### 4. `ProjectDetails.tsx` + `ProjectForm.tsx` (شر)
+
+ظأبي **دصر ر:** `ProjectDetails.tsx`     ز ز ص
+
+**ددز:**
+
+- ظ `ProjectForm.tsx`: (~300 ) -   
+- ظإ `ProjectDetails.tsx`: (~494 ) - **DEPRECATED -  ز - ز ص**
+
+### دزد  دثر دث
+
+```
+د دددز ظْ د دد:
+ظظظ  د ذدر ظْ حدة  زدخد
+ظظظ  BOQ د ظْ دزد در
+ظظظ ذ TenderId ظ ProjectId
+
+د دزدز ظْ د دد:
+ظظظ Purchase Orders ظْ دزد در
+ظظظ ززذ ددز
+ظظظ در د vs د
+
+د ددة:
+ظظظ Client data integration
+```
+
+### د Services د Repositories
+
+**ش صدد:**
+
+```
+ظ enhancedProjectService.ts -  دثد
+ظ LocalEnhancedProjectRepository - ز ص
+ظ Types شر  types/projects.ts
+```
+
+** ش (شذ حدج):**
+
+```
+ظإ Zustand Stores د
+ظإ Custom Hooks ر
+ظإ Component Library ر
+ظإ Test Suite د
+```
+
+---
+
+## ا در دزر - 5 ثدذ
+
+### ا Week -1: Projects Infrastructure (5 ثد)
+
+**د:** ذدة دذر دزصزر دثدر (Stores + Core Hooks)
+
+#### Day -5: projectStore.ts ظذ CRITICAL
+
+**در:** ~1 
+
+**دد:**
+
+```typescript
+حدة src/application/stores/projectStore.ts:
+
+interface ProjectStore {
+  // State
+  projects: EnhancedProject[]
+  currentProject: EnhancedProject | null
+  loading: boolean
+  error: string | null
+
+  // Actions
+  setProjects: (projects: EnhancedProject[]) => void
+  setCurrentProject: (project: EnhancedProject | null) => void
+  addProject: (project: EnhancedProject) => void
+  updateProject: (id: string, updates: Partial<EnhancedProject>) => void
+  deleteProject: (id: string) => void
+  loadProject: (id: string) => Promise<void>
+  loadProjects: () => Promise<void>
+
+  // Selectors
+  getProjectById: (id: string) => EnhancedProject | undefined
+  getActiveProjects: () => EnhancedProject[]
+  getCompletedProjects: () => EnhancedProject[]
+  getTotalValue: () => number
+}
+```
+
+**Deliverables:**
+
+- ظ projectStore.ts (350 LOC)
+- ظ Tests: 30 unit tests
+- ظ DevTools integration
+- ظ Immer middleware
+
+---
+
+#### Day -4: projectListStore.ts
+
+**در:** ~1 
+
+**دد:**
+
+```typescript
+حدة src/application/stores/projectListStore.ts:
+
+interface ProjectListStore {
+  // Filters
+  filters: ProjectFilters
+  setFilters: (filters: Partial<ProjectFilters>) => void
+  clearFilters: () => void
+
+  // Sorting
+  sortBy: ProjectSortField
+  sortOrder: 'asc' | 'desc'
+  setSorting: (field: ProjectSortField, order: 'asc' | 'desc') => void
+
+  // Search
+  searchQuery: string
+  setSearchQuery: (query: string) => void
+
+  // Pagination
+  page: number
+  pageSize: number
+  setPage: (page: number) => void
+
+  // Computed
+  filteredProjects: () => EnhancedProject[]
+  sortedProjects: () => EnhancedProject[]
+  paginatedProjects: () => EnhancedProject[]
+  totalPages: () => number
+}
+```
+
+**Deliverables:**
+
+- ظ projectListStore.ts (300 LOC)
+- ظ Tests: 25 unit tests
+
+---
+
+#### Day -3: projectDetailsStore.ts
+
+**در:** ~1 
+
+**دد:**
+
+```typescript
+حدة src/application/stores/projectDetailsStore.ts:
+
+interface ProjectDetailsStore {
+  // Current Tab
+  activeTab: 'overview' | 'costs' | 'budget' | 'timeline' | 'purchases' | 'attachments'
+  setActiveTab: (tab: string) => void
+
+  // Edit Mode
+  isEditing: boolean
+  editFormData: EditProjectFormData
+  setEditMode: (editing: boolean) => void
+  updateEditForm: (data: Partial<EditProjectFormData>) => void
+
+  // Budget Comparison
+  budgetComparison: ProjectBudgetComparison[]
+  budgetSummary: BudgetSummary | null
+  loadBudgetComparison: (projectId: string) => Promise<void>
+
+  // Related Data
+  relatedTender: Tender | null
+  purchaseOrders: PurchaseOrder[]
+  loadRelatedData: (projectId: string) => Promise<void>
+}
+```
+
+**Deliverables:**
+
+- ظ projectDetailsStore.ts (280 LOC)
+- ظ Tests: 22 unit tests
+
+---
+
+#### Day -2: projectCostStore.ts
+
+**در:** ~1 
+
+**دد:**
+
+```typescript
+حدة src/application/stores/projectCostStore.ts:
+
+interface ProjectCostStore {
+  // Costs Data
+  estimatedCosts: BOQItem[]
+  actualCosts: Expense[]
+  variance: CostVariance[]
+
+  // Loading States
+  loadingEstimated: boolean
+  loadingActual: boolean
+
+  // Actions
+  loadEstimatedCosts: (projectId: string) => Promise<void>
+  loadActualCosts: (projectId: string) => Promise<void>
+  calculateVariance: () => void
+
+  // Computed
+  totalEstimated: () => number
+  totalActual: () => number
+  totalVariance: () => number
+  variancePercentage: () => number
+  costStatus: () => 'under' | 'over' | 'on-budget'
+}
+```
+
+**Deliverables:**
+
+- ظ projectCostStore.ts (250 LOC)
+- ظ Tests: 20 unit tests
+
+---
+
+#### Day -1: projectAttachmentsStore.ts
+
+**در:** ~1 
+
+**دد:**
+
+```typescript
+حدة src/application/stores/projectAttachmentsStore.ts:
+
+interface ProjectAttachmentsStore {
+  // Attachments
+  attachments: ProjectAttachment[]
+  isUploading: boolean
+  uploadProgress: number
+
+  // Actions
+  loadAttachments: (projectId: string) => Promise<void>
+  uploadFile: (projectId: string, file: File) => Promise<void>
+  deleteAttachment: (attachmentId: string) => Promise<void>
+  downloadAttachment: (attachmentId: string) => Promise<void>
+
+  // Computed
+  totalSize: () => number
+  attachmentsByType: () => Record<string, ProjectAttachment[]>
+}
+```
+
+**Deliverables:**
+
+- ظ projectAttachmentsStore.ts (200 LOC)
+- ظ Tests: 18 unit tests
+
+---
+
+### ا Week 0: Custom Hooks (4 ثد)
+
+**د:** دزدش د Logic ح Custom Hooks دذر حدر ددزد
+
+#### Day 0: useProjectData.ts + useProjectNavigation.ts
+
+**در:** ~1 
+
+**useProjectData:**
+
+```typescript
+interface UseProjectDataReturn {
+  project: EnhancedProject | null
+  loading: boolean
+  error: string | null
+  refresh: () => Promise<void>
+  update: (updates: Partial<EnhancedProject>) => Promise<void>
+  delete: () => Promise<void>
+}
+
+export function useProjectData(projectId: string): UseProjectDataReturn
+```
+
+**useProjectNavigation:**
+
+```typescript
+interface UseProjectNavigationReturn {
+  currentView: 'list' | 'details' | 'create' | 'edit'
+  selectedProject: EnhancedProject | null
+  navigateToList: () => void
+  navigateToDetails: (projectId: string) => void
+  navigateToCreate: () => void
+  navigateToEdit: (projectId: string) => void
+}
+
+export function useProjectNavigation(): UseProjectNavigationReturn
+```
+
+**Deliverables:**
+
+- ظ useProjectData.ts (120 LOC)
+- ظ useProjectNavigation.ts (80 LOC)
+- ظ Tests: 15 + 10 = 25 tests
+
+---
+
+#### Day 1: useProjectCosts.ts + useProjectBudget.ts
+
+**در:** ~1 
+
+**useProjectCosts:**
+
+```typescript
+interface UseProjectCostsReturn {
+  estimatedCosts: BOQItem[]
+  actualCosts: Expense[]
+  variance: CostVariance[]
+  loading: boolean
+  refresh: () => Promise<void>
+  calculateVariance: () => CostVariance[]
+}
+
+export function useProjectCosts(projectId: string): UseProjectCostsReturn
+```
+
+**useProjectBudget:**
+
+```typescript
+interface UseProjectBudgetReturn {
+  budgetComparison: ProjectBudgetComparison[]
+  budgetSummary: BudgetSummary | null
+  loading: boolean
+  refresh: () => Promise<void>
+  exportToExcel: () => void
+}
+
+export function useProjectBudget(projectId: string): UseProjectBudgetReturn
+```
+
+**Deliverables:**
+
+- ظ useProjectCosts.ts (150 LOC)
+- ظ useProjectBudget.ts (130 LOC)
+- ظ Tests: 18 + 16 = 34 tests
+
+---
+
+#### Day 2: useProjectAttachments.ts + useProjectTimeline.ts
+
+**در:** ~1 
+
+**useProjectAttachments:**
+
+```typescript
+interface UseProjectAttachmentsReturn {
+  attachments: ProjectAttachment[]
+  isUploading: boolean
+  uploadProgress: number
+  uploadFile: (file: File) => Promise<void>
+  deleteFile: (id: string) => Promise<void>
+  downloadFile: (id: string) => Promise<void>
+}
+
+export function useProjectAttachments(projectId: string)
+```
+
+**useProjectTimeline:**
+
+```typescript
+interface UseProjectTimelineReturn {
+  startDate: Date
+  endDate: Date
+  progress: number
+  daysRemaining: number
+  isOverdue: boolean
+  milestones: Milestone[]
+  updateProgress: (progress: number) => Promise<void>
+}
+
+export function useProjectTimeline(projectId: string)
+```
+
+**Deliverables:**
+
+- ظ useProjectAttachments.ts (140 LOC)
+- ظ useProjectTimeline.ts (100 LOC)
+- ظ Tests: 20 + 12 = 32 tests
+
+---
+
+#### Day 3: useProjectStatus.ts + useProjectFormatters.ts
+
+**در:** ~1 
+
+**useProjectStatus:**
+
+```typescript
+interface UseProjectStatusReturn {
+  status: ProjectStatus
+  statusInfo: StatusInfo
+  canEdit: boolean
+  canDelete: boolean
+  canComplete: boolean
+  updateStatus: (status: ProjectStatus) => Promise<void>
+}
+
+export function useProjectStatus(project: EnhancedProject)
+```
+
+**useProjectFormatters:**
+
+```typescript
+interface UseProjectFormattersReturn {
+  formatCurrency: (amount: number) => string
+  formatDate: (date: Date | string) => string
+  formatPercentage: (value: number) => string
+  formatFileSize: (bytes: number) => string
+}
+
+export function useProjectFormatters()
+```
+
+**Deliverables:**
+
+- ظ useProjectStatus.ts (90 LOC)
+- ظ useProjectFormatters.ts (70 LOC)
+- ظ Tests: 14 + 8 = 22 tests
+
+---
+
+### ا Week 1: Component Extraction (5 ثد)
+
+**د:** ز ددز در ح دز ر دذر حدر ددزد
+
+#### Day 1: ProjectCard + ProjectListItem
+
+**در:** ~1 
+
+**ProjectCard:**
+
+```typescript
+interface ProjectCardProps {
+  project: EnhancedProject
+  onClick?: () => void
+  onEdit?: () => void
+  onDelete?: () => void
+  showActions?: boolean
+}
+
+export function ProjectCard(props: ProjectCardProps)
+```
+
+**ProjectListItem:**
+
+```typescript
+interface ProjectListItemProps {
+  project: EnhancedProject
+  selected?: boolean
+  onClick?: () => void
+}
+
+export function ProjectListItem(props: ProjectListItemProps)
+```
+
+**Deliverables:**
+
+- ظ ProjectCard.tsx (120 LOC)
+- ظ ProjectListItem.tsx (80 LOC)
+- ظ Tests: 15 + 10 = 25 tests
+
+---
+
+#### Day 2: ProjectStatusBadge + ProjectProgressBar + ProjectFinancialSummary
+
+**در:** ~1 
+
+**Components:**
+
+- ProjectStatusBadge:  صدر د
+- ProjectProgressBar:  دز
+- ProjectFinancialSummary:  د
+
+**Deliverables:**
+
+- ظ 3 components (~200 LOC total)
+- ظ Tests: 25 tests
+
+---
+
+#### Day 3: ProjectOverviewPanel + ProjectCostsPanel
+
+**در:** ~1 
+
+**ProjectOverviewPanel:**
+
+```typescript
+interface ProjectOverviewPanelProps {
+  project: EnhancedProject
+  onEdit?: () => void
+}
+```
+
+**ProjectCostsPanel:**
+
+```typescript
+interface ProjectCostsPanelProps {
+  projectId: string
+  estimatedCosts: BOQItem[]
+  actualCosts: Expense[]
+}
+```
+
+**Deliverables:**
+
+- ظ ProjectOverviewPanel.tsx (150 LOC)
+- ظ ProjectCostsPanel.tsx (180 LOC)
+- ظ Tests: 20 + 22 = 42 tests
+
+---
+
+#### Day 4: ProjectBudgetComparisonTable + ProjectTimelineChart
+
+**در:** ~1 
+
+**Components:**
+
+- ProjectBudgetComparisonTable: ش در ددر
+- ProjectTimelineChart:  دش د
+
+**Deliverables:**
+
+- ظ 2 components (~250 LOC total)
+- ظ Tests: 30 tests
+
+---
+
+#### Day 5: ProjectAttachmentsList + ProjectPurchasesTable
+
+**در:** ~1 
+
+**Components:**
+
+- ProjectAttachmentsList: دخر ددز
+- ProjectPurchasesTable: ش دزدز
+
+**Deliverables:**
+
+- ظ 2 components (~200 LOC total)
+- ظ Tests: 25 tests
+
+---
+
+### ا Week 2: Page Refactoring (3 ثد)
+
+**د:** حدر زدذر دصدز ز ر دصر
+
+#### Day 1: ProjectsPage Refactoring
+
+**در:** ~1 
+
+**ذ:**
+
+```typescript
+// Projects.tsx - 900 lines
+export function ProjectsView() {
+  const [projects, setProjects] = useState([])
+  const [filters, setFilters] = useState({})
+  // ... 800+ lines
+}
+```
+
+**ذ:**
+
+```typescript
+// ProjectsPage.tsx - <200 lines
+export function ProjectsPage() {
+  const { projects } = useProjectStore()
+  const { filters, sorting } = useProjectListStore()
+  const navigation = useProjectNavigation()
+
+  return (
+    <PageLayout>
+      <ProjectsList
+        projects={projects}
+        filters={filters}
+        onProjectSelect={navigation.navigateToDetails}
+      />
+    </PageLayout>
+  )
+}
+```
+
+**Deliverables:**
+
+- ظ ProjectsPage.tsx: 900ظْ190 LOC (-79%)
+- ظ Tests: 20 tests
+
+---
+
+#### Day 2: ProjectDetailsPage Refactoring
+
+**در:** ~1 
+
+**ذ:**
+
+```typescript
+// EnhancedProjectDetails.tsx - 656 lines (دز صدد)
+export function EnhancedProjectDetails({ projectId }) {
+  // ... ذ د Custom Hooks شر ذد
+  const { project } = useProjectData({ projectId })
+  const { financialMetrics } = useProjectCosts({ projectId })
+
+  // ...  د د د logic د
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [budgetComparison, setBudgetComparison] = useState([])
+  // ... د  د state د logic
+}
+```
+
+**ذ:**
+
+```typescript
+// ProjectDetailsPage.tsx - <240 lines
+export function ProjectDetailsPage({ projectId }) {
+  const { project } = useProjectData(projectId)
+  const { activeTab } = useProjectDetailsStore()
+  const costs = useProjectCosts(projectId)
+  const budget = useProjectBudget(projectId)
+  const attachments = useProjectAttachments(projectId)
+
+  return (
+    <PageLayout>
+      <Tabs value={activeTab}>
+        <TabsContent value="overview">
+          <ProjectOverviewPanel project={project} />
+        </TabsContent>
+        <TabsContent value="costs">
+          <ProjectCostsPanel {...costs} />
+        </TabsContent>
+        <TabsContent value="budget">
+          <ProjectBudgetComparisonTable {...budget} />
+        </TabsContent>
+        <TabsContent value="attachments">
+          <ProjectAttachmentsList {...attachments} />
+        </TabsContent>
+      </Tabs>
+    </PageLayout>
+  )
+}
+```
+
+**Deliverables:**
+
+- ظ ProjectDetailsPage.tsx: 656ظْ240 LOC (-63%)
+- ظ   د Logic  Stores د Hooks
+- ظ دزد ش د Components دزشر
+- ظ Tests: 25 tests
+
+**دصر:** ز ص `ProjectDetails.tsx` د ( ز)
+
+---
+
+#### Day 3: NewProjectForm Refactoring
+
+**در:** ~1 
+
+**ذ:**
+
+```typescript
+// NewProjectForm.tsx - 600 lines
+export function NewProjectForm() {
+  // ... complex form logic
+}
+```
+
+**ذ:**
+
+```typescript
+// NewProjectForm.tsx - <150 lines
+export function NewProjectForm() {
+  const { addProject } = useProjectStore()
+  const formatters = useProjectFormatters()
+
+  const form = useForm<CreateProjectRequest>({
+    defaultValues: projectDefaults
+  })
+
+  const onSubmit = async (data) => {
+    await addProject(data)
+  }
+
+  return <ProjectFormFields form={form} onSubmit={onSubmit} />
+}
+```
+
+**Deliverables:**
+
+- ظ NewProjectForm.tsx: 600ظْ140 LOC (-77%)
+- ظ Tests: 18 tests
+
+---
+
+### ا Week 3: Testing & Quality (7 ثد)
+
+**د:** د دشر ددزد
+
+#### Day 1: Test Analysis
+
+- زص د test suite
+- زص دسدز  دزر
+- حدة ر ددزذددز
+
+#### Day 2: Fix Failures
+
+- حدص ددزذددز ددر
+- زصس د mocks
+
+#### Day 3: Unit Tests for Stores
+
+- دزذددز در  5 stores
+- Target: 30 tests per store = 150 tests
+
+#### Day 4: Unit Tests for Hooks
+
+- دزذددز در  8 hooks
+- Target: 15 tests per hook = 120 tests
+
+#### Day 5: Integration Tests
+
+- Store-Repository integration: 20 tests
+- Cross-Store events: 15 tests
+- Workflow tests: 10 tests
+
+#### Day 6: Component Tests
+
+- دزذددز  10 components
+- Target: 15 tests per component = 150 tests
+
+#### Day 7: Final Validation
+
+- Coverage analysis (target: >85%)
+- Performance testing
+- Build validation
+- Documentation review
+
+---
+
+### ا Week 4 (دزد): Advanced Features
+
+#### Day 1-2: Tender-Project Integration
+
+- ذ زدخ  د ذدر
+-  BOQ د
+- ززذ ددزذد
+
+#### Day 3-4: Purchase Orders Integration
+
+- ذ  د دزدز
+- صدذ دزد در
+- در زدخر
+
+#### Day 5: Timeline Management
+
+- حدر دش د
+- ززذ ددص
+- زذدز دزث
+
+---
+
+## ا دد دزر
+
+### Code Reduction
+
+```
+Before:
+ظظظ EnhancedProjectDetails.tsx: ~656 LOC (دز د)
+ظظظ Projects.tsx: ~900 LOC
+ظظظ NewProjectForm.tsx: ~600 LOC
+ظظظ ProjectDetails.tsx: ~494 LOC (DEPRECATED - ز ص ظإ)
+ظظظ Others: ~350 LOC
+ظظظ Total Active: ~2,506 LOC
+
+After:
+ظظظ ProjectDetailsPage.tsx: ~240 LOC (-63%  EnhancedProjectDetails)
+ظظظ ProjectsPage.tsx: ~190 LOC (-79%)
+ظظظ NewProjectForm.tsx: ~140 LOC (-77%)
+ظظظ Others: ~180 LOC (-49%)
+ظظظ Total: ~750 LOC (-70%)
+
+Infrastructure Created:
+ظظظ Stores: 5 files (~1,400 LOC)
+ظظظ Hooks: 8 files (~900 LOC)
+ظظظ Components: 10 files (~1,500 LOC)
+ظظظ Tests: 600 tests (~4,500 LOC)
+ظظظ Total: ~8,300 LOC (reusable)
+```
+
+### Quality Metrics
+
+```
+Tests: 600+ tests
+Coverage: >85%
+TypeScript Errors: 0
+ESLint Warnings: 0
+Build: Success
+Performance: <200ms load time
+```
+
+---
+
+## ا د دشدص
+
+### Must Have (P0)
+
+- ظ ش ددز <250 
+- ظ 5 Zustand stores ز
+- ظ 8 Custom hooks زذر
+- ظ 10 Components دذر حدر ددزد
+- ظ Test coverage >85%
+- ظ Zero TypeScript errors
+- ظ Build success
+
+### Should Have (P1)
+
+- ظ Integration  د دددز
+- ظ Integration  د دزدز
+- ظ Real-time cost tracking
+- ظ Performance optimizations
+
+### Nice to Have (P2)
+
+- Timeline management
+- Advanced reporting
+- Export capabilities
+- Offline support
+
+---
+
+## اأ دز
+
+### در دث
+
+دذث ذ **Week -1, Day -5: projectStore.ts**
+
+### دد دذر
+
+-  دص ز
+- 4-5 ثدذ
+- Access  دثر
+
+### Dependencies
+
+- Zustand (ظ ش)
+- Immer (ظ ش)
+- React Testing Library (ظ ش)
+- Vitest (ظ ش)
+
+---
+
+**دصدر:** ا شد ز
+**دثر:** اح در شد
+**ددخ دز:** زص 79%  صش د + شر در
+
+**ا د شد ذة د ذدزد  دشر ددشصر د دددز!**

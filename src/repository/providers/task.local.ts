@@ -3,22 +3,22 @@
  * تنفيذ مستودع المهام المحلي
  */
 
-import { 
-  Task, 
-  CreateTaskRequest, 
-  UpdateTaskRequest, 
-  TaskFilters, 
-  TaskSortOptions, 
+import type {
+  Task,
+  CreateTaskRequest,
+  UpdateTaskRequest,
+  TaskFilters,
+  TaskSortOptions,
   TaskStatistics,
   TaskDependency,
   TaskComment,
   TaskAttachment,
   TaskTimeEntry,
   TaskStatus,
-  TaskPriority
+  TaskPriority,
 } from '../../types/tasks'
-import { TaskRepository } from '../task.repository'
-import { safeLocalStorage } from '../../utils/storage'
+import type { TaskRepository } from '../task.repository'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 
 class LocalTaskRepository implements TaskRepository {
   private readonly STORAGE_KEY = 'tasks'
@@ -87,7 +87,7 @@ class LocalTaskRepository implements TaskRepository {
   async getById(id: string): Promise<Task | null> {
     try {
       const tasks = await this.getAll()
-      return tasks.find(task => task.id === id) || null
+      return tasks.find((task) => task.id === id) || null
     } catch (error) {
       console.error('خطأ في الحصول على المهمة:', error)
       throw new Error('فشل في تحميل المهمة')
@@ -100,7 +100,7 @@ class LocalTaskRepository implements TaskRepository {
   async create(request: CreateTaskRequest): Promise<Task> {
     try {
       const tasks = await this.getAll()
-      
+
       const newTask: Task = {
         id: this.generateId(),
         ...request,
@@ -118,7 +118,7 @@ class LocalTaskRepository implements TaskRepository {
         updatedAt: new Date().toISOString(),
         createdBy: 'current_user', // يجب الحصول على المستخدم الحالي
         lastModifiedBy: 'current_user',
-        version: 1
+        version: 1,
       }
 
       tasks.push(newTask)
@@ -137,14 +137,14 @@ class LocalTaskRepository implements TaskRepository {
   async update(request: UpdateTaskRequest): Promise<Task> {
     try {
       const tasks = await this.getAll()
-      const taskIndex = tasks.findIndex(task => task.id === request.id)
-      
+      const taskIndex = tasks.findIndex((task) => task.id === request.id)
+
       if (taskIndex === -1) {
         throw new Error('المهمة غير موجودة')
       }
 
       const existingTask = tasks[taskIndex]
-      
+
       // التحقق من الإصدار (Optimistic Locking)
       if (existingTask.version !== request.version) {
         throw new Error('تم تعديل المهمة من قبل مستخدم آخر')
@@ -156,7 +156,7 @@ class LocalTaskRepository implements TaskRepository {
         ...request,
         updatedAt: new Date().toISOString(),
         lastModifiedBy: 'current_user',
-        version: existingTask.version + 1
+        version: existingTask.version + 1,
       }
 
       tasks[taskIndex] = updatedTask
@@ -175,8 +175,8 @@ class LocalTaskRepository implements TaskRepository {
   async delete(id: string): Promise<void> {
     try {
       const tasks = await this.getAll()
-      const filteredTasks = tasks.filter(task => task.id !== id)
-      
+      const filteredTasks = tasks.filter((task) => task.id !== id)
+
       if (filteredTasks.length === tasks.length) {
         throw new Error('المهمة غير موجودة')
       }
@@ -197,11 +197,11 @@ class LocalTaskRepository implements TaskRepository {
   async getStatistics(filters?: TaskFilters): Promise<TaskStatistics> {
     try {
       const tasks = await this.getAll(filters)
-      
+
       const totalTasks = tasks.length
-      const completedTasks = tasks.filter(task => task.status === 'completed').length
-      const inProgressTasks = tasks.filter(task => task.status === 'in_progress').length
-      const overdueTasks = tasks.filter(task => {
+      const completedTasks = tasks.filter((task) => task.status === 'completed').length
+      const inProgressTasks = tasks.filter((task) => task.status === 'in_progress').length
+      const overdueTasks = tasks.filter((task) => {
         const today = new Date()
         const endDate = new Date(task.plannedEndDate)
         return endDate < today && task.status !== 'completed'
@@ -210,17 +210,18 @@ class LocalTaskRepository implements TaskRepository {
       const completionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0
 
       // حساب متوسط وقت الإنجاز
-      const completedTasksWithDates = tasks.filter(task => 
-        task.status === 'completed' && task.actualStartDate && task.actualEndDate
+      const completedTasksWithDates = tasks.filter(
+        (task) => task.status === 'completed' && task.actualStartDate && task.actualEndDate,
       )
-      
-      const averageCompletionTime = completedTasksWithDates.length > 0 
-        ? completedTasksWithDates.reduce((sum, task) => {
-            const start = new Date(task.actualStartDate!).getTime()
-            const end = new Date(task.actualEndDate!).getTime()
-            return sum + (end - start) / (1000 * 60 * 60 * 24) // بالأيام
-          }, 0) / completedTasksWithDates.length
-        : 0
+
+      const averageCompletionTime =
+        completedTasksWithDates.length > 0
+          ? completedTasksWithDates.reduce((sum, task) => {
+              const start = new Date(task.actualStartDate!).getTime()
+              const end = new Date(task.actualEndDate!).getTime()
+              return sum + (end - start) / (1000 * 60 * 60 * 24) // بالأيام
+            }, 0) / completedTasksWithDates.length
+          : 0
 
       // إحصائيات الساعات والتكلفة
       const totalEstimatedHours = tasks.reduce((sum, task) => sum + task.estimatedHours, 0)
@@ -230,24 +231,24 @@ class LocalTaskRepository implements TaskRepository {
 
       // إحصائيات حسب الحالة
       const tasksByStatus: Record<TaskStatus, number> = {
-        not_started: tasks.filter(t => t.status === 'not_started').length,
-        in_progress: tasks.filter(t => t.status === 'in_progress').length,
-        completed: tasks.filter(t => t.status === 'completed').length,
-        on_hold: tasks.filter(t => t.status === 'on_hold').length,
-        cancelled: tasks.filter(t => t.status === 'cancelled').length
+        not_started: tasks.filter((t) => t.status === 'not_started').length,
+        in_progress: tasks.filter((t) => t.status === 'in_progress').length,
+        completed: tasks.filter((t) => t.status === 'completed').length,
+        on_hold: tasks.filter((t) => t.status === 'on_hold').length,
+        cancelled: tasks.filter((t) => t.status === 'cancelled').length,
       }
 
       // إحصائيات حسب الأولوية
       const tasksByPriority: Record<TaskPriority, number> = {
-        low: tasks.filter(t => t.priority === 'low').length,
-        medium: tasks.filter(t => t.priority === 'medium').length,
-        high: tasks.filter(t => t.priority === 'high').length,
-        critical: tasks.filter(t => t.priority === 'critical').length
+        low: tasks.filter((t) => t.priority === 'low').length,
+        medium: tasks.filter((t) => t.priority === 'medium').length,
+        high: tasks.filter((t) => t.priority === 'high').length,
+        critical: tasks.filter((t) => t.priority === 'critical').length,
       }
 
       // إحصائيات حسب المخصص له
       const tasksByAssignee: Record<string, number> = {}
-      tasks.forEach(task => {
+      tasks.forEach((task) => {
         if (task.assigneeId) {
           tasksByAssignee[task.assigneeId] = (tasksByAssignee[task.assigneeId] || 0) + 1
         }
@@ -266,7 +267,7 @@ class LocalTaskRepository implements TaskRepository {
         totalActualCost,
         tasksByStatus,
         tasksByPriority,
-        tasksByAssignee
+        tasksByAssignee,
       }
     } catch (error) {
       console.error('خطأ في حساب إحصائيات المهام:', error)
@@ -281,7 +282,7 @@ class LocalTaskRepository implements TaskRepository {
     try {
       const dependenciesData = safeLocalStorage.getItem(this.DEPENDENCIES_KEY)
       const dependencies: TaskDependency[] = dependenciesData ? JSON.parse(dependenciesData) : []
-      return dependencies.filter(dep => dep.taskId === taskId || dep.dependsOnTaskId === taskId)
+      return dependencies.filter((dep) => dep.taskId === taskId || dep.dependsOnTaskId === taskId)
     } catch (error) {
       console.error('خطأ في الحصول على تبعيات المهمة:', error)
       throw new Error('فشل في تحميل تبعيات المهمة')
@@ -291,14 +292,16 @@ class LocalTaskRepository implements TaskRepository {
   /**
    * إضافة تبعية للمهمة
    */
-  async addTaskDependency(dependency: Omit<TaskDependency, 'id' | 'createdAt'>): Promise<TaskDependency> {
+  async addTaskDependency(
+    dependency: Omit<TaskDependency, 'id' | 'createdAt'>,
+  ): Promise<TaskDependency> {
     try {
       const dependencies = await this.getTaskDependencies('')
-      
+
       const newDependency: TaskDependency = {
         ...dependency,
         id: this.generateId(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       }
 
       dependencies.push(newDependency)
@@ -318,8 +321,8 @@ class LocalTaskRepository implements TaskRepository {
     try {
       const dependenciesData = safeLocalStorage.getItem(this.DEPENDENCIES_KEY)
       const dependencies: TaskDependency[] = dependenciesData ? JSON.parse(dependenciesData) : []
-      
-      const filteredDependencies = dependencies.filter(dep => dep.id !== dependencyId)
+
+      const filteredDependencies = dependencies.filter((dep) => dep.id !== dependencyId)
       safeLocalStorage.setItem(this.DEPENDENCIES_KEY, JSON.stringify(filteredDependencies))
     } catch (error) {
       console.error('خطأ في حذف تبعية المهمة:', error)
@@ -333,7 +336,9 @@ class LocalTaskRepository implements TaskRepository {
     return []
   }
 
-  async addTaskComment(comment: Omit<TaskComment, 'id' | 'createdAt' | 'updatedAt'>): Promise<TaskComment> {
+  async addTaskComment(
+    comment: Omit<TaskComment, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<TaskComment> {
     // تنفيذ مؤقت
     throw new Error('لم يتم تنفيذها بعد')
   }
@@ -352,7 +357,9 @@ class LocalTaskRepository implements TaskRepository {
     return []
   }
 
-  async addTaskAttachment(attachment: Omit<TaskAttachment, 'id' | 'uploadedAt'>): Promise<TaskAttachment> {
+  async addTaskAttachment(
+    attachment: Omit<TaskAttachment, 'id' | 'uploadedAt'>,
+  ): Promise<TaskAttachment> {
     // تنفيذ مؤقت
     throw new Error('لم يتم تنفيذها بعد')
   }
@@ -366,12 +373,17 @@ class LocalTaskRepository implements TaskRepository {
     return []
   }
 
-  async addTaskTimeEntry(timeEntry: Omit<TaskTimeEntry, 'id' | 'createdAt'>): Promise<TaskTimeEntry> {
+  async addTaskTimeEntry(
+    timeEntry: Omit<TaskTimeEntry, 'id' | 'createdAt'>,
+  ): Promise<TaskTimeEntry> {
     // تنفيذ مؤقت
     throw new Error('لم يتم تنفيذها بعد')
   }
 
-  async updateTaskTimeEntry(timeEntryId: string, updates: Partial<Omit<TaskTimeEntry, 'id' | 'taskId' | 'createdAt'>>): Promise<TaskTimeEntry> {
+  async updateTaskTimeEntry(
+    timeEntryId: string,
+    updates: Partial<Omit<TaskTimeEntry, 'id' | 'taskId' | 'createdAt'>>,
+  ): Promise<TaskTimeEntry> {
     // تنفيذ مؤقت
     throw new Error('لم يتم تنفيذها بعد')
   }
@@ -384,7 +396,7 @@ class LocalTaskRepository implements TaskRepository {
    * تطبيق الفلاتر على المهام
    */
   private applyFilters(tasks: Task[], filters: TaskFilters): Task[] {
-    return tasks.filter(task => {
+    return tasks.filter((task) => {
       // فلتر المشروع
       if (filters.projectId && task.projectId !== filters.projectId) {
         return false
@@ -396,7 +408,11 @@ class LocalTaskRepository implements TaskRepository {
       }
 
       // فلتر الأولوية
-      if (filters.priority && filters.priority.length > 0 && !filters.priority.includes(task.priority)) {
+      if (
+        filters.priority &&
+        filters.priority.length > 0 &&
+        !filters.priority.includes(task.priority)
+      ) {
         return false
       }
 
@@ -415,8 +431,8 @@ class LocalTaskRepository implements TaskRepository {
         const searchLower = filters.search.toLowerCase()
         const titleMatch = task.title.toLowerCase().includes(searchLower)
         const descriptionMatch = task.description.toLowerCase().includes(searchLower)
-        const tagsMatch = task.tags.some(tag => tag.toLowerCase().includes(searchLower))
-        
+        const tagsMatch = task.tags.some((tag) => tag.toLowerCase().includes(searchLower))
+
         if (!titleMatch && !descriptionMatch && !tagsMatch) {
           return false
         }
@@ -496,7 +512,10 @@ class LocalTaskRepository implements TaskRepository {
   }
 
   // باقي الطرق المطلوبة - سيتم إضافتها في الجزء التالي
-  async getTasksByAssignee(assigneeId: string, filters?: Omit<TaskFilters, 'assigneeId'>): Promise<Task[]> {
+  async getTasksByAssignee(
+    assigneeId: string,
+    filters?: Omit<TaskFilters, 'assigneeId'>,
+  ): Promise<Task[]> {
     const allFilters = { ...filters, assigneeId }
     return this.getAll(allFilters)
   }
@@ -506,7 +525,7 @@ class LocalTaskRepository implements TaskRepository {
     const filters: TaskFilters = {
       projectId,
       endDateTo: today,
-      status: ['not_started', 'in_progress']
+      status: ['not_started', 'in_progress'],
     }
     return this.getAll(filters)
   }
@@ -514,36 +533,78 @@ class LocalTaskRepository implements TaskRepository {
   async getUpcomingTasks(days: number, projectId?: string): Promise<Task[]> {
     const today = new Date()
     const futureDate = new Date(today.getTime() + days * 24 * 60 * 60 * 1000)
-    
+
     const filters: TaskFilters = {
       projectId,
       endDateFrom: today.toISOString().split('T')[0],
       endDateTo: futureDate.toISOString().split('T')[0],
-      status: ['not_started', 'in_progress']
+      status: ['not_started', 'in_progress'],
     }
     return this.getAll(filters)
   }
 
   // طرق أخرى مؤقتة
-  async duplicateTask(taskId: string, newProjectId?: string): Promise<Task> { throw new Error('لم يتم تنفيذها بعد') }
-  async moveTaskToProject(taskId: string, newProjectId: string): Promise<Task> { throw new Error('لم يتم تنفيذها بعد') }
-  async updateTaskOrder(taskIds: string[]): Promise<void> { }
-  async searchTasks(query: string, filters?: TaskFilters): Promise<Task[]> { return this.getAll({ ...filters, search: query }) }
-  async getTaskPerformanceReport(projectId: string, startDate: string, endDate: string): Promise<any> { return {} }
-  async exportTasks(filters?: TaskFilters, format?: 'csv' | 'excel' | 'pdf'): Promise<Blob> { throw new Error('لم يتم تنفيذها بعد') }
-  async importTasks(file: File, projectId: string): Promise<Task[]> { throw new Error('لم يتم تنفيذها بعد') }
-  async getTaskTemplates(): Promise<any[]> { return [] }
-  async createTasksFromTemplate(templateId: string, projectId: string): Promise<Task[]> { throw new Error('لم يتم تنفيذها بعد') }
-  async saveTaskTemplate(name: string, tasks: Task[]): Promise<any> { throw new Error('لم يتم تنفيذها بعد') }
-  async getCriticalPath(projectId: string): Promise<Task[]> { return [] }
-  async calculateProjectDates(projectId: string): Promise<{ startDate: string; endDate: string; duration: number }> { return { startDate: '', endDate: '', duration: 0 } }
-  async updateProjectProgress(projectId: string): Promise<number> { return 0 }
-  async getResourceAnalysis(projectId: string): Promise<any> { return {} }
-  async getCostAnalysis(projectId: string): Promise<any> { return {} }
-  async getGanttData(projectId: string): Promise<any> { return {} }
-  async rescheduleTask(taskId: string, newStartDate: string, newEndDate: string): Promise<Task> { throw new Error('لم يتم تنفيذها بعد') }
-  async getRiskAnalysis(projectId: string): Promise<any> { return {} }
-  async getCompletionForecast(projectId: string): Promise<any> { return {} }
+  async duplicateTask(taskId: string, newProjectId?: string): Promise<Task> {
+    throw new Error('لم يتم تنفيذها بعد')
+  }
+  async moveTaskToProject(taskId: string, newProjectId: string): Promise<Task> {
+    throw new Error('لم يتم تنفيذها بعد')
+  }
+  async updateTaskOrder(taskIds: string[]): Promise<void> {}
+  async searchTasks(query: string, filters?: TaskFilters): Promise<Task[]> {
+    return this.getAll({ ...filters, search: query })
+  }
+  async getTaskPerformanceReport(
+    projectId: string,
+    startDate: string,
+    endDate: string,
+  ): Promise<any> {
+    return {}
+  }
+  async exportTasks(filters?: TaskFilters, format?: 'csv' | 'excel' | 'pdf'): Promise<Blob> {
+    throw new Error('لم يتم تنفيذها بعد')
+  }
+  async importTasks(file: File, projectId: string): Promise<Task[]> {
+    throw new Error('لم يتم تنفيذها بعد')
+  }
+  async getTaskTemplates(): Promise<any[]> {
+    return []
+  }
+  async createTasksFromTemplate(templateId: string, projectId: string): Promise<Task[]> {
+    throw new Error('لم يتم تنفيذها بعد')
+  }
+  async saveTaskTemplate(name: string, tasks: Task[]): Promise<any> {
+    throw new Error('لم يتم تنفيذها بعد')
+  }
+  async getCriticalPath(projectId: string): Promise<Task[]> {
+    return []
+  }
+  async calculateProjectDates(
+    projectId: string,
+  ): Promise<{ startDate: string; endDate: string; duration: number }> {
+    return { startDate: '', endDate: '', duration: 0 }
+  }
+  async updateProjectProgress(projectId: string): Promise<number> {
+    return 0
+  }
+  async getResourceAnalysis(projectId: string): Promise<any> {
+    return {}
+  }
+  async getCostAnalysis(projectId: string): Promise<any> {
+    return {}
+  }
+  async getGanttData(projectId: string): Promise<any> {
+    return {}
+  }
+  async rescheduleTask(taskId: string, newStartDate: string, newEndDate: string): Promise<Task> {
+    throw new Error('لم يتم تنفيذها بعد')
+  }
+  async getRiskAnalysis(projectId: string): Promise<any> {
+    return {}
+  }
+  async getCompletionForecast(projectId: string): Promise<any> {
+    return {}
+  }
 }
 
 export const taskRepository = new LocalTaskRepository()

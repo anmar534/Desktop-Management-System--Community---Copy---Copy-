@@ -4,6 +4,9 @@ import { LocalClientRepository } from '@/repository/providers/client.local'
 import { safeLocalStorage } from '@/utils/storage'
 import { STORAGE_KEYS } from '@/config/storageKeys'
 import { APP_EVENTS } from '@/events/bus'
+import { StorageManager } from '@/storage/core/StorageManager'
+import { LocalStorageAdapter } from '@/storage/adapters/LocalStorageAdapter'
+import { clientsStorage } from '@/storage/modules/ClientsStorage'
 
 const sampleClient = (overrides: Partial<Client> = {}): Client => ({
   id: overrides.id ?? 'client-seed',
@@ -37,7 +40,7 @@ describe('LocalClientRepository', () => {
     windowEvents.push(custom.detail)
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     windowEvents.length = 0
     if (typeof window !== 'undefined') {
       window.addEventListener(APP_EVENTS.CLIENTS_UPDATED, windowHandler)
@@ -45,6 +48,18 @@ describe('LocalClientRepository', () => {
     if (typeof localStorage !== 'undefined') {
       localStorage.clear()
     }
+
+    // Initialize storage system
+    StorageManager.resetInstance()
+    const manager = StorageManager.getInstance()
+    const adapter = new LocalStorageAdapter()
+    manager.setAdapter(adapter)
+    await manager.initialize()
+
+    // Initialize Clients storage module
+    clientsStorage.setManager(manager)
+    await clientsStorage.initialize()
+
     safeLocalStorage.removeItem(STORAGE_KEYS.CLIENTS)
   })
 
@@ -61,7 +76,13 @@ describe('LocalClientRepository', () => {
 
   it('returns clients stored in safeLocalStorage', async () => {
     const stored = [sampleClient(), sampleClient({ id: 'client-b', name: 'مطور خاص' })]
-    safeLocalStorage.setItem(STORAGE_KEYS.CLIENTS, stored)
+
+    // Use StorageManager directly
+    const manager = StorageManager.getInstance()
+    await manager.set(STORAGE_KEYS.CLIENTS, stored)
+
+    // Reload module
+    await clientsStorage.initialize()
 
     const all = await repository.getAll()
     expect(all).toHaveLength(2)
@@ -80,14 +101,16 @@ describe('LocalClientRepository', () => {
     expect(created.id).toMatch(/^client_\d+_[a-z0-9]+$/)
     expect(created.name).toBe('عميل جديد')
 
-    let stored = safeLocalStorage.getItem<Client[]>(STORAGE_KEYS.CLIENTS, [])
+    // Read from StorageManager directly
+    const manager = StorageManager.getInstance()
+    let stored = await manager.get<Client[]>(STORAGE_KEYS.CLIENTS, [])
     expect(stored).toHaveLength(1)
 
     const updated = await repository.update(created.id, { status: 'inactive', projects: 10 })
     expect(updated?.status).toBe('inactive')
     expect(updated?.projects).toBe(10)
 
-    stored = safeLocalStorage.getItem<Client[]>(STORAGE_KEYS.CLIENTS, [])
+    stored = await manager.get<Client[]>(STORAGE_KEYS.CLIENTS, [])
     expect(stored[0].status).toBe('inactive')
 
     const removed = await repository.delete(created.id)

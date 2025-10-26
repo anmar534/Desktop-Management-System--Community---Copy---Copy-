@@ -15,9 +15,14 @@
 import { pricingService } from './pricingService'
 import { APP_EVENTS, emit } from '@/events/bus'
 import { getTenderRepository, getBOQRepository } from '@/application/services/serviceRegistry'
-import { safeLocalStorage } from '@/utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import type { BreakdownRow, PercentagesSet } from './projectCostService'
-import type { PricingBreakdown, PricingData, PricingRow, PricingPercentages } from '@/types/pricing'
+import type {
+  PricingBreakdown,
+  PricingData,
+  PricingRow,
+  PricingPercentages,
+} from '@/shared/types/pricing'
 
 type BreakdownRowInput = Partial<BreakdownRow> & { id?: string }
 
@@ -48,7 +53,8 @@ interface StoredTechnicalFile {
 
 type PricingEntry = [string, PricingData & Record<string, unknown>]
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null
 
 const toFiniteNumber = (value: unknown): number | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -77,7 +83,7 @@ const normalizeBreakdownRows = (input: unknown): BreakdownRowInput[] => {
   }
 
   return input
-    .map(row => {
+    .map((row) => {
       if (!isRecord(row)) {
         return null
       }
@@ -101,7 +107,7 @@ const normalizeBreakdownRows = (input: unknown): BreakdownRowInput[] => {
         ...(unitCost !== undefined ? { unitCost } : {}),
         ...(totalCost !== undefined ? { totalCost } : {}),
         ...(origin === 'estimated' || origin === 'actual-only' ? { origin } : {}),
-        ...(procurementLinks ? { procurementLinks } : {})
+        ...(procurementLinks ? { procurementLinks } : {}),
       }
 
       return Object.keys(normalized).length > 0 ? normalized : null
@@ -110,7 +116,7 @@ const normalizeBreakdownRows = (input: unknown): BreakdownRowInput[] => {
 }
 
 const cloneBreakdownRows = (rows?: BreakdownRowInput[]): BreakdownRowInput[] =>
-  rows?.map(row => ({ ...row })) ?? []
+  rows?.map((row) => ({ ...row })) ?? []
 
 const isPricingRow = (value: unknown): value is PricingRow => {
   if (!isRecord(value)) {
@@ -121,7 +127,11 @@ const isPricingRow = (value: unknown): value is PricingRow => {
   const total = value.total
   const quantity = value.quantity
 
-  return typeof id === 'string' && toFiniteNumber(total) !== undefined && toFiniteNumber(quantity) !== undefined
+  return (
+    typeof id === 'string' &&
+    toFiniteNumber(total) !== undefined &&
+    toFiniteNumber(quantity) !== undefined
+  )
 }
 
 const toPricingRows = (input: unknown): PricingRow[] => {
@@ -129,7 +139,7 @@ const toPricingRows = (input: unknown): PricingRow[] => {
     return []
   }
 
-  return input.filter(isPricingRow).map(row => row as PricingRow)
+  return input.filter(isPricingRow).map((row) => row as PricingRow)
 }
 
 const normalizePercentages = (input: unknown): PercentagesSet | undefined => {
@@ -153,13 +163,16 @@ const normalizePercentages = (input: unknown): PercentagesSet | undefined => {
   }
 
   if ('other' in input && isRecord(input.other)) {
-    const otherEntries = Object.entries(input.other).reduce<Record<string, number>>((acc, [key, value]) => {
-      const numericValue = toFiniteNumber(value)
-      if (numericValue !== undefined) {
-        acc[key] = numericValue
-      }
-      return acc
-    }, {})
+    const otherEntries = Object.entries(input.other).reduce<Record<string, number>>(
+      (acc, [key, value]) => {
+        const numericValue = toFiniteNumber(value)
+        if (numericValue !== undefined) {
+          acc[key] = numericValue
+        }
+        return acc
+      },
+      {},
+    )
 
     if (Object.keys(otherEntries).length > 0) {
       result.other = otherEntries
@@ -191,7 +204,7 @@ const normalizeQuantityItem = (input: unknown): QuantityItem | null => {
     equipment: normalizeBreakdownRows(input.equipment),
     subcontractors: normalizeBreakdownRows(input.subcontractors),
     breakdown: normalizePercentages(input.breakdown),
-    additionalPercentages: normalizePercentages(input.additionalPercentages)
+    additionalPercentages: normalizePercentages(input.additionalPercentages),
   }
 }
 
@@ -209,13 +222,17 @@ const normalizePricingUpdateDetail = (detail: unknown): PricingUpdateDetail => {
   return {
     tenderId: toStringOrUndefined(detail.tenderId),
     quantityTable,
-    source: toStringOrUndefined(detail.source)
+    source: toStringOrUndefined(detail.source),
   }
 }
 
-const pricingRowToBreakdownRow = (row: PricingRow, origin: BreakdownRow['origin'] = 'estimated'): BreakdownRowInput => {
+const pricingRowToBreakdownRow = (
+  row: PricingRow,
+  origin: BreakdownRow['origin'] = 'estimated',
+): BreakdownRowInput => {
   const quantity = toFiniteNumber(row.quantity) ?? 0
-  const unitCost = toFiniteNumber(row.price) ?? (quantity > 0 ? (toFiniteNumber(row.total) ?? 0) / quantity : 0)
+  const unitCost =
+    toFiniteNumber(row.price) ?? (quantity > 0 ? (toFiniteNumber(row.total) ?? 0) / quantity : 0)
   const totalCost = toFiniteNumber(row.total) ?? quantity * unitCost
 
   return {
@@ -224,7 +241,7 @@ const pricingRowToBreakdownRow = (row: PricingRow, origin: BreakdownRow['origin'
     quantity,
     unitCost,
     totalCost,
-    origin
+    origin,
   }
 }
 
@@ -236,7 +253,7 @@ const pricingPercentagesToSet = (percentages?: PricingPercentages): PercentagesS
   return {
     administrative: percentages.administrative,
     operational: percentages.operational,
-    profit: percentages.profit
+    profit: percentages.profit,
   }
 }
 
@@ -248,7 +265,7 @@ const pricingBreakdownToSet = (breakdown?: PricingBreakdown): PercentagesSet | u
   return {
     administrative: breakdown.administrative,
     operational: breakdown.operational,
-    profit: breakdown.profit
+    profit: breakdown.profit,
   }
 }
 
@@ -263,13 +280,17 @@ const mapPricingEntryToQuantityItem = ([id, data]: PricingEntry): QuantityItem |
   const unitPrice = toFiniteNumber(data.unitPrice)
   const totalPrice = toFiniteNumber(data.totalPrice)
 
-  const materials = toPricingRows(data.materials).map(row => pricingRowToBreakdownRow(row))
-  const labor = toPricingRows(data.labor).map(row => pricingRowToBreakdownRow(row))
-  const equipment = toPricingRows(data.equipment).map(row => pricingRowToBreakdownRow(row))
-  const subcontractors = toPricingRows(data.subcontractors).map(row => pricingRowToBreakdownRow(row))
+  const materials = toPricingRows(data.materials).map((row) => pricingRowToBreakdownRow(row))
+  const labor = toPricingRows(data.labor).map((row) => pricingRowToBreakdownRow(row))
+  const equipment = toPricingRows(data.equipment).map((row) => pricingRowToBreakdownRow(row))
+  const subcontractors = toPricingRows(data.subcontractors).map((row) =>
+    pricingRowToBreakdownRow(row),
+  )
 
   const breakdownPercentages = pricingBreakdownToSet(data.breakdown as PricingBreakdown | undefined)
-  const additionalPercentages = pricingPercentagesToSet(data.additionalPercentages as PricingPercentages | undefined)
+  const additionalPercentages = pricingPercentagesToSet(
+    data.additionalPercentages as PricingPercentages | undefined,
+  )
 
   return {
     id,
@@ -283,14 +304,14 @@ const mapPricingEntryToQuantityItem = ([id, data]: PricingEntry): QuantityItem |
     equipment,
     subcontractors,
     breakdown: breakdownPercentages,
-    additionalPercentages
+    additionalPercentages,
   }
 }
 
 const toPricingEntries = (pricing: unknown): PricingEntry[] => {
   if (Array.isArray(pricing)) {
     return pricing
-      .map(entry => {
+      .map((entry) => {
         if (!Array.isArray(entry) || entry.length < 2) {
           return null
         }
@@ -337,7 +358,11 @@ export class PricingDataSyncService {
 
     this.syncInProgress.add(tenderId)
     try {
-      console.log('🔄 [PricingSync] تحديث تسعير مستلم', { tenderId, source, count: quantityTable.length })
+      console.log('🔄 [PricingSync] تحديث تسعير مستلم', {
+        tenderId,
+        source,
+        count: quantityTable.length,
+      })
 
       await this.updateCentralBOQ(tenderId, quantityTable)
       await this.updateTenderStatus(tenderId, quantityTable)
@@ -351,13 +376,15 @@ export class PricingDataSyncService {
 
   private async updateCentralBOQ(tenderId: string, quantityTable: QuantityItem[]) {
     try {
-      const boqItems = quantityTable.map(item => {
+      const boqItems = quantityTable.map((item) => {
         const quantity = item.quantity ?? 0
         const unitPrice = item.unitPrice ?? 0
         const totalPrice = item.totalPrice ?? quantity * unitPrice
         const breakdownPercentages = item.breakdown ?? item.additionalPercentages
-        const administrative = breakdownPercentages?.administrative ?? item.additionalPercentages?.administrative ?? 0
-        const operational = breakdownPercentages?.operational ?? item.additionalPercentages?.operational ?? 0
+        const administrative =
+          breakdownPercentages?.administrative ?? item.additionalPercentages?.administrative ?? 0
+        const operational =
+          breakdownPercentages?.operational ?? item.additionalPercentages?.operational ?? 0
         const profit = breakdownPercentages?.profit ?? item.additionalPercentages?.profit ?? 0
 
         return {
@@ -384,22 +411,25 @@ export class PricingDataSyncService {
             additionalPercentages: {
               administrative,
               operational,
-              profit
-            }
-          }
+              profit,
+            },
+          },
         }
       })
 
       const totalValue = boqItems.reduce((s, i) => s + (i.totalPrice ?? 0), 0)
       const repository = getBOQRepository()
-      const savedBoq = await repository.createOrUpdate({
-        id: `boq_tender_${tenderId}`,
-        tenderId,
-        items: boqItems,
-        totalValue,
-        lastUpdated: new Date().toISOString()
-      })
-      emit(APP_EVENTS.BOQ_UPDATED, { tenderId, id: savedBoq.id, source: 'pricing-sync' })
+      await repository.createOrUpdate(
+        {
+          id: `boq_tender_${tenderId}`,
+          tenderId,
+          items: boqItems,
+          totalValue,
+          lastUpdated: new Date().toISOString(),
+        },
+        { skipRefresh: true }, // Prevent loop when updating from pricing page
+      )
+      // Event is already emitted by repository with skipRefresh flag
     } catch (e) {
       console.warn('⚠️ [PricingSync] فشل تحديث BOQ', e)
     }
@@ -411,7 +441,9 @@ export class PricingDataSyncService {
       const tender = await tenderRepository.getById(tenderId)
       if (!tender) return
       const totalItems = quantityTable.length
-      const pricedItems = quantityTable.filter(item => (item.unitPrice ?? 0) > 0 && (item.totalPrice ?? 0) > 0).length
+      const pricedItems = quantityTable.filter(
+        (item) => (item.unitPrice ?? 0) > 0 && (item.totalPrice ?? 0) > 0,
+      ).length
       const completion = totalItems ? (pricedItems / totalItems) * 100 : 0
       const totalValue = quantityTable.reduce((sum, item) => sum + (item.totalPrice ?? 0), 0)
 
@@ -428,7 +460,7 @@ export class PricingDataSyncService {
         pricedItems,
         totalItems,
         status: newStatus,
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       })
       emit(APP_EVENTS.TENDER_UPDATED, { tenderId, source: 'pricing-sync', status: newStatus })
     } catch (e) {
@@ -439,7 +471,7 @@ export class PricingDataSyncService {
   private checkTechnicalFiles(tenderId: string): boolean {
     try {
       const allFiles = safeLocalStorage.getItem<StoredTechnicalFile[]>('tender_technical_files', [])
-      return allFiles.some(file => file?.tenderId === tenderId)
+      return allFiles.some((file) => file?.tenderId === tenderId)
     } catch {
       return false
     }
@@ -448,7 +480,9 @@ export class PricingDataSyncService {
   private notifyComponents(tenderId: string, type: string) {
     emit(APP_EVENTS.TENDER_UPDATED, { tenderId, type })
     emit(APP_EVENTS.BOQ_UPDATED, { tenderId, type })
-    window.dispatchEvent(new CustomEvent('tenderDataSynced', { detail: { tenderId, type, ts: Date.now() } }))
+    window.dispatchEvent(
+      new CustomEvent('tenderDataSynced', { detail: { tenderId, type, ts: Date.now() } }),
+    )
   }
 
   public clearSyncStateForTesting(): void {
@@ -475,8 +509,8 @@ export class PricingDataSyncService {
 
       await this.handlePricingUpdate(
         new CustomEvent('pricingDataUpdated', {
-          detail: { tenderId, quantityTable, source: 'manual-sync' }
-        })
+          detail: { tenderId, quantityTable, source: 'manual-sync' },
+        }),
       )
       return true
     } catch (e) {
@@ -490,10 +524,9 @@ export class PricingDataSyncService {
     const existing = await repository.getByTenderId(tenderId)
     return {
       isInProgress: this.syncInProgress.has(tenderId),
-      hasBOQ: !!existing
+      hasBOQ: !!existing,
     }
   }
 }
 
 export const pricingDataSyncService = PricingDataSyncService.getInstance()
-

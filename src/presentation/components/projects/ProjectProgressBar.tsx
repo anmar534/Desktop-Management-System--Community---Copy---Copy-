@@ -101,7 +101,7 @@ export const ProjectProgressBar: React.FC<ProjectProgressBarProps> = memo(
             (labelPosition === 'inside' || labelPosition === 'both') &&
             height !== 'sm' && (
               <span
-                className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white mix-blend-difference"
+                className="absolute inset-0 flex items-center justify-center text-xs font-bold text-foreground mix-blend-difference"
                 data-testid="progress-label-inside"
                 aria-hidden="true"
               >

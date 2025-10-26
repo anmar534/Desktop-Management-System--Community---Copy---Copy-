@@ -28,12 +28,7 @@ export interface Project {
   updatedAt: string
 }
 
-export type ProjectStatus = 
-  | 'planning'
-  | 'in_progress'
-  | 'on_hold'
-  | 'completed'
-  | 'cancelled'
+export type ProjectStatus = 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'
 
 export interface ProjectCosts {
   projectId: string
@@ -104,12 +99,7 @@ export interface ProjectTask {
   updatedAt: string
 }
 
-export type TaskStatus = 
-  | 'not_started'
-  | 'in_progress'
-  | 'on_hold'
-  | 'completed'
-  | 'cancelled'
+export type TaskStatus = 'not_started' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled'
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
 
@@ -144,9 +134,11 @@ export interface ProjectListResponse {
  * الحصول على جميع المشاريع
  */
 export async function getProjects(
-  params?: PaginatedRequest & FilteredRequest
+  params?: PaginatedRequest & FilteredRequest,
 ): Promise<ApiResponse<ProjectListResponse>> {
-  return apiClient.get<ProjectListResponse>('/projects', { query: params as Record<string, string | number | boolean> })
+  return apiClient.get<ProjectListResponse>('/projects', {
+    query: params as Record<string, string | number | boolean>,
+  })
 }
 
 /**
@@ -161,9 +153,7 @@ export async function getProjectById(id: string): Promise<ApiResponse<Project>> 
  * Create new project
  * إنشاء مشروع جديد
  */
-export async function createProject(
-  data: CreateProjectRequest
-): Promise<ApiResponse<Project>> {
+export async function createProject(data: CreateProjectRequest): Promise<ApiResponse<Project>> {
   return apiClient.post<Project>('/projects', data)
 }
 
@@ -173,7 +163,7 @@ export async function createProject(
  */
 export async function updateProject(
   id: string,
-  data: UpdateProjectRequest
+  data: UpdateProjectRequest,
 ): Promise<ApiResponse<Project>> {
   return apiClient.put<Project>(`/projects/${id}`, data)
 }
@@ -190,9 +180,7 @@ export async function deleteProject(id: string): Promise<ApiResponse<void>> {
  * Get project costs
  * الحصول على تكاليف المشروع
  */
-export async function getProjectCosts(
-  id: string
-): Promise<ApiResponse<ProjectCosts>> {
+export async function getProjectCosts(id: string): Promise<ApiResponse<ProjectCosts>> {
   return apiClient.get<ProjectCosts>(`/projects/${id}/costs`)
 }
 
@@ -200,9 +188,7 @@ export async function getProjectCosts(
  * Get project schedule
  * الحصول على جدول المشروع
  */
-export async function getProjectSchedule(
-  id: string
-): Promise<ApiResponse<ProjectSchedule>> {
+export async function getProjectSchedule(id: string): Promise<ApiResponse<ProjectSchedule>> {
   return apiClient.get<ProjectSchedule>(`/projects/${id}/schedule`)
 }
 
@@ -212,12 +198,11 @@ export async function getProjectSchedule(
  */
 export async function getProjectTasks(
   id: string,
-  params?: PaginatedRequest
+  params?: PaginatedRequest,
 ): Promise<ApiResponse<{ tasks: ProjectTask[]; total: number }>> {
-  return apiClient.get<{ tasks: ProjectTask[]; total: number }>(
-    `/projects/${id}/tasks`,
-    { query: params as Record<string, string | number | boolean> }
-  )
+  return apiClient.get<{ tasks: ProjectTask[]; total: number }>(`/projects/${id}/tasks`, {
+    query: params as Record<string, string | number | boolean>,
+  })
 }
 
 /**
@@ -226,7 +211,7 @@ export async function getProjectTasks(
  */
 export async function createProjectTask(
   projectId: string,
-  data: Omit<ProjectTask, 'id' | 'projectId' | 'createdAt' | 'updatedAt'>
+  data: Omit<ProjectTask, 'id' | 'projectId' | 'createdAt' | 'updatedAt'>,
 ): Promise<ApiResponse<ProjectTask>> {
   return apiClient.post<ProjectTask>(`/projects/${projectId}/tasks`, data)
 }
@@ -238,7 +223,7 @@ export async function createProjectTask(
 export async function updateProjectTask(
   projectId: string,
   taskId: string,
-  data: Partial<ProjectTask>
+  data: Partial<ProjectTask>,
 ): Promise<ApiResponse<ProjectTask>> {
   return apiClient.put<ProjectTask>(`/projects/${projectId}/tasks/${taskId}`, data)
 }
@@ -249,7 +234,7 @@ export async function updateProjectTask(
  */
 export async function deleteProjectTask(
   projectId: string,
-  taskId: string
+  taskId: string,
 ): Promise<ApiResponse<void>> {
   return apiClient.delete<void>(`/projects/${projectId}/tasks/${taskId}`)
 }
@@ -260,7 +245,7 @@ export async function deleteProjectTask(
  */
 export async function updateProjectStatus(
   id: string,
-  status: ProjectStatus
+  status: ProjectStatus,
 ): Promise<ApiResponse<Project>> {
   return apiClient.patch<Project>(`/projects/${id}`, { status })
 }
@@ -271,10 +256,13 @@ export async function updateProjectStatus(
  */
 export async function getProjectsByStatus(
   status: ProjectStatus,
-  params?: PaginatedRequest
+  params?: PaginatedRequest,
 ): Promise<ApiResponse<ProjectListResponse>> {
   return apiClient.get<ProjectListResponse>('/projects', {
-    query: { ...params, filters: { status } } as Record<string, string | number | boolean>,
+    query: { ...params, filters: { status } } as unknown as Record<
+      string,
+      string | number | boolean
+    >,
   })
 }
 
@@ -302,11 +290,10 @@ export interface ProjectStatistics {
  */
 export async function exportProjects(
   format: 'csv' | 'xlsx' | 'pdf',
-  params?: FilteredRequest
+  params?: FilteredRequest,
 ): Promise<ApiResponse<{ url: string; filename: string }>> {
   return apiClient.post<{ url: string; filename: string }>('/projects/export', {
     format,
     ...params,
   })
 }
-

@@ -18,7 +18,7 @@ if (isDev) {
 }
 
 // استيراد إعدادات التطوير المشتركة
-const DEV_CONFIG = require('../../dev.config.js')
+const DEV_CONFIG = require('../../dev.config.cjs')
 
 const resolveScopedAppName = () => {
   const rawName = app.getName() || 'ConstructionSystem'
@@ -906,24 +906,31 @@ function createWindow() {
   const session = mainWindow.webContents.session;
   rotateCspNonce();
 
-  session.webRequest.onHeadersReceived((details, callback) => {
+  // فلترة الطلبات - تطبيق CSP فقط على المستندات HTML الرئيسية
+  session.webRequest.onHeadersReceived({ urls: ['*://*/*'] }, (details, callback) => {
     try {
-      const nonce = getActiveCspNonce();
-      const policy = buildContentSecurityPolicy({ isDev, nonce });
-      console.log('🛡️ Applying CSP:', policy);
-      callback({
-        responseHeaders: {
-          ...details.responseHeaders,
-          'Content-Security-Policy': [policy]
-        }
-      });
+      // تطبيق CSP فقط على المستندات الرئيسية، وليس على الموارد (scripts, styles, images, etc)
+      const isMainDocument = details.resourceType === 'mainFrame' || 
+                             details.resourceType === 'subFrame' ||
+                             details.url.includes('index.html');
+      
+      if (isMainDocument) {
+        const nonce = getActiveCspNonce();
+        const policy = buildContentSecurityPolicy({ isDev, nonce });
+        console.log('🛡️ Applying CSP for document:', details.url.substring(0, 80));
+        callback({
+          responseHeaders: {
+            ...details.responseHeaders,
+            'Content-Security-Policy': [policy]
+          }
+        });
+      } else {
+        // تمرير الموارد الأخرى بدون تعديل
+        callback({ responseHeaders: details.responseHeaders });
+      }
     } catch (error) {
       console.warn('⚠️ Failed to apply CSP header:', error?.message || error);
-      callback({
-        responseHeaders: {
-          ...details.responseHeaders
-        }
-      });
+      callback({ responseHeaders: details.responseHeaders });
     }
   });
 

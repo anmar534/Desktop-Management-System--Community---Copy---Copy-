@@ -1,7 +1,7 @@
 import type { IPurchaseOrderRepository } from '../purchaseOrder.repository'
-import type { PurchaseOrder } from '@/types/contracts'
-import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import type { PurchaseOrder } from '@/shared/types/contracts'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 
 type PurchaseOrderItem = NonNullable<PurchaseOrder['items']>[number]
@@ -19,7 +19,7 @@ const normalizeItems = (items?: PurchaseOrder['items']): PurchaseOrderItem[] => 
 
 const normalizeOrder = (order: PurchaseOrder): PurchaseOrder => ({
   ...order,
-  items: normalizeItems(order.items)
+  items: normalizeItems(order.items),
 })
 
 const loadAll = (): PurchaseOrder[] => {
@@ -42,19 +42,19 @@ export class LocalPurchaseOrderRepository implements IPurchaseOrderRepository {
 
   async getById(id: string): Promise<PurchaseOrder | null> {
     const orders = loadAll()
-    const order = orders.find(entry => entry.id === id)
+    const order = orders.find((entry) => entry.id === id)
     return order ? normalizeOrder(order) : null
   }
 
   async getByTenderId(tenderId: string): Promise<PurchaseOrder | null> {
     const orders = loadAll()
-    const order = orders.find(entry => entry.tenderId === tenderId)
+    const order = orders.find((entry) => entry.tenderId === tenderId)
     return order ? normalizeOrder(order) : null
   }
 
   async getByProjectId(projectId: string): Promise<PurchaseOrder[]> {
     const orders = loadAll()
-    return orders.filter(order => order.projectId === projectId)
+    return orders.filter((order) => order.projectId === projectId)
   }
 
   async create(data: Omit<PurchaseOrder, 'id'> & { id?: string }): Promise<PurchaseOrder> {
@@ -64,7 +64,7 @@ export class LocalPurchaseOrderRepository implements IPurchaseOrderRepository {
       ...data,
       id: data.id ?? generateId(),
       createdAt: data.createdAt ?? now,
-      updatedAt: data.updatedAt ?? now
+      updatedAt: data.updatedAt ?? now,
     } as PurchaseOrder)
     orders.push(order)
     persistAll(orders)
@@ -73,7 +73,7 @@ export class LocalPurchaseOrderRepository implements IPurchaseOrderRepository {
 
   async update(id: string, updates: Partial<PurchaseOrder>): Promise<PurchaseOrder | null> {
     const orders = loadAll()
-    const index = orders.findIndex(entry => entry.id === id)
+    const index = orders.findIndex((entry) => entry.id === id)
     if (index === -1) {
       return null
     }
@@ -82,7 +82,7 @@ export class LocalPurchaseOrderRepository implements IPurchaseOrderRepository {
       ...updates,
       id,
       createdAt: orders[index].createdAt,
-      updatedAt: updates.updatedAt ?? new Date().toISOString()
+      updatedAt: updates.updatedAt ?? new Date().toISOString(),
     } as PurchaseOrder)
     orders[index] = updated
     persistAll(orders)
@@ -91,7 +91,7 @@ export class LocalPurchaseOrderRepository implements IPurchaseOrderRepository {
 
   async upsert(order: PurchaseOrder): Promise<PurchaseOrder> {
     const orders = loadAll()
-    const index = orders.findIndex(entry => entry.id === order.id)
+    const index = orders.findIndex((entry) => entry.id === order.id)
     if (index === -1) {
       const { id, ...rest } = order
       return this.create({ ...rest, id })
@@ -101,7 +101,7 @@ export class LocalPurchaseOrderRepository implements IPurchaseOrderRepository {
 
   async delete(id: string): Promise<boolean> {
     const orders = loadAll()
-    const nextOrders = orders.filter(order => order.id !== id)
+    const nextOrders = orders.filter((order) => order.id !== id)
     if (nextOrders.length === orders.length) {
       return false
     }
@@ -111,7 +111,7 @@ export class LocalPurchaseOrderRepository implements IPurchaseOrderRepository {
 
   async deleteByTenderId(tenderId: string): Promise<number> {
     const orders = loadAll()
-    const nextOrders = orders.filter(order => order.tenderId !== tenderId)
+    const nextOrders = orders.filter((order) => order.tenderId !== tenderId)
     const deletedCount = orders.length - nextOrders.length
     if (deletedCount > 0) {
       persistAll(nextOrders)

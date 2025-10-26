@@ -4,9 +4,9 @@ import { useExpenses } from '@/application/hooks/useExpenses'
 import { useBankAccounts } from '@/application/hooks/useBankAccounts'
 import {
   selectDashboardMetrics,
-  type DashboardMetricsResult
+  type DashboardMetricsResult,
 } from '@/domain/selectors/financialMetrics'
-import { BASE_CURRENCY, DEFAULT_CURRENCY_RATES } from '@/config/currency'
+import { BASE_CURRENCY, DEFAULT_CURRENCY_RATES } from '@/shared/config/currency'
 
 interface UseDashboardMetricsResult {
   data: DashboardMetricsResult
@@ -15,7 +15,10 @@ interface UseDashboardMetricsResult {
   refresh: () => Promise<void>
 }
 
-const resolveFallbackBalance = (cashFlowCurrent: number | undefined, bankBalances: number): number => {
+const resolveFallbackBalance = (
+  cashFlowCurrent: number | undefined,
+  bankBalances: number,
+): number => {
   const normalizedCashflow = Number.isFinite(cashFlowCurrent) ? Number(cashFlowCurrent) : 0
   return normalizedCashflow > 0 ? normalizedCashflow : bankBalances
 }
@@ -24,7 +27,7 @@ const convertToBaseCurrency = (
   amount: number | undefined,
   currency: string | undefined,
   baseCurrency: string,
-  rates: Record<string, number>
+  rates: Record<string, number>,
 ): number => {
   const safeAmount = Number.isFinite(amount) ? Number(amount) : 0
   if (!currency || currency === baseCurrency) {
@@ -46,7 +49,7 @@ export const useDashboardMetrics = (): UseDashboardMetricsResult => {
     currency,
     isLoading: providerLoading,
     lastRefreshAt,
-    refreshAll
+    refreshAll,
   } = useFinancialState()
 
   const currencyBase = currency?.baseCurrency ?? BASE_CURRENCY
@@ -64,54 +67,65 @@ export const useDashboardMetrics = (): UseDashboardMetricsResult => {
     () =>
       accounts.reduce(
         (total, account) =>
-          total + convertToBaseCurrency(account.currentBalance, account.currency, currencyBase, currencyRates),
-        0
+          total +
+          convertToBaseCurrency(
+            account.currentBalance,
+            account.currency,
+            currencyBase,
+            currencyRates,
+          ),
+        0,
       ),
-    [accounts, currencyBase, currencyRates]
+    [accounts, currencyBase, currencyRates],
   )
   const startingBalanceFallback = useMemo(
     () => resolveFallbackBalance(cashflowState.current, bankBalance),
-    [cashflowState, bankBalance]
+    [cashflowState, bankBalance],
   )
 
-  const dashboardData = useMemo(() => selectDashboardMetrics({
-    projects: projectsList,
-    tenders: tendersList,
-    invoices: invoicesList,
-    expenses,
-    bankAccounts: accounts,
-    options: {
-      asOf: lastRefreshAt ? new Date(lastRefreshAt) : new Date(),
+  const dashboardData = useMemo(
+    () =>
+      selectDashboardMetrics({
+        projects: projectsList,
+        tenders: tendersList,
+        invoices: invoicesList,
+        expenses,
+        bankAccounts: accounts,
+        options: {
+          asOf: lastRefreshAt ? new Date(lastRefreshAt) : new Date(),
+          startingBalanceFallback,
+          baseCurrency: currencyBase,
+          currencyRates: currencyRates,
+          currencyTimestamp,
+        },
+      }),
+    [
+      projectsList,
+      tendersList,
+      invoicesList,
+      expenses,
+      accounts,
       startingBalanceFallback,
-      baseCurrency: currencyBase,
-      currencyRates: currencyRates,
-      currencyTimestamp
-    }
-  }), [
-    projectsList,
-    tendersList,
-    invoicesList,
-    expenses,
-    accounts,
-    startingBalanceFallback,
-    lastRefreshAt,
-    currencyBase,
-    currencyRates,
-    currencyTimestamp
-  ])
+      lastRefreshAt,
+      currencyBase,
+      currencyRates,
+      currencyTimestamp,
+    ],
+  )
 
   const refresh = async () => {
-    await Promise.all([
-      refreshAll(),
-      refreshExpenses(),
-      refreshAccounts()
-    ])
+    await Promise.all([refreshAll(), refreshExpenses(), refreshAccounts()])
   }
 
   return {
     data: dashboardData,
-  isLoading: providerLoading || expensesLoading || accountsLoading || financial.loading || currency.isLoading,
+    isLoading:
+      providerLoading ||
+      expensesLoading ||
+      accountsLoading ||
+      financial.loading ||
+      currency.isLoading,
     lastUpdated: lastRefreshAt,
-    refresh
+    refresh,
   }
 }

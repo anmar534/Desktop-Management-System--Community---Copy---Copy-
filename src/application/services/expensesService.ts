@@ -5,8 +5,8 @@
  * - Provides simple CRUD helpers used by hooks/components
  */
 
-import { STORAGE_KEYS } from '@/config/storageKeys'
-import { safeLocalStorage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import type { Expense } from '@/data/expenseCategories'
 import { APP_EVENTS, emit } from '@/events/bus'
 
@@ -33,24 +33,24 @@ const resolveLegacyStorage = (): LegacyStorage | null => {
 
 class ExpensesService {
   // علم مركزي لتعطيل الهجرة القديمة (يمكن تفعيله مؤقتاً إن لزم)
-  private static ENABLE_LEGACY_EXPENSES_MIGRATION = false;
-  private static legacyMigrationDone = false;
+  private static ENABLE_LEGACY_EXPENSES_MIGRATION = false
+  private static legacyMigrationDone = false
 
   /**
    * محاولة هجرة قديمة (مرة واحدة فقط إذا كان العلم مفعلاً)
    * تعيد عدد العناصر المضافة أثناء الدمج.
    */
   tryMigrateOnce(legacyKey = 'construction_system_expenses'): number {
-    if (!ExpensesService.ENABLE_LEGACY_EXPENSES_MIGRATION) return 0;
-    if (ExpensesService.legacyMigrationDone) return 0;
-    const added = this.migrateFromLegacy(legacyKey);
-    ExpensesService.legacyMigrationDone = true;
+    if (!ExpensesService.ENABLE_LEGACY_EXPENSES_MIGRATION) return 0
+    if (ExpensesService.legacyMigrationDone) return 0
+    const added = this.migrateFromLegacy(legacyKey)
+    ExpensesService.legacyMigrationDone = true
     if (added > 0) {
       if (typeof console !== 'undefined' && typeof console.info === 'function') {
         console.info(`[legacy-migration] expenses migrated once: +${added}`)
       }
     }
-    return added;
+    return added
   }
 
   private emitUpdated() {
@@ -75,7 +75,7 @@ class ExpensesService {
 
   update(id: string, updated: Expense): Expense | null {
     const all = this.getAll()
-    const idx = all.findIndex(e => e.id === id)
+    const idx = all.findIndex((e) => e.id === id)
     if (idx === -1) return null
     all[idx] = updated
     this.setAll(all)
@@ -84,7 +84,7 @@ class ExpensesService {
 
   delete(id: string): boolean {
     const all = this.getAll()
-    const next = all.filter(e => e.id !== id)
+    const next = all.filter((e) => e.id !== id)
     const changed = next.length !== all.length
     if (changed) this.setAll(next)
     return changed
@@ -92,7 +92,7 @@ class ExpensesService {
 
   getByProject(projectId: string): Expense[] {
     const all = this.getAll()
-    return all.filter(e => e.projectId === projectId)
+    return all.filter((e) => e.projectId === projectId)
   }
 
   migrateFromLegacy(legacyKey = 'construction_system_expenses'): number {

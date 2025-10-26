@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { BASE_CURRENCY, DEFAULT_CURRENCY_RATES } from '@/config/currency'
-import { fetchExchangeRates, type ExchangeRateResult } from '@/services/exchangeRates'
+import { BASE_CURRENCY, DEFAULT_CURRENCY_RATES } from '@/shared/config/currency'
+import { fetchExchangeRates, type ExchangeRateResult } from '@/application/services/exchangeRates'
 
 export interface UseCurrencyRatesOptions {
   baseCurrency?: string
@@ -32,7 +32,10 @@ const DEFAULT_ERROR_MESSAGE = 'تعذر تحديث أسعار الصرف الآ�
 export const useCurrencyRates = (options: UseCurrencyRatesOptions = {}): CurrencyRatesState => {
   const baseCurrency = options.baseCurrency ?? BASE_CURRENCY
   const fallbackRatesRef = useRef<Record<string, number>>(
-    Object.freeze({ ...(options.initialRates ?? DEFAULT_CURRENCY_RATES) }) as Record<string, number>
+    Object.freeze({ ...(options.initialRates ?? DEFAULT_CURRENCY_RATES) }) as Record<
+      string,
+      number
+    >,
   )
   const fallbackRates = fallbackRatesRef.current
   const fetcher = options.fetcher ?? fetchExchangeRates
@@ -49,9 +52,12 @@ export const useCurrencyRates = (options: UseCurrencyRatesOptions = {}): Currenc
   const isMountedRef = useRef(true)
   const lastRatesRef = useRef<Record<string, number>>(fallbackRates)
 
-  useEffect(() => () => {
-    isMountedRef.current = false
-  }, [])
+  useEffect(
+    () => () => {
+      isMountedRef.current = false
+    },
+    [],
+  )
 
   const updateState = useCallback((updater: (prev: InternalState) => InternalState) => {
     if (!isMountedRef.current) {
@@ -99,7 +105,7 @@ export const useCurrencyRates = (options: UseCurrencyRatesOptions = {}): Currenc
         return fallbackSnapshot
       }
     },
-    [baseCurrency, fetcher, updateState, fallbackRates]
+    [baseCurrency, fetcher, updateState, fallbackRates],
   )
 
   useEffect(() => {
@@ -117,8 +123,11 @@ export const useCurrencyRates = (options: UseCurrencyRatesOptions = {}): Currenc
     return rates
   }, [loadRates])
 
-  return useMemo(() => ({
-    ...state,
-    refresh,
-  }), [state, refresh])
+  return useMemo(
+    () => ({
+      ...state,
+      refresh,
+    }),
+    [state, refresh],
+  )
 }

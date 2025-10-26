@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom'
-import { PricingTemplateManager } from '../../src/components/bidding/PricingTemplateManager'
+import { PricingTemplateManager } from '../../src/components/tenders/PricingTemplateManager'
 
 // Mock the recommendation service
 vi.mock('../../src/services/recommendationService', () => ({
@@ -89,15 +89,15 @@ describe('PricingTemplateManager', () => {
       defaultPercentages: {
         administrative: 15,
         operational: 10,
-        profit: 12
+        profit: 12,
       },
       costBreakdown: {
         materials: 45,
         labor: 30,
         equipment: 15,
-        subcontractors: 10
+        subcontractors: 10,
       },
-      tags: ['سكني', 'صغير', 'متوسط']
+      tags: ['سكني', 'صغير', 'متوسط'],
     },
     {
       id: 'template-2',
@@ -121,8 +121,8 @@ describe('PricingTemplateManager', () => {
         equipment: 25,
         subcontractors: 15,
       },
-      tags: ['تجاري', 'مكاتب']
-    }
+      tags: ['تجاري', 'مكاتب'],
+    },
   ]
 
   const defaultProps = {
@@ -134,10 +134,10 @@ describe('PricingTemplateManager', () => {
       category: 'residential' as const,
       value: 1000000,
       region: 'الرياض',
-      complexity: 'medium' as const
+      complexity: 'medium' as const,
     },
     enableAIRecommendations: true,
-    className: ''
+    className: '',
   }
 
   beforeEach(() => {

@@ -2,7 +2,7 @@ import type { Tender } from '@/data/centralData'
 import { getTenderRepository } from './serviceRegistry'
 import { purchaseOrderService, type BookletExpense } from './purchaseOrderService'
 import { developmentStatsService } from './developmentStatsService'
-import type { PurchaseOrder } from '@/types/contracts'
+import type { PurchaseOrder } from '@/shared/types/contracts'
 import type { Project } from '@/data/centralData'
 import type { DevelopmentStats } from './developmentStatsService'
 
@@ -40,7 +40,7 @@ class TenderSubmissionService {
       status: 'submitted',
       submissionDate: submissionTimestamp,
       lastAction: SUBMISSION_LAST_ACTION,
-      lastUpdate: submissionTimestamp
+      lastUpdate: submissionTimestamp,
     }
 
     const savedTender = await repository.update(tender.id, updatedTender)
@@ -64,12 +64,12 @@ class TenderSubmissionService {
       stats,
       created: {
         purchaseOrder: afterCounts.ordersCount > beforeCounts.ordersCount,
-        bookletExpense: afterCounts.expensesCount > beforeCounts.expensesCount
+        bookletExpense: afterCounts.expensesCount > beforeCounts.expensesCount,
       },
       counts: {
         before: beforeCounts,
-        after: afterCounts
-      }
+        after: afterCounts,
+      },
     }
   }
 }

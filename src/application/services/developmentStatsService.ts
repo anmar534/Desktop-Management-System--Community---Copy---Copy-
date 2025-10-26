@@ -1,7 +1,7 @@
 import type { Tender } from '@/data/centralData'
-import { UnifiedCalculations } from '@/utils/unifiedCalculations'
-import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { UnifiedCalculations } from '@/shared/utils/pricing/unifiedCalculations'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 
@@ -35,10 +35,11 @@ type StoredDevelopmentStats = Partial<Omit<DevelopmentStats, 'monthlyStats'>> & 
   monthlyStats?: Record<string, Partial<MonthlyDevelopmentStats> | undefined>
 }
 
-type TenderLike = Pick<Tender, 'id' | 'name' | 'status' | 'client'> & Partial<Tender> & {
-  createdAt?: string
-  bookletPrice?: number | string | null
-}
+type TenderLike = Pick<Tender, 'id' | 'name' | 'status' | 'client'> &
+  Partial<Tender> & {
+    createdAt?: string
+    bookletPrice?: number | string | null
+  }
 
 const MONTH_KEY_FORMAT_LENGTH = 7 // YYYY-MM
 
@@ -48,11 +49,11 @@ const createEmptyMonthlyStats = (): MonthlyDevelopmentStats => ({
   lost: 0,
   submittedValue: 0,
   wonValue: 0,
-  bookletsCost: 0
+  bookletsCost: 0,
 })
 
 const normalizeMonthlyStats = (
-  rawStats?: Record<string, Partial<MonthlyDevelopmentStats> | undefined>
+  rawStats?: Record<string, Partial<MonthlyDevelopmentStats> | undefined>,
 ): MonthlyStatsRecord => {
   if (!rawStats) {
     return {}
@@ -66,7 +67,7 @@ const normalizeMonthlyStats = (
       lost: entry.lost ?? 0,
       submittedValue: entry.submittedValue ?? 0,
       wonValue: entry.wonValue ?? 0,
-      bookletsCost: entry.bookletsCost ?? 0
+      bookletsCost: entry.bookletsCost ?? 0,
     }
     return acc
   }, {})
@@ -122,7 +123,7 @@ const getTenderPrimaryDate = (tender: TenderLike): Date | null => {
     tender.lostDate,
     tender.resultDate,
     tender.lastUpdate,
-    tender.createdAt
+    tender.createdAt,
   ]
 
   for (const candidate of candidateDates) {
@@ -163,7 +164,7 @@ const createSyntheticTender = (id: string, status: Tender['status'], label: stri
     lastUpdate: timestamp,
     category: 'عام',
     location: 'غير محدد',
-    type: 'tender'
+    type: 'tender',
   }
 }
 
@@ -182,7 +183,9 @@ const buildSimulatedTenders = (stats: DevelopmentStats): Tender[] => {
   const submittedRemaining = Math.max(0, stats.submittedTenders - totalDecided)
 
   for (let index = 0; index < submittedRemaining; index += 1) {
-    tenders.push(createSyntheticTender(`submitted_${index}`, 'submitted', `منافسة محاكاة ${index + 1}`))
+    tenders.push(
+      createSyntheticTender(`submitted_${index}`, 'submitted', `منافسة محاكاة ${index + 1}`),
+    )
   }
 
   return tenders
@@ -220,7 +223,8 @@ class DevelopmentStatsService {
       currentStats.totalBookletsCost += bookletCost
 
       if (currentStats.submittedTenders > 0) {
-        currentStats.averageBookletCost = currentStats.totalBookletsCost / currentStats.submittedTenders
+        currentStats.averageBookletCost =
+          currentStats.totalBookletsCost / currentStats.submittedTenders
       }
 
       currentStats.monthlyStats[currentMonth] ??= createEmptyMonthlyStats()
@@ -315,7 +319,7 @@ class DevelopmentStatsService {
         lastUpdate: stored.lastUpdate ?? new Date().toISOString(),
         currentMonthTenders: stored.currentMonthTenders,
         currentMonthValue: stored.currentMonthValue,
-        monthlyStats: normalizeMonthlyStats(stored.monthlyStats)
+        monthlyStats: normalizeMonthlyStats(stored.monthlyStats),
       }
     } catch (error) {
       console.error('خطأ في قراءة إحصائيات التطوير:', error)
@@ -343,30 +347,45 @@ class DevelopmentStatsService {
         'under_review',
         'awaiting_results',
         'won',
-        'lost'
+        'lost',
       ])
 
-      const submittedTenders = tendersData.filter(tender => tender.status && submittedStatuses.has(tender.status))
-      const wonTenders = tendersData.filter(tender => tender.status === 'won')
-      const lostTenders = tendersData.filter(tender => tender.status === 'lost')
+      const submittedTenders = tendersData.filter(
+        (tender) => tender.status && submittedStatuses.has(tender.status),
+      )
+      const wonTenders = tendersData.filter((tender) => tender.status === 'won')
+      const lostTenders = tendersData.filter((tender) => tender.status === 'lost')
 
-      const submittedValue = submittedTenders.reduce((sum, tender) => sum + getTenderTotalValue(tender), 0)
+      const submittedValue = submittedTenders.reduce(
+        (sum, tender) => sum + getTenderTotalValue(tender),
+        0,
+      )
       const wonValue = wonTenders.reduce((sum, tender) => sum + getTenderTotalValue(tender), 0)
-      const totalBookletsCost = submittedTenders.reduce((sum, tender) => sum + getTenderBookletCost(tender), 0)
-      const averageBookletCost = submittedTenders.length > 0 ? totalBookletsCost / submittedTenders.length : 0
+      const totalBookletsCost = submittedTenders.reduce(
+        (sum, tender) => sum + getTenderBookletCost(tender),
+        0,
+      )
+      const averageBookletCost =
+        submittedTenders.length > 0 ? totalBookletsCost / submittedTenders.length : 0
 
       const allTenders = [...submittedTenders, ...wonTenders, ...lostTenders]
       const winRate = UnifiedCalculations.calculateWinRate(allTenders as Tender[])
 
       const currentDate = new Date()
       const currentMonthKey = getMonthKey(currentDate)
-      const currentMonthTenders = submittedTenders.filter(tender => {
+      const currentMonthTenders = submittedTenders.filter((tender) => {
         const tenderDate = getTenderPrimaryDate(tender)
         return tenderDate ? getMonthKey(tenderDate) === currentMonthKey : false
       })
 
-      console.log(`📅 المنافسات للشهر الحالي (${currentDate.getMonth() + 1}/${currentDate.getFullYear()}):`, currentMonthTenders.length)
-      console.log('📋 قائمة المنافسات الشهرية:', currentMonthTenders.map(tender => tender.name))
+      console.log(
+        `📅 المنافسات للشهر الحالي (${currentDate.getMonth() + 1}/${currentDate.getFullYear()}):`,
+        currentMonthTenders.length,
+      )
+      console.log(
+        '📋 قائمة المنافسات الشهرية:',
+        currentMonthTenders.map((tender) => tender.name),
+      )
 
       const newStats: DevelopmentStats = {
         submittedTenders: submittedTenders.length,
@@ -380,7 +399,10 @@ class DevelopmentStatsService {
         lastUpdate: new Date().toISOString(),
         monthlyStats: {},
         currentMonthTenders: currentMonthTenders.length,
-        currentMonthValue: currentMonthTenders.reduce((sum, tender) => sum + getTenderTotalValue(tender), 0)
+        currentMonthValue: currentMonthTenders.reduce(
+          (sum, tender) => sum + getTenderTotalValue(tender),
+          0,
+        ),
       }
 
       this.saveDevelopmentStats(newStats)
@@ -424,7 +446,7 @@ class DevelopmentStatsService {
       averageBookletCost: 0,
       winRate: 0,
       lastUpdate: new Date().toISOString(),
-      monthlyStats: {}
+      monthlyStats: {},
     }
   }
 

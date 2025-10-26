@@ -28,7 +28,7 @@ export interface PurchaseOrder {
   updatedAt: string
 }
 
-export type PurchaseOrderStatus = 
+export type PurchaseOrderStatus =
   | 'draft'
   | 'pending_approval'
   | 'approved'
@@ -106,9 +106,11 @@ export type MovementType = 'in' | 'out' | 'adjustment' | 'transfer'
 // ============================================================================
 
 export async function getPurchaseOrders(
-  params?: PaginatedRequest & FilteredRequest
+  params?: PaginatedRequest & FilteredRequest,
 ): Promise<ApiResponse<{ orders: PurchaseOrder[]; total: number }>> {
-  return apiClient.get('/procurement/orders', { query: params as Record<string, string | number | boolean> })
+  return apiClient.get('/procurement/orders', {
+    query: params as Record<string, string | number | boolean>,
+  })
 }
 
 export async function getPurchaseOrderById(id: string): Promise<ApiResponse<PurchaseOrder>> {
@@ -116,14 +118,14 @@ export async function getPurchaseOrderById(id: string): Promise<ApiResponse<Purc
 }
 
 export async function createPurchaseOrder(
-  data: Omit<PurchaseOrder, 'id' | 'createdAt' | 'updatedAt'>
+  data: Omit<PurchaseOrder, 'id' | 'createdAt' | 'updatedAt'>,
 ): Promise<ApiResponse<PurchaseOrder>> {
   return apiClient.post('/procurement/orders', data)
 }
 
 export async function updatePurchaseOrder(
   id: string,
-  data: Partial<PurchaseOrder>
+  data: Partial<PurchaseOrder>,
 ): Promise<ApiResponse<PurchaseOrder>> {
   return apiClient.put(`/procurement/orders/${id}`, data)
 }
@@ -138,7 +140,7 @@ export async function approvePurchaseOrder(id: string): Promise<ApiResponse<Purc
 
 export async function receivePurchaseOrder(
   id: string,
-  items: Array<{ itemId: string; receivedQuantity: number }>
+  items: { itemId: string; receivedQuantity: number }[],
 ): Promise<ApiResponse<PurchaseOrder>> {
   return apiClient.post(`/procurement/orders/${id}/receive`, { items })
 }
@@ -148,9 +150,11 @@ export async function receivePurchaseOrder(
 // ============================================================================
 
 export async function getSuppliers(
-  params?: PaginatedRequest & FilteredRequest
+  params?: PaginatedRequest & FilteredRequest,
 ): Promise<ApiResponse<{ suppliers: Supplier[]; total: number }>> {
-  return apiClient.get('/procurement/suppliers', { query: params as Record<string, string | number | boolean> })
+  return apiClient.get('/procurement/suppliers', {
+    query: params as Record<string, string | number | boolean>,
+  })
 }
 
 export async function getSupplierById(id: string): Promise<ApiResponse<Supplier>> {
@@ -158,14 +162,14 @@ export async function getSupplierById(id: string): Promise<ApiResponse<Supplier>
 }
 
 export async function createSupplier(
-  data: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>
+  data: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>,
 ): Promise<ApiResponse<Supplier>> {
   return apiClient.post('/procurement/suppliers', data)
 }
 
 export async function updateSupplier(
   id: string,
-  data: Partial<Supplier>
+  data: Partial<Supplier>,
 ): Promise<ApiResponse<Supplier>> {
   return apiClient.put(`/procurement/suppliers/${id}`, data)
 }
@@ -175,7 +179,7 @@ export async function deleteSupplier(id: string): Promise<ApiResponse<void>> {
 }
 
 export async function getSupplierPerformance(
-  id: string
+  id: string,
 ): Promise<ApiResponse<SupplierPerformance>> {
   return apiClient.get(`/procurement/suppliers/${id}/performance`)
 }
@@ -195,9 +199,11 @@ export interface SupplierPerformance {
 // ============================================================================
 
 export async function getInventoryItems(
-  params?: PaginatedRequest & FilteredRequest
+  params?: PaginatedRequest & FilteredRequest,
 ): Promise<ApiResponse<{ items: InventoryItem[]; total: number }>> {
-  return apiClient.get('/procurement/inventory', { query: params as Record<string, string | number | boolean> })
+  return apiClient.get('/procurement/inventory', {
+    query: params as Record<string, string | number | boolean>,
+  })
 }
 
 export async function getInventoryItemById(id: string): Promise<ApiResponse<InventoryItem>> {
@@ -205,14 +211,14 @@ export async function getInventoryItemById(id: string): Promise<ApiResponse<Inve
 }
 
 export async function createInventoryItem(
-  data: Omit<InventoryItem, 'id' | 'totalValue' | 'createdAt' | 'updatedAt'>
+  data: Omit<InventoryItem, 'id' | 'totalValue' | 'createdAt' | 'updatedAt'>,
 ): Promise<ApiResponse<InventoryItem>> {
   return apiClient.post('/procurement/inventory', data)
 }
 
 export async function updateInventoryItem(
   id: string,
-  data: Partial<InventoryItem>
+  data: Partial<InventoryItem>,
 ): Promise<ApiResponse<InventoryItem>> {
   return apiClient.put(`/procurement/inventory/${id}`, data)
 }
@@ -223,7 +229,7 @@ export async function deleteInventoryItem(id: string): Promise<ApiResponse<void>
 
 export async function getInventoryMovements(
   itemId: string,
-  params?: PaginatedRequest
+  params?: PaginatedRequest,
 ): Promise<ApiResponse<{ movements: InventoryMovement[]; total: number }>> {
   return apiClient.get(`/procurement/inventory/${itemId}/movements`, {
     query: params as Record<string, string | number | boolean>,
@@ -231,7 +237,7 @@ export async function getInventoryMovements(
 }
 
 export async function createInventoryMovement(
-  data: Omit<InventoryMovement, 'id' | 'createdAt'>
+  data: Omit<InventoryMovement, 'id' | 'createdAt'>,
 ): Promise<ApiResponse<InventoryMovement>> {
   return apiClient.post('/procurement/inventory/movements', data)
 }
@@ -248,12 +254,12 @@ export interface InventoryValuation {
   totalItems: number
   totalQuantity: number
   totalValue: number
-  byCategory: Array<{
+  byCategory: {
     category: string
     items: number
     quantity: number
     value: number
-  }>
+  }[]
 }
 
 // ============================================================================
@@ -276,7 +282,7 @@ export interface ProcurementSummary {
 
 export async function getSpendAnalysis(
   startDate: string,
-  endDate: string
+  endDate: string,
 ): Promise<ApiResponse<SpendAnalysis>> {
   return apiClient.get('/procurement/spend-analysis', {
     query: { startDate, endDate },
@@ -286,27 +292,27 @@ export async function getSpendAnalysis(
 export interface SpendAnalysis {
   period: { startDate: string; endDate: string }
   totalSpend: number
-  bySupplier: Array<{
+  bySupplier: {
     supplierId: string
     supplierName: string
     amount: number
     percentage: number
-  }>
-  byCategory: Array<{
+  }[]
+  byCategory: {
     category: string
     amount: number
     percentage: number
-  }>
-  byProject: Array<{
+  }[]
+  byProject: {
     projectId: string
     projectName: string
     amount: number
     percentage: number
-  }>
+  }[]
 }
 
 export async function getSupplierComparison(
-  itemCategory: string
+  itemCategory: string,
 ): Promise<ApiResponse<SupplierComparison[]>> {
   return apiClient.get('/procurement/supplier-comparison', {
     query: { category: itemCategory },
@@ -321,4 +327,3 @@ export interface SupplierComparison {
   qualityRating: number
   totalOrders: number
 }
-

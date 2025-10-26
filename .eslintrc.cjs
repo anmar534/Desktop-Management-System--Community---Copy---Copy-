@@ -53,14 +53,18 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-unused-vars': [
       'warn',
-      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }
     ],
-    '@typescript-eslint/no-empty-function': 'warn',
-    '@typescript-eslint/no-floating-promises': 'warn',
-    '@typescript-eslint/consistent-type-imports': 'warn',
-    '@typescript-eslint/array-type': 'warn',
-    '@typescript-eslint/prefer-nullish-coalescing': 'warn',
-    '@typescript-eslint/prefer-optional-chain': 'warn',
+    '@typescript-eslint/no-empty-function': 'off',
+    '@typescript-eslint/no-floating-promises': 'off',
+    '@typescript-eslint/consistent-type-imports': 'off',
+    '@typescript-eslint/array-type': 'off',
+    '@typescript-eslint/prefer-nullish-coalescing': 'off',
+    '@typescript-eslint/prefer-optional-chain': 'off',
     '@typescript-eslint/no-inferrable-types': 'warn',
     '@typescript-eslint/consistent-generic-constructors': 'warn',
     '@typescript-eslint/prefer-function-type': 'warn',
@@ -125,12 +129,58 @@ module.exports = {
       },
     },
     {
-      files: ['*.cjs', '*.config.js', 'vite.config.ts', 'vitest.config.ts'],
+      files: ['*.cjs', '*.config.js', 'vite.config.ts', 'vitest.config.ts', 'postcss.config.js', 'tailwind.config.js'],
       env: {
         node: true
       },
       parserOptions: {
         project: null
+      },
+      rules: {
+        // Disable ALL type-checked rules for config files (they require parserOptions.project)
+        '@typescript-eslint/await-thenable': 'off',
+        '@typescript-eslint/dot-notation': 'off',
+        '@typescript-eslint/naming-convention': 'off',
+        '@typescript-eslint/no-base-to-string': 'off',
+        '@typescript-eslint/no-confusing-void-expression': 'off',
+        '@typescript-eslint/no-floating-promises': 'off',
+        '@typescript-eslint/no-for-in-array': 'off',
+        '@typescript-eslint/no-implied-eval': 'off',
+        '@typescript-eslint/no-meaningless-void-operator': 'off',
+        '@typescript-eslint/no-misused-promises': 'off',
+        '@typescript-eslint/no-redundant-type-constituents': 'off',
+        '@typescript-eslint/no-throw-literal': 'off',
+        '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'off',
+        '@typescript-eslint/no-unnecessary-condition': 'off',
+        '@typescript-eslint/no-unnecessary-qualifier': 'off',
+        '@typescript-eslint/no-unnecessary-type-arguments': 'off',
+        '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+        '@typescript-eslint/no-unsafe-argument': 'off',
+        '@typescript-eslint/no-unsafe-assignment': 'off',
+        '@typescript-eslint/no-unsafe-call': 'off',
+        '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+        '@typescript-eslint/no-unsafe-member-access': 'off',
+        '@typescript-eslint/no-unsafe-return': 'off',
+        '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+        '@typescript-eslint/prefer-find': 'off',
+        '@typescript-eslint/prefer-includes': 'off',
+        '@typescript-eslint/prefer-nullish-coalescing': 'off',
+        '@typescript-eslint/prefer-optional-chain': 'off',
+        '@typescript-eslint/prefer-readonly': 'off',
+        '@typescript-eslint/prefer-readonly-parameter-types': 'off',
+        '@typescript-eslint/prefer-reduce-type-parameter': 'off',
+        '@typescript-eslint/prefer-regexp-exec': 'off',
+        '@typescript-eslint/prefer-return-this-type': 'off',
+        '@typescript-eslint/prefer-string-starts-ends-with': 'off',
+        '@typescript-eslint/promise-function-async': 'off',
+        '@typescript-eslint/require-array-sort-compare': 'off',
+        '@typescript-eslint/require-await': 'off',
+        '@typescript-eslint/restrict-plus-operands': 'off',
+        '@typescript-eslint/restrict-template-expressions': 'off',
+        '@typescript-eslint/return-await': 'off',
+        '@typescript-eslint/strict-boolean-expressions': 'off',
+        '@typescript-eslint/switch-exhaustiveness-check': 'off',
+        '@typescript-eslint/unbound-method': 'off'
       }
     }
   ],

@@ -5,10 +5,14 @@
 import { expensesService } from './expensesService'
 import { APP_EVENTS, emit } from '@/events/bus'
 import type { AppEventName } from '@/events/bus'
-import type { PurchaseOrder, PurchaseOrderItem } from '@/types/contracts'
+import type { PurchaseOrder, PurchaseOrderItem } from '@/shared/types/contracts'
 import type { Expense } from '@/data/expenseCategories'
 import type { Project } from '@/data/centralData'
-import { getProjectRepository, getPurchaseOrderRepository, getRelationRepository } from '@/application/services/serviceRegistry'
+import {
+  getProjectRepository,
+  getPurchaseOrderRepository,
+  getRelationRepository,
+} from '@/application/services/serviceRegistry'
 
 export interface BookletExpense extends Expense {
   tenderId?: string
@@ -49,7 +53,7 @@ class PurchaseOrderService {
    */
   async createPurchaseOrderForTender(tender: TenderSubmission): Promise<PurchaseOrder> {
     console.log('🛒 إنشاء أمر شراء للمنافسة:', tender.name)
-    
+
     try {
       const repository = getPurchaseOrderRepository()
       const existingOrder = await repository.getByTenderId(tender.id)
@@ -74,14 +78,13 @@ class PurchaseOrderService {
         source: 'tender_submitted',
         items: [],
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
       })
 
       this.dispatchUpdateEvent(APP_EVENTS.PURCHASE_ORDERS_UPDATED)
-      
+
       console.log('✅ تم إنشاء أمر الشراء بنجاح:', newPurchaseOrder.id)
       return newPurchaseOrder
-      
     } catch (error) {
       console.error('❌ خطأ في إنشاء أمر الشراء:', error)
       throw error
@@ -93,26 +96,29 @@ class PurchaseOrderService {
    */
   createBookletExpense(tender: TenderSubmission, projectId?: string): BookletExpense | null {
     console.log('📋 إنشاء مصروف شراء كراسة للمنافسة:', tender.name)
-    
+
     try {
       // الحصول على المصاريف الحالية
-    // ensure legacy migration for expenses
-    // محاولة هجرة قديمة (لن تنفذ إلا إذا كان العلم مفعلاً داخل الخدمة)
-    expensesService.tryMigrateOnce(this.LEGACY_EXPENSES_KEY)
-    const existingExpenses = this.getExpenses()
-      
+      // ensure legacy migration for expenses
+      // محاولة هجرة قديمة (لن تنفذ إلا إذا كان العلم مفعلاً داخل الخدمة)
+      expensesService.tryMigrateOnce(this.LEGACY_EXPENSES_KEY)
+      const existingExpenses = this.getExpenses()
+
       // التحقق من عدم وجود مصروف مسبق لنفس المنافسة
-      const existingExpense = existingExpenses.find(expense => expense.tenderId === tender.id)
+      const existingExpense = existingExpenses.find((expense) => expense.tenderId === tender.id)
       if (existingExpense) {
         // في حال لم يكن مربوطًا بمشروع وأصبح لدينا projectId الآن، نقوم بتحديثه
         if (projectId && !existingExpense.projectId) {
           const updated: BookletExpense = { ...existingExpense, projectId }
-          const idx = existingExpenses.findIndex(e => e.id === existingExpense.id)
+          const idx = existingExpenses.findIndex((e) => e.id === existingExpense.id)
           if (idx !== -1) {
             existingExpenses[idx] = updated
             expensesService.setAll(existingExpenses)
           }
-          console.log('⚠️ يوجد مصروف كراسة مسبق للمنافسة وتم تحديث ربط المشروع:', existingExpense.id)
+          console.log(
+            '⚠️ يوجد مصروف كراسة مسبق للمنافسة وتم تحديث ربط المشروع:',
+            existingExpense.id,
+          )
           return updated
         }
         console.log('⚠️ يوجد مصروف كراسة مسبق للمنافسة:', existingExpense.id)
@@ -121,8 +127,9 @@ class PurchaseOrderService {
 
       // الحصول على سعر الكراسة
       const documentPrice = tender.documentPrice ?? tender.bookletPrice ?? 0
-      const price = typeof documentPrice === 'string' ? Number.parseFloat(documentPrice) : documentPrice
-      
+      const price =
+        typeof documentPrice === 'string' ? Number.parseFloat(documentPrice) : documentPrice
+
       if (!Number.isFinite(price) || price <= 0) {
         console.log('ℹ️ لا يوجد سعر كراسة للمنافسة')
         return null
@@ -144,19 +151,18 @@ class PurchaseOrderService {
         updatedAt: new Date().toISOString(),
         tenderId: tender.id,
         tenderName: tender.name,
-        projectId
+        projectId,
       }
-      
+
       // إضافة المصروف الجديد
-    existingExpenses.push(newExpense)
-    expensesService.setAll(existingExpenses)
-      
+      existingExpenses.push(newExpense)
+      expensesService.setAll(existingExpenses)
+
       // إرسال حدث التحديث
-    this.dispatchUpdateEvent(APP_EVENTS.EXPENSES_UPDATED)
-      
+      this.dispatchUpdateEvent(APP_EVENTS.EXPENSES_UPDATED)
+
       console.log('✅ تم إنشاء مصروف الكراسة بنجاح:', newExpense.id, 'مبلغ:', price)
       return newExpense
-      
     } catch (error) {
       console.error('❌ خطأ في إنشاء مصروف الكراسة:', error)
       throw error
@@ -172,14 +178,14 @@ class PurchaseOrderService {
     relatedProject?: Project | null
   }> {
     console.log('🚀 معالجة إرسال المنافسة شاملة:', tender.name)
-    
+
     try {
       // إنشاء أمر الشراء
-  const relationRepository = getRelationRepository()
-  const projectRepository = getProjectRepository()
-  const purchaseOrderRepository = getPurchaseOrderRepository()
+      const relationRepository = getRelationRepository()
+      const projectRepository = getProjectRepository()
+      const purchaseOrderRepository = getPurchaseOrderRepository()
 
-  let purchaseOrder = await this.createPurchaseOrderForTender(tender)
+      let purchaseOrder = await this.createPurchaseOrderForTender(tender)
 
       // لو كان هناك مشروع مرتبط بهذه المنافسة، اربط أمر الشراء بالمشروع
       let relatedProject: Project | null = null
@@ -188,12 +194,18 @@ class PurchaseOrderService {
         try {
           relatedProject = await projectRepository.getById(relatedProjectId)
         } catch (error) {
-          console.warn('⚠️ تعذر تحميل المشروع المرتبط بالمنافسة', { tenderId: tender.id, relatedProjectId, error })
+          console.warn('⚠️ تعذر تحميل المشروع المرتبط بالمنافسة', {
+            tenderId: tender.id,
+            relatedProjectId,
+            error,
+          })
         }
       }
 
       if (relatedProject) {
-        const updated = await purchaseOrderRepository.update(purchaseOrder.id, { projectId: relatedProject.id })
+        const updated = await purchaseOrderRepository.update(purchaseOrder.id, {
+          projectId: relatedProject.id,
+        })
         if (updated) {
           purchaseOrder = updated
           relationRepository.linkProjectToPurchaseOrder(relatedProject.id, purchaseOrder.id)
@@ -203,13 +215,12 @@ class PurchaseOrderService {
 
       // إنشاء مصروف الكراسة وربطه بالمشروع إن وجد
       const bookletExpense = this.createBookletExpense(tender, relatedProject?.id)
-      
+
       // إرسال إشعار شامل
-    this.dispatchUpdateEvent(APP_EVENTS.SYSTEM_PURCHASE_UPDATED)
-      
+      this.dispatchUpdateEvent(APP_EVENTS.SYSTEM_PURCHASE_UPDATED)
+
       console.log('✅ تمت معالجة إرسال المنافسة بنجاح')
-  return { purchaseOrder, bookletExpense, relatedProject }
-      
+      return { purchaseOrder, bookletExpense, relatedProject }
     } catch (error) {
       console.error('❌ خطأ في معالجة إرسال المنافسة:', error)
       throw error
@@ -261,12 +272,12 @@ class PurchaseOrderService {
     deletedExpensesCount: number
   }> {
     console.log(`🗑️ حذف أوامر الشراء والمصاريف المرتبطة بالمنافسة: ${tenderId}`)
-    
+
     try {
       const repository = getPurchaseOrderRepository()
       const relationRepository = getRelationRepository()
       const existingOrders = await repository.getAll()
-      const relatedOrders = existingOrders.filter(order => order.tenderId === tenderId)
+      const relatedOrders = existingOrders.filter((order) => order.tenderId === tenderId)
 
       let deletedOrdersCount = 0
       for (const order of relatedOrders) {
@@ -278,15 +289,15 @@ class PurchaseOrderService {
           }
         }
       }
-      
+
       // حذف المصاريف المرتبطة
       const existingExpenses = this.getExpenses()
-      const filteredExpenses = existingExpenses.filter(expense => expense.tenderId !== tenderId)
+      const filteredExpenses = existingExpenses.filter((expense) => expense.tenderId !== tenderId)
       const deletedExpensesCount = existingExpenses.length - filteredExpenses.length
       if (deletedExpensesCount > 0) {
         expensesService.setAll(filteredExpenses)
       }
-      
+
       // إرسال إشعارات التحديث
       if (deletedOrdersCount > 0) {
         this.dispatchUpdateEvent(APP_EVENTS.PURCHASE_ORDERS_UPDATED)
@@ -294,11 +305,10 @@ class PurchaseOrderService {
       if (deletedOrdersCount > 0 || deletedExpensesCount > 0) {
         this.dispatchUpdateEvent(APP_EVENTS.SYSTEM_PURCHASE_UPDATED)
       }
-      
+
       console.log(`✅ تم حذف ${deletedOrdersCount} أمر شراء و ${deletedExpensesCount} مصروف`)
-      
+
       return { deletedOrdersCount, deletedExpensesCount }
-      
     } catch (error) {
       console.error('❌ خطأ في حذف أوامر الشراء والمصاريف:', error)
       throw error
@@ -315,12 +325,11 @@ class PurchaseOrderService {
     try {
       const orders = await this.getPurchaseOrders()
       const expenses = this.getExpenses()
-      
-      const ordersCount = orders.filter(order => order.tenderId === tenderId).length
-      const expensesCount = expenses.filter(expense => expense.tenderId === tenderId).length
-      
+
+      const ordersCount = orders.filter((order) => order.tenderId === tenderId).length
+      const expensesCount = expenses.filter((expense) => expense.tenderId === tenderId).length
+
       return { ordersCount, expensesCount }
-      
     } catch (error) {
       console.error('❌ خطأ في فحص أوامر الشراء المرتبطة:', error)
       return { ordersCount: 0, expensesCount: 0 }
@@ -338,7 +347,7 @@ class PurchaseOrderService {
   }> {
     const orders = await this.getPurchaseOrders()
     const totalOrders = orders.length
-    const pendingOrders = orders.filter(order => order.status === 'pending').length
+    const pendingOrders = orders.filter((order) => order.status === 'pending').length
     const totalValue = orders.reduce((sum, order) => sum + order.value, 0)
     const averageValue = totalOrders > 0 ? totalValue / totalOrders : 0
 
@@ -346,7 +355,7 @@ class PurchaseOrderService {
       totalOrders,
       pendingOrders,
       totalValue,
-      averageValue
+      averageValue,
     }
   }
 
@@ -359,18 +368,19 @@ class PurchaseOrderService {
     averageBookletCost: number
   } {
     const expenses = this.getExpenses()
-    const bookletExpenses = expenses.filter(expense => 
-      expense.subcategoryId === 'promotional_materials' || Boolean(expense.tenderId)
+    const bookletExpenses = expenses.filter(
+      (expense) => expense.subcategoryId === 'promotional_materials' || Boolean(expense.tenderId),
     )
-    
+
     const totalBookletExpenses = bookletExpenses.length
     const totalBookletCost = bookletExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-    const averageBookletCost = totalBookletExpenses > 0 ? totalBookletCost / totalBookletExpenses : 0
+    const averageBookletCost =
+      totalBookletExpenses > 0 ? totalBookletCost / totalBookletExpenses : 0
 
     return {
       totalBookletExpenses,
       totalBookletCost,
-      averageBookletCost
+      averageBookletCost,
     }
   }
 
@@ -379,7 +389,21 @@ class PurchaseOrderService {
    * - إذا وُجد أمر شراء مسودة للمشروع يتم إعادة استخدامه
    * - يتم إدراج بند مرتبط بالـ BOQ عبر الحقل boqItemId
    */
-  async createDraftPOForBOQ(projectId: string, boqItem: BoqItemLike, options?: DraftPurchaseOptions): Promise<{ purchaseOrder: PurchaseOrder; item: { name: string; quantity: number; unitPrice: number; totalPrice: number; category: string; boqItemId: string } }> {
+  async createDraftPOForBOQ(
+    projectId: string,
+    boqItem: BoqItemLike,
+    options?: DraftPurchaseOptions,
+  ): Promise<{
+    purchaseOrder: PurchaseOrder
+    item: {
+      name: string
+      quantity: number
+      unitPrice: number
+      totalPrice: number
+      category: string
+      boqItemId: string
+    }
+  }> {
     const qty = options?.quantity ?? boqItem.quantity ?? 1
     const unitPrice = options?.unitPrice ?? boqItem.unitPrice ?? 0
     const category = options?.category ?? 'boq_item'
@@ -388,11 +412,17 @@ class PurchaseOrderService {
 
     const repository = getPurchaseOrderRepository()
     const orders = await repository.getAll()
-    const draftOrder = orders.find(order => order.projectId === projectId && order.status === 'pending' && order.source === 'manual')
+    const draftOrder = orders.find(
+      (order) =>
+        order.projectId === projectId && order.status === 'pending' && order.source === 'manual',
+    )
 
     let purchaseOrder: PurchaseOrder
     if (draftOrder) {
-      purchaseOrder = { ...draftOrder, items: Array.isArray(draftOrder.items) ? [...draftOrder.items] : [] }
+      purchaseOrder = {
+        ...draftOrder,
+        items: Array.isArray(draftOrder.items) ? [...draftOrder.items] : [],
+      }
     } else {
       const now = new Date().toISOString()
       purchaseOrder = await repository.create({
@@ -412,12 +442,14 @@ class PurchaseOrderService {
         projectId,
         items: [],
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
       })
     }
 
-    const items: PurchaseOrderItem[] = Array.isArray(purchaseOrder.items) ? [...purchaseOrder.items] : []
-    const existingIdx = items.findIndex(item => item.boqItemId === boqItem.id)
+    const items: PurchaseOrderItem[] = Array.isArray(purchaseOrder.items)
+      ? [...purchaseOrder.items]
+      : []
+    const existingIdx = items.findIndex((item) => item.boqItemId === boqItem.id)
     let item: PurchaseOrderItem & { boqItemId: string }
 
     if (existingIdx !== -1) {
@@ -430,7 +462,7 @@ class PurchaseOrderService {
         unitPrice,
         totalPrice: newTotal,
         category: existing.category ?? category,
-        boqItemId: existing.boqItemId ?? boqItem.id
+        boqItemId: existing.boqItemId ?? boqItem.id,
       }
       items[existingIdx] = item
     } else {
@@ -440,17 +472,20 @@ class PurchaseOrderService {
         unitPrice,
         totalPrice: qty * unitPrice,
         category,
-        boqItemId: boqItem.id
+        boqItemId: boqItem.id,
       }
       items.push(item)
     }
 
-    const value = items.reduce<number>((sum, current) => sum + (current.totalPrice ?? current.quantity * current.unitPrice), 0)
+    const value = items.reduce<number>(
+      (sum, current) => sum + (current.totalPrice ?? current.quantity * current.unitPrice),
+      0,
+    )
     const updated = await repository.update(purchaseOrder.id, {
       items,
       value,
       tenderId: purchaseOrder.tenderId ?? tenderId,
-      tenderName: purchaseOrder.tenderName ?? tenderName
+      tenderName: purchaseOrder.tenderName ?? tenderName,
     })
 
     const resolvedOrder = updated ?? { ...purchaseOrder, items, value }

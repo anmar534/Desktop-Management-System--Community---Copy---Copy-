@@ -1,11 +1,18 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Tender } from '@/data/centralData'
 import { LocalTenderRepository } from '@/repository/providers/tender.local'
-import type { EntityRelationSnapshot, IRelationRepository, LinkTenderOptions } from '@/repository/relations.repository'
+import type {
+  EntityRelationSnapshot,
+  IRelationRepository,
+  LinkTenderOptions,
+} from '@/repository/relations.repository'
 import type { ProjectPurchaseRelation, TenderProjectRelation } from '@/repository/types'
-import { getRelationRepository, registerRelationRepository } from '@/application/services/serviceRegistry'
-import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import {
+  getRelationRepository,
+  registerRelationRepository,
+} from '@/application/services/serviceRegistry'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, bus } from '@/events/bus'
 
 class StubRelationRepository implements IRelationRepository {
@@ -14,12 +21,14 @@ class StubRelationRepository implements IRelationRepository {
   private purchaseByProject = new Map<string, Set<string>>()
 
   getSnapshot(): EntityRelationSnapshot {
-    const tenderProject = Array.from(this.tenderByProject.entries()).map(([projectId, tenderId]) => ({
-      tenderId,
-      projectId,
-      createdAt: new Date().toISOString(),
-      isAutoCreated: false,
-    }))
+    const tenderProject = Array.from(this.tenderByProject.entries()).map(
+      ([projectId, tenderId]) => ({
+        tenderId,
+        projectId,
+        createdAt: new Date().toISOString(),
+        isAutoCreated: false,
+      }),
+    )
     const projectPurchase: ProjectPurchaseRelation[] = []
     for (const [projectId, purchaseOrders] of this.purchaseByProject.entries()) {
       for (const purchaseOrderId of purchaseOrders) {
@@ -35,7 +44,9 @@ class StubRelationRepository implements IRelationRepository {
   }
 
   saveSnapshot(snapshot: EntityRelationSnapshot): void {
-    this.tenderByProject = new Map(snapshot.tenderProject.map(link => [link.projectId, link.tenderId]))
+    this.tenderByProject = new Map(
+      snapshot.tenderProject.map((link) => [link.projectId, link.tenderId]),
+    )
     this.purchaseByProject = new Map()
     for (const link of snapshot.projectPurchase) {
       const set = this.purchaseByProject.get(link.projectId) ?? new Set<string>()
@@ -44,7 +55,11 @@ class StubRelationRepository implements IRelationRepository {
     }
   }
 
-  linkTenderToProject(tenderId: string, projectId: string, options?: LinkTenderOptions): TenderProjectRelation {
+  linkTenderToProject(
+    tenderId: string,
+    projectId: string,
+    options?: LinkTenderOptions,
+  ): TenderProjectRelation {
     this.tenderByProject.set(projectId, tenderId)
     return {
       tenderId,
@@ -281,9 +296,19 @@ describe('LocalTenderRepository', () => {
   })
 
   it('normalizes tenders from storage and supports lookups', async () => {
-  const raw: Record<string, unknown>[] = [
-      { ...sampleTender({ id: 't-1', name: 'عروض مستودع', title: 'Warehouse Phase 2' }), status: 'preparing' },
-      { ...sampleTender({ id: 't-2', name: 'كوبري علوي', status: 'won', title: 'Bridge Expansion' }) },
+    const raw: Record<string, unknown>[] = [
+      {
+        ...sampleTender({ id: 't-1', name: 'عروض مستودع', title: 'Warehouse Phase 2' }),
+        status: 'preparing',
+      },
+      {
+        ...sampleTender({
+          id: 't-2',
+          name: 'كوبري علوي',
+          status: 'won',
+          title: 'Bridge Expansion',
+        }),
+      },
     ]
 
     safeLocalStorage.setItem(STORAGE_KEYS.TENDERS, raw)
@@ -291,10 +316,10 @@ describe('LocalTenderRepository', () => {
 
     const all = await repository.getAll()
     expect(all).toHaveLength(2)
-    expect(all.find(tender => tender.id === 't-1')?.status).toBe('new')
+    expect(all.find((tender) => tender.id === 't-1')?.status).toBe('new')
 
     const storedAfter = safeLocalStorage.getItem<Tender[]>(STORAGE_KEYS.TENDERS, [])
-    expect(storedAfter.find(tender => tender.id === 't-1')?.status).toBe('new')
+    expect(storedAfter.find((tender) => tender.id === 't-1')?.status).toBe('new')
 
     const byId = await repository.getById('t-2')
     expect(byId?.status).toBe('won')
@@ -303,7 +328,7 @@ describe('LocalTenderRepository', () => {
     expect(byProject?.id).toBe('t-2')
 
     const searchResults = await repository.search('warehouse')
-    expect(searchResults.map(tender => tender.id)).toContain('t-1')
+    expect(searchResults.map((tender) => tender.id)).toContain('t-1')
   })
 
   it('deletes tenders, unlinks relations, and emits delete events', async () => {
@@ -316,11 +341,15 @@ describe('LocalTenderRepository', () => {
     expect(safeLocalStorage.getItem<Tender[]>(STORAGE_KEYS.TENDERS, [])).toHaveLength(0)
     expect(stubRelationRepository.unlinkTenderCalls).toContain('t-delete')
 
-    const lastBusDetail = tendersUpdatedBusEvents.at(-1) as { action?: string; tenderId?: string } | undefined
+    const lastBusDetail = tendersUpdatedBusEvents.at(-1) as
+      | { action?: string; tenderId?: string }
+      | undefined
     expect(lastBusDetail?.action).toBe('delete')
     expect(lastBusDetail?.tenderId).toBe('t-delete')
 
-    const lastWindowDetail = tendersUpdatedWindowEvents.at(-1) as { action?: string; tenderId?: string } | undefined
+    const lastWindowDetail = tendersUpdatedWindowEvents.at(-1) as
+      | { action?: string; tenderId?: string }
+      | undefined
     expect(lastWindowDetail?.action).toBe('delete')
   })
 })

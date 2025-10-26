@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { buildPricingSummary } from '@/analytics/pricingAnalytics'
-import type { EnrichedPricingItem } from '@/services/pricingEngine'
+import type { EnrichedPricingItem } from '@/application/services/pricingEngine'
 
-const makeItem = (overrides: Partial<EnrichedPricingItem> & { breakdown?: Partial<EnrichedPricingItem['breakdown']> } = {}): EnrichedPricingItem => {
+const makeItem = (
+  overrides: Partial<EnrichedPricingItem> & {
+    breakdown?: Partial<EnrichedPricingItem['breakdown']>
+  } = {},
+): EnrichedPricingItem => {
   const base: EnrichedPricingItem = {
     id: 'item-1',
     description: 'بند تجريبي',
@@ -10,7 +14,7 @@ const makeItem = (overrides: Partial<EnrichedPricingItem> & { breakdown?: Partia
     quantity: 1,
     unitPrice: 0,
     totalPrice: 0,
-  finalPrice: 0,
+    finalPrice: 0,
     isPriced: false,
     materials: [],
     labor: [],
@@ -28,8 +32,8 @@ const makeItem = (overrides: Partial<EnrichedPricingItem> & { breakdown?: Partia
       operational: 0,
       profit: 0,
       subtotal: 0,
-      total: 0
-    }
+      total: 0,
+    },
   }
 
   const merged: EnrichedPricingItem = {
@@ -39,7 +43,7 @@ const makeItem = (overrides: Partial<EnrichedPricingItem> & { breakdown?: Partia
 
   merged.breakdown = {
     ...base.breakdown,
-    ...(overrides.breakdown ?? {})
+    ...(overrides.breakdown ?? {}),
   }
 
   return merged
@@ -63,8 +67,8 @@ const sampleItems: EnrichedPricingItem[] = [
       operational: 50,
       profit: 100,
       subtotal: 350,
-      total: 500
-    }
+      total: 500,
+    },
   }),
   makeItem({
     id: '2',
@@ -83,15 +87,15 @@ const sampleItems: EnrichedPricingItem[] = [
       operational: 100,
       profit: 250,
       subtotal: 750,
-      total: 1000
-    }
+      total: 1000,
+    },
   }),
   makeItem({
     id: '3',
     isPriced: false,
     unitPrice: 0,
-    totalPrice: 0
-  })
+    totalPrice: 0,
+  }),
 ]
 
 describe('pricingAnalytics.buildPricingSummary', () => {

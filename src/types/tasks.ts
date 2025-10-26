@@ -1,6 +1,5 @@
-/**
- * Task Management Types
- * أنواع البيانات لإدارة المهام والأنشطة
+/*
+ * Task domain types
  */
 
 export type TaskStatus = 'not_started' | 'in_progress' | 'completed' | 'on_hold' | 'cancelled'
@@ -10,21 +9,27 @@ export type TaskType = 'task' | 'milestone' | 'phase' | 'deliverable'
 export interface TaskAssignee {
   id: string
   name: string
-  nameEn?: string
-  email: string
-  role: string
-  department: string
-  avatar?: string
-  isActive: boolean
+  email?: string
+  role?: string
+  department?: string
+  phone?: string
+  avatarUrl?: string
 }
+
+export type TaskDependencyType =
+  | 'finish_to_start'
+  | 'start_to_start'
+  | 'finish_to_finish'
+  | 'start_to_finish'
 
 export interface TaskDependency {
   id: string
   taskId: string
   dependsOnTaskId: string
-  type: 'finish_to_start' | 'start_to_start' | 'finish_to_finish' | 'start_to_finish'
-  lag: number // في الأيام
+  type?: TaskDependencyType
+  lagDays?: number
   createdAt: string
+  notes?: string
 }
 
 export interface TaskComment {
@@ -33,157 +38,118 @@ export interface TaskComment {
   authorId: string
   authorName: string
   content: string
-  attachments?: string[]
   createdAt: string
   updatedAt: string
+  mentions?: string[]
 }
 
 export interface TaskAttachment {
   id: string
   taskId: string
-  fileName: string
-  fileSize: number
-  fileType: string
-  filePath: string
+  name: string
+  fileName?: string
+  fileType?: string
+  fileSize?: number
+  url?: string
   uploadedBy: string
   uploadedAt: string
+  description?: string
 }
 
 export interface TaskTimeEntry {
   id: string
   taskId: string
   userId: string
-  userName: string
-  description: string
-  hoursSpent: number
-  date: string
-  billable: boolean
+  hours: number
+  description?: string
+  entryDate?: string
+  billable?: boolean
   createdAt: string
+}
+
+export interface TaskSubtask {
+  id: string
+  parentTaskId: string
+  title: string
+  status: TaskStatus
+  progress: number
+  assigneeId?: string
+  dueDate?: string
 }
 
 export interface Task {
   id: string
   projectId: string
-  parentTaskId?: string
-  
-  // معلومات أساسية
   title: string
   titleEn?: string
   description: string
   descriptionEn?: string
   type: TaskType
-  
-  // الحالة والأولوية
   status: TaskStatus
   priority: TaskPriority
-  progress: number // 0-100
-  
-  // التوقيتات
+  progress: number
   plannedStartDate: string
   plannedEndDate: string
   actualStartDate?: string
   actualEndDate?: string
   estimatedHours: number
-  actualHours: number
-  
-  // التخصيص
-  assigneeId?: string
-  assignee?: TaskAssignee
-  reviewerId?: string
-  reviewer?: TaskAssignee
-  
-  // التكلفة والميزانية
   estimatedCost: number
+  actualHours: number
   actualCost: number
+  assigneeId?: string
+  reviewerId?: string
   budgetCode?: string
-  
-  // العلاقات
+  category?: string
+  phase?: string
+  tags: string[]
   dependencies: TaskDependency[]
-  subtasks: Task[]
-  
-  // المرفقات والتعليقات
+  subtasks: TaskSubtask[]
   attachments: TaskAttachment[]
   comments: TaskComment[]
   timeEntries: TaskTimeEntry[]
-  
-  // العلامات والتصنيف
-  tags: string[]
-  category?: string
-  phase?: string
-  
-  // البيانات الوصفية
-  createdAt: string
-  updatedAt: string
+  assignee?: TaskAssignee
+  reviewer?: TaskAssignee
   createdBy: string
   lastModifiedBy: string
+  createdAt: string
+  updatedAt: string
   version: number
 }
 
-export interface CreateTaskRequest {
-  projectId: string
-  parentTaskId?: string
-  title: string
-  titleEn?: string
-  description: string
-  descriptionEn?: string
-  type: TaskType
-  priority: TaskPriority
-  plannedStartDate: string
-  plannedEndDate: string
-  estimatedHours: number
-  estimatedCost: number
-  assigneeId?: string
-  reviewerId?: string
-  budgetCode?: string
-  tags?: string[]
-  category?: string
-  phase?: string
-}
-
-export interface UpdateTaskRequest {
+export interface TaskBoardColumn {
   id: string
-  title?: string
-  titleEn?: string
-  description?: string
-  descriptionEn?: string
-  status?: TaskStatus
-  priority?: TaskPriority
-  progress?: number
-  plannedStartDate?: string
-  plannedEndDate?: string
-  actualStartDate?: string
-  actualEndDate?: string
-  estimatedHours?: number
-  actualHours?: number
-  estimatedCost?: number
-  actualCost?: number
-  assigneeId?: string
-  reviewerId?: string
-  budgetCode?: string
-  tags?: string[]
-  category?: string
-  phase?: string
-  version: number
+  boardId: string
+  name: string
+  status: TaskStatus
+  order: number
+  color?: string
+  tasks: Task[]
 }
 
 export interface TaskFilters {
   projectId?: string
   status?: TaskStatus[]
   priority?: TaskPriority[]
-  assigneeId?: string
   type?: TaskType[]
+  assigneeId?: string
+  search?: string
+  tags?: string[]
   startDateFrom?: string
   startDateTo?: string
   endDateFrom?: string
   endDateTo?: string
-  tags?: string[]
-  category?: string
-  phase?: string
-  search?: string
 }
 
 export interface TaskSortOptions {
-  field: 'title' | 'priority' | 'status' | 'plannedStartDate' | 'plannedEndDate' | 'progress' | 'createdAt'
+  field:
+    | 'title'
+    | 'priority'
+    | 'status'
+    | 'plannedStartDate'
+    | 'plannedEndDate'
+    | 'progress'
+    | 'createdAt'
+    | 'updatedAt'
   direction: 'asc' | 'desc'
 }
 
@@ -203,117 +169,37 @@ export interface TaskStatistics {
   tasksByAssignee: Record<string, number>
 }
 
-export interface TaskBoard {
-  id: string
+export interface CreateTaskRequest {
   projectId: string
-  name: string
-  nameEn?: string
-  description?: string
-  columns: TaskBoardColumn[]
-  settings: TaskBoardSettings
-  createdAt: string
-  updatedAt: string
-}
-
-export interface TaskBoardColumn {
-  id: string
-  boardId: string
-  name: string
-  nameEn?: string
-  status: TaskStatus
-  order: number
-  color: string
-  wipLimit?: number // Work In Progress limit
-  tasks: Task[]
-}
-
-export interface TaskBoardSettings {
-  allowWipLimits: boolean
-  showEstimates: boolean
-  showAssignees: boolean
-  showDueDates: boolean
-  showProgress: boolean
-  autoMoveCompleted: boolean
-  swimlanes: 'none' | 'assignee' | 'priority' | 'phase'
-}
-
-export interface TaskTemplate {
-  id: string
-  name: string
-  nameEn?: string
+  title: string
+  titleEn?: string
   description: string
-  category: string
-  tasks: Omit<CreateTaskRequest, 'projectId'>[]
-  createdAt: string
-  updatedAt: string
+  descriptionEn?: string
+  type: TaskType
+  priority: TaskPriority
+  plannedStartDate: string
+  plannedEndDate: string
+  estimatedHours: number
+  estimatedCost: number
+  assigneeId?: string
+  reviewerId?: string
+  budgetCode?: string
+  category?: string
+  phase?: string
+  tags?: string[]
+  dependencies?: TaskDependency[]
+  subtasks?: TaskSubtask[]
+  attachments?: TaskAttachment[]
 }
 
-export interface TaskValidationResult {
-  isValid: boolean
-  errors: string[]
-  warnings: string[]
-}
-
-export interface TaskProgressUpdate {
-  taskId: string
-  progress: number
+export interface UpdateTaskRequest extends Partial<CreateTaskRequest> {
+  id: string
+  status?: TaskStatus
+  progress?: number
   actualHours?: number
   actualCost?: number
-  status?: TaskStatus
-  notes?: string
-  updatedBy: string
-  updatedAt: string
-}
-
-export interface TaskNotification {
-  id: string
-  taskId: string
-  type: 'assignment' | 'status_change' | 'due_date' | 'overdue' | 'completion' | 'comment'
-  recipientId: string
-  title: string
-  message: string
-  isRead: boolean
-  createdAt: string
-}
-
-// إعدادات التنبيهات
-export interface TaskNotificationSettings {
-  userId: string
-  emailNotifications: boolean
-  pushNotifications: boolean
-  notifyOnAssignment: boolean
-  notifyOnStatusChange: boolean
-  notifyOnDueDate: boolean
-  notifyOnOverdue: boolean
-  notifyOnComments: boolean
-  reminderDaysBefore: number
-}
-
-// تقرير أداء المهام
-export interface TaskPerformanceReport {
-  projectId: string
-  period: {
-    startDate: string
-    endDate: string
-  }
-  statistics: TaskStatistics
-  trends: {
-    completionRate: Array<{ date: string; rate: number }>
-    productivity: Array<{ date: string; tasksCompleted: number }>
-    efficiency: Array<{ date: string; hoursPerTask: number }>
-  }
-  topPerformers: Array<{
-    assigneeId: string
-    assigneeName: string
-    tasksCompleted: number
-    averageCompletionTime: number
-    efficiency: number
-  }>
-  bottlenecks: Array<{
-    taskId: string
-    taskTitle: string
-    daysOverdue: number
-    blockedTasks: number
-  }>
-  recommendations: string[]
+  actualStartDate?: string
+  actualEndDate?: string
+  tags?: string[]
+  version: number
 }

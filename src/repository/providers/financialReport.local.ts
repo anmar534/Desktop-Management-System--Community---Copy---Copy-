@@ -1,19 +1,24 @@
 import type { IFinancialReportRepository } from '@/repository/financialReport.repository'
 import type { FinancialReport } from '@/data/centralData'
-import { safeLocalStorage } from '@/utils/storage'
-import { STORAGE_KEYS } from '@/config/storageKeys'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 
 const generateId = () => `financial_report_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 
-const normalizeReport = (report: Partial<FinancialReport> & Pick<FinancialReport, 'id'>): FinancialReport => ({
+const normalizeReport = (
+  report: Partial<FinancialReport> & Pick<FinancialReport, 'id'>,
+): FinancialReport => ({
   id: report.id,
   name: report.name ?? '',
   type: report.type ?? 'custom',
   description: report.description ?? '',
   status: report.status ?? 'pending',
   createdAt: report.createdAt ?? new Date().toISOString(),
-  completedAt: report.status === 'completed' ? report.completedAt ?? new Date().toISOString() : report.completedAt,
+  completedAt:
+    report.status === 'completed'
+      ? (report.completedAt ?? new Date().toISOString())
+      : report.completedAt,
   format: report.format ?? 'pdf',
   size: report.size !== undefined ? Number(report.size) : undefined,
   url: report.url,
@@ -25,7 +30,9 @@ const normalizeReport = (report: Partial<FinancialReport> & Pick<FinancialReport
 
 const loadAll = (): FinancialReport[] => {
   const stored = safeLocalStorage.getItem<FinancialReport[]>(STORAGE_KEYS.FINANCIAL_REPORTS, [])
-  return Array.isArray(stored) ? stored.map(report => normalizeReport({ ...report, id: report.id ?? generateId() })) : []
+  return Array.isArray(stored)
+    ? stored.map((report) => normalizeReport({ ...report, id: report.id ?? generateId() }))
+    : []
 }
 
 const persist = (reports: FinancialReport[]): void => {
@@ -41,11 +48,13 @@ export class LocalFinancialReportRepository implements IFinancialReportRepositor
 
   async getById(id: string): Promise<FinancialReport | null> {
     const reports = loadAll()
-    const report = reports.find(item => item.id === id)
+    const report = reports.find((item) => item.id === id)
     return report ? normalizeReport(report) : null
   }
 
-  async create(report: Omit<FinancialReport, 'id'> & Partial<Pick<FinancialReport, 'id'>>): Promise<FinancialReport> {
+  async create(
+    report: Omit<FinancialReport, 'id'> & Partial<Pick<FinancialReport, 'id'>>,
+  ): Promise<FinancialReport> {
     const reports = loadAll()
     const record = normalizeReport({ ...report, id: report.id ?? generateId() })
     reports.push(record)
@@ -56,7 +65,7 @@ export class LocalFinancialReportRepository implements IFinancialReportRepositor
 
   async upsert(report: FinancialReport): Promise<FinancialReport> {
     const reports = loadAll()
-    const index = reports.findIndex(item => item.id === report.id)
+    const index = reports.findIndex((item) => item.id === report.id)
     const normalized = normalizeReport({ ...report, id: report.id ?? generateId() })
 
     if (index >= 0) {
@@ -72,7 +81,7 @@ export class LocalFinancialReportRepository implements IFinancialReportRepositor
 
   async update(id: string, updates: Partial<FinancialReport>): Promise<FinancialReport | null> {
     const reports = loadAll()
-    const index = reports.findIndex(item => item.id === id)
+    const index = reports.findIndex((item) => item.id === id)
 
     if (index === -1) {
       return null
@@ -87,7 +96,7 @@ export class LocalFinancialReportRepository implements IFinancialReportRepositor
 
   async delete(id: string): Promise<boolean> {
     const reports = loadAll()
-    const filtered = reports.filter(item => item.id !== id)
+    const filtered = reports.filter((item) => item.id !== id)
     if (filtered.length === reports.length) {
       return false
     }
@@ -96,13 +105,16 @@ export class LocalFinancialReportRepository implements IFinancialReportRepositor
     return true
   }
 
-  async importMany(reports: FinancialReport[], options: { replace?: boolean } = {}): Promise<FinancialReport[]> {
+  async importMany(
+    reports: FinancialReport[],
+    options: { replace?: boolean } = {},
+  ): Promise<FinancialReport[]> {
     const shouldReplace = options.replace ?? true
     const current = shouldReplace ? [] : loadAll()
 
     for (const report of reports) {
       const normalized = normalizeReport({ ...report, id: report.id ?? generateId() })
-      const index = current.findIndex(item => item.id === normalized.id)
+      const index = current.findIndex((item) => item.id === normalized.id)
       if (index >= 0) {
         current[index] = normalized
       } else {

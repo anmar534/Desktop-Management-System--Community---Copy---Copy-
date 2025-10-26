@@ -3,7 +3,7 @@
  * Sprint 5.3.2: تطوير نظام مصادقة وتفويض
  */
 
-import type { AuthCredentials, AuthToken, ApiKey, ApiPermission } from '../types'
+import type { AuthCredentials, AuthToken, ApiPermission } from '../types'
 import { apiClient } from '../client'
 import type { ApiResponse } from '../types'
 
@@ -25,7 +25,7 @@ export interface User {
   updatedAt: string
 }
 
-export type UserRole = 
+export type UserRole =
   | 'admin'
   | 'manager'
   | 'project_manager'
@@ -146,16 +146,16 @@ export class AuthService {
    */
   async login(credentials: AuthCredentials): Promise<ApiResponse<LoginResponse>> {
     const response = await apiClient.post<LoginResponse>('/auth/login', credentials)
-    
+
     if (response.success && response.data) {
       this.currentUser = response.data.user
       this.currentToken = response.data.token
       apiClient.setToken(response.data.token.accessToken)
-      
+
       // Store in secure storage
       await this.storeAuthData(response.data)
     }
-    
+
     return response
   }
 
@@ -180,13 +180,13 @@ export class AuthService {
    */
   async refreshToken(refreshToken: string): Promise<ApiResponse<AuthToken>> {
     const response = await apiClient.post<AuthToken>('/auth/refresh', { refreshToken })
-    
+
     if (response.success && response.data) {
       this.currentToken = response.data
       apiClient.setToken(response.data.accessToken)
       await this.storeToken(response.data)
     }
-    
+
     return response
   }
 
@@ -220,10 +220,10 @@ export class AuthService {
    */
   hasPermission(permission: ApiPermission): boolean {
     if (!this.currentUser) return false
-    
+
     // Admin has all permissions
     if (this.currentUser.permissions.includes('admin:all')) return true
-    
+
     return this.currentUser.permissions.includes(permission)
   }
 
@@ -232,7 +232,7 @@ export class AuthService {
    * التحقق من وجود أي من الصلاحيات
    */
   hasAnyPermission(permissions: ApiPermission[]): boolean {
-    return permissions.some(permission => this.hasPermission(permission))
+    return permissions.some((permission) => this.hasPermission(permission))
   }
 
   /**
@@ -240,7 +240,7 @@ export class AuthService {
    * التحقق من وجود جميع الصلاحيات
    */
   hasAllPermissions(permissions: ApiPermission[]): boolean {
-    return permissions.every(permission => this.hasPermission(permission))
+    return permissions.every((permission) => this.hasPermission(permission))
   }
 
   /**
@@ -273,11 +273,11 @@ export class AuthService {
    */
   async getProfile(): Promise<ApiResponse<User>> {
     const response = await apiClient.get<User>('/auth/profile')
-    
+
     if (response.success && response.data) {
       this.currentUser = response.data
     }
-    
+
     return response
   }
 
@@ -287,11 +287,11 @@ export class AuthService {
    */
   async updateProfile(data: Partial<User>): Promise<ApiResponse<User>> {
     const response = await apiClient.put<User>('/auth/profile', data)
-    
+
     if (response.success && response.data) {
       this.currentUser = response.data
     }
-    
+
     return response
   }
 
@@ -330,7 +330,7 @@ export class AuthService {
       const userStr = await window.electronAPI.secureStore.get('auth_user')
       const tokenStr = await window.electronAPI.secureStore.get('auth_token')
 
-      if (userStr && tokenStr) {
+      if (userStr && tokenStr && typeof userStr === 'string' && typeof tokenStr === 'string') {
         this.currentUser = JSON.parse(userStr) as User
         this.currentToken = JSON.parse(tokenStr) as AuthToken
         apiClient.setToken(this.currentToken.accessToken)
@@ -349,4 +349,3 @@ export class AuthService {
 // ============================================================================
 
 export const authService = new AuthService()
-

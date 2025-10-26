@@ -1,16 +1,30 @@
-import type { ITenderRepository } from '../tender.repository';
-import type { Tender } from '@/data/centralData';
-import { safeLocalStorage } from '@/utils/storage';
-import { STORAGE_KEYS } from '@/config/storageKeys';
-import { migrateTenderStatus, needsMigration } from '@/utils/tenderStatusMigration';
-import { getRelationRepository } from '@/application/services/serviceRegistry';
-import { bus, APP_EVENTS, emit } from '@/events/bus';
+import type { Tender } from '@/data/centralData'
+
+// ITenderRepository interface (moved from tender.repository.ts)
+export interface ITenderRepository {
+  getAll(): Promise<Tender[]>
+  getById(id: string): Promise<Tender | null>
+  getByProjectId?(projectId: string): Promise<Tender | null>
+  create(data: Omit<Tender, 'id'>): Promise<Tender>
+  update(
+    id: string,
+    updates: Partial<Tender>,
+    options?: { skipRefresh?: boolean },
+  ): Promise<Tender | null>
+  delete(id: string): Promise<boolean>
+  search(query: string): Promise<Tender[]>
+}
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
+import { migrateTenderStatus, needsMigration } from '@/shared/utils/tender/tenderStatusMigration'
+import { getRelationRepository } from '@/application/services/serviceRegistry'
+import { bus, APP_EVENTS, emit } from '@/events/bus'
 import {
   sanitizeTenderCollection,
   validateTender,
   validateTenderPayload,
-  validateTenderUpdate
-} from '@/domain/validation';
+  validateTenderUpdate,
+} from '@/domain/validation'
 
 const allowedStatuses: Tender['status'][] = [
   'new',
@@ -21,166 +35,200 @@ const allowedStatuses: Tender['status'][] = [
   'lost',
   'expired',
   'cancelled',
-];
+]
 
-const generateId = () => `tender_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+const generateId = () => `tender_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
 
-const isDifferent = (a: Tender, b: Tender): boolean => JSON.stringify(a) !== JSON.stringify(b);
+const isDifferent = (a: Tender, b: Tender): boolean => JSON.stringify(a) !== JSON.stringify(b)
 
 const normalizeTender = (tender: Tender): Tender => {
-  let status = tender.status;
+  let status = tender.status
   if (needsMigration(tender)) {
-    status = migrateTenderStatus(status as string);
+    status = migrateTenderStatus(status as string)
   }
   if (!allowedStatuses.includes(status)) {
-    status = 'new';
+    status = 'new'
   }
-  return { ...tender, status };
-};
+
+  // Normalize quantities field to quantityTable for pricing compatibility
+  const normalized = { ...tender, status }
+
+  // If quantities exists but quantityTable doesn't, copy quantities to quantityTable
+  if (Array.isArray((normalized as any).quantities) && (normalized as any).quantities.length > 0) {
+    if (
+      !Array.isArray((normalized as any).quantityTable) ||
+      (normalized as any).quantityTable.length === 0
+    ) {
+      ;(normalized as any).quantityTable = (normalized as any).quantities
+    }
+  }
+
+  // Also ensure quantityItems is populated for backward compatibility
+  if (
+    Array.isArray((normalized as any).quantityTable) &&
+    (normalized as any).quantityTable.length > 0
+  ) {
+    if (
+      !Array.isArray((normalized as any).quantityItems) ||
+      (normalized as any).quantityItems.length === 0
+    ) {
+      ;(normalized as any).quantityItems = (normalized as any).quantityTable
+    }
+  }
+
+  return normalized
+}
 
 const persist = (tenders: Tender[]): void => {
-  safeLocalStorage.setItem(STORAGE_KEYS.TENDERS, tenders);
-};
+  safeLocalStorage.setItem(STORAGE_KEYS.TENDERS, tenders)
+}
 
 const loadAll = (): Tender[] => {
-  const stored = safeLocalStorage.getItem<Tender[]>(STORAGE_KEYS.TENDERS, []);
+  const stored = safeLocalStorage.getItem<Tender[]>(STORAGE_KEYS.TENDERS, [])
   if (!Array.isArray(stored)) {
-    return [];
+    return []
   }
 
-  let shouldPersist = false;
-  const normalized = stored.map(entry => {
-    const normalizedTender = normalizeTender({ ...entry });
+  let shouldPersist = false
+  const normalized = stored.map((entry) => {
+    const normalizedTender = normalizeTender({ ...entry })
     if (!shouldPersist && isDifferent(entry, normalizedTender)) {
-      shouldPersist = true;
+      shouldPersist = true
     }
-    return normalizedTender;
-  });
+    return normalizedTender
+  })
 
-  const sanitized = sanitizeTenderCollection(normalized);
+  const sanitized = sanitizeTenderCollection(normalized)
 
   if (sanitized.length !== normalized.length || hasDifferences(normalized, sanitized)) {
-    shouldPersist = true;
+    shouldPersist = true
   }
 
   if (shouldPersist) {
-    persist(sanitized);
+    persist(sanitized)
   }
 
-  return sanitized;
-};
+  return sanitized
+}
 
 const emitTendersUpdated = <T>(detail: T) => {
-  bus.emit(APP_EVENTS.TENDERS_UPDATED, detail);
-  emit(APP_EVENTS.TENDERS_UPDATED, detail);
-};
+  bus.emit(APP_EVENTS.TENDERS_UPDATED, detail)
+  emit(APP_EVENTS.TENDERS_UPDATED, detail)
+}
 
 const emitTenderUpdated = <T>(detail: T) => {
-  bus.emit(APP_EVENTS.TENDER_UPDATED, detail);
-  emit(APP_EVENTS.TENDER_UPDATED, detail);
-};
+  bus.emit(APP_EVENTS.TENDER_UPDATED, detail)
+  emit(APP_EVENTS.TENDER_UPDATED, detail)
+}
 
 const hasDifferences = (original: Tender[], sanitized: Tender[]): boolean => {
   if (original.length !== sanitized.length) {
-    return true;
+    return true
   }
 
   for (let index = 0; index < original.length; index += 1) {
     if (JSON.stringify(original[index]) !== JSON.stringify(sanitized[index])) {
-      return true;
+      return true
     }
   }
 
-  return false;
-};
+  return false
+}
 
 export class LocalTenderRepository implements ITenderRepository {
   async getAll(): Promise<Tender[]> {
-    return loadAll();
+    return loadAll()
   }
 
   async getById(id: string): Promise<Tender | null> {
-    const tenders = loadAll();
-    const tender = tenders.find(entry => entry.id === id);
-    return tender ? { ...tender } : null;
+    const tenders = loadAll()
+    const tender = tenders.find((entry) => entry.id === id)
+    return tender ? { ...tender } : null
   }
 
   async getByProjectId(projectId: string): Promise<Tender | null> {
-    const relationRepository = getRelationRepository();
-    const tenderId = relationRepository.getTenderIdByProjectId(projectId);
+    const relationRepository = getRelationRepository()
+    const tenderId = relationRepository.getTenderIdByProjectId(projectId)
     if (!tenderId) {
-      return null;
+      return null
     }
-    return this.getById(tenderId);
+    return this.getById(tenderId)
   }
 
   async create(data: Omit<Tender, 'id'>): Promise<Tender> {
-    const tenders = loadAll();
-    const payload = validateTenderPayload(data);
+    const tenders = loadAll()
+    const payload = validateTenderPayload(data)
     const tender = validateTender(
       normalizeTender({
         ...payload,
         id: generateId(),
       }),
-    );
-    tenders.push(tender);
-    persist(tenders);
-    const detail = { action: 'create' as const, tender };
-    emitTendersUpdated(detail);
-    return tender;
+    )
+    tenders.push(tender)
+    persist(tenders)
+    const detail = { action: 'create' as const, tender }
+    emitTendersUpdated(detail)
+    return tender
   }
 
-  async update(id: string, updates: Partial<Tender>): Promise<Tender | null> {
-    const tenders = loadAll();
-    const index = tenders.findIndex(entry => entry.id === id);
+  async update(
+    id: string,
+    updates: Partial<Tender>,
+    options?: { skipRefresh?: boolean },
+  ): Promise<Tender | null> {
+    const tenders = loadAll()
+    const index = tenders.findIndex((entry) => entry.id === id)
 
     if (index === -1) {
-      return null;
+      return null
     }
 
-    const sanitizedUpdates = validateTenderUpdate({ ...updates, id });
-    const updated = validateTender(
-      normalizeTender({ ...tenders[index], ...sanitizedUpdates, id }),
-    );
-    tenders[index] = updated;
-    persist(tenders);
-    const detail = { action: 'update' as const, tenderId: id, tender: updated };
-    emitTendersUpdated(detail);
-    emitTenderUpdated(detail);
-    return updated;
+    const sanitizedUpdates = validateTenderUpdate({ ...updates, id })
+    const updated = validateTender(normalizeTender({ ...tenders[index], ...sanitizedUpdates, id }))
+    tenders[index] = updated
+    persist(tenders)
+    const detail = {
+      action: 'update' as const,
+      tenderId: id,
+      tender: updated,
+      skipRefresh: options?.skipRefresh || false, // ← تمرير skipRefresh flag
+    }
+    emitTendersUpdated(detail)
+    emitTenderUpdated(detail)
+    return updated
   }
 
   async delete(id: string): Promise<boolean> {
-    const tenders = loadAll();
-    const nextTenders = tenders.filter(entry => entry.id !== id);
+    const tenders = loadAll()
+    const nextTenders = tenders.filter((entry) => entry.id !== id)
 
     if (nextTenders.length === tenders.length) {
-      return false;
+      return false
     }
 
-    persist(nextTenders);
-    const relationRepository = getRelationRepository();
-    relationRepository.unlinkTender(id);
-    const detail = { action: 'delete' as const, tenderId: id };
-    emitTendersUpdated(detail);
-    return true;
+    persist(nextTenders)
+    const relationRepository = getRelationRepository()
+    relationRepository.unlinkTender(id)
+    const detail = { action: 'delete' as const, tenderId: id }
+    emitTendersUpdated(detail)
+    return true
   }
 
   async search(query: string): Promise<Tender[]> {
-    const trimmed = query.trim();
+    const trimmed = query.trim()
     if (trimmed.length === 0) {
-      return this.getAll();
+      return this.getAll()
     }
 
-    const lowercaseQuery = trimmed.toLowerCase();
-    const tenders = await this.getAll();
+    const lowercaseQuery = trimmed.toLowerCase()
+    const tenders = await this.getAll()
 
-    const matches = (value?: string) => (value ?? '').toLowerCase().includes(lowercaseQuery);
+    const matches = (value?: string) => (value ?? '').toLowerCase().includes(lowercaseQuery)
 
-    return tenders.filter(tender =>
-      matches(tender.name) || matches(tender.client) || matches(tender.title)
-    );
+    return tenders.filter(
+      (tender) => matches(tender.name) || matches(tender.client) || matches(tender.title),
+    )
   }
 }
 
-export const tenderRepository = new LocalTenderRepository();
+export const tenderRepository = new LocalTenderRepository()

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { safeLocalStorage } from '@/utils/storage'
+import { safeLocalStorage } from '@/shared/utils/storage/storage'
 
 export interface DevelopmentGoal {
   id: string
@@ -17,14 +17,16 @@ export interface DevelopmentGoal {
 const STORAGE_KEY = 'development_goals'
 
 export function useDevelopment() {
-  const [goals, setGoals] = useState<DevelopmentGoal[]>(() => safeLocalStorage.getItem(STORAGE_KEY, []))
+  const [goals, setGoals] = useState<DevelopmentGoal[]>(() =>
+    safeLocalStorage.getItem(STORAGE_KEY, []),
+  )
 
   useEffect(() => {
     safeLocalStorage.setItem(STORAGE_KEY, goals)
   }, [goals])
 
   const updateGoal = useCallback(async (id: string, updates: Partial<DevelopmentGoal>) => {
-    setGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g))
+    setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, ...updates } : g)))
   }, [])
 
   const addGoal = useCallback(async (goal: Omit<DevelopmentGoal, 'id'> & { id?: string }) => {
@@ -35,7 +37,7 @@ export function useDevelopment() {
       return `goal-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
     }
 
-    setGoals(prev => [
+    setGoals((prev) => [
       ...prev,
       {
         ...goal,
@@ -45,11 +47,11 @@ export function useDevelopment() {
   }, [])
 
   const deleteGoal = useCallback(async (id: string) => {
-    setGoals(prev => prev.filter(g => g.id !== id))
+    setGoals((prev) => prev.filter((g) => g.id !== id))
   }, [])
 
   const updateCurrentValues = useCallback(async (updates: Record<string, number>) => {
-    setGoals(prev => prev.map(g => ({ ...g, currentValue: updates[g.id] ?? g.currentValue })))
+    setGoals((prev) => prev.map((g) => ({ ...g, currentValue: updates[g.id] ?? g.currentValue })))
   }, [])
 
   return { goals, addGoal, updateGoal, deleteGoal, updateCurrentValues }

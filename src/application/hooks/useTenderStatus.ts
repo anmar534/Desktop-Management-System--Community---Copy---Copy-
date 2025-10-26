@@ -1,6 +1,6 @@
 import type { Tender } from '@/data/centralData'
-import type { StatusBadgeProps } from '@/components/ui/status-badge'
-import { getDaysRemaining, isTenderExpired } from '@/utils/tenderProgressCalculator'
+import type { StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { getDaysRemaining, isTenderExpired } from '@/shared/utils/tender/tenderProgressCalculator'
 
 type StatusTone = StatusBadgeProps['status']
 
@@ -28,23 +28,55 @@ export function useTenderStatus(tender: Tender) {
   const statusInfo = (() => {
     switch (tender.status) {
       case 'new':
-        return { text: 'جديدة', variant: 'secondary' as const, badgeStatus: 'notStarted' as StatusTone }
+        return {
+          text: 'جديدة',
+          variant: 'secondary' as const,
+          badgeStatus: 'notStarted' as StatusTone,
+        }
       case 'under_action':
-        return { text: 'تحت الإجراء', variant: 'warning' as const, badgeStatus: 'warning' as StatusTone }
+        return {
+          text: 'تحت الإجراء',
+          variant: 'warning' as const,
+          badgeStatus: 'warning' as StatusTone,
+        }
       case 'ready_to_submit':
-        return { text: 'جاهزة للتقديم', variant: 'default' as const, badgeStatus: 'onTrack' as StatusTone }
+        return {
+          text: 'جاهزة للتقديم',
+          variant: 'default' as const,
+          badgeStatus: 'onTrack' as StatusTone,
+        }
       case 'submitted':
-        return { text: 'بانتظار النتائج', variant: 'info' as const, badgeStatus: 'info' as StatusTone }
+        return {
+          text: 'بانتظار النتائج',
+          variant: 'info' as const,
+          badgeStatus: 'info' as StatusTone,
+        }
       case 'won':
         return { text: 'فائزة', variant: 'success' as const, badgeStatus: 'success' as StatusTone }
       case 'lost':
-        return { text: 'خاسرة', variant: 'destructive' as const, badgeStatus: 'error' as StatusTone }
+        return {
+          text: 'خاسرة',
+          variant: 'destructive' as const,
+          badgeStatus: 'error' as StatusTone,
+        }
       case 'expired':
-        return { text: 'منتهية', variant: 'destructive' as const, badgeStatus: 'overdue' as StatusTone }
+        return {
+          text: 'منتهية',
+          variant: 'destructive' as const,
+          badgeStatus: 'overdue' as StatusTone,
+        }
       case 'cancelled':
-        return { text: 'ملغاة', variant: 'secondary' as const, badgeStatus: 'default' as StatusTone }
+        return {
+          text: 'ملغاة',
+          variant: 'secondary' as const,
+          badgeStatus: 'default' as StatusTone,
+        }
       default:
-        return { text: 'غير معروف', variant: 'secondary' as const, badgeStatus: 'default' as StatusTone }
+        return {
+          text: 'غير معروف',
+          variant: 'secondary' as const,
+          badgeStatus: 'default' as StatusTone,
+        }
     }
   })()
 
@@ -87,7 +119,8 @@ export function useTenderStatus(tender: Tender) {
   // الجاهزية الصارمة: التسعير مكتمل 100% + الملفات الفنية موجودة
   const pricedItemsCount = tender.pricedItems ?? 0
   const totalItemsCount = tender.totalItems ?? 0
-  const isPricingCompleted = pricedItemsCount > 0 && totalItemsCount > 0 && pricedItemsCount >= totalItemsCount
+  const isPricingCompleted =
+    pricedItemsCount > 0 && totalItemsCount > 0 && pricedItemsCount >= totalItemsCount
   const isTechnicalFilesUploaded = !!tender.technicalFilesUploaded
   const isReadyToSubmitStrict = isPricingCompleted && isTechnicalFilesUploaded
 
@@ -95,28 +128,30 @@ export function useTenderStatus(tender: Tender) {
     isPricingCompleted,
     isTechnicalFilesUploaded,
     // تُستخدم فقط كمؤشر بصري على البطاقة، أما زر الإرسال فيعتمد على الحالة الموحدة
-    isReadyToSubmit: isReadyToSubmitStrict || tender.status === 'ready_to_submit'
+    isReadyToSubmit: isReadyToSubmitStrict || tender.status === 'ready_to_submit',
   }
 
   // منطق الأزرار المحسن:
   const isFinalState = ['submitted', 'won', 'lost', 'expired', 'cancelled'].includes(tender.status)
-  
+
   // التحقق من حالة العودة للتسعير
-  const isRevertedToPricing = tender.lastAction?.includes('تراجع للتسعير') || tender.lastAction?.includes('تراجع عن الحالة')
-  
+  const isRevertedToPricing =
+    tender.lastAction?.includes('تراجع للتسعير') || tender.lastAction?.includes('تراجع عن الحالة')
+
   // زر الإرسال: يظهر عند ready_to_submit أو عندما تكون الجاهزية الصارمة مكتملة (إلا في حالة العودة للتسعير)
-  const shouldShowSubmitButton = !isFinalState && (
-    tender.status === 'ready_to_submit' || 
-    (tender.status === 'under_action' && isReadyToSubmitStrict && !isRevertedToPricing)
-  )
+  const shouldShowSubmitButton =
+    !isFinalState &&
+    (tender.status === 'ready_to_submit' ||
+      (tender.status === 'under_action' && isReadyToSubmitStrict && !isRevertedToPricing))
 
   // إزالة حالة الترقية المُقترحة - لا نحتاجها بعد الآن
   const shouldSuggestPromotion = false
 
   // زر التسعير: يظهر للحالات الجديدة وتحت الإجراء
-  const shouldShowPricingButton = !isFinalState && !shouldShowSubmitButton && (
-    tender.status === 'new' || tender.status === 'under_action'
-  )
+  const shouldShowPricingButton =
+    !isFinalState &&
+    !shouldShowSubmitButton &&
+    (tender.status === 'new' || tender.status === 'under_action')
 
   return {
     statusInfo: {

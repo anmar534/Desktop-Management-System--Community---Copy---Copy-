@@ -13,17 +13,23 @@ const mockLocalStorage = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
-  clear: vi.fn()
+  clear: vi.fn(),
 }
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage })
 
+const safeLocalStorageMock = vi.hoisted(() => ({
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+})) as {
+  getItem: ReturnType<typeof vi.fn>
+  setItem: ReturnType<typeof vi.fn>
+  removeItem: ReturnType<typeof vi.fn>
+}
+
 // Mock safeLocalStorage
-vi.mock('../../src/utils/storage', () => ({
-  safeLocalStorage: {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn()
-  }
+vi.mock('../../src/shared/utils/storage/storage', () => ({
+  safeLocalStorage: safeLocalStorageMock,
 }))
 
 describe('Tender-Project Integration', () => {
@@ -48,7 +54,7 @@ describe('Tender-Project Integration', () => {
         unit: 'م3',
         unitPrice: 150,
         totalPrice: 150000,
-        category: 'earthwork'
+        category: 'earthwork',
       },
       {
         id: '2',
@@ -57,7 +63,7 @@ describe('Tender-Project Integration', () => {
         unit: 'م3',
         unitPrice: 800,
         totalPrice: 2000000,
-        category: 'concrete'
+        category: 'concrete',
       },
       {
         id: '3',
@@ -66,57 +72,57 @@ describe('Tender-Project Integration', () => {
         unit: 'م2',
         unitPrice: 400,
         totalPrice: 2000000,
-        category: 'masonry'
-      }
+        category: 'masonry',
+      },
     ],
     requirements: [
       'الحصول على تراخيص البناء',
       'تطبيق معايير السلامة والأمان',
       'استخدام مواد بناء عالية الجودة',
-      'الالتزام بالمواصفات البيئية'
+      'الالتزام بالمواصفات البيئية',
     ],
     deliverables: [
       'المخططات التنفيذية المعتمدة',
       'تقارير الجودة والسلامة',
       'شهادات الإنجاز والتسليم',
-      'دليل الصيانة والتشغيل'
+      'دليل الصيانة والتشغيل',
     ],
     timeline: [
       {
         phase: 'التخطيط والتصميم',
         duration: 60,
-        dependencies: []
+        dependencies: [],
       },
       {
         phase: 'أعمال الحفر والأساسات',
         duration: 90,
-        dependencies: ['التخطيط والتصميم']
+        dependencies: ['التخطيط والتصميم'],
       },
       {
         phase: 'الهيكل الإنشائي',
         duration: 180,
-        dependencies: ['أعمال الحفر والأساسات']
+        dependencies: ['أعمال الحفر والأساسات'],
       },
       {
         phase: 'التشطيبات والمرافق',
         duration: 120,
-        dependencies: ['الهيكل الإنشائي']
-      }
-    ]
+        dependencies: ['الهيكل الإنشائي'],
+      },
+    ],
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Setup default localStorage mock
-    const { safeLocalStorage } = require('../../src/utils/storage')
+    const safeLocalStorage = safeLocalStorageMock
     safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
     safeLocalStorage.setItem.mockImplementation(() => {})
   })
 
   describe('createProjectFromTender', () => {
     it('should create project with tender data', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
@@ -138,7 +144,7 @@ describe('Tender-Project Integration', () => {
     })
 
     it('should create phases from tender timeline', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
@@ -156,7 +162,7 @@ describe('Tender-Project Integration', () => {
     })
 
     it('should create milestones from tender data', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
@@ -172,19 +178,19 @@ describe('Tender-Project Integration', () => {
     })
 
     it('should create default risks', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
 
       expect(project.risks).toHaveLength(3)
-      expect(project.risks.some(risk => risk.title === 'تأخير في التراخيص')).toBe(true)
-      expect(project.risks.some(risk => risk.title === 'تأثير الطقس')).toBe(true)
-      expect(project.risks.some(risk => risk.title === 'نقص المواد')).toBe(true)
+      expect(project.risks.some((risk) => risk.title === 'تأخير في التراخيص')).toBe(true)
+      expect(project.risks.some((risk) => risk.title === 'تأثير الطقس')).toBe(true)
+      expect(project.risks.some((risk) => risk.title === 'نقص المواد')).toBe(true)
     })
 
     it('should set metadata correctly', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
@@ -198,7 +204,7 @@ describe('Tender-Project Integration', () => {
     })
 
     it('should merge additional data', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const additionalData: Partial<CreateProjectRequest> = {
@@ -206,13 +212,16 @@ describe('Tender-Project Integration', () => {
           projectManager: 'أحمد محمد',
           members: [
             { id: 'user-1', name: 'فاطمة علي', role: 'developer', email: 'fatima@example.com' },
-            { id: 'user-2', name: 'محمد سالم', role: 'designer', email: 'mohammed@example.com' }
-          ]
+            { id: 'user-2', name: 'محمد سالم', role: 'designer', email: 'mohammed@example.com' },
+          ],
         },
-        priority: 'critical'
+        priority: 'critical',
       }
 
-      const project = await enhancedProjectService.createProjectFromTender('tender-123', additionalData)
+      const project = await enhancedProjectService.createProjectFromTender(
+        'tender-123',
+        additionalData,
+      )
 
       expect(project.team.projectManager).toBe('أحمد محمد')
       expect(project.team.members).toHaveLength(2)
@@ -221,21 +230,21 @@ describe('Tender-Project Integration', () => {
 
     it('should handle non-existent tender', async () => {
       // Mock getTenderData to return null
-      const originalGetTenderData = enhancedProjectService['getTenderData']
-      enhancedProjectService['getTenderData'] = vi.fn().mockResolvedValue(null)
+      const originalGetTenderData = enhancedProjectService.getTenderData
+      enhancedProjectService.getTenderData = vi.fn().mockResolvedValue(null)
 
       await expect(
-        enhancedProjectService.createProjectFromTender('non-existent-tender')
+        enhancedProjectService.createProjectFromTender('non-existent-tender'),
       ).rejects.toThrow('المناقصة غير موجودة')
 
       // Restore original method
-      enhancedProjectService['getTenderData'] = originalGetTenderData
+      enhancedProjectService.getTenderData = originalGetTenderData
     })
   })
 
   describe('BOQ to Tasks Conversion', () => {
     it('should create tasks from BOQ items', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       // Mock the createTasksFromBoq method
@@ -248,7 +257,7 @@ describe('Tender-Project Integration', () => {
     })
 
     it('should handle BOQ with different categories', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
@@ -260,7 +269,7 @@ describe('Tender-Project Integration', () => {
 
   describe('Budget Calculation', () => {
     it('should set budget from tender value', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
@@ -273,7 +282,7 @@ describe('Tender-Project Integration', () => {
     })
 
     it('should distribute budget across phases', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
@@ -283,7 +292,7 @@ describe('Tender-Project Integration', () => {
 
       // كل مرحلة يجب أن تحصل على نصيب متساوٍ
       const expectedBudgetPerPhase = 15000000 / 4
-      project.phases.forEach(phase => {
+      project.phases.forEach((phase) => {
         expect(phase.budget).toBe(expectedBudgetPerPhase)
       })
     })
@@ -291,13 +300,13 @@ describe('Tender-Project Integration', () => {
 
   describe('Timeline Calculation', () => {
     it('should calculate phase dates correctly', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
 
       const startDate = new Date('2024-11-01')
-      
+
       // المرحلة الأولى: 60 يوم
       const phase1Start = new Date(project.phases[0].startDate)
       const phase1End = new Date(project.phases[0].endDate)
@@ -312,7 +321,7 @@ describe('Tender-Project Integration', () => {
     })
 
     it('should set milestone dates correctly', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
@@ -329,17 +338,17 @@ describe('Tender-Project Integration', () => {
 
   describe('Data Validation', () => {
     it('should validate tender data before creating project', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       // Mock invalid tender data
-      const originalGetTenderData = enhancedProjectService['getTenderData']
-      enhancedProjectService['getTenderData'] = vi.fn().mockResolvedValue({
+      const originalGetTenderData = enhancedProjectService.getTenderData
+      enhancedProjectService.getTenderData = vi.fn().mockResolvedValue({
         id: 'invalid-tender',
         title: '', // عنوان فارغ
         value: -1000, // قيمة سالبة
         startDate: '2024-12-31',
-        endDate: '2024-01-01' // تاريخ نهاية قبل البداية
+        endDate: '2024-01-01', // تاريخ نهاية قبل البداية
       })
 
       // يجب أن يتم إنشاء المشروع حتى مع البيانات غير الصحيحة
@@ -348,18 +357,18 @@ describe('Tender-Project Integration', () => {
       expect(project).toBeDefined()
 
       // Restore original method
-      enhancedProjectService['getTenderData'] = originalGetTenderData
+      enhancedProjectService.getTenderData = originalGetTenderData
     })
 
     it('should handle missing BOQ data', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       // Mock tender without BOQ
-      const originalGetTenderData = enhancedProjectService['getTenderData']
-      enhancedProjectService['getTenderData'] = vi.fn().mockResolvedValue({
+      const originalGetTenderData = enhancedProjectService.getTenderData
+      enhancedProjectService.getTenderData = vi.fn().mockResolvedValue({
         ...mockTenderData,
-        boq: undefined
+        boq: undefined,
       })
 
       const project = await enhancedProjectService.createProjectFromTender('tender-no-boq')
@@ -367,18 +376,18 @@ describe('Tender-Project Integration', () => {
       expect(project.metadata.boqItems).toBe(0)
 
       // Restore original method
-      enhancedProjectService['getTenderData'] = originalGetTenderData
+      enhancedProjectService.getTenderData = originalGetTenderData
     })
 
     it('should handle missing timeline data', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       // Mock tender without timeline
-      const originalGetTenderData = enhancedProjectService['getTenderData']
-      enhancedProjectService['getTenderData'] = vi.fn().mockResolvedValue({
+      const originalGetTenderData = enhancedProjectService.getTenderData
+      enhancedProjectService.getTenderData = vi.fn().mockResolvedValue({
         ...mockTenderData,
-        timeline: undefined
+        timeline: undefined,
       })
 
       const project = await enhancedProjectService.createProjectFromTender('tender-no-timeline')
@@ -386,39 +395,39 @@ describe('Tender-Project Integration', () => {
       expect(project.phases).toHaveLength(0)
 
       // Restore original method
-      enhancedProjectService['getTenderData'] = originalGetTenderData
+      enhancedProjectService.getTenderData = originalGetTenderData
     })
   })
 
   describe('Error Handling', () => {
     it('should handle database errors', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.setItem.mockImplementation(() => {
         throw new Error('Database error')
       })
 
-      await expect(
-        enhancedProjectService.createProjectFromTender('tender-123')
-      ).rejects.toThrow('فشل في إنشاء مشروع من مناقصة')
+      await expect(enhancedProjectService.createProjectFromTender('tender-123')).rejects.toThrow(
+        'فشل في إنشاء مشروع من مناقصة',
+      )
     })
 
     it('should handle network errors when fetching tender data', async () => {
       // Mock network error
-      const originalGetTenderData = enhancedProjectService['getTenderData']
-      enhancedProjectService['getTenderData'] = vi.fn().mockRejectedValue(new Error('Network error'))
+      const originalGetTenderData = enhancedProjectService.getTenderData
+      enhancedProjectService.getTenderData = vi.fn().mockRejectedValue(new Error('Network error'))
 
-      await expect(
-        enhancedProjectService.createProjectFromTender('tender-123')
-      ).rejects.toThrow('فشل في إنشاء مشروع من مناقصة')
+      await expect(enhancedProjectService.createProjectFromTender('tender-123')).rejects.toThrow(
+        'فشل في إنشاء مشروع من مناقصة',
+      )
 
       // Restore original method
-      enhancedProjectService['getTenderData'] = originalGetTenderData
+      enhancedProjectService.getTenderData = originalGetTenderData
     })
   })
 
   describe('Integration with Task Management', () => {
     it('should create tasks after project creation', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       // Mock task creation
@@ -433,13 +442,13 @@ describe('Tender-Project Integration', () => {
     })
 
     it('should link tasks to project phases', async () => {
-      const { safeLocalStorage } = require('../../src/utils/storage')
+      const safeLocalStorage = safeLocalStorageMock
       safeLocalStorage.getItem.mockReturnValue(JSON.stringify([]))
 
       const project = await enhancedProjectService.createProjectFromTender('tender-123')
 
       // التحقق من أن المراحل تحتوي على معرف المشروع الصحيح
-      project.phases.forEach(phase => {
+      project.phases.forEach((phase) => {
         expect(phase.id).toBeDefined()
         expect(phase.name).toBeDefined()
         expect(phase.startDate).toBeDefined()

@@ -1,6 +1,6 @@
-import type { Tender } from '../data/centralData'
-import { TENDER_CONSTANTS, WinRateCalculations } from '../utils/unifiedCalculations'
-import { getDaysRemaining, isTenderExpired } from '../utils/tenderProgressCalculator'
+import type { Tender } from '@/data/centralData'
+import { TENDER_CONSTANTS, WinRateCalculations } from '@/shared/utils/pricing/unifiedCalculations'
+import { getDaysRemaining, isTenderExpired } from '@/shared/utils/tender/tenderProgressCalculator'
 
 export interface TenderStats {
   total: number
@@ -44,7 +44,9 @@ export function calculateTenderStats(tenders: Tender[]): TenderStats {
     return base
   }
 
-  const submittedStatuses = new Set<string>(TENDER_CONSTANTS.SUBMITTED_STATUSES as readonly string[])
+  const submittedStatuses = new Set<string>(
+    TENDER_CONSTANTS.SUBMITTED_STATUSES as readonly string[],
+  )
   const urgentStatuses = new Set<string>(['new', 'under_action', 'ready_to_submit'])
 
   let urgent = 0
@@ -94,7 +96,7 @@ export function calculateTenderStats(tenders: Tender[]): TenderStats {
       }
     }
 
-  if (status && submittedStatuses.has(status)) {
+    if (status && submittedStatuses.has(status)) {
       totalDocumentValue += WinRateCalculations.getUnifiedDocumentPrice(tender)
     }
   }
