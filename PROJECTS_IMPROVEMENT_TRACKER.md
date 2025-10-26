@@ -500,11 +500,18 @@
 
 **المهام:**
 
-- [ ] مراجعة ProjectDetailsPage.refactored.tsx
-- [ ] اختبار التكامل مع الـ Stores
-- [ ] استبدال EnhancedProjectDetails.tsx
-- [ ] تحديث الـ Routes
+- [x] مراجعة ProjectDetailsPage.refactored.tsx
+- [x] اختبار التكامل مع الـ Stores
+- [x] استبدال EnhancedProjectDetails.tsx (تم تمرير العرض القديم إلى ProjectDetailsPageView)
+- [x] تحديث الـ Routes (تهيئة MemoryRouter داخل ProjectsContainer للتنقل بين القائمة والتفاصيل)
 - [ ] Testing (25 tests)
+
+**ملاحظات التقدم:**
+
+- تم تحديث `ProjectDetailsPage.refactored.tsx` لتوفير `ProjectDetailsPageView` قابلة لإعادة الاستخدام داخل السياق القديم، مع المحافظة على دعم onSectionChange.
+- `ProjectsPage.tsx` الآن يستخدم العرض المعاد صياغته، ما يقلص الإعتمادية على الحالة الداخلية في `EnhancedProjectDetails`.
+- تفعيل `MemoryRouter` داخل `ProjectsContainer.tsx` يسمح بالانتقال بين القائمة وتفاصيل المشروع دون الاعتماد على الحالة المحلية في `ProjectsPage.tsx`.
+- سيتم توسيع مخطط React Router لاحقاً لدمج صفحات النموذج والقائمة المعاد صياغتها بالكامل ولربطها بالمخطط العالمي.
 
 **النتيجة المتوقعة:**
 

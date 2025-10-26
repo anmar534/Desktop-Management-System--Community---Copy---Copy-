@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '@/presentation/components/ui/card'
 import { Button } from '@/presentation/components/ui/button'
 import { InlineAlert } from '@/presentation/components/ui/inline-alert'
@@ -16,7 +17,6 @@ import {
 } from '@/presentation/components/ui/alert-dialog'
 import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'
 import { NewProjectForm } from './components/NewProjectForm'
-import { EnhancedProjectDetails } from './components/EnhancedProjectDetails'
 import { Clients } from './components/Clients'
 import {
   Building2,
@@ -61,14 +61,12 @@ export function ProjectsView({
   onDeleteProject,
   onUpdateProject,
 }: ProjectsViewProps) {
+  const navigate = useNavigate()
   const [searchTerm] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null)
   const [projectToEdit, setProjectToEdit] = useState<ProjectWithLegacyFields | null>(null)
-  const [projectToView, setProjectToView] = useState<string | null>(null)
-  const [currentView, setCurrentView] = useState<'list' | 'new' | 'edit' | 'details' | 'clients'>(
-    'list',
-  )
+  const [currentView, setCurrentView] = useState<'list' | 'new' | 'edit' | 'clients'>('list')
   const [costInputs, setCostInputs] = useState<Record<string, string>>({})
   const [isSavingCosts, setIsSavingCosts] = useState<Record<string, boolean>>({})
   const { metrics, currency } = useFinancialState()
@@ -139,13 +137,12 @@ export function ProjectsView({
   const handleBackToList = () => {
     setCurrentView('list')
     setProjectToEdit(null)
-    setProjectToView(null)
+    navigate('/')
   }
 
   const handleViewProject = (projectId: string) => {
     console.info('[ProjectsView] Navigating to project details', { projectId })
-    setProjectToView(projectId)
-    setCurrentView('details')
+    navigate(`/${projectId}`)
   }
 
   const handleViewClients = () => {
@@ -863,16 +860,6 @@ export function ProjectsView({
       </div>
     </div>
   )
-
-  if (currentView === 'details' && projectToView) {
-    return (
-      <EnhancedProjectDetails
-        projectId={projectToView}
-        onBack={handleBackToList}
-        onSectionChange={onSectionChange}
-      />
-    )
-  }
 
   if (currentView === 'new') {
     return <NewProjectForm mode="create" onBack={handleBackToList} />

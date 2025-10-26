@@ -10,30 +10,33 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useProjectData } from '@/application/hooks/useProjectData'
 import { EnhancedProjectDetails } from '@/presentation/pages/Projects/components/EnhancedProjectDetails'
 
-export const ProjectDetailsPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
+interface ProjectDetailsPageViewProps {
+  projectId?: string | null
+  onBack: () => void
+  onSectionChange?: (section: string) => void
+}
 
+export const ProjectDetailsPageView: React.FC<ProjectDetailsPageViewProps> = ({
+  projectId,
+  onBack,
+  onSectionChange,
+}) => {
   const { loadProject, currentProject, isLoading, error } = useProjectData()
 
   useEffect(() => {
-    if (id) {
-      void loadProject(id)
+    if (projectId) {
+      void loadProject(projectId)
     }
-  }, [id, loadProject])
+  }, [projectId, loadProject])
 
-  const handleBack = () => {
-    navigate('/projects')
-  }
-
-  if (!id) {
+  if (!projectId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/10">
         <div className="rounded-xl border border-border bg-background p-8 text-center shadow-sm">
           <p className="text-lg font-semibold text-foreground">لم يتم العثور على رقم المشروع.</p>
           <button
             type="button"
-            onClick={handleBack}
+            onClick={onBack}
             className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             العودة لقائمة المشاريع
@@ -62,7 +65,7 @@ export const ProjectDetailsPage: React.FC = () => {
           <p className="mt-2 text-sm text-muted-foreground">{error}</p>
           <button
             type="button"
-            onClick={handleBack}
+            onClick={onBack}
             className="mt-6 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90"
           >
             العودة لقائمة المشاريع
@@ -85,7 +88,7 @@ export const ProjectDetailsPage: React.FC = () => {
           </p>
           <button
             type="button"
-            onClick={handleBack}
+            onClick={onBack}
             className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             العودة لقائمة المشاريع
@@ -97,7 +100,28 @@ export const ProjectDetailsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-muted/10 py-6">
-      <EnhancedProjectDetails projectId={id} onBack={handleBack} />
+      <EnhancedProjectDetails
+        projectId={projectId}
+        onBack={onBack}
+        onSectionChange={onSectionChange}
+      />
     </div>
+  )
+}
+
+interface ProjectDetailsPageProps {
+  onSectionChange?: (section: string) => void
+}
+
+export const ProjectDetailsPage: React.FC<ProjectDetailsPageProps> = ({ onSectionChange }) => {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+
+  const handleBack = () => {
+    navigate('/projects')
+  }
+
+  return (
+    <ProjectDetailsPageView projectId={id} onBack={handleBack} onSectionChange={onSectionChange} />
   )
 }
