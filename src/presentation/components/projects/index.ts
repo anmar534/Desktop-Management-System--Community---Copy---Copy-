@@ -34,6 +34,17 @@ export {
   type ProjectBudgetComparisonTableProps,
 } from './ProjectBudgetComparisonTable'
 export { ProjectTimelineChart, type ProjectTimelineChartProps } from './ProjectTimelineChart'
+export {
+  ProjectAttachmentsList,
+  type ProjectAttachmentsListProps,
+  type ProjectAttachmentListItem,
+  type ProjectAttachmentUploadStatus,
+} from './ProjectAttachmentsList'
+export {
+  ProjectPurchasesTable,
+  type ProjectPurchasesTableProps,
+  type ProjectPurchaseRow,
+} from './ProjectPurchasesTable'
 
 // Default export - Using enhanced ProjectsView from pages
 export {
