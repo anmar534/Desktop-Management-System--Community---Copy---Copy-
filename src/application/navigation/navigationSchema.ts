@@ -18,7 +18,6 @@ export const NAVIGATION_SECTIONS = [
   'projects',
   'tenders',
   'new-tender',
-  'tender-pricing-wizard',
   'analytics',
   'financial',
   'development',
@@ -187,14 +186,6 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
         targetSection: 'new-tender',
         requires: ['tenders:write'],
       },
-      {
-        id: 'open-pricing-wizard',
-        label: 'معالج التسعير',
-        icon: Calculator,
-        targetSection: 'tender-pricing-wizard',
-        requires: ['tenders:write'],
-        tooltip: 'اتباع المعالج المتدرج لتجهيز المنافسة للإرسال',
-      },
     ],
     relatedSections: ['financial', 'reports'],
     view: {
@@ -215,31 +206,6 @@ export const NAVIGATION_SCHEMA: readonly NavigationNode[] = [
     view: {
       module: '@/presentation/pages/Tenders/components/NewTenderForm',
       exportName: 'NewTenderForm',
-    },
-  },
-  {
-    id: 'tender-pricing-wizard',
-    label: 'معالج تسعير المنافسة',
-    description: 'مسار متكامل لتجهيز المنافسة من التسجيل إلى الإرسال مع الحفظ التلقائي',
-    icon: Calculator,
-    order: 27,
-    category: 'workflow',
-    hideFromMenu: true,
-    requires: ['tenders:write'],
-    breadcrumbs: [{ label: 'المنافسات', section: 'tenders' }, { label: 'معالج التسعير' }],
-    quickActions: [
-      {
-        id: 'wizard-back-to-tenders',
-        label: 'قائمة المنافسات',
-        icon: Trophy,
-        targetSection: 'tenders',
-        requires: ['tenders:read'],
-      },
-    ],
-    relatedSections: ['tenders', 'new-tender'],
-    view: {
-      module: '@/features/tenders/pricing/TenderPricingWizard',
-      exportName: 'TenderPricingWizard',
     },
   },
   {

@@ -9,6 +9,20 @@ import type {
   SubcontractorRow,
 } from '@/shared/types/pricing'
 
+// ==== Pricing Section Types ====
+
+export type PricingSection = 'materials' | 'labor' | 'equipment' | 'subcontractors' | 'all'
+export type ActualPricingSection = Exclude<PricingSection, 'all'>
+
+export interface SectionRowMap {
+  materials: MaterialRow
+  labor: LaborRow
+  equipment: EquipmentRow
+  subcontractors: SubcontractorRow
+}
+
+// ==== View Types ====
+
 export type PricingViewName = 'summary' | 'pricing' | 'technical'
 
 export const isPricingViewName = (value: string): value is PricingViewName =>

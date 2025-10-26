@@ -17,7 +17,6 @@ import type { Tender } from '@/data/centralData'
 // Utilities from shared/utils
 import {
   type TenderTabId,
-  getTenderDocumentPrice,
   normaliseSearchQuery,
   computeFilteredTenders,
 } from '@/shared/utils/tender/tenderFilters'
@@ -36,11 +35,9 @@ import {
 
 // Components
 import { TenderTabs } from '@/presentation/components/tenders/TenderTabs'
-import {
-  TenderDeleteDialog,
-  TenderSubmitDialog,
-} from '@/presentation/components/tenders/TenderDialogs'
+import { TenderDeleteDialog } from '@/presentation/components/tenders/TenderDialogs'
 import { TenderPerformanceCards } from '@/presentation/components/tenders/TenderPerformanceCards'
+import { SubmitReviewDialog } from './components/SubmitReviewDialog'
 
 import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
@@ -315,10 +312,10 @@ export function Tenders({ onSectionChange }: TendersProps) {
         onCancel={() => setTenderToDelete(null)}
       />
 
-      <TenderSubmitDialog
+      <SubmitReviewDialog
+        open={!!tenderToSubmit}
         tender={tenderToSubmit}
-        submissionPrice={tenderToSubmit ? getTenderDocumentPrice(tenderToSubmit) : 0}
-        formatCurrency={formatCurrencyValue}
+        onClose={() => setTenderToSubmit(null)}
         onConfirm={async () => {
           if (tenderToSubmit) {
             try {
@@ -328,7 +325,6 @@ export function Tenders({ onSectionChange }: TendersProps) {
             }
           }
         }}
-        onCancel={() => setTenderToSubmit(null)}
       />
     </>
   )

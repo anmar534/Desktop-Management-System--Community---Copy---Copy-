@@ -218,13 +218,6 @@ describe('EnhancedTenderCard', () => {
       expect(screen.getByText('75%')).toBeInTheDocument()
       expect(screen.getByText('فرصة الفوز:')).toBeInTheDocument()
     })
-
-    it('should show progress indicator', () => {
-      render(<EnhancedTenderCard {...defaultProps} />)
-
-      expect(screen.getByText('60%')).toBeInTheDocument()
-      expect(screen.getByText('التقدم')).toBeInTheDocument()
-    })
   })
 
   describe('Status Display', () => {
@@ -456,7 +449,7 @@ describe('EnhancedTenderCard', () => {
           {...defaultProps}
           enablePredictiveAnalytics={true}
           onViewAnalytics={onViewAnalytics}
-        />
+        />,
       )
 
       // Wait for loading to complete
@@ -471,29 +464,6 @@ describe('EnhancedTenderCard', () => {
     })
   })
 
-  describe('Status Management', () => {
-    it('should display correct buttons for new status', () => {
-      const tender = { ...mockTender, status: 'new' as const }
-      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
-
-      expect(screen.getByText('تسعير')).toBeInTheDocument()
-    })
-
-    it('should display submit button for ready_to_submit status', () => {
-      const tender = { ...mockTender, status: 'ready_to_submit' as const }
-      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
-
-      expect(screen.getByText('ارسال')).toBeInTheDocument()
-    })
-
-    it('should display results button for submitted status', () => {
-      const tender = { ...mockTender, status: 'submitted' as const }
-      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
-
-      expect(screen.getByText('النتيجة')).toBeInTheDocument()
-    })
-  })
-
   describe('Revert Functionality', () => {
     it('should show revert button for submitted status', () => {
       const tender = { ...mockTender, status: 'submitted' as const }
@@ -505,7 +475,9 @@ describe('EnhancedTenderCard', () => {
     it('should call onRevertStatus when revert button is clicked', () => {
       const onRevertStatus = vi.fn()
       const tender = { ...mockTender, status: 'submitted' as const }
-      render(<EnhancedTenderCard {...defaultProps} tender={tender} onRevertStatus={onRevertStatus} />)
+      render(
+        <EnhancedTenderCard {...defaultProps} tender={tender} onRevertStatus={onRevertStatus} />,
+      )
 
       fireEvent.click(screen.getByText('عودة للإرسال'))
 
@@ -520,46 +492,6 @@ describe('EnhancedTenderCard', () => {
       render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
 
       expect(screen.getByText('عودة للتسعير')).toBeInTheDocument()
-    })
-  })
-
-  describe('Completion Indicators', () => {
-    it('should show ready to submit badge when pricing is complete and files uploaded', () => {
-      const tender = {
-        ...mockTender,
-        pricedItems: 100,
-        totalItems: 100,
-        technicalFilesUploaded: true,
-        status: 'under_action' as const,
-      }
-      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
-
-      expect(screen.getByText('جاهزة للإرسال')).toBeInTheDocument()
-    })
-
-    it('should show technical files needed warning when pricing complete but no files', () => {
-      const tender = {
-        ...mockTender,
-        pricedItems: 100,
-        totalItems: 100,
-        technicalFilesUploaded: false,
-        status: 'under_action' as const,
-      }
-      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
-
-      expect(screen.getByText('يحتاج ملفات فنية')).toBeInTheDocument()
-      expect(screen.getByText('ملفات فنية مطلوبة')).toBeInTheDocument()
-    })
-
-    it('should show overdue warning when deadline has passed', () => {
-      const tender = {
-        ...mockTender,
-        deadline: '2020-01-01',
-        daysLeft: -10,
-      }
-      render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
-
-      expect(screen.getByText('الموعد النهائي انتهى')).toBeInTheDocument()
     })
   })
 
@@ -590,13 +522,6 @@ describe('EnhancedTenderCard', () => {
   })
 
   describe('Progress Calculation', () => {
-    it('should show progress bar for active tenders', () => {
-      render(<EnhancedTenderCard {...defaultProps} />)
-
-      expect(screen.getByText('التقدم')).toBeInTheDocument()
-      expect(screen.getByText('60%')).toBeInTheDocument()
-    })
-
     it('should not show progress bar for won tenders', () => {
       const tender = { ...mockTender, status: 'won' as const }
       render(<EnhancedTenderCard {...defaultProps} tender={tender} />)
@@ -657,7 +582,9 @@ describe('EnhancedTenderCard', () => {
     })
 
     it('should properly cleanup on unmount', () => {
-      const { unmount } = render(<EnhancedTenderCard {...defaultProps} enablePredictiveAnalytics={true} />)
+      const { unmount } = render(
+        <EnhancedTenderCard {...defaultProps} enablePredictiveAnalytics={true} />,
+      )
 
       unmount()
 

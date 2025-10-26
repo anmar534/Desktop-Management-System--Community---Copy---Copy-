@@ -3,7 +3,7 @@
  */
 
 import type { LucideIcon } from 'lucide-react'
-import { Calculator, FileText, Plus } from 'lucide-react'
+import { FileText, Plus } from 'lucide-react'
 import type { Tender } from '@/data/centralData'
 
 export interface QuickAction {
@@ -20,12 +20,6 @@ export interface QuickAction {
 export const createQuickActions = (
   onSectionChange: (section: string, tender?: Tender) => void,
 ): QuickAction[] => [
-  {
-    label: 'معالج التسعير',
-    icon: Calculator,
-    onClick: () => onSectionChange('tender-pricing-wizard'),
-    variant: 'outline',
-  },
   {
     label: 'تقارير المنافسات',
     icon: FileText,

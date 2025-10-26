@@ -3,21 +3,23 @@ import { pricingService } from '@/application/services/pricingService'
 import { exportTenderPricingToExcel } from '@/presentation/pages/Tenders/TenderPricing/utils/exportUtils'
 import { formatTimestamp as formatTimestampUtil } from '@/presentation/pages/Tenders/TenderPricing/utils/dateUtils'
 import { parseQuantityItems } from '@/presentation/pages/Tenders/TenderPricing/utils/parseQuantityItems'
+import {
+  createQuantityFormatter,
+  createPricingAuditLogger,
+  getErrorMessage,
+  DEFAULT_PRICING_PERCENTAGES,
+  percentagesToInputStrings,
+} from '@/presentation/pages/Tenders/TenderPricing/utils/tenderPricingHelpers'
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import type {
-  MaterialRow,
-  LaborRow,
-  EquipmentRow,
-  SubcontractorRow,
-  PricingData,
-  PricingPercentages,
-  PricingViewItem,
-} from '@/shared/types/pricing'
+import type { PricingData, PricingPercentages, PricingViewItem } from '@/shared/types/pricing'
 // Zustand Store for unified pricing state management
 import { useTenderPricingStore } from '@/stores/tenderPricingStore'
 import type {
   QuantityItem,
   TenderWithPricingSources,
+  PricingSection,
+  ActualPricingSection,
+  SectionRowMap,
 } from '@/presentation/pages/Tenders/TenderPricing/types'
 import type { Tender } from '@/data/centralData'
 // Phase 2 authoring engine adoption helpers (flag-guarded)
@@ -40,11 +42,7 @@ import { TenderPricingRepository } from '@/infrastructure/repositories/TenderPri
 import { APP_EVENTS } from '@/events/bus.js'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { TenderPricingTabs } from '@/presentation/components/pricing/tender-pricing-process/views/TenderPricingTabs'
-import {
-  recordAuditEvent,
-  type AuditEventLevel,
-  type AuditEventStatus,
-} from '@/shared/utils/storage/auditLog'
+import { type AuditEventLevel, type AuditEventStatus } from '@/shared/utils/storage/auditLog'
 import { PricingHeader } from '@/presentation/pages/Tenders/TenderPricing/components/PricingHeader'
 import { RestoreBackupDialog } from '@/presentation/pages/Tenders/TenderPricing/components/RestoreBackupDialog'
 
@@ -52,85 +50,24 @@ export type { TenderWithPricingSources } from '@/presentation/pages/Tenders/Tend
 
 // ==== Types ====
 
-type PricingSection = 'materials' | 'labor' | 'equipment' | 'subcontractors' | 'all'
-type ActualPricingSection = Exclude<PricingSection, 'all'>
-
-interface SectionRowMap {
-  materials: MaterialRow
-  labor: LaborRow
-  equipment: EquipmentRow
-  subcontractors: SubcontractorRow
-}
-
 interface TenderPricingProcessProps {
   tender: TenderWithPricingSources
   onBack: () => void
 }
 
-type QuantityFormatOptions = Intl.NumberFormatOptions & { locale?: string }
-
 export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tender, onBack }) => {
   const { formatCurrencyValue } = useCurrencyFormatter()
-  const quantityFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat('ar-SA', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-      }),
-    [],
-  )
-  const formatQuantity = useCallback(
-    (value: number | string | null | undefined, options?: QuantityFormatOptions) => {
-      const numeric = typeof value === 'number' ? value : Number(value ?? 0)
-      const safeValue = Number.isFinite(numeric) ? numeric : 0
-      if (!options) {
-        return quantityFormatter.format(safeValue)
-      }
-      const { locale = 'ar-SA', ...rest } = options
-      return new Intl.NumberFormat(locale, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-        ...rest,
-      }).format(safeValue)
-    },
-    [quantityFormatter],
-  )
 
-  // Use imported timestamp formatter utility
+  // Create formatters
+  const formatQuantity = useMemo(() => createQuantityFormatter(), [])
   const formatTimestamp = useCallback(
     (value: string | number | Date | null | undefined) => formatTimestampUtil(value),
     [],
   )
 
+  // Create audit logger
   const tenderTitle = tender.title ?? tender.name ?? ''
-  const recordPricingAudit = useCallback(
-    (
-      level: AuditEventLevel,
-      action: string,
-      metadata?: Record<string, unknown>,
-      status?: AuditEventStatus,
-    ) => {
-      void recordAuditEvent({
-        category: 'tender-pricing',
-        action,
-        key: tender.id ? String(tender.id) : 'unknown-tender',
-        level,
-        status,
-        metadata,
-      })
-    },
-    [tender.id],
-  )
-
-  const getErrorMessage = useCallback((error: unknown): string => {
-    if (error instanceof Error && error.message) {
-      return error.message
-    }
-    if (typeof error === 'string') {
-      return error
-    }
-    return 'unknown-error'
-  }, [])
+  const recordPricingAudit = useMemo(() => createPricingAuditLogger(tender.id), [tender.id])
   // using unified storage utils instead of useStorage
   const [pricingData, setPricingData] = useState<Map<string, PricingData>>(new Map())
   // Zustand Store: unified BOQ and pricing state
@@ -167,19 +104,13 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
   const handleAttemptLeave = requestLeave
 
-  // النسب الافتراضية العامة - MOVED HERE TO FIX TEMPORAL DEAD ZONE
-  const [defaultPercentages, setDefaultPercentages] = useState<PricingPercentages>({
-    administrative: 5,
-    operational: 5,
-    profit: 15,
-  })
-  // REMOVED: previousDefaultsRef - no longer auto-applying after Draft removal
-  // حالات نصية وسيطة للسماح بالكتابة الحرة ثم الاعتماد عند الخروج من الحقل
-  const [defaultPercentagesInput, setDefaultPercentagesInput] = useState({
-    administrative: '5',
-    operational: '5',
-    profit: '15',
-  })
+  // Default pricing percentages with input state
+  const [defaultPercentages, setDefaultPercentages] = useState<PricingPercentages>(
+    DEFAULT_PRICING_PERCENTAGES,
+  )
+  const [defaultPercentagesInput, setDefaultPercentagesInput] = useState(
+    percentagesToInputStrings(DEFAULT_PRICING_PERCENTAGES),
+  )
 
   // استخراج بيانات جدول الكميات من المنافسة مع البحث المحسّن
   // Uses Zustand Store boqItems as primary source, with fallback to legacy parseQuantityItems
@@ -665,7 +596,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
         recordPricingAudit(level as AuditEventLevel, action, metadata, status as AuditEventStatus),
       getErrorMessage,
     })
-  }, [quantityItems, pricingData, recordPricingAudit, getErrorMessage])
+  }, [quantityItems, pricingData, recordPricingAudit])
 
   if (!currentItem) {
     return (

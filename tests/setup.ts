@@ -3,10 +3,12 @@
  * Global test setup for Vitest with React Testing Library
  */
 
-import { expect, afterEach, vi } from 'vitest'
+import { expect, afterEach, beforeEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import * as matchers from '@testing-library/jest-dom/matchers'
 import { enableMapSet } from 'immer'
+import { StorageManager } from '@/infrastructure/storage/core/StorageManager'
+import { LocalStorageAdapter } from '@/infrastructure/storage/adapters/LocalStorageAdapter'
 
 // Enable Immer MapSet plugin for Zustand stores that use Map
 enableMapSet()
@@ -14,9 +16,19 @@ enableMapSet()
 // Extend Vitest's expect with Testing Library matchers
 expect.extend(matchers)
 
+// Setup StorageManager before each test
+beforeEach(() => {
+  // Reset and initialize StorageManager with LocalStorageAdapter
+  StorageManager.resetInstance()
+  const manager = StorageManager.getInstance()
+  manager.setAdapter(new LocalStorageAdapter())
+})
+
 // Cleanup after each test case
 afterEach(() => {
   cleanup()
+  // Reset StorageManager after each test
+  StorageManager.resetInstance()
 })
 
 // Mock IntersectionObserver

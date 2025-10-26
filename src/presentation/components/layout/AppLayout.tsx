@@ -13,7 +13,6 @@ import DashboardPage from '@/presentation/pages/Dashboard/DashboardPage'
 import ProjectsContainer from '@/features/projects/ProjectsContainer'
 import { Tenders } from '@/presentation/pages/Tenders/TendersPage'
 import { NewTenderForm } from '@/presentation/pages/Tenders/components/NewTenderForm'
-import TenderPricingWizard from '@/features/tenders/pricing/TenderPricingWizard'
 import { AnalyticsRouter } from '@/presentation/components/analytics/AnalyticsRouter'
 import FinancialPage from '@/presentation/pages/Financial/FinancialPage'
 import { NewInvoice } from '@/presentation/pages/Financial/components/NewInvoice'
@@ -28,16 +27,14 @@ import { Settings } from '@/presentation/pages/Settings/SettingsPage'
 // Page mapping by section
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const PAGE_COMPONENTS: Record<string, React.ComponentType<any>> = {
-  'dashboard': DashboardPage,
-  'projects': ProjectsContainer,
-  'tenders': Tenders,
+  dashboard: DashboardPage,
+  projects: ProjectsContainer,
+  tenders: Tenders,
   'new-tender': NewTenderForm,
-  'tender-pricing': TenderPricingWizard,
-  'tender-pricing-wizard': TenderPricingWizard,
-  'analytics': AnalyticsRouter,
-  'financial': FinancialPage,
-  'invoices': FinancialPage,
-  'budgets': FinancialPage,
+  analytics: AnalyticsRouter,
+  financial: FinancialPage,
+  invoices: FinancialPage,
+  budgets: FinancialPage,
   'bank-accounts': FinancialPage,
   'financial-reports': FinancialPage,
   'new-invoice': NewInvoice,
@@ -45,9 +42,9 @@ const PAGE_COMPONENTS: Record<string, React.ComponentType<any>> = {
   'new-budget': NewBudget,
   'new-report': NewReport,
   'administrative-expenses': ExpenseManagement,
-  'development': Development,
-  'reports': ReportsPage,
-  'settings': Settings,
+  development: Development,
+  reports: ReportsPage,
+  settings: Settings,
 }
 
 // Loading fallback for lazy-loaded pages
@@ -119,15 +116,15 @@ function AppLayout() {
           console.log('[AppLayout][onSave] tenderData.id:', tenderData.id)
           console.log('[AppLayout][onSave] tenderToEdit:', tenderToEdit)
           console.log('[AppLayout][onSave] tenderToEdit.id:', tenderToEdit?.id)
-          
+
           const { getTenderRepository } = await import('@/application/services/serviceRegistry')
           const tenderRepo = getTenderRepository()
 
           // Check if we're editing an existing tender
           const isEditing = tenderToEdit && (tenderData.id || tenderToEdit.id)
-          
+
           console.log('[AppLayout][onSave] isEditing:', isEditing)
-          
+
           if (isEditing) {
             // Update existing tender - use the ID from tenderData or fallback to tenderToEdit
             const tenderId = tenderData.id || tenderToEdit.id
@@ -174,9 +171,7 @@ function AppLayout() {
             </Suspense>
           ) : (
             <div className="text-center py-12">
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                الصفحة غير متاحة
-              </h2>
+              <h2 className="text-2xl font-bold text-foreground mb-2">الصفحة غير متاحة</h2>
               <p className="text-muted-foreground">
                 القسم المطلوب ({activeSection}) غير موجود أو غير متاح حالياً
               </p>
