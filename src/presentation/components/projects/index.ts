@@ -27,6 +27,13 @@ export {
   getFinancialStatus,
   type ProjectFinancialSummaryProps,
 } from './ProjectFinancialSummary'
+export { ProjectOverviewPanel, type ProjectOverviewPanelProps } from './ProjectOverviewPanel'
+export { ProjectCostsPanel, type ProjectCostsPanelProps } from './ProjectCostsPanel'
+export {
+  ProjectBudgetComparisonTable,
+  type ProjectBudgetComparisonTableProps,
+} from './ProjectBudgetComparisonTable'
+export { ProjectTimelineChart, type ProjectTimelineChartProps } from './ProjectTimelineChart'
 
 // Default export - Using enhanced ProjectsView from pages
 export {
