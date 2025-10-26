@@ -4,7 +4,7 @@
 
 # Projects System Improvement - Progress Tracker
 
-**آخر تحديث:** 2025-10-27 14:25  
+**آخر تحديث:** 2025-10-27 15:10  
 **الحالة:** ✅ Week -1 & Week 0 + Week 1 مكتملة - Week 2 جاهز للبدء  
 **المدة المتوقعة:** 4-5 أسابيع
 
@@ -504,13 +504,14 @@
 - [x] اختبار التكامل مع الـ Stores
 - [x] استبدال EnhancedProjectDetails.tsx (تم تمرير العرض القديم إلى ProjectDetailsPageView)
 - [x] تحديث الـ Routes (تهيئة MemoryRouter داخل ProjectsContainer للتنقل بين القائمة والتفاصيل)
-- [ ] Testing (25 tests)
+- [ ] Testing (25 tests) — التقدم الحالي: 2/25 (ProjectsContainer MemoryRouter smoke)
 
 **ملاحظات التقدم:**
 
 - تم تحديث `ProjectDetailsPage.refactored.tsx` لتوفير `ProjectDetailsPageView` قابلة لإعادة الاستخدام داخل السياق القديم، مع المحافظة على دعم onSectionChange.
 - `ProjectsPage.tsx` الآن يستخدم العرض المعاد صياغته، ما يقلص الإعتمادية على الحالة الداخلية في `EnhancedProjectDetails`.
 - تفعيل `MemoryRouter` داخل `ProjectsContainer.tsx` يسمح بالانتقال بين القائمة وتفاصيل المشروع دون الاعتماد على الحالة المحلية في `ProjectsPage.tsx`.
+- تمت إضافة `tests/unit/features/projects/ProjectsContainer.test.tsx` للتحقق من تمرير المعالجات من السياق وتدفق التنقل داخل MemoryRouter (تغطية أولية - 2 حالات ✅).
 - سيتم توسيع مخطط React Router لاحقاً لدمج صفحات النموذج والقائمة المعاد صياغتها بالكامل ولربطها بالمخطط العالمي.
 
 **النتيجة المتوقعة:**
