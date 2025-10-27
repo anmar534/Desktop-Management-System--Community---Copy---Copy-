@@ -8,6 +8,7 @@ import type { IBankAccountRepository } from '@/repository/bankAccount.repository
 import type { IInvoiceRepository } from '@/repository/invoice.repository'
 import type { IBudgetRepository } from '@/repository/budget.repository'
 import type { IFinancialReportRepository } from '@/repository/financialReport.repository'
+import type { IEnhancedProjectRepository } from '@/repository/enhancedProject.repository'
 import { projectRepository as defaultProjectRepository } from '@/repository/providers/project.local'
 import { tenderRepository as defaultTenderRepository } from '@/repository/providers/tender.local'
 import { clientRepository as defaultClientRepository } from '@/repository/providers/client.local'
@@ -18,6 +19,7 @@ import { bankAccountRepository as defaultBankAccountRepository } from '@/reposit
 import { invoiceRepository as defaultInvoiceRepository } from '@/repository/providers/invoice.local'
 import { budgetRepository as defaultBudgetRepository } from '@/repository/providers/budget.local'
 import { financialReportRepository as defaultFinancialReportRepository } from '@/repository/providers/financialReport.local'
+import defaultEnhancedProjectRepository from '@/repository/providers/enhancedProject.local'
 
 export interface RepositoryRegistry {
   projectRepository: IProjectRepository
@@ -30,6 +32,7 @@ export interface RepositoryRegistry {
   invoiceRepository: IInvoiceRepository
   budgetRepository: IBudgetRepository
   financialReportRepository: IFinancialReportRepository
+  enhancedProjectRepository: IEnhancedProjectRepository
 }
 
 const defaultRegistry: RepositoryRegistry = {
@@ -43,6 +46,7 @@ const defaultRegistry: RepositoryRegistry = {
   invoiceRepository: defaultInvoiceRepository,
   budgetRepository: defaultBudgetRepository,
   financialReportRepository: defaultFinancialReportRepository,
+  enhancedProjectRepository: defaultEnhancedProjectRepository,
 }
 
 const registry: RepositoryRegistry = { ...defaultRegistry }
@@ -79,6 +83,9 @@ function assignRegistry(overrides: RepositoryOverrides) {
   }
   if (overrides.financialReportRepository) {
     registry.financialReportRepository = overrides.financialReportRepository
+  }
+  if (overrides.enhancedProjectRepository) {
+    registry.enhancedProjectRepository = overrides.enhancedProjectRepository
   }
 }
 
@@ -176,4 +183,8 @@ export function getBudgetRepository(): IBudgetRepository {
 
 export function getFinancialReportRepository(): IFinancialReportRepository {
   return registry.financialReportRepository
+}
+
+export function getEnhancedProjectRepository(): IEnhancedProjectRepository {
+  return registry.enhancedProjectRepository
 }
