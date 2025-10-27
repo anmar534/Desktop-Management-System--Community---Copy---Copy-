@@ -141,7 +141,7 @@ tests/integration/ganttChartIntegration.test.ts
 ### Integration Tests (23 tests)
 
 ```bash
-tests/integration/week4-integration.test.ts
+tests/integration/project-schema-migration.test.ts
 ```
 
 ---

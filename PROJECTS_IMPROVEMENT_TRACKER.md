@@ -2304,9 +2304,9 @@ git push origin feature/projects-system-improvement
    linkedPurchaseOrders: string[] // Array of PO IDs linked to this project
    ```
 
-#### Migration Script: week4-integration.ts
+#### Migration Script: project-schema-migration.ts
 
-**Path:** `src/repository/migrations/week4-integration.ts`  
+**Path:** `src/repository/migrations/project-schema-migration.ts`  
 **Size:** 250 LOC
 
 **Functions Implemented:**
@@ -2365,7 +2365,7 @@ git push origin feature/projects-system-improvement
 
 ### Tests
 
-**Path:** `tests/unit/migrations/week4-integration.test.ts`  
+**Path:** `tests/unit/migrations/project-schema-migration.test.ts`  
 **Size:** 180 LOC  
 **Results:** ✅ **14/14 passing (100%)**
 

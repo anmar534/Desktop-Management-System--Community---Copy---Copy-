@@ -1,20 +1,23 @@
 /**
- * Database Schema Migration - Week 4 Integration
- * Migration Script for Tender-Project and PO-Project Linking
+ * Project Schema Migration
+ * Database schema migration for EnhancedProject data structure updates
  *
- * Changes:
- * 1. Add linkedPurchaseOrders array to EnhancedProject interface
- * 2. Ensure tenderLink and fromTender fields are properly initialized
- * 3. Add cost tracking fields to ProjectBudget
- * 4. Validate data integrity after migration
+ * Purpose:
+ * - Add Purchase Order linking support (linkedPurchaseOrders field)
+ * - Validate and fix Tender-Project linking (tenderLink, fromTender)
+ * - Add cost tracking fields to ProjectBudget
+ * - Ensure data integrity across all projects
+ *
+ * Migration Date: 2025-01-27
  */
 
 import type { EnhancedProject } from '@/types/projects'
 
 /**
- * Migration version
+ * Migration version identifier
+ * Format: YYYY-MM-DD-descriptive-name
  */
-export const MIGRATION_VERSION = '2025-01-27-week4-integration'
+export const MIGRATION_VERSION = '2025-01-27-project-schema-migration'
 
 /**
  * Check if project needs migration

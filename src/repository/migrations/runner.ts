@@ -1,10 +1,15 @@
 /**
  * Migration Runner Script
- * Applies Week 4 database schema migration to all projects
+ * Applies project schema migration to all existing projects in the database
+ *
+ * Features:
+ * - Creates automatic backup before migration
+ * - Provides dry-run capability for testing
+ * - Returns detailed statistics
  */
 
 import { getEnhancedProjectRepository } from '@/application/services/serviceRegistry'
-import { runMigration, MIGRATION_VERSION } from './week4-integration'
+import { runMigration, MIGRATION_VERSION } from './project-schema-migration'
 import type { EnhancedProject } from '@/types/projects'
 
 /**

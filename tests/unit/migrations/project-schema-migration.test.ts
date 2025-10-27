@@ -1,5 +1,11 @@
 /**
- * Tests for Database Migration - Week 4 Integration
+ * Project Schema Migration Tests
+ * Tests for database schema migration functionality
+ *
+ * Coverage:
+ * - needsMigration: Detection of projects requiring updates
+ * - migrateProject: Application of schema changes
+ * - validateMigratedProject: Validation of migrated data integrity
  */
 
 import { describe, it, expect, beforeEach } from 'vitest'
@@ -7,7 +13,7 @@ import {
   needsMigration,
   migrateProject,
   validateMigratedProject,
-} from '@/repository/migrations/week4-integration'
+} from '@/repository/migrations/project-schema-migration'
 import type { EnhancedProject } from '@/types/projects'
 
 // Helper to create test project
