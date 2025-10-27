@@ -29,7 +29,9 @@ vi.mock('@/shared/utils/storage/storage', () => ({
 
 describe('LocalEnhancedProjectRepository - Purchase Order Integration', () => {
   let repository: LocalEnhancedProjectRepository
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockRelationRepo: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockPORepo: any
 
   const testProject: EnhancedProject = {
@@ -37,46 +39,82 @@ describe('LocalEnhancedProjectRepository - Purchase Order Integration', () => {
     code: 'PRJ-001',
     name: 'Test Project',
     description: 'Test Description',
-    type: 'internal',
+    client: 'Test Client',
+    clientId: 'client-001',
+    clientContact: 'Contact Person',
     status: 'active',
-    health: 'healthy',
+    health: 'green',
+    priority: 'medium',
     progress: 0,
+    phase: 'Planning',
+    phaseId: 'phase-001',
+    startDate: '2025-01-01',
+    endDate: '2025-12-31',
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z',
+    location: 'Riyadh',
+    category: 'Construction',
+    type: 'internal',
+    tags: [],
     budget: {
-      currency: 'SAR',
-      allocated: 500000,
-      spent: 0,
-      remaining: 500000,
-      spendRate: 0,
+      id: 'budget-001',
+      projectId: 'test-project-123',
+      totalBudget: 500000,
+      allocatedBudget: 500000,
+      spentBudget: 0,
+      remainingBudget: 500000,
+      contingencyBudget: 50000,
+      categories: [],
+      approvals: [],
+      lastUpdated: '2025-01-01T00:00:00.000Z',
     },
-    timeline: {
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      estimatedDuration: 365,
-      actualDuration: 0,
-    },
+    contractValue: 500000,
+    profitMargin: 10,
     team: {
-      projectManagerId: 'pm-001',
+      id: 'team-001',
+      projectId: 'test-project-123',
+      projectManager: {
+        id: 'pm-001',
+        name: 'Project Manager',
+        role: 'Project Manager',
+        email: 'pm@example.com',
+        phone: '+966-50-123-4567',
+        department: 'Engineering',
+        responsibilities: ['Project Management', 'Team Leadership'],
+        startDate: '2025-01-01',
+        isActive: true,
+      },
       members: [],
-      totalMembers: 1,
+      consultants: [],
+      contractors: [],
+      lastUpdated: '2025-01-01T00:00:00.000Z',
     },
-    metadata: {
-      createdAt: '2025-01-01T00:00:00.000Z',
-      createdBy: 'admin',
-      updatedAt: '2025-01-01T00:00:00.000Z',
-      updatedBy: 'admin',
-      version: 1,
-      tags: [],
-    },
+    phases: [],
+    milestones: [],
+    risks: [],
+    attachments: [],
+    notes: '',
+    metadata: {},
+    createdBy: 'admin',
+    lastModifiedBy: 'admin',
+    version: 1,
   }
 
   const testPO: PurchaseOrder = {
     id: 'po-001',
-    tenderId: 'tender-001',
     tenderName: 'Test Tender',
+    tenderId: 'tender-001',
     client: 'Test Client',
-    status: 'draft',
     value: 250000,
-    currency: 'SAR',
+    status: 'pending',
+    createdDate: '2025-01-15',
+    expectedDelivery: '2025-03-01',
+    priority: 'medium',
+    department: 'Procurement',
+    approver: 'manager-001',
+    description: 'Test PO Description',
+    source: 'project_won',
+    projectId: 'test-project-123',
     items: [
       {
         name: 'Test Item',
@@ -86,7 +124,8 @@ describe('LocalEnhancedProjectRepository - Purchase Order Integration', () => {
         category: 'Equipment',
       },
     ],
-    createdDate: '2025-01-15',
+    createdAt: '2025-01-15T00:00:00.000Z',
+    updatedAt: '2025-01-15T00:00:00.000Z',
   }
 
   beforeEach(() => {

@@ -24,7 +24,8 @@ export const MIGRATION_VERSION = '2025-01-27-project-schema-migration'
  */
 export function needsMigration(project: EnhancedProject): boolean {
   // Check if linkedPurchaseOrders field exists
-  if (!Array.isArray(project.linkedPurchaseOrders)) {
+  const projectWithPO = project as EnhancedProject & { linkedPurchaseOrders?: unknown }
+  if (!Array.isArray(projectWithPO.linkedPurchaseOrders)) {
     return true
   }
 
@@ -40,7 +41,7 @@ export function needsMigration(project: EnhancedProject): boolean {
  * Migrate single project to new schema
  */
 export function migrateProject(project: EnhancedProject): EnhancedProject {
-  const migrated = { ...project }
+  const migrated = { ...project } as EnhancedProject & { linkedPurchaseOrders?: string[] }
 
   // 1. Add linkedPurchaseOrders if missing
   if (!Array.isArray(migrated.linkedPurchaseOrders)) {
@@ -74,16 +75,12 @@ export function migrateProject(project: EnhancedProject): EnhancedProject {
     migrated.budget.remainingBudget = migrated.budget.allocatedBudget || 0
   }
 
-  if (!migrated.budget.spendRate && migrated.budget.spendRate !== 0) {
-    migrated.budget.spendRate = 0
-  }
-
   // 5. Update version
   migrated.version = (migrated.version || 0) + 1
   migrated.updatedAt = new Date().toISOString()
   migrated.lastModifiedBy = 'System Migration'
 
-  return migrated
+  return migrated as EnhancedProject
 }
 
 /**
@@ -94,9 +91,10 @@ export function validateMigratedProject(project: EnhancedProject): {
   errors: string[]
 } {
   const errors: string[] = []
+  const projectWithPO = project as EnhancedProject & { linkedPurchaseOrders?: unknown }
 
   // Check required fields
-  if (!Array.isArray(project.linkedPurchaseOrders)) {
+  if (!Array.isArray(projectWithPO.linkedPurchaseOrders)) {
     errors.push('linkedPurchaseOrders must be an array')
   }
 

@@ -141,6 +141,9 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
         createdBy: 'current_user', // TODO: Get from auth context
         lastModifiedBy: 'current_user',
         version: 1,
+
+        // Purchase Order Integration
+        linkedPurchaseOrders: [],
       }
 
       projects.push(enhancedProject)

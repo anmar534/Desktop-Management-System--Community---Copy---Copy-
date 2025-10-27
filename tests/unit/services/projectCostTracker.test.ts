@@ -19,7 +19,9 @@ vi.mock('@/application/services/serviceRegistry', () => ({
 }))
 
 describe('ProjectCostTrackerService', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockProjectRepo: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockPORepo: any
 
   const testProject: EnhancedProject = {
@@ -33,7 +35,7 @@ describe('ProjectCostTrackerService', () => {
     clientContact: 'contact-001',
     status: 'active',
     priority: 'high',
-    health: 'healthy',
+    health: 'green',
     progress: 50,
     phase: 'execution',
     phaseId: 'phase-001',
@@ -60,9 +62,23 @@ describe('ProjectCostTrackerService', () => {
     contractValue: 1000000,
     profitMargin: 15,
     team: {
-      projectManager: 'manager-001',
+      id: 'team-001',
+      projectId: 'project-123',
+      projectManager: {
+        id: 'manager-001',
+        name: 'Manager Name',
+        email: 'manager@example.com',
+        phone: '+966-50-123-4567',
+        role: 'Project Manager',
+        department: 'Engineering',
+        responsibilities: ['Management'],
+        startDate: '2025-01-01',
+        isActive: true,
+      },
       members: [],
-      totalMembers: 1,
+      consultants: [],
+      contractors: [],
+      lastUpdated: '2025-01-01T00:00:00.000Z',
     },
     phases: [],
     milestones: [],
@@ -82,7 +98,13 @@ describe('ProjectCostTrackerService', () => {
     client: 'Test Client',
     status: 'approved',
     value: 250000,
-    currency: 'SAR',
+    createdDate: '2025-01-15',
+    expectedDelivery: '2025-03-01',
+    priority: 'medium',
+    department: 'Procurement',
+    approver: 'approver-001',
+    description: 'Test PO 1',
+    source: 'tender_submitted',
     items: [
       {
         name: 'Item 1',
@@ -99,7 +121,8 @@ describe('ProjectCostTrackerService', () => {
         category: 'Materials',
       },
     ],
-    createdDate: '2025-01-15',
+    createdAt: '2025-01-15T00:00:00.000Z',
+    updatedAt: '2025-01-15T00:00:00.000Z',
   }
 
   const testPO2: PurchaseOrder = {
@@ -109,7 +132,13 @@ describe('ProjectCostTrackerService', () => {
     client: 'Test Client',
     status: 'pending',
     value: 150000,
-    currency: 'SAR',
+    createdDate: '2025-01-16',
+    expectedDelivery: '2025-03-15',
+    priority: 'medium',
+    department: 'Procurement',
+    approver: 'approver-001',
+    description: 'Test PO 2',
+    source: 'tender_submitted',
     items: [
       {
         name: 'Item 3',
@@ -119,7 +148,8 @@ describe('ProjectCostTrackerService', () => {
         category: 'Labor',
       },
     ],
-    createdDate: '2025-01-20',
+    createdAt: '2025-01-16T00:00:00.000Z',
+    updatedAt: '2025-01-16T00:00:00.000Z',
   }
 
   beforeEach(() => {

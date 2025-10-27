@@ -26,6 +26,11 @@ export interface ProjectPhase {
   estimatedDuration: number // in days
   dependencies: string[] // phase IDs
   milestones: ProjectMilestone[]
+  // Extended properties for timeline management (optional for backward compatibility)
+  startDate?: string
+  endDate?: string
+  status?: 'pending' | 'in_progress' | 'completed' | 'on_hold' | 'cancelled'
+  progress?: number
 }
 
 export interface ProjectMilestone {

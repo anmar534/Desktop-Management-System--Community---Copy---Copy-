@@ -8,16 +8,7 @@
  */
 
 import React, { useState, useCallback } from 'react'
-import {
-  Plus,
-  Calendar,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  GripVertical,
-  Edit,
-  Trash2,
-} from 'lucide-react'
+import { Plus, Calendar, Clock, CheckCircle2, GripVertical, Edit, Trash2 } from 'lucide-react'
 import type { ProjectPhase, ProjectMilestone } from '@/types/projects'
 import { Button } from '@/presentation/components/ui/button'
 import {
@@ -77,10 +68,10 @@ const generateId = (): string => {
 
 const getStatusColor = (status: ProjectMilestone['status']): string => {
   const colors = {
-    pending: 'bg-gray-500',
-    in_progress: 'bg-blue-500',
-    completed: 'bg-green-500',
-    delayed: 'bg-red-500',
+    pending: 'bg-muted',
+    in_progress: 'bg-primary',
+    completed: 'bg-success',
+    delayed: 'bg-destructive',
   }
   return colors[status] || colors.pending
 }
@@ -106,7 +97,7 @@ const calculatePhaseProgress = (phase: ProjectPhase): number => {
 // =====================================
 
 export function ProjectTimelineEditor({
-  projectId,
+  projectId: _projectId,
   phases: initialPhases,
   onUpdate,
   readonly = false,
@@ -280,7 +271,9 @@ export function ProjectTimelineEditor({
                 m.id === milestoneId
                   ? {
                       ...m,
-                      status: m.status === 'completed' ? 'pending' : 'completed',
+                      status: (m.status === 'completed'
+                        ? 'pending'
+                        : 'completed') as ProjectMilestone['status'],
                       progress: m.status === 'completed' ? 0 : 100,
                       actualDate:
                         m.status === 'completed'
@@ -477,13 +470,13 @@ export function ProjectTimelineEditor({
                               className={cn(
                                 'flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors',
                                 milestone.status === 'completed'
-                                  ? 'bg-green-500 border-green-500'
-                                  : 'border-gray-300 hover:border-green-500',
+                                  ? 'bg-success border-success'
+                                  : 'border-border hover:border-success',
                                 readonly && 'cursor-default',
                               )}
                             >
                               {milestone.status === 'completed' && (
-                                <CheckCircle2 className="h-3 w-3 text-white" />
+                                <CheckCircle2 className="h-3 w-3 text-success-foreground" />
                               )}
                             </button>
                             <div className="flex-1">
@@ -505,7 +498,7 @@ export function ProjectTimelineEditor({
                                   {new Date(milestone.targetDate).toLocaleDateString('ar-EG')}
                                 </span>
                                 {milestone.actualDate && (
-                                  <span className="text-xs text-green-600">
+                                  <span className="text-xs text-success">
                                     تم الإنجاز:{' '}
                                     {new Date(milestone.actualDate).toLocaleDateString('ar-EG')}
                                   </span>
