@@ -511,4 +511,4 @@ export function DetailCard({
   )
 }
 
-export type { PageLayoutTone }
+export type { PageLayoutTone, QuickAction }
