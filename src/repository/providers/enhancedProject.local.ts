@@ -660,8 +660,8 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
   }
 
   async importMany(
-    projects: CreateProjectRequest[],
-    options?: { replace?: boolean },
+    _projects: CreateProjectRequest[],
+    _options?: { replace?: boolean },
   ): Promise<EnhancedProject[]> {
     throw new Error('Method not implemented.')
   }
@@ -671,12 +671,12 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
   }
 
   async bulkUpdate(
-    updates: { id: string; data: Partial<UpdateProjectRequest> }[],
+    _updates: { id: string; data: Partial<UpdateProjectRequest> }[],
   ): Promise<EnhancedProject[]> {
     throw new Error('Method not implemented.')
   }
 
-  async bulkDelete(ids: string[]): Promise<boolean> {
+  async bulkDelete(_ids: string[]): Promise<boolean> {
     throw new Error('Method not implemented.')
   }
 
