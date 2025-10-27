@@ -48,13 +48,11 @@ export function ProjectsView({
   const [projectToEdit, setProjectToEdit] = useState<ProjectWithLegacyFields | null>(null)
   const [currentView, setCurrentView] = useState<'list' | 'new' | 'edit' | 'clients'>('list')
 
-  // استخدام الـ hooks المستخرجة
   const { formatCurrencyValue } = useProjectCurrencyFormatter()
   const projectAggregates = useProjectAggregates()
   const { costInputs, isSavingCosts, handleCostInputChange, handleSaveCosts } =
     useProjectCostManagement()
 
-  // دوال التعامل مع العمليات
   const handleDeleteProject = async (projectId: string) => {
     try {
       await onDeleteProject(projectId)
@@ -90,26 +88,26 @@ export function ProjectsView({
     setCurrentView('clients')
   }
 
-  // تصفية المشاريع حسب التبويب
+  const onSaveCosts = useCallback(
+    (project: ProjectWithLegacyFields) => {
+      return handleSaveCosts(project, formatCurrencyValue, onUpdateProject)
+    },
+    [handleSaveCosts, formatCurrencyValue, onUpdateProject],
+  )
+
   const getFilteredProjects = useCallback(
     (status: string) => {
-      let filtered = projects || []
-      const normalizedSearch = searchTerm.toLowerCase()
+      if (!projects) return []
 
-      if (status === 'all') {
-        // إرجاع جميع المشاريع بدون فلترة
-        filtered = projects || []
-      } else if (status === 'active') {
-        filtered = filtered.filter((project) => project.status === 'active')
-      } else if (status === 'completed') {
-        filtered = filtered.filter((project) => project.status === 'completed')
-      } else if (status === 'planning') {
-        filtered = filtered.filter((project) => project.status === 'planning')
-      } else if (status === 'paused') {
-        filtered = filtered.filter((project) => project.status === 'paused')
+      const normalizedSearch = searchTerm.toLowerCase()
+      const statusFilter = (project: ProjectWithLegacyFields) => {
+        if (status === 'all') return true
+        return project.status === status
       }
 
-      return filtered.filter((project) => {
+      return projects.filter((project) => {
+        if (!statusFilter(project)) return false
+        
         const nameMatches = project.name?.toLowerCase().includes(normalizedSearch) ?? false
         const clientMatches = project.client?.toLowerCase().includes(normalizedSearch) ?? false
         return nameMatches || clientMatches
@@ -118,7 +116,6 @@ export function ProjectsView({
     [projects, searchTerm],
   )
 
-  // إحصائيات المشاريع
   const stats = useMemo(() => {
     const totalProjects = projects ? projects.length : 0
     const averageProgress =
@@ -139,17 +136,20 @@ export function ProjectsView({
     }
   }, [projects, getFilteredProjects])
 
-  // استخدام hook لحساب بيانات الإدارة
   const projectsManagementData = useProjectsManagementData(stats)
 
-  // استخدام مكون الإجراءات السريعة
-  const quickActions = ProjectQuickActions({
-    onViewClients: handleViewClients,
-    onViewReports: () => onSectionChange('reports'),
-    onNewProject: handleNewProject,
-  })
+  const tabs = useMemo(() => createProjectTabsConfig(stats), [stats])
 
-  // مكونات الهيدر (badges + analysis cards)
+  const quickActions = useMemo(
+    () =>
+      ProjectQuickActions({
+        onViewClients: handleViewClients,
+        onViewReports: () => onSectionChange('reports'),
+        onNewProject: handleNewProject,
+      }),
+    [onSectionChange],
+  )
+
   const headerExtraContent = useMemo(
     () => (
       <ProjectHeaderExtras
@@ -165,11 +165,6 @@ export function ProjectsView({
     ),
     [stats, projectAggregates.totalNetProfit, formatCurrencyValue, projectsManagementData],
   )
-
-  // استخدام configuration من الملف المشترك
-  const tabs = useMemo(() => createProjectTabsConfig(stats), [stats])
-
-  // استخدام مكون التبويبات المستخرج
 
   if (currentView === 'new') {
     return <NewProjectForm mode="create" onBack={handleBackToList} />
@@ -221,7 +216,7 @@ export function ProjectsView({
           costInputs={costInputs}
           isSavingCosts={isSavingCosts}
           onCostInputChange={handleCostInputChange}
-          onSaveCosts={(proj) => handleSaveCosts(proj, formatCurrencyValue, onUpdateProject)}
+          onSaveCosts={onSaveCosts}
           onViewProject={handleViewProject}
           onEditProject={handleEditProject}
           onDeleteProject={handleDeleteProject}
@@ -229,7 +224,6 @@ export function ProjectsView({
         />
       )}
 
-      {/* Dialog تأكيد الحذف */}
       <AlertDialog open={!!projectToDelete} onOpenChange={() => setProjectToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
