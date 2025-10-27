@@ -179,4 +179,33 @@ describe('Purchase Order - Project Integration Tests', () => {
     expect(linkedPOs).toHaveLength(5)
     expect(totalCost).toBe(750000) // 50000 + 100000 + 150000 + 200000 + 250000
   })
+
+  it('should enforce business rule - cannot delete PO with active project', async () => {
+    // Arrange
+    const mockProject = createMockProject({ name: 'Project Eta' })
+    const createdProject = await repos.projectRepository.create(mockProject)
+
+    const mockPO = createMockPurchaseOrder({
+      poNumber: 'PO-2025-110',
+      totalAmount: 300000,
+    })
+    const createdPO = await repos.purchaseOrderRepository.create(mockPO)
+    await repos.projectRepository.linkToPurchaseOrder(createdProject.id, createdPO.id)
+
+    // Act - Try to delete PO with active project link
+    const projectWithPO = await repos.projectRepository.getProjectByPurchaseOrder(createdPO.id)
+
+    // Assert
+    expect(projectWithPO).toBeDefined()
+    expect(projectWithPO?.id).toBe(createdProject.id)
+
+    // Business Rule: Should unlink before delete
+    await repos.projectRepository.unlinkFromPurchaseOrder(createdProject.id, createdPO.id)
+    const projectAfterUnlink = await repos.projectRepository.getProjectByPurchaseOrder(createdPO.id)
+    expect(projectAfterUnlink).toBeNull()
+
+    // Now deletion would be safe
+    const deleteResult = await repos.purchaseOrderRepository.delete(createdPO.id)
+    expect(deleteResult).toBe(true)
+  })
 })
