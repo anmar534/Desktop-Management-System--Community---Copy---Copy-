@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/presentation/components/ui/alert-dialog'
-import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
+import { PageLayout } from '@/presentation/components/layout/PageLayout'
 import { NewProjectForm } from './components/NewProjectForm'
 import { Clients } from './components/Clients'
 import { AlertCircle, ArrowRight, Building2 } from 'lucide-react'
@@ -24,9 +24,7 @@ import { useProjectsManagementData } from '@/application/hooks/useProjectsManage
 import { useProjectCostManagement } from '@/application/hooks/useProjectCostManagement'
 import { ProjectHeaderExtras } from '@/presentation/components/projects/ProjectHeaderExtras'
 import { ProjectQuickActions } from '@/presentation/components/projects/ProjectQuickActions'
-import { ProjectCard } from '@/presentation/components/projects/ProjectCard'
-import { motion } from 'framer-motion'
-import { StatusBadge } from '@/presentation/components/ui/status-badge'
+import { ProjectTabs } from '@/presentation/components/projects/ProjectTabs'
 
 type ProjectWithLegacyFields = Project & { profit?: number; profitMargin?: number }
 
@@ -171,121 +169,7 @@ export function ProjectsView({
   // استخدام configuration من الملف المشترك
   const tabs = useMemo(() => createProjectTabsConfig(stats), [stats])
 
-  // مكون التبويبات - استخدام ProjectCard المستخرج
-  const TabsComponent = (
-    <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-foreground">تصنيف المشاريع</h2>
-          <div className="text-sm text-muted-foreground">
-            {getFilteredProjects(activeTab).length} من {stats.total} مشروع
-          </div>
-        </div>
-
-        <div className="relative">
-          <div className="flex bg-muted rounded-lg p-1.5 gap-1">
-            {tabs.map((tab, index) => {
-              const isActive = activeTab === tab.id
-              const Icon = tab.icon
-
-              return (
-                <motion.button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`
-                    relative flex items-center gap-2 px-4 py-2.5 rounded-md font-medium text-sm transition-all duration-200 flex-1 justify-center
-                    ${
-                      isActive
-                        ? `${tab.activeColor} transform scale-[0.98]`
-                        : `text-muted-foreground ${tab.hoverColor} hover:text-foreground`
-                    }
-                  `}
-                  whileHover={{ scale: isActive ? 0.98 : 1.02 }}
-                  whileTap={{ scale: 0.96 }}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Icon
-                    className={`h-4 w-4 ${isActive ? (tab.activeIconColor ?? 'text-primary-foreground') : tab.color}`}
-                  />
-                  <span className="hidden sm:inline whitespace-nowrap">{tab.label}</span>
-                  <StatusBadge
-                    status={isActive ? tab.badgeStatus : 'default'}
-                    label={String(tab.count)}
-                    size="sm"
-                    showIcon={false}
-                    className={`min-w-[28px] justify-center px-2 py-0.5 text-xs shadow-none ${isActive ? (tab.activeBadgeClass ?? 'bg-primary/15 text-primary-foreground border-primary/30') : ''}`}
-                  />
-
-                  {isActive && (
-                    <motion.div
-                      className="absolute -bottom-1.5 left-1/2 h-0.5 w-8 -translate-x-1/2 transform rounded-full bg-primary/40"
-                      layoutId="activeProjectTab"
-                      transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                </motion.button>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="p-4">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {getFilteredProjects(activeTab).map((project, index) => (
-              <ProjectCard
-                key={project.id || index}
-                project={project}
-                index={index}
-                formatCurrencyValue={formatCurrencyValue}
-                costInputs={costInputs}
-                isSavingCosts={isSavingCosts}
-                onCostInputChange={handleCostInputChange}
-                onSaveCosts={(proj) => handleSaveCosts(proj, formatCurrencyValue, onUpdateProject)}
-                onViewProject={handleViewProject}
-                onEditProject={handleEditProject}
-                onDeleteProject={handleDeleteProject}
-              />
-            ))}
-          </div>
-
-          {getFilteredProjects(activeTab).length === 0 && (
-            <EmptyState
-              icon={Building2}
-              title="لا توجد مشاريع"
-              description={
-                activeTab === 'all'
-                  ? 'لا توجد مشاريع في النظام'
-                  : activeTab === 'active'
-                    ? 'لا توجد مشاريع نشطة حالياً'
-                    : activeTab === 'completed'
-                      ? 'لا توجد مشاريع مكتملة'
-                      : activeTab === 'planning'
-                        ? 'لا توجد مشاريع تحت التخطيط'
-                        : 'لا توجد مشاريع متوقفة مؤقتاً'
-              }
-              actionLabel={
-                activeTab === 'active' || activeTab === 'all' ? 'إضافة مشروع جديد' : undefined
-              }
-              onAction={
-                activeTab === 'active' || activeTab === 'all'
-                  ? () => onSectionChange('new-project')
-                  : undefined
-              }
-            />
-          )}
-        </motion.div>
-      </div>
-    </div>
-  )
+  // استخدام مكون التبويبات المستخرج
 
   if (currentView === 'new') {
     return <NewProjectForm mode="create" onBack={handleBackToList} />
@@ -326,7 +210,24 @@ export function ProjectsView({
       showSearch={false}
       showLastUpdate={false}
     >
-      {currentView === 'list' && TabsComponent}
+      {currentView === 'list' && (
+        <ProjectTabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          filteredProjects={getFilteredProjects(activeTab)}
+          totalCount={stats.total}
+          formatCurrencyValue={formatCurrencyValue}
+          costInputs={costInputs}
+          isSavingCosts={isSavingCosts}
+          onCostInputChange={handleCostInputChange}
+          onSaveCosts={(proj) => handleSaveCosts(proj, formatCurrencyValue, onUpdateProject)}
+          onViewProject={handleViewProject}
+          onEditProject={handleEditProject}
+          onDeleteProject={handleDeleteProject}
+          onSectionChange={onSectionChange}
+        />
+      )}
 
       {/* Dialog تأكيد الحذف */}
       <AlertDialog open={!!projectToDelete} onOpenChange={() => setProjectToDelete(null)}>
