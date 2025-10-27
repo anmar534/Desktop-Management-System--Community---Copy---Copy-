@@ -55,4 +55,27 @@ describe('Purchase Order - Project Integration Tests', () => {
     expect(linkedPOIds).toContain(mockPO1.id)
     expect(linkedPOIds).toContain(mockPO2.id)
   })
+
+  it('should unlink a purchase order from project', async () => {
+    // Arrange
+    const mockProject = createMockProject({ name: 'Project Gamma' })
+    const createdProject = await repos.projectRepository.create(mockProject)
+
+    const mockPO = createMockPurchaseOrder({ poNumber: 'PO-2025-004' })
+    await repos.purchaseOrderRepository.create(mockPO)
+
+    await repos.projectRepository.linkToPurchaseOrder(createdProject.id, mockPO.id as string)
+
+    // Act
+    const unlinkResult = await repos.projectRepository.unlinkFromPurchaseOrder(
+      createdProject.id,
+      mockPO.id as string,
+    )
+
+    // Assert
+    expect(unlinkResult).toBe(true)
+
+    const linkedPOs = await repos.projectRepository.getPurchaseOrdersByProject(createdProject.id)
+    expect(linkedPOs).toHaveLength(0)
+  })
 })
