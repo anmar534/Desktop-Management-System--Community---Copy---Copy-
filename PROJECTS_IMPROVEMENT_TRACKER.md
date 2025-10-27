@@ -4,8 +4,8 @@
 
 # Projects System Improvement - Progress Tracker
 
-**آخر تحديث:** 2025-01-27 15:00  
-**الحالة:** 🔄 Week 4 Day 1 - Task 1.3 مكتملة  
+**آخر تحديث:** 2025-01-27 16:20  
+**الحالة:** 🔄 Week 4 Day 1 - Task 2.1 مكتملة  
 **المدة المتوقعة:** 4-5 أسابيع
 
 ---
@@ -1826,9 +1826,145 @@ Remote: Successfully pushed to GitHub
 
 ---
 
-**آخر تحديث:** 2025-01-27 15:00  
+### Day 1 - Task 2.1: Purchase Order Project Linking ✅ COMPLETED
+
+**Status:** ✅ DONE  
+**Date:** 2025-01-27 16:20  
+**Duration:** ~3 hours (estimated 4h, completed early)
+
+#### Implementation
+
+**Files Modified:**
+
+1. **src/repository/enhancedProject.repository.ts** (+4 method signatures)
+
+   - Added Purchase Order Integration section to interface
+   - 4 new async methods for PO linking operations
+
+2. **src/repository/providers/enhancedProject.local.ts** (+125 LOC)
+   - `linkToPurchaseOrder(projectId, purchaseOrderId)` - Link project to PO
+   - `unlinkFromPurchaseOrder(projectId, purchaseOrderId)` - Remove PO link
+   - `getPurchaseOrdersByProject(projectId)` - Query all POs for project
+   - `getProjectByPurchaseOrder(purchaseOrderId)` - Find project by PO ID
+
+**Files Created:**
+
+- **tests/unit/repository/enhancedProject.purchaseOrderLink.test.ts** (+360 LOC)
+  - Comprehensive test suite for all 4 methods
+  - 18 unit tests with 100% pass rate
+
+#### Method Details
+
+##### 1. linkToPurchaseOrder() - 40 LOC
+
+```typescript
+async linkToPurchaseOrder(projectId: string, purchaseOrderId: string): Promise<boolean>
+```
+
+- Validates project existence via `getById()`
+- Checks for duplicate link using `getPurchaseOrderIdsByProjectId()`
+- Creates relation via `relationRepo.linkProjectToPurchaseOrder()`
+- Updates PurchaseOrder.projectId field via `poRepo.update()`
+- Returns boolean success status
+
+##### 2. unlinkFromPurchaseOrder() - 30 LOC
+
+```typescript
+async unlinkFromPurchaseOrder(projectId: string, purchaseOrderId: string): Promise<boolean>
+```
+
+- Validates project existence
+- Removes relation via `relationRepo.unlinkProjectPurchase()`
+- Clears PurchaseOrder.projectId field (sets to undefined)
+- Only updates PO if projectId matches (prevents cross-project unlinking)
+- Returns boolean success status
+
+##### 3. getPurchaseOrdersByProject() - 25 LOC
+
+```typescript
+async getPurchaseOrdersByProject(projectId: string): Promise<string[]>
+```
+
+- Queries all relations via `relationRepo.getPurchaseOrderIdsByProjectId()`
+- Returns array of purchaseOrderId strings
+- Returns empty array on error (graceful degradation)
+
+##### 4. getProjectByPurchaseOrder() - 30 LOC
+
+```typescript
+async getProjectByPurchaseOrder(purchaseOrderId: string): Promise<EnhancedProject | null>
+```
+
+- Gets all PO-Project links via `relationRepo.getAllProjectPurchaseLinks()`
+- Finds relation matching purchaseOrderId
+- Retrieves project via `getById()`
+- Returns null if no relation or project not found
+- Handles orphaned relations gracefully
+
+#### Test Coverage - 18/18 Tests Passing (100%)
+
+**linkToPurchaseOrder Tests (5):**
+
+- ✅ Should successfully link project to purchase order
+- ✅ Should return false when project not found
+- ✅ Should handle duplicate link gracefully
+- ✅ Should handle missing purchase order gracefully
+- ✅ Should handle errors and return false
+
+**unlinkFromPurchaseOrder Tests (5):**
+
+- ✅ Should successfully unlink project from purchase order
+- ✅ Should return false when project not found
+- ✅ Should handle missing purchase order gracefully
+- ✅ Should only update PO if projectId matches
+- ✅ Should handle errors and return false
+
+**getPurchaseOrdersByProject Tests (3):**
+
+- ✅ Should return array of linked PO IDs
+- ✅ Should return empty array when no POs linked
+- ✅ Should handle errors and return empty array
+
+**getProjectByPurchaseOrder Tests (5):**
+
+- ✅ Should return project when linked to PO
+- ✅ Should return null when no project linked to PO
+- ✅ Should return null when project not found despite relation
+- ✅ Should handle multiple project-PO links correctly
+- ✅ Should handle errors and return null
+
+#### Code Quality
+
+- ✅ Uses existing IRelationRepository methods (no custom relation storage)
+- ✅ Bidirectional linking (updates both relation repo and PO.projectId)
+- ✅ Proper error handling with try-catch blocks
+- ✅ Console logging for debugging (success/warning/error)
+- ✅ Type safety with ProjectPurchaseRelation interface
+- ✅ No TypeScript errors, no ESLint errors
+- ✅ Follows same pattern as tender linking methods
+
+#### Git Activity
+
+```bash
+git commit f1ab9a8 "feat(week4): add purchase order project linking (Task 2.1)"
+git push origin feature/projects-system-improvement
+```
+
+#### Summary
+
+- **Implementation:** 125 LOC
+- **Tests:** 360 LOC
+- **Total:** 485 LOC added
+- **Test Coverage:** 100% pass rate (18/18)
+- **Time Saved:** 1 hour (estimated 4h, actual ~3h)
+
+**Next:** Task 2.2 - Project Cost Tracking Service
+
+---
+
+**آخر تحديث:** 2025-01-27 16:20  
 **المحدث بواسطة:** GitHub Copilot  
-**الحالة:** 🔄 Week 4 Day 1 - Task 1.3 مكتملة، جاهز لـ Task 2.1
+**الحالة:** 🔄 Week 4 Day 1 - Task 2.1 مكتملة، جاهز لـ Task 2.2
 
 ---
 
