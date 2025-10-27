@@ -127,4 +127,56 @@ describe('Purchase Order - Project Integration Tests', () => {
     // Assert
     expect(totalCost).toBe(325000) // 100000 + 150000 + 75000
   })
+
+  it('should handle PO status changes affecting project', async () => {
+    // Arrange
+    const mockProject = createMockProject({ name: 'Project Epsilon' })
+    const createdProject = await repos.projectRepository.create(mockProject)
+
+    const mockPO = createMockPurchaseOrder({
+      poNumber: 'PO-2025-009',
+      status: 'pending',
+      totalAmount: 200000,
+    })
+    const createdPO = await repos.purchaseOrderRepository.create(mockPO)
+    await repos.projectRepository.linkToPurchaseOrder(createdProject.id, createdPO.id)
+
+    // Act - Update PO status
+    const updatedPO = await repos.purchaseOrderRepository.update(createdPO.id, {
+      status: 'approved',
+    })
+
+    // Assert
+    expect(updatedPO).toBeDefined()
+    expect(updatedPO?.status).toBe('approved')
+
+    // Verify project still linked after status change
+    const linkedPOs = await repos.projectRepository.getPurchaseOrdersByProject(createdProject.id)
+    expect(linkedPOs).toContain(createdPO.id)
+  })
+
+  it('should link multiple POs to single project', async () => {
+    // Arrange
+    const mockProject = createMockProject({ name: 'Project Zeta' })
+    const createdProject = await repos.projectRepository.create(mockProject)
+
+    const pos = []
+    for (let i = 0; i < 5; i++) {
+      const po = createMockPurchaseOrder({
+        poNumber: `PO-2025-${100 + i}`,
+        totalAmount: 50000 * (i + 1),
+      })
+      const createdPO = await repos.purchaseOrderRepository.create(po)
+      pos.push(createdPO)
+      await repos.projectRepository.linkToPurchaseOrder(createdProject.id, createdPO.id)
+    }
+
+    // Act
+    const linkedPOs = await repos.projectRepository.getPurchaseOrdersByProject(createdProject.id)
+    const totalCost = await repos.projectRepository.getTotalPOCosts(createdProject.id)
+
+    // Assert
+    expect(linkedPOs).toHaveLength(5)
+    expect(totalCost).toBe(750000) // 50000 + 100000 + 150000 + 200000 + 250000
+  })
 })
