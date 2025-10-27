@@ -20,7 +20,6 @@ import type {
 } from '../../types/projects'
 import type { Status, Health } from '../../types/contracts'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
-import { APP_EVENTS, emit } from '@/events/bus'
 
 const ENHANCED_PROJECTS_KEY = 'enhanced_projects'
 
@@ -174,11 +173,15 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
 
       const now = new Date().toISOString()
 
-      // Update the project
+      // Update the project - preserve budget type
       const updatedProject: EnhancedProject = {
         ...existingProject,
         ...data,
         id: existingProject.id, // Ensure ID doesn't change
+        budget:
+          typeof data.budget === 'number'
+            ? this.createDefaultBudget(existingProject.id, data.budget)
+            : data.budget || existingProject.budget,
         updatedAt: now,
         lastModifiedBy: 'current_user', // TODO: Get from auth context
         version: existingProject.version + 1,
@@ -186,7 +189,6 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
 
       projects[index] = updatedProject
       safeLocalStorage.setItem(ENHANCED_PROJECTS_KEY, projects)
-      // Projects updated
 
       return updatedProject
     } catch (error) {
