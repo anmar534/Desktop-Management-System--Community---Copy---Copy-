@@ -94,6 +94,7 @@ export interface ProjectListStore {
   // Utilities
   reset: () => void
   countActiveFilters: () => number
+  updateTotalItems: (projects: EnhancedProject[]) => void
 }
 
 // ============================================================================
@@ -345,9 +346,8 @@ export const useProjectListStore = create<ProjectListStore>()(
         const start = (page - 1) * pageSize
         const end = start + pageSize
 
-        set((state) => {
-          state.totalItems = projects.length
-        })
+        // Don't update state inside a selector - this causes infinite loops
+        // totalItems should be calculated separately
 
         return projects.slice(start, end)
       },
@@ -364,7 +364,7 @@ export const useProjectListStore = create<ProjectListStore>()(
         // Apply sorting
         result = get().applySort(result)
 
-        // Apply pagination
+        // Apply pagination (total items count is calculated internally)
         result = get().applyPagination(result)
 
         return result
@@ -395,6 +395,17 @@ export const useProjectListStore = create<ProjectListStore>()(
         return Object.keys(filters).filter(
           (key) => filters[key as keyof ProjectFilters] !== undefined,
         ).length
+      },
+
+      // Calculate and update total items count
+      updateTotalItems: (projects: EnhancedProject[]) => {
+        let result = projects
+        result = get().applyFilters(result)
+        result = get().applySearch(result)
+
+        set((state) => {
+          state.totalItems = result.length
+        })
       },
 
       reset: () => {
