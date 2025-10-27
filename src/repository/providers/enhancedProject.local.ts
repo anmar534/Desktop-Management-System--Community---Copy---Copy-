@@ -19,7 +19,12 @@ import type {
   ProjectPhase,
 } from '../../types/projects'
 import type { Status, Health } from '../../types/contracts'
+import type { ProjectPurchaseRelation } from '../types'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import {
+  getRelationRepository,
+  getPurchaseOrderRepository,
+} from '../../application/services/serviceRegistry'
 
 const ENHANCED_PROJECTS_KEY = 'enhanced_projects'
 
@@ -591,6 +596,131 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
       return project.tenderLink || null
     } catch (error) {
       console.error('Error getting tender link:', error)
+      return null
+    }
+  }
+
+  // ============================================
+  // Purchase Order Integration
+  // ============================================
+
+  /**
+   * ربط مشروع بأمر شراء
+   */
+  async linkToPurchaseOrder(projectId: string, purchaseOrderId: string): Promise<boolean> {
+    try {
+      // التحقق من وجود المشروع
+      const project = await this.getById(projectId)
+      if (!project) {
+        console.error(`❌ Project ${projectId} not found`)
+        return false
+      }
+
+      // الحصول على مستودع العلاقات
+      const relationRepo = getRelationRepository()
+
+      // التحقق من عدم وجود ربط مسبق
+      const existingPOs = relationRepo.getPurchaseOrderIdsByProjectId(projectId)
+      if (existingPOs.includes(purchaseOrderId)) {
+        console.warn(`⚠️ Project ${projectId} already linked to purchase order ${purchaseOrderId}`)
+        return true
+      }
+
+      // إنشاء العلاقة الجديدة
+      relationRepo.linkProjectToPurchaseOrder(projectId, purchaseOrderId)
+
+      // تحديث حقل projectId في أمر الشراء
+      const poRepo = getPurchaseOrderRepository()
+      const purchaseOrder = await poRepo.getById(purchaseOrderId)
+      if (purchaseOrder) {
+        purchaseOrder.projectId = projectId
+        await poRepo.update(purchaseOrderId, purchaseOrder)
+      }
+
+      console.log(`✅ Project ${projectId} linked to purchase order ${purchaseOrderId}`)
+      return true
+    } catch (error) {
+      console.error('Error linking project to purchase order:', error)
+      return false
+    }
+  }
+
+  /**
+   * إلغاء ربط مشروع بأمر شراء
+   */
+  async unlinkFromPurchaseOrder(projectId: string, purchaseOrderId: string): Promise<boolean> {
+    try {
+      // التحقق من وجود المشروع
+      const project = await this.getById(projectId)
+      if (!project) {
+        console.error(`❌ Project ${projectId} not found`)
+        return false
+      }
+
+      // حذف العلاقة
+      const relationRepo = getRelationRepository()
+      relationRepo.unlinkProjectPurchase(projectId, purchaseOrderId)
+
+      // إزالة حقل projectId من أمر الشراء
+      const poRepo = getPurchaseOrderRepository()
+      const purchaseOrder = await poRepo.getById(purchaseOrderId)
+      if (purchaseOrder && purchaseOrder.projectId === projectId) {
+        purchaseOrder.projectId = undefined
+        await poRepo.update(purchaseOrderId, purchaseOrder)
+      }
+
+      console.log(`✅ Project ${projectId} unlinked from purchase order ${purchaseOrderId}`)
+      return true
+    } catch (error) {
+      console.error('Error unlinking project from purchase order:', error)
+      return false
+    }
+  }
+
+  /**
+   * الحصول على جميع أوامر الشراء المرتبطة بمشروع
+   */
+  async getPurchaseOrdersByProject(projectId: string): Promise<string[]> {
+    try {
+      const relationRepo = getRelationRepository()
+      const linkedPOs = relationRepo.getPurchaseOrderIdsByProjectId(projectId)
+
+      console.log(`✅ Found ${linkedPOs.length} purchase orders for project ${projectId}`)
+      return linkedPOs
+    } catch (error) {
+      console.error('Error getting purchase orders for project:', error)
+      return []
+    }
+  }
+
+  /**
+   * الحصول على المشروع المرتبط بأمر شراء
+   */
+  async getProjectByPurchaseOrder(purchaseOrderId: string): Promise<EnhancedProject | null> {
+    try {
+      const relationRepo = getRelationRepository()
+      const allLinks = relationRepo.getAllProjectPurchaseLinks()
+
+      const relation = allLinks.find(
+        (link: ProjectPurchaseRelation) => link.purchaseOrderId === purchaseOrderId,
+      )
+      if (!relation) {
+        console.log(`ℹ️ No project found for purchase order ${purchaseOrderId}`)
+        return null
+      }
+
+      const project = await this.getById(relation.projectId)
+      if (!project) {
+        console.warn(
+          `⚠️ Relation exists but project ${relation.projectId} not found for PO ${purchaseOrderId}`,
+        )
+        return null
+      }
+
+      console.log(`✅ Found project ${project.id} for purchase order ${purchaseOrderId}`)
+      return project
+    } catch (error) {
+      console.error('Error getting project by purchase order:', error)
       return null
     }
   }
