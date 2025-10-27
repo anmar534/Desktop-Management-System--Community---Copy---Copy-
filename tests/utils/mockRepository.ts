@@ -199,6 +199,18 @@ export class MockEnhancedProjectRepository implements IEnhancedProjectRepository
     return null
   }
 
+  async createFromPurchaseOrder(purchaseOrderId: string, projectData: any): Promise<any> {
+    const project = await this.create({
+      name: projectData.name ?? `Project from PO ${purchaseOrderId}`,
+      code: projectData.code ?? `PRJ_PO_${Date.now()}`,
+      status: projectData.status ?? 'planning',
+      ...projectData,
+    })
+
+    await this.linkToPurchaseOrder(project.id, purchaseOrderId)
+    return project
+  }
+
   // Analytics and Metrics
   async getProjectMetrics(_projectId: string): Promise<any> {
     return {

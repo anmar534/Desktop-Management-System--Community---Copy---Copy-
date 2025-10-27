@@ -78,4 +78,29 @@ describe('Purchase Order - Project Integration Tests', () => {
     const linkedPOs = await repos.projectRepository.getPurchaseOrdersByProject(createdProject.id)
     expect(linkedPOs).toHaveLength(0)
   })
+
+  it('should create project from purchase order', async () => {
+    // Arrange
+    const mockPO = createMockPurchaseOrder({
+      poNumber: 'PO-2025-005',
+      totalAmount: 250000,
+      supplier: 'Test Supplier',
+    })
+    await repos.purchaseOrderRepository.create(mockPO)
+
+    // Act
+    const project = await repos.projectRepository.createFromPurchaseOrder(mockPO.id as string, {
+      name: 'Project from PO',
+      code: 'PO-PRJ-001',
+    })
+
+    // Assert
+    expect(project).toBeDefined()
+    expect(project.name).toBe('Project from PO')
+    expect(project.code).toBe('PO-PRJ-001')
+
+    // Verify automatic linking
+    const linkedPOs = await repos.projectRepository.getPurchaseOrdersByProject(project.id)
+    expect(linkedPOs).toContain(mockPO.id)
+  })
 })
