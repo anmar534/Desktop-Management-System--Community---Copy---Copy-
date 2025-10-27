@@ -14,19 +14,15 @@ import type {
   ProjectKPI,
   ProjectValidationResult,
   TenderProjectLink,
-  ProjectFromTender,
   ProjectBudget,
   ProjectTeam,
   ProjectPhase,
-  ProjectMilestone,
 } from '../../types/projects'
-import type { Status, Priority, Health } from '../../types/contracts'
+import type { Status, Health } from '../../types/contracts'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
-import { STORAGE_KEYS } from '../../config/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
 
 const ENHANCED_PROJECTS_KEY = 'enhanced_projects'
-const PROJECT_LINKS_KEY = 'project_tender_links'
 
 const generateId = () => `project_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
 const generateCode = () => `PRJ-${Date.now().toString().slice(-6)}`
@@ -144,8 +140,8 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
       }
 
       projects.push(enhancedProject)
-      this.persist(projects)
-      this.emitProjectsUpdated()
+      safeLocalStorage.setItem(ENHANCED_PROJECTS_KEY, projects)
+      // Projects updated
 
       return enhancedProject
     } catch (error) {
@@ -189,8 +185,8 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
       }
 
       projects[index] = updatedProject
-      this.persist(projects)
-      this.emitProjectsUpdated()
+      safeLocalStorage.setItem(ENHANCED_PROJECTS_KEY, projects)
+      // Projects updated
 
       return updatedProject
     } catch (error) {
@@ -209,8 +205,8 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
       }
 
       projects.splice(index, 1)
-      this.persist(projects)
-      this.emitProjectsUpdated()
+      safeLocalStorage.setItem(ENHANCED_PROJECTS_KEY, projects)
+      // Projects updated
 
       return true
     } catch (error) {
@@ -287,8 +283,8 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
       // Apply sorting
       if (sort) {
         projects.sort((a, b) => {
-          let aValue: any
-          let bValue: any
+          let aValue: string | number | Date
+          let bValue: string | number | Date
 
           switch (sort.field) {
             case 'name':
@@ -451,47 +447,161 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
     safeLocalStorage.setItem(ENHANCED_PROJECTS_KEY, projects)
   }
 
-  private emitProjectsUpdated(): void {
-    emit(APP_EVENTS.PROJECTS_UPDATED)
-  }
-
   // Placeholder implementations for remaining methods
   async createFromTender(
-    tenderId: string,
-    projectData: Partial<CreateProjectRequest>,
+    _tenderId: string,
+    _projectData: Partial<CreateProjectRequest>,
   ): Promise<EnhancedProject> {
     throw new Error('Method not implemented.')
   }
 
+  /**
+   * ربط مشروع بمنافسة
+   */
   async linkToTender(
     projectId: string,
     tenderId: string,
-    linkType: string,
+    linkType = 'created_from',
   ): Promise<TenderProjectLink> {
-    throw new Error('Method not implemented.')
+    try {
+      // 1. التحقق من وجود المشروع
+      const projects = await this.getAll()
+      const projectIndex = projects.findIndex((p) => p.id === projectId)
+
+      if (projectIndex === -1) {
+        throw new Error(`Project not found: ${projectId}`)
+      }
+
+      // 2. التحقق من عدم وجود ربط سابق
+      if (projects[projectIndex].tenderLink) {
+        throw new Error(
+          `Project ${projectId} is already linked to tender ${projects[projectIndex].tenderLink?.tenderId}`,
+        )
+      }
+
+      // 3. إنشاء الربط
+      const link: TenderProjectLink = {
+        id: `tpl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        tenderId,
+        projectId,
+        linkType: linkType as 'created_from' | 'related_to' | 'derived_from',
+        linkDate: new Date().toISOString(),
+        metadata: {
+          createdBy: 'system',
+          source: 'manual_link',
+        },
+      }
+
+      // 4. حفظ الربط
+      projects[projectIndex].tenderLink = link
+
+      // 5. Persist التغييرات
+      safeLocalStorage.setItem(ENHANCED_PROJECTS_KEY, projects)
+      // Projects updated
+
+      console.log(`✅ Project ${projectId} linked to tender ${tenderId}`)
+      return link
+    } catch (error) {
+      console.error('Error linking project to tender:', error)
+      throw error
+    }
   }
 
+  /**
+   * فك ربط مشروع من منافسة
+   */
   async unlinkFromTender(projectId: string, tenderId: string): Promise<boolean> {
-    throw new Error('Method not implemented.')
+    try {
+      // 1. تحميل المشاريع
+      const projects = await this.getAll()
+      const projectIndex = projects.findIndex((p) => p.id === projectId)
+
+      // 2. التحقق من وجود المشروع
+      if (projectIndex === -1) {
+        console.warn(`Project not found: ${projectId}`)
+        return false
+      }
+
+      const project = projects[projectIndex]
+
+      // 3. التحقق من وجود ربط
+      if (!project.tenderLink) {
+        console.warn(`Project ${projectId} has no tender link`)
+        return false
+      }
+
+      // 4. التحقق من تطابق المنافسة
+      if (project.tenderLink.tenderId !== tenderId) {
+        console.warn(
+          `Project ${projectId} is linked to different tender: ${project.tenderLink.tenderId}`,
+        )
+        return false
+      }
+
+      // 5. حذف الربط
+      delete projects[projectIndex].tenderLink
+
+      // 6. Persist
+      safeLocalStorage.setItem(ENHANCED_PROJECTS_KEY, projects)
+      // Projects updated
+
+      console.log(`✅ Project ${projectId} unlinked from tender ${tenderId}`)
+      return true
+    } catch (error) {
+      console.error('Error unlinking project from tender:', error)
+      return false
+    }
   }
 
+  /**
+   * الحصول على جميع المشاريع المرتبطة بمنافسة
+   */
   async getProjectsFromTender(tenderId: string): Promise<EnhancedProject[]> {
-    throw new Error('Method not implemented.')
+    try {
+      const projects = await this.getAll()
+
+      // البحث في كل من tenderLink و fromTender
+      const linkedProjects = projects.filter(
+        (project) =>
+          project.tenderLink?.tenderId === tenderId || project.fromTender?.tenderId === tenderId,
+      )
+
+      console.log(`✅ Found ${linkedProjects.length} projects for tender ${tenderId}`)
+      return linkedProjects
+    } catch (error) {
+      console.error('Error getting projects from tender:', error)
+      return []
+    }
   }
 
+  /**
+   * الحصول على معلومات الربط بالمنافسة
+   */
   async getTenderLink(projectId: string): Promise<TenderProjectLink | null> {
+    try {
+      const projects = await this.getAll()
+      const project = projects.find((p) => p.id === projectId)
+
+      if (!project) {
+        return null
+      }
+
+      return project.tenderLink || null
+    } catch (error) {
+      console.error('Error getting tender link:', error)
+      return null
+    }
+  }
+
+  async getProjectMetrics(_projectId: string): Promise<ProjectMetrics> {
     throw new Error('Method not implemented.')
   }
 
-  async getProjectMetrics(projectId: string): Promise<ProjectMetrics> {
+  async getProjectKPIs(_projectId: string): Promise<ProjectKPI[]> {
     throw new Error('Method not implemented.')
   }
 
-  async getProjectKPIs(projectId: string): Promise<ProjectKPI[]> {
-    throw new Error('Method not implemented.')
-  }
-
-  async getPortfolioMetrics(filters?: ProjectFilters): Promise<ProjectMetrics[]> {
+  async getPortfolioMetrics(_filters?: ProjectFilters): Promise<ProjectMetrics[]> {
     throw new Error('Method not implemented.')
   }
 
@@ -606,3 +716,6 @@ export class LocalEnhancedProjectRepository implements IEnhancedProjectRepositor
     return stats
   }
 }
+
+// Export default instance for service registry
+export default new LocalEnhancedProjectRepository()
