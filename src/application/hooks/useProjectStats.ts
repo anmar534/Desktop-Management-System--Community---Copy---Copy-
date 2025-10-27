@@ -6,7 +6,16 @@
 
 import { useMemo } from 'react'
 import type { EnhancedProject } from '@/shared/types/projects'
-import type { ProjectStats } from '@/presentation/components/projects/ProjectStatsCards'
+
+export interface ProjectStats {
+  totalProjects: number
+  activeProjects: number
+  completedProjects: number
+  onHoldProjects: number
+  totalBudget: number
+  totalContractValue: number
+  averageProgress: number
+}
 
 export const useProjectStats = (filteredProjects: EnhancedProject[]): ProjectStats => {
   return useMemo(() => {

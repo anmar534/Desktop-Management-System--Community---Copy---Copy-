@@ -40,7 +40,7 @@ import { useProjectAggregates } from '@/application/hooks/useProjectAggregates'
 import { useProjectsManagementData } from '@/application/hooks/useProjectsManagementData'
 import { useProjectCostManagement } from '@/application/hooks/useProjectCostManagement'
 import { ProjectHeaderExtras } from '@/presentation/components/projects/ProjectHeaderExtras'
-import { ProjectQuickActions } from '@/presentation/components/projects/ProjectQuickActions'
+import { ProjectQuickActions } from '@/presentation/components/projects'
 
 type ProjectWithLegacyFields = Project & { profit?: number; profitMargin?: number }
 
