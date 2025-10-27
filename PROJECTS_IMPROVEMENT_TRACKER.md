@@ -512,6 +512,7 @@
 - `ProjectsPage.tsx` الآن يستخدم العرض المعاد صياغته، ما يقلص الإعتمادية على الحالة الداخلية في `EnhancedProjectDetails`.
 - تفعيل `MemoryRouter` داخل `ProjectsContainer.tsx` يسمح بالانتقال بين القائمة وتفاصيل المشروع دون الاعتماد على الحالة المحلية في `ProjectsPage.tsx`.
 - تمت إضافة `tests/unit/features/projects/ProjectsContainer.test.tsx` للتحقق من تمرير المعالجات من السياق وتدفق التنقل داخل MemoryRouter (تغطية أولية - 2 حالات ✅).
+- إضافة أعلام React Router v7 المستقبلية (`v7_startTransition`, `v7_relativeSplatPath`) لإزالة التحذيرات في الكونسول ✅.
 - سيتم توسيع مخطط React Router لاحقاً لدمج صفحات النموذج والقائمة المعاد صياغتها بالكامل ولربطها بالمخطط العالمي.
 
 **النتيجة المتوقعة:**

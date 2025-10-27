@@ -12,7 +12,13 @@ export function ProjectsContainer({ onSectionChange }: ProjectsContainerProps) {
   const { projects, deleteProject, updateProject } = projectsState
 
   return (
-    <MemoryRouter initialEntries={['/']}>
+    <MemoryRouter
+      initialEntries={['/']}
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Routes>
         <Route
           path="/"
