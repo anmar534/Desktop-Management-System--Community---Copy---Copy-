@@ -37,13 +37,15 @@ import {
 import { EntityActions } from '@/presentation/components/ui/ActionButtons'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { motion } from 'framer-motion'
-import { formatCurrency, type CurrencyOptions } from '@/shared/utils/formatters/formatters'
 import type { Project } from '@/data/centralData'
 import { getHealthColor } from '@/shared/utils/ui/statusColors'
 import { toast } from 'sonner'
-import { useFinancialState } from '@/application/context'
 import { getStatusIcon, getProjectStatusBadge } from '@/shared/utils/projectStatusHelpers'
 import { createProjectTabsConfig } from '@/shared/config/projectTabsConfig'
+import { useProjectCurrencyFormatter } from '@/application/hooks/useProjectCurrencyFormatter'
+import { useProjectAggregates } from '@/application/hooks/useProjectAggregates'
+import { useProjectsManagementData } from '@/application/hooks/useProjectsManagementData'
+import { useProjectCostManagement } from '@/application/hooks/useProjectCostManagement'
 
 type ProjectWithLegacyFields = Project & { profit?: number; profitMargin?: number }
 
@@ -66,51 +68,12 @@ export function ProjectsView({
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null)
   const [projectToEdit, setProjectToEdit] = useState<ProjectWithLegacyFields | null>(null)
   const [currentView, setCurrentView] = useState<'list' | 'new' | 'edit' | 'clients'>('list')
-  const [costInputs, setCostInputs] = useState<Record<string, string>>({})
-  const [isSavingCosts, setIsSavingCosts] = useState<Record<string, boolean>>({})
-  const { metrics, currency } = useFinancialState()
-  const projectMetrics = metrics.projects
-  const baseCurrency = currency?.baseCurrency ?? 'SAR'
 
-  const formatCurrencyValue = useCallback(
-    (amount: number | null | undefined, options?: CurrencyOptions) => {
-      const normalized = typeof amount === 'number' && Number.isFinite(amount) ? amount : 0
-      return formatCurrency(normalized, {
-        currency: baseCurrency,
-        ...options,
-      })
-    },
-    [baseCurrency],
-  )
-
-  const projectAggregates = useMemo(() => {
-    const costSummary = projectMetrics.costSummary
-    const totalContractValue = projectMetrics.totalContractValue ?? 0
-    const totalActualCost = costSummary?.totals.actual ?? 0
-    const totalEstimatedCost = costSummary?.totals.estimated ?? 0
-    const netProfit = totalContractValue - totalActualCost
-    const totalRemaining = Math.max(totalContractValue - totalActualCost, 0)
-    const averageProjectValue =
-      projectMetrics.totalCount > 0 ? totalContractValue / projectMetrics.totalCount : 0
-    const profitMargin =
-      totalContractValue > 0
-        ? ((totalContractValue - totalActualCost) / totalContractValue) * 100
-        : 0
-    const variancePct = costSummary?.totals.variance.pct ?? 0
-    const grossMarginPct = costSummary?.totals.grossMarginPct ?? 0
-
-    return {
-      totalContractValue,
-      totalActualCost,
-      totalEstimatedCost,
-      totalRemaining,
-      averageProjectValue,
-      profitMargin,
-      variancePct,
-      grossMarginPct,
-      totalNetProfit: netProfit,
-    }
-  }, [projectMetrics])
+  // استخدام الـ hooks المستخرجة
+  const { formatCurrencyValue } = useProjectCurrencyFormatter()
+  const projectAggregates = useProjectAggregates()
+  const { costInputs, isSavingCosts, handleCostInputChange, handleSaveCosts } =
+    useProjectCostManagement()
 
   // دوال التعامل مع العمليات
   const handleDeleteProject = async (projectId: string) => {
@@ -146,67 +109,6 @@ export function ProjectsView({
 
   const handleViewClients = () => {
     setCurrentView('clients')
-  }
-
-  // دوال إدارة التكاليف
-  const handleCostInputChange = (projectId: string, value: string) => {
-    setCostInputs((prev) => ({
-      ...prev,
-      [projectId]: value,
-    }))
-  }
-
-  const handleSaveCosts = async (project: ProjectWithLegacyFields) => {
-    const actualCostValue = parseFloat(costInputs[project.id] || '0')
-    if (actualCostValue <= 0) {
-      toast.error('يرجى إدخال تكلفة صحيحة')
-      return
-    }
-
-    try {
-      setIsSavingCosts((prev) => ({ ...prev, [project.id]: true }))
-
-      const contractValue = project.contractValue || project.value || project.budget || 0
-      const estimatedCost = project.estimatedCost || 0
-      const actualProfit = contractValue - actualCostValue
-      const profitMargin = contractValue > 0 ? (actualProfit / contractValue) * 100 : 0
-
-      const updatedProject = {
-        ...project,
-        actualCost: actualCostValue, // التكلفة الفعلية
-        spent: actualCostValue, // للتوافق مع النظام القديم
-        remaining: contractValue - actualCostValue,
-        actualProfit: actualProfit, // الربح الفعلي
-        profitMargin: profitMargin,
-        lastUpdate: new Date().toISOString(),
-      }
-
-      await onUpdateProject(updatedProject)
-
-      // إزالة القيمة من حقل الإدخال
-      setCostInputs((prev) => ({
-        ...prev,
-        [project.id]: '',
-      }))
-
-      const estimatedProfit = contractValue - estimatedCost
-      const profitDifference = actualProfit - estimatedProfit
-
-      toast.success(`تم حفظ التكاليف الفعلية بنجاح
-      
-  📊 ملخص المشروع:
-  • قيمة العقد: ${formatCurrencyValue(contractValue)}
-  • التكلفة التقديرية: ${formatCurrencyValue(estimatedCost)}
-  • التكلفة الفعلية: ${formatCurrencyValue(actualCostValue)}
-  • الربح الفعلي: ${formatCurrencyValue(actualProfit)} (${profitMargin.toFixed(1)}%)
-      
-  ${profitDifference >= 0 ? '🟢' : '🔴'} الفرق عن المتوقع: ${formatCurrencyValue(Math.abs(profitDifference))} ${profitDifference >= 0 ? 'توفير' : 'تجاوز'}`)
-    } catch (error) {
-      console.error('فشل في حفظ التكاليف', error)
-      toast.error('فشل في حفظ التكاليف')
-    } finally {
-      setIsSavingCosts((prev) => ({ ...prev, [project.id]: false }))
-    }
   }
 
   // تصفية المشاريع حسب التبويب
@@ -258,42 +160,8 @@ export function ProjectsView({
     }
   }, [projects, getFilteredProjects])
 
-  const projectsManagementData = useMemo(() => {
-    const onTimeDelivery =
-      stats.total > 0 ? Math.round((stats.completed / stats.total) * 1000) / 10 : 0
-    const profitMargin = Number.isFinite(projectAggregates.profitMargin)
-      ? projectAggregates.profitMargin
-      : 0
-    const budgetVariance = Number.isFinite(projectAggregates.variancePct)
-      ? projectAggregates.variancePct
-      : 0
-
-    return {
-      overview: {
-        totalValue: projectAggregates.totalContractValue,
-        monthlyProgress: stats.averageProgress,
-        averageProjectValue: projectAggregates.averageProjectValue,
-        teamUtilization: 87.5,
-        onTimeDelivery,
-        profitMargin: Number.isFinite(profitMargin) ? Math.round(profitMargin * 10) / 10 : 0,
-      },
-      performance: {
-        budgetVariance,
-        scheduleVariance: 3.2,
-        qualityScore: 94.5,
-        clientSatisfaction: 96.2,
-        grossMargin: Number.isFinite(projectAggregates.grossMarginPct)
-          ? projectAggregates.grossMarginPct
-          : 0,
-      },
-      resources: {
-        availableTeams: 4,
-        busyTeams: 3,
-        equipmentUtilization: 78.5,
-        materialStock: 85.2,
-      },
-    }
-  }, [projectAggregates, stats])
+  // استخدام hook لحساب بيانات الإدارة
+  const projectsManagementData = useProjectsManagementData(stats)
 
   // الإجراءات السريعة
   const quickActions = [
@@ -629,7 +497,7 @@ export function ProjectsView({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleSaveCosts(project)}
+                    onClick={() => handleSaveCosts(project, formatCurrencyValue, onUpdateProject)}
                     disabled={isSavingCosts[project.id] || !costInputs[project.id]}
                     className="h-7 px-2 text-xs"
                   >
