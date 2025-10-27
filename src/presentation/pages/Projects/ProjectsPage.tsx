@@ -21,7 +21,6 @@ import { Clients } from './components/Clients'
 import {
   Building2,
   Users,
-  Clock,
   DollarSign,
   Calendar,
   BarChart3,
@@ -36,17 +35,17 @@ import {
   ListChecks,
 } from 'lucide-react'
 import { EntityActions } from '@/presentation/components/ui/ActionButtons'
-import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
+import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { motion } from 'framer-motion'
 import { formatCurrency, type CurrencyOptions } from '@/shared/utils/formatters/formatters'
 import type { Project } from '@/data/centralData'
 import { getHealthColor } from '@/shared/utils/ui/statusColors'
 import { toast } from 'sonner'
 import { useFinancialState } from '@/application/context'
+import { getStatusIcon, getProjectStatusBadge } from '@/shared/utils/projectStatusHelpers'
+import { createProjectTabsConfig } from '@/shared/config/projectTabsConfig'
 
 type ProjectWithLegacyFields = Project & { profit?: number; profitMargin?: number }
-
-type ProjectStatusBadgeStatus = StatusBadgeProps['status']
 
 export interface ProjectsViewProps {
   projects: ProjectWithLegacyFields[]
@@ -455,105 +454,8 @@ export function ProjectsView({
     [headerMetadata, projectsAnalysisCards],
   )
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <PlayCircle className="h-4 w-4 text-status-on-track" />
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-status-completed" />
-      case 'planning':
-        return <Clock className="h-4 w-4 text-info" />
-      case 'paused':
-        return <PauseCircle className="h-4 w-4 text-warning" />
-      default:
-        return <Clock className="h-4 w-4 text-muted-foreground" />
-    }
-  }
-
-  const getProjectStatusBadge = (
-    status: string,
-  ): { status: ProjectStatusBadgeStatus; label: string } => {
-    switch (status) {
-      case 'active':
-        return { status: 'onTrack', label: 'نشط' }
-      case 'completed':
-        return { status: 'completed', label: 'مكتمل' }
-      case 'planning':
-        return { status: 'info', label: 'تحت التخطيط' }
-      case 'paused':
-        return { status: 'warning', label: 'متوقف مؤقتاً' }
-      default:
-        return { status: 'default', label: 'غير محدد' }
-    }
-  }
-
-  const tabs = [
-    {
-      id: 'all',
-      label: 'جميع المشاريع',
-      count: stats.total,
-      icon: Building2,
-      color: 'text-muted-foreground',
-      bgColor: 'bg-muted/20',
-      hoverColor: 'hover:bg-muted/30',
-      activeColor: 'bg-secondary text-secondary-foreground shadow-lg shadow-secondary/25',
-      activeIconColor: 'text-secondary-foreground',
-      activeBadgeClass: 'bg-secondary/20 text-secondary-foreground border-secondary/30',
-      badgeStatus: 'default' as ProjectStatusBadgeStatus,
-    },
-    {
-      id: 'active',
-      label: 'المشاريع النشطة',
-      count: stats.active,
-      icon: PlayCircle,
-      color: 'text-success',
-      bgColor: 'bg-success/10',
-      hoverColor: 'hover:bg-success/20',
-      activeColor: 'bg-success text-success-foreground shadow-lg shadow-success/25',
-      activeIconColor: 'text-success-foreground',
-      activeBadgeClass: 'bg-success/20 text-success-foreground border-success/30',
-      badgeStatus: 'success' as ProjectStatusBadgeStatus,
-    },
-    {
-      id: 'completed',
-      label: 'المشاريع المنفذة',
-      count: stats.completed,
-      icon: CheckCircle,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
-      hoverColor: 'hover:bg-primary/20',
-      activeColor: 'bg-primary text-primary-foreground shadow-lg shadow-primary/25',
-      activeIconColor: 'text-primary-foreground',
-      activeBadgeClass: 'bg-primary/20 text-primary-foreground border-primary/30',
-      badgeStatus: 'completed' as ProjectStatusBadgeStatus,
-    },
-    {
-      id: 'planning',
-      label: 'تحت التخطيط',
-      count: stats.planning,
-      icon: Clock,
-      color: 'text-info',
-      bgColor: 'bg-info/10',
-      hoverColor: 'hover:bg-info/20',
-      activeColor: 'bg-info text-foreground shadow-lg shadow-info/25',
-      activeIconColor: 'text-foreground',
-      activeBadgeClass: 'bg-info/20 text-foreground border-info/30',
-      badgeStatus: 'info' as ProjectStatusBadgeStatus,
-    },
-    {
-      id: 'paused',
-      label: 'متوقفة مؤقتاً',
-      count: stats.paused,
-      icon: PauseCircle,
-      color: 'text-warning',
-      bgColor: 'bg-warning/10',
-      hoverColor: 'hover:bg-warning/20',
-      activeColor: 'bg-warning text-warning-foreground shadow-lg shadow-warning/25',
-      activeIconColor: 'text-warning-foreground',
-      activeBadgeClass: 'bg-warning/20 text-warning-foreground border-warning/30',
-      badgeStatus: 'warning' as ProjectStatusBadgeStatus,
-    },
-  ]
+  // استخدام configuration من الملف المشترك
+  const tabs = useMemo(() => createProjectTabsConfig(stats), [stats])
 
   // تعريف ProjectCard قبل استخدامها
   const ProjectCard = ({ project, index }: { project: ProjectWithLegacyFields; index: number }) => {
