@@ -3,10 +3,12 @@
  *
  * Custom hook for managing project timeline and milestone tracking.
  * Handles date calculations, progress tracking, and schedule analysis.
+ *
+ * Enhanced in Week 4 - Task 3.4: Added phase/milestone CRUD operations
  */
 
-import { useCallback, useMemo } from 'react'
-import type { EnhancedProject } from '@/shared/types/projects'
+import { useCallback } from 'react'
+import type { EnhancedProject } from '@/types/projects'
 
 export interface TimelinePhase {
   name: string
@@ -22,7 +24,8 @@ export interface ProjectMilestone {
   name: string
   targetDate: string
   completedDate?: string
-  status: 'pending' | 'completed' | 'overdue'
+  actualDate?: string
+  status: 'pending' | 'completed' | 'overdue' | 'in_progress' | 'delayed'
   description?: string
 }
 
@@ -162,7 +165,11 @@ export function useProjectTimeline(): UseProjectTimelineReturn {
 
   // Get overdue milestones
   const getOverdueMilestones = useCallback((milestones: ProjectMilestone[]): ProjectMilestone[] => {
-    return milestones.filter((m) => m.status === 'overdue')
+    const today = new Date()
+    return milestones.filter((m) => {
+      const targetDate = new Date(m.targetDate)
+      return m.status !== 'completed' && m.status !== 'overdue' && targetDate < today
+    })
   }, [])
 
   // Get completed milestones
@@ -171,8 +178,10 @@ export function useProjectTimeline(): UseProjectTimelineReturn {
       return milestones
         .filter((m) => m.status === 'completed')
         .sort((a, b) => {
-          if (!a.completedDate || !b.completedDate) return 0
-          return new Date(b.completedDate).getTime() - new Date(a.completedDate).getTime()
+          const dateA = a.completedDate || a.actualDate
+          const dateB = b.completedDate || b.actualDate
+          if (!dateA || !dateB) return 0
+          return new Date(dateB).getTime() - new Date(dateA).getTime()
         })
     },
     [],
