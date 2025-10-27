@@ -22,6 +22,11 @@ export class MockEnhancedProjectRepository implements IEnhancedProjectRepository
   private projects = new Map<string, any>()
   private tenderLinks = new Map<string, any>()
   private purchaseOrderLinks = new Map<string, Set<string>>()
+  private purchaseOrderRepository?: MockPurchaseOrderRepository
+
+  setPurchaseOrderRepository(repo: MockPurchaseOrderRepository) {
+    this.purchaseOrderRepository = repo
+  }
 
   // Basic CRUD Operations
   async getAll(): Promise<any[]> {
@@ -209,6 +214,22 @@ export class MockEnhancedProjectRepository implements IEnhancedProjectRepository
 
     await this.linkToPurchaseOrder(project.id, purchaseOrderId)
     return project
+  }
+
+  async getTotalPOCosts(projectId: string): Promise<number> {
+    const poIds = await this.getPurchaseOrdersByProject(projectId)
+    let total = 0
+
+    if (!this.purchaseOrderRepository) return total
+
+    for (const poId of poIds) {
+      const po = await this.purchaseOrderRepository.getById(poId)
+      if (po && typeof po.totalAmount === 'number') {
+        total += po.totalAmount
+      }
+    }
+
+    return total
   }
 
   // Analytics and Metrics
@@ -598,11 +619,19 @@ export class MockPurchaseOrderRepository implements IPurchaseOrderRepository {
 // ============================================================================
 
 export function createMockRepositories() {
+  const projectRepository = new MockEnhancedProjectRepository()
+  const tenderRepository = new MockTenderRepository()
+  const boqRepository = new MockBOQRepository()
+  const purchaseOrderRepository = new MockPurchaseOrderRepository()
+
+  // Wire up cross-repository dependencies
+  projectRepository.setPurchaseOrderRepository(purchaseOrderRepository)
+
   return {
-    projectRepository: new MockEnhancedProjectRepository(),
-    tenderRepository: new MockTenderRepository(),
-    boqRepository: new MockBOQRepository(),
-    purchaseOrderRepository: new MockPurchaseOrderRepository(),
+    projectRepository,
+    tenderRepository,
+    boqRepository,
+    purchaseOrderRepository,
   }
 }
 

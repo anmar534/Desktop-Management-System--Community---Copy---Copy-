@@ -103,4 +103,28 @@ describe('Purchase Order - Project Integration Tests', () => {
     const linkedPOs = await repos.projectRepository.getPurchaseOrdersByProject(project.id)
     expect(linkedPOs).toContain(mockPO.id)
   })
+
+  it('should calculate total PO costs for a project', async () => {
+    // Arrange
+    const mockProject = createMockProject({ name: 'Project Delta' })
+    const createdProject = await repos.projectRepository.create(mockProject)
+
+    const mockPO1 = createMockPurchaseOrder({ poNumber: 'PO-2025-006', totalAmount: 100000 })
+    const mockPO2 = createMockPurchaseOrder({ poNumber: 'PO-2025-007', totalAmount: 150000 })
+    const mockPO3 = createMockPurchaseOrder({ poNumber: 'PO-2025-008', totalAmount: 75000 })
+
+    await repos.purchaseOrderRepository.create(mockPO1)
+    await repos.purchaseOrderRepository.create(mockPO2)
+    await repos.purchaseOrderRepository.create(mockPO3)
+
+    await repos.projectRepository.linkToPurchaseOrder(createdProject.id, mockPO1.id as string)
+    await repos.projectRepository.linkToPurchaseOrder(createdProject.id, mockPO2.id as string)
+    await repos.projectRepository.linkToPurchaseOrder(createdProject.id, mockPO3.id as string)
+
+    // Act
+    const totalCost = await repos.projectRepository.getTotalPOCosts(createdProject.id)
+
+    // Assert
+    expect(totalCost).toBe(325000) // 100000 + 150000 + 75000
+  })
 })
