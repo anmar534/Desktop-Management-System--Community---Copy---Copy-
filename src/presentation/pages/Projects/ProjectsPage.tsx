@@ -1,10 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Card, CardContent } from '@/presentation/components/ui/card'
 import { Button } from '@/presentation/components/ui/button'
-import { InlineAlert } from '@/presentation/components/ui/inline-alert'
-import { Progress } from '@/presentation/components/ui/progress'
-import { Input } from '@/presentation/components/ui/input'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,22 +14,9 @@ import {
 import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
 import { NewProjectForm } from './components/NewProjectForm'
 import { Clients } from './components/Clients'
-import {
-  Building2,
-  Users,
-  DollarSign,
-  Calendar,
-  BarChart3,
-  AlertCircle,
-  ArrowRight,
-} from 'lucide-react'
-import { EntityActions } from '@/presentation/components/ui/ActionButtons'
-import { StatusBadge } from '@/presentation/components/ui/status-badge'
-import { motion } from 'framer-motion'
+import { AlertCircle, ArrowRight, Building2 } from 'lucide-react'
 import type { Project } from '@/data/centralData'
-import { getHealthColor } from '@/shared/utils/ui/statusColors'
 import { toast } from 'sonner'
-import { getStatusIcon, getProjectStatusBadge } from '@/shared/utils/projectStatusHelpers'
 import { createProjectTabsConfig } from '@/shared/config/projectTabsConfig'
 import { useProjectCurrencyFormatter } from '@/application/hooks/useProjectCurrencyFormatter'
 import { useProjectAggregates } from '@/application/hooks/useProjectAggregates'
@@ -41,6 +24,9 @@ import { useProjectsManagementData } from '@/application/hooks/useProjectsManage
 import { useProjectCostManagement } from '@/application/hooks/useProjectCostManagement'
 import { ProjectHeaderExtras } from '@/presentation/components/projects/ProjectHeaderExtras'
 import { ProjectQuickActions } from '@/presentation/components/projects/ProjectQuickActions'
+import { ProjectCard } from '@/presentation/components/projects/ProjectCard'
+import { motion } from 'framer-motion'
+import { StatusBadge } from '@/presentation/components/ui/status-badge'
 
 type ProjectWithLegacyFields = Project & { profit?: number; profitMargin?: number }
 
@@ -185,209 +171,7 @@ export function ProjectsView({
   // استخدام configuration من الملف المشترك
   const tabs = useMemo(() => createProjectTabsConfig(stats), [stats])
 
-  // تعريف ProjectCard قبل استخدامها
-  const ProjectCard = ({ project, index }: { project: ProjectWithLegacyFields; index: number }) => {
-    const statusBadge = getProjectStatusBadge(project.status)
-    const isCompleted = project.status === 'completed'
-    const profitValue = project.actualProfit ?? project.profit ?? 0
-    const profitClass = profitValue >= 0 ? 'text-success' : 'text-destructive'
-    const contractValueDisplay = project.contractValue
-      ? formatCurrencyValue(project.contractValue)
-      : project.value
-        ? formatCurrencyValue(project.value)
-        : project.budget
-          ? formatCurrencyValue(project.budget)
-          : 'غير محدد'
-    const estimatedCostDisplay = project.estimatedCost
-      ? formatCurrencyValue(project.estimatedCost)
-      : 'غير محددة'
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05 }}
-      >
-        <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300 group">
-          <CardContent className="p-4">
-            {/* العنوان والحالة */}
-            <div
-              className="flex items-start justify-between mb-3"
-              onClick={() => handleViewProject(project.id)}
-            >
-              <div className="flex items-center gap-2 flex-1">
-                {getStatusIcon(project.status)}
-                <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors cursor-pointer">
-                  {project.name || 'مشروع غير محدد'}
-                </h3>
-              </div>
-              <div className={`w-3 h-3 rounded-full ${getHealthColor(project.health)}`} />
-            </div>
-
-            {/* المعلومات الأساسية في grid متساوي */}
-            <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <div className="min-w-0">
-                  <span className="text-muted-foreground text-xs">العميل:</span>
-                  <div className="font-medium truncate">{project.client || 'غير محدد'}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div className="min-w-0">
-                  <span className="text-muted-foreground text-xs">التاريخ:</span>
-                  <div className="font-medium truncate">{project.startDate || 'غير محدد'}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                <div className="min-w-0">
-                  <span className="text-muted-foreground text-xs">النوع:</span>
-                  <div className="font-medium truncate">{project.type || 'غير محدد'}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <StatusBadge
-                  status={statusBadge.status}
-                  label={statusBadge.label}
-                  size="sm"
-                  className="whitespace-nowrap"
-                />
-              </div>
-            </div>
-
-            {/* المعلومات المالية في grid متساوي */}
-            <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="min-w-0">
-                  <span className="text-muted-foreground text-xs">قيمة العقد:</span>
-                  <div className="font-medium text-success truncate">{contractValueDisplay}</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="min-w-0">
-                  <span className="text-muted-foreground text-xs">التكلفة التقديرية:</span>
-                  <div className="font-medium text-warning truncate">{estimatedCostDisplay}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* عرض الربح المتوقع إذا توفرت البيانات */}
-            {project.contractValue && project.estimatedCost && (
-              <div className="mb-2 text-xs text-muted-foreground">
-                <span>الربح المتوقع: </span>
-                <span
-                  className={`font-medium ${project.contractValue - project.estimatedCost >= 0 ? 'text-success' : 'text-destructive'}`}
-                >
-                  {formatCurrencyValue(project.contractValue - project.estimatedCost)}
-                </span>
-              </div>
-            )}
-
-            {/* سطر ملخص صغير جدًا للبيانات المهمة عند توفرها (لا يزيد حجم البطاقة) */}
-            {isCompleted && (project.actualCost || project.spent) && (
-              <div className="mb-2 flex items-center gap-3 text-xs text-muted-foreground">
-                <span>
-                  الربح الفعلي:
-                  <span className={`mx-1 font-medium ${profitClass}`}>
-                    {formatCurrencyValue(profitValue)}
-                    {project.profitMargin && (
-                      <span className="text-xs opacity-75">
-                        {' '}
-                        ({project.profitMargin.toFixed(1)}%)
-                      </span>
-                    )}
-                  </span>
-                </span>
-                <span className="opacity-60">•</span>
-                <span>
-                  التكلفة الفعلية:
-                  <span className="mx-1 font-medium text-warning">
-                    {formatCurrencyValue(project.actualCost || project.spent || 0)}
-                  </span>
-                </span>
-              </div>
-            )}
-
-            {/* شريط التقدم */}
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground text-xs">نسبة الإنجاز</span>
-                <span className="font-medium text-foreground text-xs">
-                  {isCompleted ? '100' : project.progress || 0}%
-                </span>
-              </div>
-              <Progress value={isCompleted ? 100 : project.progress || 0} className="h-1.5" />
-            </div>
-
-            {/* قسم إدخال التكاليف للمشاريع المكتملة بدون تكاليف فعلية */}
-            {isCompleted && !project.actualCost && !project.spent && (
-              <InlineAlert
-                variant="warning"
-                title="إدخال التكلفة الفعلية للمشروع"
-                description={
-                  <span>
-                    قيمة العقد:{' '}
-                    <span className="font-semibold text-foreground">{contractValueDisplay}</span>
-                    {' • '}
-                    التكلفة التقديرية:{' '}
-                    <span className="font-semibold text-foreground">{estimatedCostDisplay}</span>
-                  </span>
-                }
-                icon={<DollarSign className="h-4 w-4" />}
-                className="mt-3"
-              >
-                <div className="flex gap-1">
-                  <Input
-                    type="number"
-                    placeholder="التكلفة الفعلية النهائية"
-                    value={costInputs[project.id] || ''}
-                    onChange={(e) => handleCostInputChange(project.id, e.target.value)}
-                    className="text-xs h-7 flex-1"
-                    min="0"
-                    step="0.01"
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleSaveCosts(project, formatCurrencyValue, onUpdateProject)}
-                    disabled={isSavingCosts[project.id] || !costInputs[project.id]}
-                    className="h-7 px-2 text-xs"
-                  >
-                    {isSavingCosts[project.id] ? '...' : 'حفظ'}
-                  </Button>
-                </div>
-              </InlineAlert>
-            )}
-
-            {/* الأيقونات في أسفل البطاقة */}
-            <div className="flex items-center justify-end gap-1 pt-3 mt-3 border-t border-border">
-              <EntityActions
-                onView={() => {
-                  handleViewProject(project.id)
-                }}
-                onEdit={() => {
-                  handleEditProject(project)
-                }}
-                onDelete={() => {
-                  void handleDeleteProject(project.id)
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    )
-  }
-
-  // مكون التبويبات - الآن يمكنه استخدام ProjectCard بأمان
+  // مكون التبويبات - استخدام ProjectCard المستخرج
   const TabsComponent = (
     <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <div className="p-4 border-b border-border">
@@ -457,7 +241,19 @@ export function ProjectsView({
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {getFilteredProjects(activeTab).map((project, index) => (
-              <ProjectCard key={project.id || index} project={project} index={index} />
+              <ProjectCard
+                key={project.id || index}
+                project={project}
+                index={index}
+                formatCurrencyValue={formatCurrencyValue}
+                costInputs={costInputs}
+                isSavingCosts={isSavingCosts}
+                onCostInputChange={handleCostInputChange}
+                onSaveCosts={(proj) => handleSaveCosts(proj, formatCurrencyValue, onUpdateProject)}
+                onViewProject={handleViewProject}
+                onEditProject={handleEditProject}
+                onDeleteProject={handleDeleteProject}
+              />
             ))}
           </div>
 

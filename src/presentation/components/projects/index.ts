@@ -9,6 +9,9 @@ export { ProjectAnalysisCards } from './ProjectAnalysisCards'
 export { ProjectHeaderExtras } from './ProjectHeaderExtras'
 export { ProjectQuickActions } from './ProjectQuickActions'
 
+// Phase 4 Components - ProjectCard
+export { ProjectCard, type ProjectCardProps } from './ProjectCard'
+
 // Week 1 Components (keeping only existing ones)
 export {
   ProjectStatusBadge,
