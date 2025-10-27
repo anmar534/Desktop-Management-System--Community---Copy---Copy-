@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/presentation/components/ui/alert-dialog'
-import { PageLayout, EmptyState, DetailCard } from '@/presentation/components/layout/PageLayout'
+import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
 import { NewProjectForm } from './components/NewProjectForm'
 import { Clients } from './components/Clients'
 import {
@@ -24,15 +24,8 @@ import {
   DollarSign,
   Calendar,
   BarChart3,
-  CheckCircle,
-  Plus,
-  FileText,
-  Award,
-  PlayCircle,
-  PauseCircle,
   AlertCircle,
   ArrowRight,
-  ListChecks,
 } from 'lucide-react'
 import { EntityActions } from '@/presentation/components/ui/ActionButtons'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
@@ -46,6 +39,8 @@ import { useProjectCurrencyFormatter } from '@/application/hooks/useProjectCurre
 import { useProjectAggregates } from '@/application/hooks/useProjectAggregates'
 import { useProjectsManagementData } from '@/application/hooks/useProjectsManagementData'
 import { useProjectCostManagement } from '@/application/hooks/useProjectCostManagement'
+import { ProjectHeaderExtras } from '@/presentation/components/projects/ProjectHeaderExtras'
+import { ProjectQuickActions } from '@/presentation/components/projects/ProjectQuickActions'
 
 type ProjectWithLegacyFields = Project & { profit?: number; profitMargin?: number }
 
@@ -163,163 +158,28 @@ export function ProjectsView({
   // استخدام hook لحساب بيانات الإدارة
   const projectsManagementData = useProjectsManagementData(stats)
 
-  // الإجراءات السريعة
-  const quickActions = [
-    {
-      label: 'إدارة العملاء',
-      icon: Users,
-      onClick: handleViewClients,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'تقارير المشاريع',
-      icon: FileText,
-      onClick: () => onSectionChange('reports'),
-      variant: 'outline' as const,
-    },
-    {
-      label: 'إحصائيات الأداء',
-      icon: BarChart3,
-      onClick: () => onSectionChange('reports'),
-      variant: 'outline' as const,
-    },
-    {
-      label: 'مشروع جديد',
-      icon: Plus,
-      onClick: handleNewProject,
-      primary: true,
-    },
-  ]
+  // استخدام مكون الإجراءات السريعة
+  const quickActions = ProjectQuickActions({
+    onViewClients: handleViewClients,
+    onViewReports: () => onSectionChange('reports'),
+    onNewProject: handleNewProject,
+  })
 
-  const headerMetadata = useMemo(
-    () => (
-      <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
-        <StatusBadge
-          status="default"
-          label={`الكل ${stats.total}`}
-          icon={ListChecks}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={stats.active > 0 ? 'info' : 'default'}
-          label={`نشطة ${stats.active}`}
-          icon={PlayCircle}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={stats.completed > 0 ? 'success' : 'default'}
-          label={`مكتملة ${stats.completed}`}
-          icon={CheckCircle}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={stats.paused > 0 ? 'warning' : 'default'}
-          label={`متوقفة ${stats.paused}`}
-          icon={PauseCircle}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status="info"
-          label={`معدل الإنجاز ${stats.averageProgress}%`}
-          icon={BarChart3}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={projectAggregates.totalNetProfit >= 0 ? 'success' : 'warning'}
-          label={`صافي الربح ${formatCurrencyValue(projectAggregates.totalNetProfit, { notation: 'compact' })}`}
-          icon={DollarSign}
-          size="sm"
-          className="shadow-none"
-        />
-      </div>
-    ),
-    [
-      formatCurrencyValue,
-      projectAggregates.totalNetProfit,
-      stats.averageProgress,
-      stats.active,
-      stats.completed,
-      stats.paused,
-      stats.total,
-    ],
-  )
-
-  // بطاقات تحليل المشاريع
-  const projectsAnalysisCards = useMemo(
-    () => (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <DetailCard
-          title="أداء الميزانية"
-          value={`${Math.abs(projectsManagementData.performance.budgetVariance).toFixed(1)}%`}
-          subtitle={
-            projectsManagementData.performance.budgetVariance < 0
-              ? 'توفير في التكلفة'
-              : 'تجاوز الميزانية'
-          }
-          icon={DollarSign}
-          color="text-success"
-          bgColor="bg-success/10"
-          trend={{
-            value: `${projectsManagementData.performance.budgetVariance.toFixed(1)}%`,
-            direction: projectsManagementData.performance.budgetVariance < 0 ? 'up' : 'down',
-          }}
-        />
-        <DetailCard
-          title="أداء الجدولة"
-          value={`${Math.abs(projectsManagementData.performance.scheduleVariance)}%`}
-          subtitle={
-            projectsManagementData.performance.scheduleVariance > 0
-              ? 'متقدم على الجدول'
-              : 'متأخر عن الجدول'
-          }
-          icon={Calendar}
-          color="text-primary"
-          bgColor="bg-primary/10"
-          trend={{
-            value: `${projectsManagementData.performance.scheduleVariance}%`,
-            direction: projectsManagementData.performance.scheduleVariance > 0 ? 'up' : 'down',
-          }}
-        />
-        <DetailCard
-          title="درجة الجودة"
-          value={`${projectsManagementData.performance.qualityScore}%`}
-          subtitle="معايير الجودة العامة"
-          icon={Award}
-          color="text-accent"
-          bgColor="bg-accent/10"
-          trend={{ value: '+2.1%', direction: 'up' }}
-        />
-        <DetailCard
-          title="رضا العملاء"
-          value={`${projectsManagementData.performance.clientSatisfaction}%`}
-          subtitle="تقييم العملاء"
-          icon={Users}
-          color="text-warning"
-          bgColor="bg-warning/10"
-          trend={{ value: '+0.8%', direction: 'up' }}
-        />
-      </div>
-    ),
-    [projectsManagementData],
-  )
-
+  // مكونات الهيدر (badges + analysis cards)
   const headerExtraContent = useMemo(
     () => (
-      <div className="space-y-4">
-        <div className="rounded-3xl border border-primary/20 bg-gradient-to-l from-primary/10 via-card/40 to-background p-5 shadow-sm">
-          {headerMetadata}
-        </div>
-        <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
-          {projectsAnalysisCards}
-        </div>
-      </div>
+      <ProjectHeaderExtras
+        badgesProps={{
+          stats,
+          totalNetProfit: projectAggregates.totalNetProfit,
+          formatCurrencyValue,
+        }}
+        analysisCardsProps={{
+          managementData: projectsManagementData,
+        }}
+      />
     ),
-    [headerMetadata, projectsAnalysisCards],
+    [stats, projectAggregates.totalNetProfit, formatCurrencyValue, projectsManagementData],
   )
 
   // استخدام configuration من الملف المشترك
