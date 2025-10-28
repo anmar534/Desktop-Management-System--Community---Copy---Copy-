@@ -15,7 +15,6 @@ import { lessonsLearnedService } from '../services/lessonsLearnedService'
 import { dataImportService } from './dataImport'
 import type { BidPerformance } from '../types/analytics'
 import type { Tender } from '../types/contracts'
-import type { LessonLearned } from '../services/lessonsLearnedService'
 
 /**
  * Migration source types
@@ -131,7 +130,7 @@ class DataMigrationService {
    */
   async migrateTenderData(
     tenders: Tender[],
-    config: MigrationConfig = {},
+    config: Partial<MigrationConfig> = {},
   ): Promise<MigrationResult> {
     const migrationId = this.generateMigrationId()
     const startTime = new Date().toISOString()
@@ -188,7 +187,7 @@ class DataMigrationService {
       result.status = 'failed'
       result.endTime = new Date().toISOString()
       result.errors.push({
-        record: null,
+        record: {} as Record<string, unknown>,
         error: error instanceof Error ? error.message : 'Unknown migration error',
         timestamp: new Date().toISOString(),
       })
@@ -201,7 +200,10 @@ class DataMigrationService {
   /**
    * Migrate from CSV file content
    */
-  async migrateFromCSV(csvContent: string, config: MigrationConfig = {}): Promise<MigrationResult> {
+  async migrateFromCSV(
+    csvContent: string,
+    config: Partial<MigrationConfig> = {},
+  ): Promise<MigrationResult> {
     try {
       // Use data import service to parse CSV
       const importResult = await dataImportService.importHistoricalTenders(csvContent, {
@@ -279,10 +281,10 @@ class DataMigrationService {
    */
   async getMigrationHistory(): Promise<MigrationHistory[]> {
     try {
-      const stored = await safeLocalStorage.getItem(this.migrationHistoryKey)
+      const stored = await safeLocalStorage.getItem<string>(this.migrationHistoryKey, '[]')
       return stored ? JSON.parse(stored) : []
-    } catch (error) {
-      console.error('Error getting migration history:', error)
+    } catch (_error) {
+      console.error('Error getting migration history:', _error)
       return []
     }
   }
@@ -328,7 +330,7 @@ class DataMigrationService {
           errors.push(`Record ${i + 1}: Invalid bid amount`)
         }
 
-        if (record.submissionDate && isNaN(Date.parse(record.submissionDate))) {
+        if (record.submissionDate && isNaN(Date.parse(String(record.submissionDate)))) {
           warnings.push(`Record ${i + 1}: Invalid submission date format`)
         }
       }
@@ -416,7 +418,7 @@ class DataMigrationService {
 
   private async processTenderBatch(
     tenders: Tender[],
-    config: MigrationConfig,
+    config: Partial<MigrationConfig>,
     result: MigrationResult,
   ): Promise<void> {
     for (const tender of tenders) {
@@ -436,7 +438,7 @@ class DataMigrationService {
       } catch (error) {
         result.failedRecords++
         result.errors.push({
-          record: tender,
+          record: tender as unknown as Record<string, unknown>,
           error: error instanceof Error ? error.message : 'Unknown error',
           timestamp: new Date().toISOString(),
         })
@@ -446,39 +448,43 @@ class DataMigrationService {
 
   private transformTenderToBidPerformance(
     tender: Tender,
-    config: MigrationConfig,
+    config: Partial<MigrationConfig>,
   ): Omit<BidPerformance, 'id' | 'createdAt' | 'updatedAt'> {
     // Apply field mapping if provided
     const mappedTender = config.fieldMapping
-      ? this.applyFieldMapping(tender, config.fieldMapping)
-      : tender
+      ? this.applyFieldMapping(tender as unknown as Record<string, unknown>, config.fieldMapping)
+      : (tender as unknown as Record<string, unknown>)
 
     // Apply transformation rules
     const transformedTender = config.transformationRules
       ? this.applyTransformationRules(mappedTender, config.transformationRules)
       : mappedTender
 
+    const tenderData = transformedTender as Record<string, unknown>
+    const originalTender = tender as unknown as Record<string, unknown>
+
     return {
-      tenderId: transformedTender.id || transformedTender.reference || `tender_${Date.now()}`,
-      submissionDate:
-        transformedTender.submissionDate ||
-        transformedTender.deadline ||
-        new Date().toISOString().split('T')[0],
+      tenderId: String(tenderData.id || originalTender.reference || `tender_${Date.now()}`),
+      submissionDate: String(
+        tenderData.submissionDate || tenderData.deadline || new Date().toISOString().split('T')[0],
+      ),
       outcome: this.inferOutcome(transformedTender),
-      bidAmount: Number(transformedTender.estimatedValue || transformedTender.value || 0),
-      estimatedValue: Number(transformedTender.estimatedValue || transformedTender.value || 0),
+      bidAmount: Number(tenderData.estimatedValue || tender.value || 0),
+      estimatedValue: Number(tenderData.estimatedValue || tender.value || 0),
       actualMargin: undefined,
       plannedMargin: this.inferPlannedMargin(transformedTender),
       winProbability: this.inferWinProbability(transformedTender),
-      competitorCount: Number(transformedTender.competitorCount || 5),
-      preparationTime: Number(transformedTender.preparationTime || 40),
-      category: transformedTender.category || 'General',
-      region: transformedTender.region || transformedTender.location || 'Unknown',
+      competitorCount: Number(originalTender.competitorCount || 5),
+      preparationTime: Number(originalTender.preparationTime || 40),
+      category: String(tender.category || 'General'),
+      region: String(originalTender.region || tender.location || 'Unknown'),
       client: {
-        id: `client_${(transformedTender.client || 'unknown').toLowerCase().replace(/\s+/g, '_')}`,
-        name: transformedTender.client || 'Unknown Client',
+        id: `client_${String(tender.client || 'unknown')
+          .toLowerCase()
+          .replace(/\s+/g, '_')}`,
+        name: String(tender.client || 'Unknown Client'),
         type: this.inferClientType(transformedTender),
-        paymentHistory: 'average',
+        paymentHistory: 'good' as const,
       },
       riskScore: this.inferRiskScore(transformedTender),
       metrics: {
@@ -533,18 +539,21 @@ class DataMigrationService {
           case 'trim':
             transformed[rule.field] = String(transformed[rule.field]).trim()
             break
-          case 'date_format':
+          case 'date_format': {
             // Convert date to ISO format
-            const date = new Date(transformed[rule.field])
+            const fieldValue = transformed[rule.field]
+            const date = new Date(fieldValue as string | number | Date)
             if (!isNaN(date.getTime())) {
               transformed[rule.field] = date.toISOString().split('T')[0]
             }
             break
-          case 'currency_format':
+          }
+          case 'currency_format': {
             // Remove currency symbols and convert to number
             const numStr = String(transformed[rule.field]).replace(/[^\d.-]/g, '')
             transformed[rule.field] = parseFloat(numStr) || 0
             break
+          }
         }
       }
     }
@@ -563,7 +572,7 @@ class DataMigrationService {
           (bp.submissionDate === bidPerformance.submissionDate &&
             bp.bidAmount === bidPerformance.bidAmount),
       )
-    } catch (error) {
+    } catch (_error) {
       return false
     }
   }
@@ -640,7 +649,7 @@ class DataMigrationService {
 
   private async restoreFromBackup(backupId: string): Promise<void> {
     const backupKey = `${this.backupPrefix}${backupId}`
-    const backupData = await safeLocalStorage.getItem(backupKey)
+    const backupData = await safeLocalStorage.getItem<string>(backupKey, '')
 
     if (!backupData) {
       throw new Error('Backup not found')
@@ -663,7 +672,14 @@ class DataMigrationService {
         if (performance.outcome === 'won' || performance.outcome === 'lost') {
           const lessonTemplate =
             await lessonsLearnedService.generateLessonFromBidPerformance(performance)
-          await lessonsLearnedService.createLesson(lessonTemplate as any)
+          if (lessonTemplate.title) {
+            await lessonsLearnedService.createLesson(
+              lessonTemplate as Omit<
+                import('../services/lessonsLearnedService').LessonLearned,
+                'id' | 'createdAt' | 'updatedAt' | 'version'
+              >,
+            )
+          }
           result.generatedLessons++
         }
       }
@@ -674,7 +690,7 @@ class DataMigrationService {
 
   private async saveMigrationHistory(
     result: MigrationResult,
-    config: MigrationConfig,
+    config: Partial<MigrationConfig>,
   ): Promise<void> {
     try {
       const history = await this.getMigrationHistory()
@@ -682,9 +698,9 @@ class DataMigrationService {
       const historyEntry: MigrationHistory = {
         migrationId: result.migrationId,
         result,
-        config,
+        config: { source: config.source || 'manual_entry', ...config },
         initiatedBy: 'system',
-        notes: `Migration from ${config.source}`,
+        notes: `Migration from ${config.source || 'manual_entry'}`,
       }
 
       history.push(historyEntry)
@@ -721,7 +737,7 @@ export async function migrateFromCSVFile(
   return dataMigrationService.migrateFromCSV(csvContent, config)
 }
 
-export async function validateMigrationData(data: any[]): Promise<{
+export async function validateMigrationData(data: Record<string, unknown>[]): Promise<{
   isValid: boolean
   errors: string[]
   warnings: string[]
