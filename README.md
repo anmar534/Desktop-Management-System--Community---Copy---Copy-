@@ -1,4 +1,3 @@
-
 # Desktop Management System (Community) (Copy) (Copy)
 
 This is a code bundle for Desktop Management System (Community) (Copy) (Copy). The original project is available at [Figma Design](https://www.figma.com/design/RUYv8ycbIa9PAGmZO6DVJR/Desktop-Management-System--Community---Copy---Copy-).
@@ -17,7 +16,7 @@ Run `npm run dev` to start the development server.
 ## Maintenance scripts
 
 - `npm run backup:export -- --output=./backups/latest.json` يعمل على توليد ملف JSON يحتوي على النسخ الاحتياطية المشفرة (يتبع مصفوفة الاحتفاظ 10×30) لاستخدامه في الأرشفة أو التدقيق.
-  
+
 ## Storage (important)
 
 - Single source of truth: electron-store via the unified storage layer in `src/utils/storage.ts`.
@@ -28,7 +27,7 @@ Run `npm run dev` to start the development server.
   - Prefer going through `src/services/centralDataService.ts` for all CRUD on tenders, projects, clients, BOQ, etc.
 - In dev/test (jsdom), the storage layer falls back to browser localStorage internally to keep integration tests working. This is encapsulated; do not call localStorage yourself.
 - Direct `localStorage` access is blocked at runtime (guard) and is silent in production (debug-only in dev/test).
-  
+
 ## Pricing Engine (Unified BOQ – 2025-09)
 
 تم توحيد نظام التسعير بالكامل بالاعتماد على مصدر واحد: بيانات الـ BOQ المركزية (CentralDataService + PricingEngine). جميع المسارات القديمة (legacy arithmetic, snapshots, dual-write, diff) أزيلت. راجع ملف `MIGRATION_2025_BOQ_UNIFICATION.md` للتفاصيل التاريخية.
@@ -79,3 +78,89 @@ Extension Rules:
 - تسهيل الصيانة وخفض عدد الملفات والوحدات.
 
 في حال الحاجة مستقبلاً لتدقيق تاريخي (Historical Reconstruction) يمكن بناء export خارجي أو Layer تحليل منفصل دون إعادة أي منطق snapshot.
+
+## 📚 Documentation
+
+### Core Systems
+
+- **[Tenders & Projects Integration Analysis](./TENDERS_PROJECTS_INTEGRATION_ANALYSIS_REPORT.md)** - تحليل شامل لنظام المنافسات والمشاريع والتكامل بينهما
+- **[Migration Guide - BOQ Unification](./MIGRATION_2025_BOQ_UNIFICATION.md)** - دليل توحيد نظام التسعير
+- **[Architecture - Pricing Layer](./ARCHITECTURE_PRICING_LAYER.md)** - البنية المعمارية لطبقة التسعير
+
+### Development Guides
+
+- **[Coding Standards](./docs/CODING_STANDARDS.md)** - معايير البرمجة
+- **[API Documentation](./docs/API_DOCUMENTATION.md)** - توثيق API
+- **[Testing Guide](./docs/AUTOMATED_TESTING_RESULTS.md)** - دليل الاختبارات
+
+### Historical Documentation
+
+- **[Cleanup History](./archive/docs/cleanup-history/)** - سجل عمليات التنظيف والتحسين السابقة
+
+## 🏗️ Project Structure
+
+```
+src/
+├── repository/              # Data access layer (Repository Pattern)
+│   ├── tender.repository.ts
+│   ├── project.repository.ts
+│   └── providers/          # Storage providers (local, remote)
+├── presentation/           # UI Components
+│   ├── pages/
+│   │   ├── Tenders/       # نظام المنافسات
+│   │   └── Projects/      # نظام المشاريع
+│   └── components/
+├── services/              # Business logic services
+│   ├── pricingEngine.ts   # محرك التسعير الموحد
+│   └── centralDataService.ts
+├── stores/                # Zustand state management
+├── utils/                 # Utility functions
+│   └── storage.ts         # Unified storage layer
+└── config/               # Configuration files
+```
+
+## 🔄 Development Workflow
+
+### Branch Strategy
+
+- `my-electron-app` - Default/Production branch
+- `cleanup/remove-deprecated-files` - Current cleanup work
+- Feature branches: `feature/[feature-name]`
+- Bug fixes: `fix/[bug-name]`
+
+### Commit Guidelines
+
+- Follow conventional commits: `type(scope): message`
+- Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+- Pre-commit hooks run linting and formatting automatically
+
+## 🧪 Quality Assurance
+
+### Code Quality
+
+- ESLint for code linting
+- Prettier for code formatting
+- TypeScript strict mode enabled
+- Pre-commit hooks for automated checks
+
+### Testing Strategy
+
+- Unit tests with Vitest
+- Integration tests for critical paths
+- E2E tests with Playwright for desktop app
+- Coverage reports available
+
+## 🚀 Performance Optimization
+
+### Current Optimizations
+
+- Unified pricing calculation (single source of truth)
+- Async storage layer with caching
+- Component lazy loading
+- Zustand for efficient state management
+
+### Monitoring
+
+- Analytics tracking in `src/analytics/`
+- Performance metrics collection
+- Error tracking and logging

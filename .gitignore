@@ -76,11 +76,16 @@ exported-data/
 *.ts.*.bak
 *.js.*.bak
 *.json.*.bak
+*.backup
+*_backup
+*.bak
 
 # Development artifacts
 layout_dump.txt
 pricing-deps.dot
 *.dot
+filtered.txt
+filtered2.txt
 
 # Archive working files (keep archive/ but ignore temp files)
 archive/.temp/
