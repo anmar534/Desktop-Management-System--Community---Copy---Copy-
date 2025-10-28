@@ -1,8 +1,13 @@
 /**
- * Project Auto-Creation Type Definitions
- * Types and interfaces for creating projects from tenders
+ * Project Auto-Creation Types
+ * Type definitions for project auto-creation service
  */
 
+import type { Project } from '@/data/centralData'
+
+/**
+ * Project creation options
+ */
 export interface ProjectCreationOptions {
   copyPricingData?: boolean
   copyQuantityTable?: boolean
@@ -12,10 +17,13 @@ export interface ProjectCreationOptions {
   inheritBudget?: boolean
 }
 
+/**
+ * Project creation result
+ */
 export interface ProjectCreationResult {
   success: boolean
   projectId?: string
-  project?: import('@/data/centralData').Project
+  project?: Project
   errors?: string[]
   warnings?: string[]
   relationsCreated?: boolean
