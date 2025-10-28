@@ -13,9 +13,11 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { Trophy, Save, ArrowRight, FileText } from 'lucide-react'
 import { PageLayout } from '@/presentation/components/layout/PageLayout'
-import { TenderBasicInfoSection } from '@/presentation/components/tenders/TenderBasicInfoSection'
-import { QuantityTableSection } from '@/presentation/components/tenders/QuantityTableSection'
-import { AttachmentsSection } from '@/presentation/components/tenders/AttachmentsSection'
+import {
+  TenderBasicInfoSection,
+  QuantityTableSection,
+  AttachmentsSection,
+} from '@/presentation/components/tenders'
 import type { QuantityItem } from '@/shared/types/contracts'
 import {
   parseNumericValue,

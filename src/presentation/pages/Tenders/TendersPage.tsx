@@ -34,17 +34,19 @@ import {
 } from '@/shared/utils/tender/tenderEventHandlers'
 
 // Components
-import { TenderTabs } from '@/presentation/components/tenders/TenderTabs'
-import { TenderDeleteDialog } from '@/presentation/components/tenders/TenderDialogs'
-import { TenderPerformanceCards } from '@/presentation/components/tenders/TenderPerformanceCards'
+import {
+  TenderTabs,
+  TenderDeleteDialog,
+  TenderPerformanceCards,
+  TenderDetails,
+  EnhancedTenderCard,
+} from '@/presentation/components/tenders'
 import { SubmitReviewDialog } from './components/SubmitReviewDialog'
 
 import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { TenderPricingPage, type TenderWithPricingSources } from './TenderPricingPage'
-import { TenderDetails } from '@/presentation/components/tenders/TenderDetails'
 import { TenderResultsManager } from './components/TenderResultsManager'
-import { EnhancedTenderCard } from '@/presentation/components/tenders/EnhancedTenderCard'
 
 import { useFinancialState } from '@/application/context'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'

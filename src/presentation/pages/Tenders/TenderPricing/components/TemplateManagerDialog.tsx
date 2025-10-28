@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/presentation/components/ui/dialog'
-import { PricingTemplateManager } from '@/presentation/components/tenders/PricingTemplateManager'
+import { PricingTemplateManager } from '@/presentation/components/tenders'
 
 interface NewPricingTemplate {
   name: string
