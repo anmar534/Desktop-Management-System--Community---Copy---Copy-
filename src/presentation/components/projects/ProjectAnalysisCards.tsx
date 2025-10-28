@@ -1,17 +1,18 @@
+import { memo } from 'react'
 import { DetailCard } from '@/presentation/components/layout/PageLayout'
 import { DollarSign, Calendar, Award, Users } from 'lucide-react'
 import type { ProjectsManagementData } from '@/application/hooks/useProjectsManagementData'
 
 /**
  * مكون بطاقات تحليل المشاريع
- * 
+ *
  * ⚠️ CRITICAL: هذا المكون تم فقدانه في محاولة الـ refactoring السابقة!
  * يجب الحفاظ على:
  * - Grid layout: "grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
  * - الألوان الدقيقة لكل بطاقة (success, primary, accent, warning)
  * - اتجاهات الـ trends الشرطية
  * - النصوص الفرعية الشرطية
- * 
+ *
  * الخسارة السابقة: 4 DetailCard components مع التنسيق الكامل
  * الاستعادة: Phase 3 - 100% design preservation
  */
@@ -20,7 +21,9 @@ interface ProjectAnalysisCardsProps {
   managementData: ProjectsManagementData
 }
 
-export function ProjectAnalysisCards({ managementData }: ProjectAnalysisCardsProps) {
+const ProjectAnalysisCardsComponent = function ProjectAnalysisCards({
+  managementData,
+}: ProjectAnalysisCardsProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <DetailCard
@@ -72,3 +75,6 @@ export function ProjectAnalysisCards({ managementData }: ProjectAnalysisCardsPro
     </div>
   )
 }
+
+// Memoize to prevent re-rendering when managementData hasn't changed
+export const ProjectAnalysisCards = memo(ProjectAnalysisCardsComponent)

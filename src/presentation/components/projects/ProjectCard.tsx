@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Card, CardContent } from '@/presentation/components/ui/card'
 import { Button } from '@/presentation/components/ui/button'
 import { Input } from '@/presentation/components/ui/input'
@@ -13,10 +14,10 @@ import type { Project } from '@/data/centralData'
 
 /**
  * مكون بطاقة المشروع
- * 
+ *
  * ⚠️ CRITICAL DESIGN PRESERVATION:
  * هذا المكون تم استخراجه في Phase 4 مع الحفاظ على 100% من التصميم الأصلي
- * 
+ *
  * العناصر الحرجة المحفوظة:
  * - Motion animations: opacity 0→1, y: 20→0, delay based on index
  * - Card styling: shadow-sm hover:shadow-md transition-all duration-300 group
@@ -30,7 +31,7 @@ import type { Project } from '@/data/centralData'
  * - All icon sizes: h-4 w-4
  * - All text sizes: text-xs, text-sm, text-base
  * - All spacing: gap-2, gap-3, mb-2, mb-3, p-4, etc.
- * 
+ *
  * تحذير: أي تغيير في هذه العناصر سيؤدي إلى فقدان التصميم!
  */
 
@@ -49,7 +50,7 @@ export interface ProjectCardProps {
   onDeleteProject: (projectId: string) => void
 }
 
-export function ProjectCard({
+const ProjectCardComponent = function ProjectCard({
   project,
   index,
   formatCurrencyValue,
@@ -173,7 +174,10 @@ export function ProjectCard({
                 <span className={`mx-1 font-medium ${profitClass}`}>
                   {formatCurrencyValue(profitValue)}
                   {project.profitMargin && (
-                    <span className="text-xs opacity-75"> ({project.profitMargin.toFixed(1)}%)</span>
+                    <span className="text-xs opacity-75">
+                      {' '}
+                      ({project.profitMargin.toFixed(1)}%)
+                    </span>
                   )}
                 </span>
               </span>
@@ -205,7 +209,8 @@ export function ProjectCard({
               title="إدخال التكلفة الفعلية للمشروع"
               description={
                 <span>
-                  قيمة العقد: <span className="font-semibold text-foreground">{contractValueDisplay}</span>
+                  قيمة العقد:{' '}
+                  <span className="font-semibold text-foreground">{contractValueDisplay}</span>
                   {' • '}
                   التكلفة التقديرية:{' '}
                   <span className="font-semibold text-foreground">{estimatedCostDisplay}</span>
@@ -256,3 +261,6 @@ export function ProjectCard({
     </motion.div>
   )
 }
+
+// Memoize ProjectCard to prevent unnecessary re-renders
+export const ProjectCard = memo(ProjectCardComponent)

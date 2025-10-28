@@ -1,14 +1,22 @@
+import { memo } from 'react'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
-import { ListChecks, PlayCircle, CheckCircle, PauseCircle, BarChart3, DollarSign } from 'lucide-react'
+import {
+  ListChecks,
+  PlayCircle,
+  CheckCircle,
+  PauseCircle,
+  BarChart3,
+  DollarSign,
+} from 'lucide-react'
 
 /**
  * مكون عرض الـ Badges في رأس صفحة المشاريع
- * 
+ *
  * ⚠️ CRITICAL: يجب الحفاظ على التصميم الدقيق:
  * - shadow-none على جميع الـ badges
  * - size="sm" على جميع الـ badges
  * - الألوان الشرطية حسب القيم
- * 
+ *
  * هذا المكون تم استخراجه في Phase 3 لتجنب فقدان التصميم
  */
 
@@ -27,7 +35,7 @@ interface ProjectHeaderBadgesProps {
   formatCurrencyValue: (value: number, options?: { notation?: 'standard' | 'compact' }) => string
 }
 
-export function ProjectHeaderBadges({
+const ProjectHeaderBadgesComponent = function ProjectHeaderBadges({
   stats,
   totalNetProfit,
   formatCurrencyValue,
@@ -79,3 +87,6 @@ export function ProjectHeaderBadges({
     </div>
   )
 }
+
+// Memoize to prevent unnecessary re-renders when stats don't change
+export const ProjectHeaderBadges = memo(ProjectHeaderBadgesComponent)
