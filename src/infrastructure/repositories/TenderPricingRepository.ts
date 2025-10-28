@@ -397,11 +397,11 @@ export class TenderPricingRepository {
         { skipRefresh: true },
       )
 
-      // Emit event
+      // Emit event without skipRefresh to ensure tender list is updated with new progress data
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent(APP_EVENTS.TENDER_UPDATED, {
-            detail: { tenderId, skipRefresh: true },
+            detail: { tenderId },
           }),
         )
       }

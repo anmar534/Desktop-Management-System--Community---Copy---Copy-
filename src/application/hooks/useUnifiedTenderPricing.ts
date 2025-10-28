@@ -25,7 +25,6 @@ export interface UnifiedTenderPricingResult {
   divergence?: { hasDivergence: boolean }
 }
 
-
 export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult {
   const tenderId = tender?.id
   // snapshot أزيل – لا حاجة لحالة منفصلة
@@ -34,10 +33,9 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
   const [version, setVersion] = useState(0)
   const [loading, setLoading] = useState(false)
   const [boqData, setBoqData] = useState<BOQData | null>(null)
-  
 
   const refresh = useCallback(async () => {
-    setVersion(v => v + 1)
+    setVersion((v) => v + 1)
   }, [])
 
   const boqRepository = useRepository(getBOQRepository)
@@ -49,16 +47,25 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
 
     const handler = (event: CustomEvent<{ tenderId?: string }>) => {
       if (event.detail?.tenderId === tenderId) {
-        console.log('[useUnifiedTenderPricing] BOQ updated for tender', tenderId, 'refreshing data (version increment)')
+        console.log(
+          '[useUnifiedTenderPricing] BOQ updated for tender',
+          tenderId,
+          'refreshing data (version increment)',
+        )
         void refresh()
       }
     }
 
-  const eventNames: (typeof APP_EVENTS.BOQ_UPDATED | 'boqUpdated')[] = [APP_EVENTS.BOQ_UPDATED, 'boqUpdated']
-    eventNames.forEach(eventName => window.addEventListener(eventName, handler as EventListener))
+    const eventNames: (typeof APP_EVENTS.BOQ_UPDATED | 'boqUpdated')[] = [
+      APP_EVENTS.BOQ_UPDATED,
+      'boqUpdated',
+    ]
+    eventNames.forEach((eventName) => window.addEventListener(eventName, handler as EventListener))
 
     return () => {
-      eventNames.forEach(eventName => window.removeEventListener(eventName, handler as EventListener))
+      eventNames.forEach((eventName) =>
+        window.removeEventListener(eventName, handler as EventListener),
+      )
     }
   }, [refresh, tenderId])
 
@@ -76,7 +83,52 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
       setLoading(true)
       setError(null)
       try {
-        const central = await boqRepository.getByTenderId(tenderId)
+        let central = await boqRepository.getByTenderId(tenderId)
+
+        // Initialize BOQ from legacy tender data if not exists
+        if (!central && tender) {
+          const legacyItems =
+            tender.quantityTable ||
+            tender.quantities ||
+            tender.items ||
+            tender.boqItems ||
+            tender.quantityItems ||
+            []
+          if (Array.isArray(legacyItems) && legacyItems.length > 0) {
+            console.log('[useUnifiedTenderPricing] Initializing BOQ from legacy tender data', {
+              tenderId,
+              itemCount: legacyItems.length,
+            })
+
+            // Create initial BOQ with legacy items
+            const boqItems = legacyItems.map((item: any, index: number) => ({
+              id: item.id || `item-${index + 1}`,
+              description: item.description || item.canonicalDescription || '',
+              canonicalDescription: item.canonicalDescription || item.description || '',
+              unit: item.unit || item.uom || 'وحدة',
+              quantity: item.quantity || 0,
+              unitPrice: item.unitPrice || 0,
+              totalPrice: item.totalPrice || 0,
+              category: 'BOQ' as const,
+            }))
+
+            const totalValue = boqItems.reduce(
+              (sum: number, item: any) => sum + (item.totalPrice || 0),
+              0,
+            )
+
+            const initialBOQ = {
+              tenderId,
+              items: boqItems,
+              totalValue,
+              lastUpdated: new Date().toISOString(),
+            }
+
+            await boqRepository.createOrUpdate(initialBOQ, { skipRefresh: true })
+            central = await boqRepository.getByTenderId(tenderId)
+          }
+        }
+
         if (!cancelled) {
           setBoqData(central)
         }
@@ -97,25 +149,45 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
     return () => {
       cancelled = true
     }
-  }, [boqRepository, tenderId, version])
+  }, [boqRepository, tenderId, version, tender])
 
   const value = useMemo<UnifiedTenderPricingResult>(() => {
     if (!tenderId) {
-      return { status: 'empty', items: [], totals: null, meta: null, source: 'none', divergence: { hasDivergence: false }, refresh }
+      return {
+        status: 'empty',
+        items: [],
+        totals: null,
+        meta: null,
+        source: 'none',
+        divergence: { hasDivergence: false },
+        refresh,
+      }
     }
 
     if (loading) {
-      return { status: 'loading', items: [], totals: null, meta: null, source: 'none', refresh, divergence: { hasDivergence: false } }
+      return {
+        status: 'loading',
+        items: [],
+        totals: null,
+        meta: null,
+        source: 'none',
+        refresh,
+        divergence: { hasDivergence: false },
+      }
     }
 
     const central = boqData
     const centralItems: any[] = central?.items ?? []
-    const centralHasPricing = centralItems.some(i => (i.unitPrice || i.totalPrice || i.estimated?.unitPrice || i.estimated?.totalPrice))
+    const centralHasPricing = centralItems.some(
+      (i) => i.unitPrice || i.totalPrice || i.estimated?.unitPrice || i.estimated?.totalPrice,
+    )
     const centralQualityCheck = {
       hasItems: centralItems.length > 0,
       hasPricing: centralHasPricing,
-      hasValidTotals: centralItems.some(i => (i.totalPrice || i.estimated?.totalPrice || 0) > 0),
-      itemsWithZeroTotals: centralItems.filter(i => (i.totalPrice || i.estimated?.totalPrice || 0) === 0).length
+      hasValidTotals: centralItems.some((i) => (i.totalPrice || i.estimated?.totalPrice || 0) > 0),
+      itemsWithZeroTotals: centralItems.filter(
+        (i) => (i.totalPrice || i.estimated?.totalPrice || 0) === 0,
+      ).length,
     }
 
     let chosen: any[] = []
@@ -125,7 +197,12 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
       chosen = centralItems.map((it, idx) => {
         const clean = (s: any) => (s == null ? '' : String(s).trim())
         const fallback = `البند ${idx + 1}`
-        const desc = clean(it.canonicalDescription) || clean(it.description) || clean(it.originalDescription) || clean(it.specifications) || fallback
+        const desc =
+          clean(it.canonicalDescription) ||
+          clean(it.description) ||
+          clean(it.originalDescription) ||
+          clean(it.specifications) ||
+          fallback
         const unit = clean(it.unit || it.uom) || 'وحدة'
         return {
           ...it,
@@ -140,7 +217,13 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
       source = 'central-boq'
       console.log('[useUnifiedTenderPricing] Using central BOQ:', centralQualityCheck)
     } else {
-      const legacy = tender.quantityTable || tender.quantities || tender.items || tender.boqItems || tender.quantityItems || []
+      const legacy =
+        tender.quantityTable ||
+        tender.quantities ||
+        tender.items ||
+        tender.boqItems ||
+        tender.quantityItems ||
+        []
       if (Array.isArray(legacy) && legacy.length > 0) {
         chosen = legacy
         source = 'legacy'
@@ -151,28 +234,71 @@ export function useUnifiedTenderPricing(tender: any): UnifiedTenderPricingResult
     if (central?.totals) {
       totals = central.totals
     } else if (central) {
-      const fields = ['totalValue','vatAmount','vatRate','totalWithVat','profit','administrative','operational','adminOperational','profitPercentage','adminOperationalPercentage','administrativePercentage','operationalPercentage','baseSubtotal'] as const
-      const hasAny = fields.some(f => (central as any)[f] !== undefined)
+      const fields = [
+        'totalValue',
+        'vatAmount',
+        'vatRate',
+        'totalWithVat',
+        'profit',
+        'administrative',
+        'operational',
+        'adminOperational',
+        'profitPercentage',
+        'adminOperationalPercentage',
+        'administrativePercentage',
+        'operationalPercentage',
+        'baseSubtotal',
+      ] as const
+      const hasAny = fields.some((f) => (central as any)[f] !== undefined)
       if (hasAny) {
         totals = {}
-        for (const f of fields) if ((central as any)[f] !== undefined) (totals as any)[f] = (central as any)[f]
+        for (const f of fields)
+          if ((central as any)[f] !== undefined) (totals as any)[f] = (central as any)[f]
       }
     }
 
     if (!totals && chosen.length > 0) {
-      const totalValue = chosen.reduce((s, it) => s + (it.totalPrice || it.estimated?.totalPrice || 0), 0)
+      const totalValue = chosen.reduce(
+        (s, it) => s + (it.totalPrice || it.estimated?.totalPrice || 0),
+        0,
+      )
       totals = { totalValue }
     }
 
     const meta = central?.meta ?? null
 
     if (error) {
-      return { status: 'error', items: chosen, totals, meta, source, refresh, error, divergence: { hasDivergence: false } }
+      return {
+        status: 'error',
+        items: chosen,
+        totals,
+        meta,
+        source,
+        refresh,
+        error,
+        divergence: { hasDivergence: false },
+      }
     }
     if (chosen.length === 0) {
-      return { status: 'empty', items: [], totals: null, meta: null, source: 'none', refresh, divergence: { hasDivergence: false } }
+      return {
+        status: 'empty',
+        items: [],
+        totals: null,
+        meta: null,
+        source: 'none',
+        refresh,
+        divergence: { hasDivergence: false },
+      }
     }
-    return { status: 'ready', items: chosen, totals, meta, source, refresh, divergence: { hasDivergence: false } }
+    return {
+      status: 'ready',
+      items: chosen,
+      totals,
+      meta,
+      source,
+      refresh,
+      divergence: { hasDivergence: false },
+    }
   }, [boqData, error, loading, refresh, tender, tenderId])
 
   return value
