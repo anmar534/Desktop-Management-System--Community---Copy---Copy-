@@ -36,7 +36,7 @@ import type {
   TaskDepartmentMetrics,
   ComplianceTrend,
   ChannelMetrics,
-  TemplateMetrics
+  TemplateMetrics,
 } from '../types/workflowAutomation'
 
 class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
@@ -53,25 +53,27 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     WORKFLOW_STATISTICS: 'workflow_statistics',
     TASK_METRICS: 'workflow_task_metrics',
     COMPLIANCE_METRICS: 'workflow_compliance_metrics',
-    NOTIFICATION_METRICS: 'workflow_notification_metrics'
+    NOTIFICATION_METRICS: 'workflow_notification_metrics',
   } as const
 
   // Tender Opportunity Alerts
-  async createTenderAlert(alert: Omit<TenderAlert, 'id' | 'createdAt' | 'updatedAt' | 'triggerCount'>): Promise<TenderAlert> {
+  async createTenderAlert(
+    alert: Omit<TenderAlert, 'id' | 'createdAt' | 'updatedAt' | 'triggerCount'>,
+  ): Promise<TenderAlert> {
     try {
       const alerts = await asyncStorage.getItem(this.STORAGE_KEYS.TENDER_ALERTS, [])
-      
+
       const newAlert: TenderAlert = {
         ...alert,
         id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        triggerCount: 0
+        triggerCount: 0,
       }
 
       alerts.push(newAlert)
       await asyncStorage.setItem(this.STORAGE_KEYS.TENDER_ALERTS, alerts)
-      
+
       return newAlert
     } catch (error) {
       console.error('Error creating tender alert:', error)
@@ -102,7 +104,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     try {
       const alerts = await asyncStorage.getItem(this.STORAGE_KEYS.TENDER_ALERTS, [])
       const alertIndex = alerts.findIndex((alert: TenderAlert) => alert.id === alertId)
-      
+
       if (alertIndex === -1) {
         throw new Error('تنبيه الفرص التجارية غير موجود')
       }
@@ -110,12 +112,12 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       const updatedAlert = {
         ...alerts[alertIndex],
         ...updates,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       alerts[alertIndex] = updatedAlert
       await asyncStorage.setItem(this.STORAGE_KEYS.TENDER_ALERTS, alerts)
-      
+
       return updatedAlert
     } catch (error) {
       console.error('Error updating tender alert:', error)
@@ -130,7 +132,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     try {
       const alerts = await asyncStorage.getItem(this.STORAGE_KEYS.TENDER_ALERTS, [])
       const filteredAlerts = alerts.filter((alert: TenderAlert) => alert.id !== alertId)
-      
+
       if (filteredAlerts.length === alerts.length) {
         throw new Error('تنبيه الفرص التجارية غير موجود')
       }
@@ -165,8 +167,16 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
           publishDate: new Date().toISOString(),
           location: 'Riyadh, Saudi Arabia',
           locationAr: 'الرياض، المملكة العربية السعودية',
-          requirements: ['ISO 9001 Certification', 'Previous hospital construction experience', 'Minimum 10 years experience'],
-          requirementsAr: ['شهادة الأيزو 9001', 'خبرة سابقة في إنشاء المستشفيات', 'خبرة لا تقل عن 10 سنوات'],
+          requirements: [
+            'ISO 9001 Certification',
+            'Previous hospital construction experience',
+            'Minimum 10 years experience',
+          ],
+          requirementsAr: [
+            'شهادة الأيزو 9001',
+            'خبرة سابقة في إنشاء المستشفيات',
+            'خبرة لا تقل عن 10 سنوات',
+          ],
           documents: [
             {
               id: 'doc_1',
@@ -174,8 +184,8 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
               nameAr: 'المواصفات الفنية',
               type: 'PDF',
               url: '/documents/tech_specs.pdf',
-              size: 2048000
-            }
+              size: 2048000,
+            },
           ],
           contactInfo: {
             name: 'Ahmed Al-Rashid',
@@ -183,18 +193,18 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
             email: 'ahmed.rashid@moh.gov.sa',
             phone: '+966-11-123-4567',
             address: 'Ministry of Health, Riyadh',
-            addressAr: 'وزارة الصحة، الرياض'
+            addressAr: 'وزارة الصحة، الرياض',
           },
           source: 'Government Portal',
           relevanceScore: 0.92,
           matchingCriteria: ['Healthcare', 'Construction', 'Large Scale'],
-          estimatedWinProbability: 0.75
-        }
+          estimatedWinProbability: 0.75,
+        },
       ]
 
       // Store opportunities for future reference
       await asyncStorage.setItem(this.STORAGE_KEYS.TENDER_OPPORTUNITIES, mockOpportunities)
-      
+
       return mockOpportunities
     } catch (error) {
       console.error('Error checking tender opportunities:', error)
@@ -203,23 +213,25 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
   }
 
   // Task Assignment
-  async createTask(task: Omit<WorkflowTask, 'id' | 'createdAt' | 'updatedAt'>): Promise<WorkflowTask> {
+  async createTask(
+    task: Omit<WorkflowTask, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<WorkflowTask> {
     try {
       const tasks = await asyncStorage.getItem(this.STORAGE_KEYS.TASKS, [])
-      
+
       const newTask: WorkflowTask = {
         ...task,
         id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       tasks.push(newTask)
       await asyncStorage.setItem(this.STORAGE_KEYS.TASKS, tasks)
-      
+
       // Execute assignment rules
       const assignedTask = await this.executeAssignmentRules(newTask)
-      
+
       return assignedTask
     } catch (error) {
       console.error('Error creating task:', error)
@@ -240,20 +252,21 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
   async getTasks(filters?: TaskFilters): Promise<WorkflowTask[]> {
     try {
       let tasks = await asyncStorage.getItem(this.STORAGE_KEYS.TASKS, [])
-      
+
       if (filters) {
         tasks = tasks.filter((task: WorkflowTask) => {
           if (filters.status && !filters.status.includes(task.status)) return false
           if (filters.priority && !filters.priority.includes(task.priority)) return false
           if (filters.assignedTo && task.assignedTo !== filters.assignedTo) return false
           if (filters.type && !filters.type.includes(task.type)) return false
-          if (filters.dueDateFrom && task.dueDate && task.dueDate < filters.dueDateFrom) return false
+          if (filters.dueDateFrom && task.dueDate && task.dueDate < filters.dueDateFrom)
+            return false
           if (filters.dueDateTo && task.dueDate && task.dueDate > filters.dueDateTo) return false
-          if (filters.tags && !filters.tags.some(tag => task.tags.includes(tag))) return false
+          if (filters.tags && !filters.tags.some((tag) => task.tags.includes(tag))) return false
           return true
         })
       }
-      
+
       return tasks
     } catch (error) {
       console.error('Error getting tasks:', error)
@@ -265,7 +278,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     try {
       const tasks = await asyncStorage.getItem(this.STORAGE_KEYS.TASKS, [])
       const taskIndex = tasks.findIndex((task: WorkflowTask) => task.id === taskId)
-      
+
       if (taskIndex === -1) {
         throw new Error('المهمة غير موجودة')
       }
@@ -273,12 +286,12 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       const updatedTask = {
         ...tasks[taskIndex],
         ...updates,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       tasks[taskIndex] = updatedTask
       await asyncStorage.setItem(this.STORAGE_KEYS.TASKS, tasks)
-      
+
       return updatedTask
     } catch (error) {
       console.error('Error updating task:', error)
@@ -291,9 +304,9 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
 
   async assignTask(taskId: string, assigneeId: string): Promise<WorkflowTask> {
     try {
-      return await this.updateTask(taskId, { 
+      return await this.updateTask(taskId, {
         assignedTo: assigneeId,
-        status: 'in_progress' as TaskStatus
+        status: 'in_progress' as TaskStatus,
       })
     } catch (error) {
       console.error('Error assigning task:', error)
@@ -309,15 +322,17 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       }
 
       const completedAt = new Date().toISOString()
-      const actualDuration = task.createdAt ? 
-        Math.round((new Date(completedAt).getTime() - new Date(task.createdAt).getTime()) / (1000 * 60)) : 
-        undefined
+      const actualDuration = task.createdAt
+        ? Math.round(
+            (new Date(completedAt).getTime() - new Date(task.createdAt).getTime()) / (1000 * 60),
+          )
+        : undefined
 
       return await this.updateTask(taskId, {
         status: 'completed' as TaskStatus,
         completedAt,
         actualDuration,
-        metadata: { ...task.metadata, ...completionData }
+        metadata: { ...task.metadata, ...completionData },
       })
     } catch (error) {
       console.error('Error completing task:', error)
@@ -329,20 +344,22 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
   }
 
   // Task Assignment Rules
-  async createAssignmentRule(rule: Omit<TaskAssignmentRule, 'id' | 'createdAt' | 'updatedAt'>): Promise<TaskAssignmentRule> {
+  async createAssignmentRule(
+    rule: Omit<TaskAssignmentRule, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<TaskAssignmentRule> {
     try {
       const rules = await asyncStorage.getItem(this.STORAGE_KEYS.ASSIGNMENT_RULES, [])
-      
+
       const newRule: TaskAssignmentRule = {
         ...rule,
         id: `rule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       rules.push(newRule)
       await asyncStorage.setItem(this.STORAGE_KEYS.ASSIGNMENT_RULES, rules)
-      
+
       return newRule
     } catch (error) {
       console.error('Error creating assignment rule:', error)
@@ -359,11 +376,14 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     }
   }
 
-  async updateAssignmentRule(ruleId: string, updates: Partial<TaskAssignmentRule>): Promise<TaskAssignmentRule> {
+  async updateAssignmentRule(
+    ruleId: string,
+    updates: Partial<TaskAssignmentRule>,
+  ): Promise<TaskAssignmentRule> {
     try {
       const rules = await asyncStorage.getItem(this.STORAGE_KEYS.ASSIGNMENT_RULES, [])
       const ruleIndex = rules.findIndex((rule: TaskAssignmentRule) => rule.id === ruleId)
-      
+
       if (ruleIndex === -1) {
         throw new Error('قاعدة التعيين غير موجودة')
       }
@@ -371,12 +391,12 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       const updatedRule = {
         ...rules[ruleIndex],
         ...updates,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       rules[ruleIndex] = updatedRule
       await asyncStorage.setItem(this.STORAGE_KEYS.ASSIGNMENT_RULES, rules)
-      
+
       return updatedRule
     } catch (error) {
       console.error('Error updating assignment rule:', error)
@@ -391,7 +411,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     try {
       const rules = await asyncStorage.getItem(this.STORAGE_KEYS.ASSIGNMENT_RULES, [])
       const filteredRules = rules.filter((rule: TaskAssignmentRule) => rule.id !== ruleId)
-      
+
       if (filteredRules.length === rules.length) {
         throw new Error('قاعدة التعيين غير موجودة')
       }
@@ -409,7 +429,8 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
   async executeAssignmentRules(task: WorkflowTask): Promise<WorkflowTask> {
     try {
       const rules = await asyncStorage.getItem(this.STORAGE_KEYS.ASSIGNMENT_RULES, [])
-      const activeRules = rules.filter((rule: TaskAssignmentRule) => rule.isActive)
+      const activeRules = rules
+        .filter((rule: TaskAssignmentRule) => rule.isActive)
         .sort((a: TaskAssignmentRule, b: TaskAssignmentRule) => b.priority - a.priority)
 
       let updatedTask = { ...task }
@@ -467,7 +488,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
 
   private evaluateCondition(condition: AssignmentCondition, task: WorkflowTask): boolean {
     const fieldValue = this.getFieldValue(condition.field, task)
-    
+
     switch (condition.operator) {
       case 'equals':
         return fieldValue === condition.value
@@ -493,7 +514,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
   private getFieldValue(field: string, task: WorkflowTask): any {
     const fields = field.split('.')
     let value: any = task
-    
+
     for (const f of fields) {
       if (value && typeof value === 'object' && f in value) {
         value = value[f]
@@ -501,12 +522,12 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         return undefined
       }
     }
-    
+
     return value
   }
 
   private applyActions(actions: AssignmentAction[], task: WorkflowTask): WorkflowTask {
-    let updatedTask = { ...task }
+    const updatedTask = { ...task }
 
     for (const action of actions) {
       switch (action.type) {
@@ -537,7 +558,9 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
   }
 
   // Compliance Checking
-  async createComplianceCheck(check: Omit<ComplianceCheck, 'id' | 'createdAt' | 'updatedAt' | 'executionCount'>): Promise<ComplianceCheck> {
+  async createComplianceCheck(
+    check: Omit<ComplianceCheck, 'id' | 'createdAt' | 'updatedAt' | 'executionCount'>,
+  ): Promise<ComplianceCheck> {
     try {
       const checks = await asyncStorage.getItem(this.STORAGE_KEYS.COMPLIANCE_CHECKS, [])
 
@@ -546,7 +569,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         id: `check_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        executionCount: 0
+        executionCount: 0,
       }
 
       checks.push(newCheck)
@@ -578,7 +601,10 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     }
   }
 
-  async updateComplianceCheck(checkId: string, updates: Partial<ComplianceCheck>): Promise<ComplianceCheck> {
+  async updateComplianceCheck(
+    checkId: string,
+    updates: Partial<ComplianceCheck>,
+  ): Promise<ComplianceCheck> {
     try {
       const checks = await asyncStorage.getItem(this.STORAGE_KEYS.COMPLIANCE_CHECKS, [])
       const checkIndex = checks.findIndex((check: ComplianceCheck) => check.id === checkId)
@@ -590,7 +616,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       const updatedCheck = {
         ...checks[checkIndex],
         ...updates,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       checks[checkIndex] = updatedCheck
@@ -606,7 +632,11 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     }
   }
 
-  async executeComplianceCheck(checkId: string, entityId: string, entityType: string): Promise<ComplianceResult> {
+  async executeComplianceCheck(
+    checkId: string,
+    entityId: string,
+    entityType: string,
+  ): Promise<ComplianceResult> {
     try {
       const check = await this.getComplianceCheck(checkId)
       if (!check) {
@@ -654,7 +684,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         warningRules,
         skippedRules,
         criticalIssues,
-        compliancePercentage: score
+        compliancePercentage: score,
       }
 
       const complianceResult: ComplianceResult = {
@@ -662,7 +692,14 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         checkId,
         entityId,
         entityType,
-        status: criticalIssues > 0 ? 'failed' : failedRules > 0 ? 'failed' : warningRules > 0 ? 'warning' : 'passed',
+        status:
+          criticalIssues > 0
+            ? 'failed'
+            : failedRules > 0
+              ? 'failed'
+              : warningRules > 0
+                ? 'warning'
+                : 'passed',
         score,
         maxScore: 100,
         executedAt: new Date().toISOString(),
@@ -670,7 +707,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         results,
         summary,
         recommendations: this.generateRecommendations(results),
-        recommendationsAr: this.generateRecommendationsAr(results)
+        recommendationsAr: this.generateRecommendationsAr(results),
       }
 
       // Store result
@@ -681,7 +718,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       // Update check execution count
       await this.updateComplianceCheck(checkId, {
         executionCount: check.executionCount + 1,
-        lastExecuted: new Date().toISOString()
+        lastExecuted: new Date().toISOString(),
       })
 
       return complianceResult
@@ -702,8 +739,9 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         results = results.filter((result: ComplianceResult) => result.entityId === entityId)
       }
 
-      return results.sort((a: ComplianceResult, b: ComplianceResult) =>
-        new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime()
+      return results.sort(
+        (a: ComplianceResult, b: ComplianceResult) =>
+          new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime(),
       )
     } catch (error) {
       console.error('Error getting compliance results:', error)
@@ -711,7 +749,11 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     }
   }
 
-  private async executeComplianceRule(rule: ComplianceRule, entityId: string, entityType: string): Promise<RuleResult> {
+  private async executeComplianceRule(
+    rule: ComplianceRule,
+    entityId: string,
+    entityType: string,
+  ): Promise<RuleResult> {
     try {
       // Simulate rule execution - in real implementation, this would evaluate actual conditions
       const mockPassed = Math.random() > 0.2 // 80% pass rate for simulation
@@ -724,7 +766,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         message: mockPassed ? 'Rule passed successfully' : rule.message,
         messageAr: mockPassed ? 'تم اجتياز القاعدة بنجاح' : rule.messageAr,
         severity: rule.severity,
-        autoFixed: false
+        autoFixed: false,
       }
 
       // Attempt auto-fix if enabled and rule failed
@@ -749,12 +791,16 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         message: 'Rule execution failed',
         messageAr: 'فشل في تنفيذ القاعدة',
         severity: 'error',
-        autoFixed: false
+        autoFixed: false,
       }
     }
   }
 
-  private async attemptAutoFix(rule: ComplianceRule, entityId: string, entityType: string): Promise<boolean> {
+  private async attemptAutoFix(
+    rule: ComplianceRule,
+    entityId: string,
+    entityType: string,
+  ): Promise<boolean> {
     try {
       // Simulate auto-fix attempt - in real implementation, this would perform actual fixes
       console.log(`Attempting auto-fix for rule ${rule.id} on ${entityType} ${entityId}`)
@@ -767,7 +813,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
 
   private generateRecommendations(results: RuleResult[]): string[] {
     const recommendations: string[] = []
-    const failedRules = results.filter(r => r.status === 'failed')
+    const failedRules = results.filter((r) => r.status === 'failed')
 
     if (failedRules.length > 0) {
       recommendations.push('Review and address all failed compliance rules')
@@ -775,7 +821,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       recommendations.push('Consider additional training for compliance requirements')
     }
 
-    const criticalIssues = failedRules.filter(r => r.severity === 'critical')
+    const criticalIssues = failedRules.filter((r) => r.severity === 'critical')
     if (criticalIssues.length > 0) {
       recommendations.push('Immediately address critical compliance issues before proceeding')
     }
@@ -785,7 +831,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
 
   private generateRecommendationsAr(results: RuleResult[]): string[] {
     const recommendations: string[] = []
-    const failedRules = results.filter(r => r.status === 'failed')
+    const failedRules = results.filter((r) => r.status === 'failed')
 
     if (failedRules.length > 0) {
       recommendations.push('مراجعة ومعالجة جميع قواعد الامتثال الفاشلة')
@@ -793,7 +839,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       recommendations.push('النظر في تدريب إضافي لمتطلبات الامتثال')
     }
 
-    const criticalIssues = failedRules.filter(r => r.severity === 'critical')
+    const criticalIssues = failedRules.filter((r) => r.severity === 'critical')
     if (criticalIssues.length > 0) {
       recommendations.push('معالجة قضايا الامتثال الحرجة فوراً قبل المتابعة')
     }
@@ -802,7 +848,9 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
   }
 
   // Scheduled Reports
-  async createScheduledReport(report: Omit<ScheduledReport, 'id' | 'createdAt' | 'updatedAt' | 'generationCount'>): Promise<ScheduledReport> {
+  async createScheduledReport(
+    report: Omit<ScheduledReport, 'id' | 'createdAt' | 'updatedAt' | 'generationCount'>,
+  ): Promise<ScheduledReport> {
     try {
       const reports = await asyncStorage.getItem(this.STORAGE_KEYS.SCHEDULED_REPORTS, [])
 
@@ -812,7 +860,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         generationCount: 0,
-        nextGeneration: this.calculateNextGeneration(report.schedule)
+        nextGeneration: this.calculateNextGeneration(report.schedule),
       }
 
       reports.push(newReport)
@@ -844,7 +892,10 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     }
   }
 
-  async updateScheduledReport(reportId: string, updates: Partial<ScheduledReport>): Promise<ScheduledReport> {
+  async updateScheduledReport(
+    reportId: string,
+    updates: Partial<ScheduledReport>,
+  ): Promise<ScheduledReport> {
     try {
       const reports = await asyncStorage.getItem(this.STORAGE_KEYS.SCHEDULED_REPORTS, [])
       const reportIndex = reports.findIndex((report: ScheduledReport) => report.id === reportId)
@@ -856,7 +907,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       const updatedReport = {
         ...reports[reportIndex],
         ...updates,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       // Recalculate next generation if schedule was updated
@@ -917,7 +968,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     const startDate = new Date(schedule.startDate)
     const [hours, minutes] = schedule.time.split(':').map(Number)
 
-    let nextDate = new Date(Math.max(now.getTime(), startDate.getTime()))
+    const nextDate = new Date(Math.max(now.getTime(), startDate.getTime()))
     nextDate.setHours(hours, minutes, 0, 0)
 
     // If the time has already passed today, move to next occurrence
@@ -961,14 +1012,14 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         parameters: scheduledReport.parameters,
         format: scheduledReport.format,
         status: 'completed',
-        size: Math.floor(Math.random() * 1000000) + 100000 // Random size between 100KB and 1MB
+        size: Math.floor(Math.random() * 1000000) + 100000, // Random size between 100KB and 1MB
       }
 
       // Update scheduled report
       await this.updateScheduledReport(scheduledReport.id, {
         lastGenerated: new Date().toISOString(),
         generationCount: scheduledReport.generationCount + 1,
-        nextGeneration: this.calculateNextGeneration(scheduledReport.schedule)
+        nextGeneration: this.calculateNextGeneration(scheduledReport.schedule),
       })
 
       // Send notifications to recipients
@@ -983,7 +1034,11 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     }
   }
 
-  private async notifyReportGenerated(recipient: any, scheduledReport: ScheduledReport, reportData: any): Promise<void> {
+  private async notifyReportGenerated(
+    recipient: any,
+    scheduledReport: ScheduledReport,
+    reportData: any,
+  ): Promise<void> {
     try {
       // Simulate sending notification
       console.log(`Notifying ${recipient.email} about report ${scheduledReport.name}`)
@@ -996,7 +1051,9 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
   }
 
   // Notification System
-  async createNotificationTemplate(template: Omit<NotificationTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<NotificationTemplate> {
+  async createNotificationTemplate(
+    template: Omit<NotificationTemplate, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<NotificationTemplate> {
     try {
       const templates = await asyncStorage.getItem(this.STORAGE_KEYS.NOTIFICATION_TEMPLATES, [])
 
@@ -1004,7 +1061,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         ...template,
         id: `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       templates.push(newTemplate)
@@ -1026,10 +1083,15 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     }
   }
 
-  async updateNotificationTemplate(templateId: string, updates: Partial<NotificationTemplate>): Promise<NotificationTemplate> {
+  async updateNotificationTemplate(
+    templateId: string,
+    updates: Partial<NotificationTemplate>,
+  ): Promise<NotificationTemplate> {
     try {
       const templates = await asyncStorage.getItem(this.STORAGE_KEYS.NOTIFICATION_TEMPLATES, [])
-      const templateIndex = templates.findIndex((template: NotificationTemplate) => template.id === templateId)
+      const templateIndex = templates.findIndex(
+        (template: NotificationTemplate) => template.id === templateId,
+      )
 
       if (templateIndex === -1) {
         throw new Error('قالب الإشعار غير موجود')
@@ -1038,7 +1100,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       const updatedTemplate = {
         ...templates[templateIndex],
         ...updates,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       templates[templateIndex] = updatedTemplate
@@ -1054,7 +1116,11 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     }
   }
 
-  async sendNotification(templateId: string, recipientId: string, variables: Record<string, any>): Promise<NotificationLog> {
+  async sendNotification(
+    templateId: string,
+    recipientId: string,
+    variables: Record<string, any>,
+  ): Promise<NotificationLog> {
     try {
       const template = await this.getNotificationTemplate(templateId)
       if (!template) {
@@ -1075,12 +1141,16 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
           processedSubject,
           processedContent,
           variables,
-          templateType: template.type
-        }
+          templateType: template.type,
+        },
       }
 
       // Simulate sending notification
-      const success = await this.deliverNotification(notificationLog, processedSubject, processedContent)
+      const success = await this.deliverNotification(
+        notificationLog,
+        processedSubject,
+        processedContent,
+      )
 
       notificationLog.status = success ? 'sent' : 'failed'
       notificationLog.sentAt = success ? new Date().toISOString() : undefined
@@ -1149,7 +1219,11 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
     return processed
   }
 
-  private async deliverNotification(log: NotificationLog, subject: string, content: string): Promise<boolean> {
+  private async deliverNotification(
+    log: NotificationLog,
+    subject: string,
+    content: string,
+  ): Promise<boolean> {
     try {
       // Simulate notification delivery based on channel
       switch (log.channel) {
@@ -1191,45 +1265,73 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       const complianceResults = await asyncStorage.getItem(this.STORAGE_KEYS.COMPLIANCE_RESULTS, [])
 
       const totalTasks = tasks.length
-      const completedTasks = tasks.filter((task: WorkflowTask) => task.status === 'completed').length
+      const completedTasks = tasks.filter(
+        (task: WorkflowTask) => task.status === 'completed',
+      ).length
       const pendingTasks = tasks.filter((task: WorkflowTask) => task.status === 'pending').length
       const now = new Date()
-      const overdueTasks = tasks.filter((task: WorkflowTask) =>
-        task.dueDate && new Date(task.dueDate) < now && task.status !== 'completed'
+      const overdueTasks = tasks.filter(
+        (task: WorkflowTask) =>
+          task.dueDate && new Date(task.dueDate) < now && task.status !== 'completed',
       ).length
 
       // Calculate average completion time
-      const completedTasksWithDuration = tasks.filter((task: WorkflowTask) =>
-        task.status === 'completed' && task.actualDuration
+      const completedTasksWithDuration = tasks.filter(
+        (task: WorkflowTask) => task.status === 'completed' && task.actualDuration,
       )
-      const averageCompletionTime = completedTasksWithDuration.length > 0 ?
-        completedTasksWithDuration.reduce((sum: number, task: WorkflowTask) => sum + (task.actualDuration || 0), 0) / completedTasksWithDuration.length :
-        0
+      const averageCompletionTime =
+        completedTasksWithDuration.length > 0
+          ? completedTasksWithDuration.reduce(
+              (sum: number, task: WorkflowTask) => sum + (task.actualDuration || 0),
+              0,
+            ) / completedTasksWithDuration.length
+          : 0
 
       // Group tasks by priority, type, and status
-      const tasksByPriority = tasks.reduce((acc: Record<TaskPriority, number>, task: WorkflowTask) => {
-        acc[task.priority] = (acc[task.priority] || 0) + 1
-        return acc
-      }, {} as Record<TaskPriority, number>)
+      const tasksByPriority = tasks.reduce(
+        (acc: Record<TaskPriority, number>, task: WorkflowTask) => {
+          acc[task.priority] = (acc[task.priority] || 0) + 1
+          return acc
+        },
+        {} as Record<TaskPriority, number>,
+      )
 
-      const tasksByType = tasks.reduce((acc: Record<TaskType, number>, task: WorkflowTask) => {
-        acc[task.type] = (acc[task.type] || 0) + 1
-        return acc
-      }, {} as Record<TaskType, number>)
+      const tasksByType = tasks.reduce(
+        (acc: Record<TaskType, number>, task: WorkflowTask) => {
+          acc[task.type] = (acc[task.type] || 0) + 1
+          return acc
+        },
+        {} as Record<TaskType, number>,
+      )
 
-      const tasksByStatus = tasks.reduce((acc: Record<TaskStatus, number>, task: WorkflowTask) => {
-        acc[task.status] = (acc[task.status] || 0) + 1
-        return acc
-      }, {} as Record<TaskStatus, number>)
+      const tasksByStatus = tasks.reduce(
+        (acc: Record<TaskStatus, number>, task: WorkflowTask) => {
+          acc[task.status] = (acc[task.status] || 0) + 1
+          return acc
+        },
+        {} as Record<TaskStatus, number>,
+      )
 
       // Calculate compliance score
-      const complianceScore = complianceResults.length > 0 ?
-        complianceResults.reduce((sum: number, result: ComplianceResult) => sum + result.score, 0) / complianceResults.length :
-        100
+      const complianceScore =
+        complianceResults.length > 0
+          ? complianceResults.reduce(
+              (sum: number, result: ComplianceResult) => sum + result.score,
+              0,
+            ) / complianceResults.length
+          : 100
 
-      const alertsTriggered = alerts.reduce((sum: number, alert: TenderAlert) => sum + alert.triggerCount, 0)
-      const reportsGenerated = reports.reduce((sum: number, report: ScheduledReport) => sum + report.generationCount, 0)
-      const notificationsSent = notifications.filter((log: NotificationLog) => log.status === 'sent').length
+      const alertsTriggered = alerts.reduce(
+        (sum: number, alert: TenderAlert) => sum + alert.triggerCount,
+        0,
+      )
+      const reportsGenerated = reports.reduce(
+        (sum: number, report: ScheduledReport) => sum + report.generationCount,
+        0,
+      )
+      const notificationsSent = notifications.filter(
+        (log: NotificationLog) => log.status === 'sent',
+      ).length
 
       return {
         totalTasks,
@@ -1243,7 +1345,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         complianceScore,
         alertsTriggered,
         reportsGenerated,
-        notificationsSent
+        notificationsSent,
       }
     } catch (error) {
       console.error('Error getting workflow statistics:', error)
@@ -1256,36 +1358,46 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       const tasks = await asyncStorage.getItem(this.STORAGE_KEYS.TASKS, [])
 
       const totalTasks = tasks.length
-      const completedTasks = tasks.filter((task: WorkflowTask) => task.status === 'completed').length
+      const completedTasks = tasks.filter(
+        (task: WorkflowTask) => task.status === 'completed',
+      ).length
 
       // Calculate average completion time
-      const completedTasksWithDuration = tasks.filter((task: WorkflowTask) =>
-        task.status === 'completed' && task.actualDuration
+      const completedTasksWithDuration = tasks.filter(
+        (task: WorkflowTask) => task.status === 'completed' && task.actualDuration,
       )
-      const averageCompletionTime = completedTasksWithDuration.length > 0 ?
-        completedTasksWithDuration.reduce((sum: number, task: WorkflowTask) => sum + (task.actualDuration || 0), 0) / completedTasksWithDuration.length :
-        0
+      const averageCompletionTime =
+        completedTasksWithDuration.length > 0
+          ? completedTasksWithDuration.reduce(
+              (sum: number, task: WorkflowTask) => sum + (task.actualDuration || 0),
+              0,
+            ) / completedTasksWithDuration.length
+          : 0
 
       // Calculate on-time completion
-      const tasksWithDueDate = tasks.filter((task: WorkflowTask) =>
-        task.status === 'completed' && task.dueDate && task.completedAt
+      const tasksWithDueDate = tasks.filter(
+        (task: WorkflowTask) => task.status === 'completed' && task.dueDate && task.completedAt,
       )
-      const onTimeCompletions = tasksWithDueDate.filter((task: WorkflowTask) =>
-        new Date(task.completedAt!) <= new Date(task.dueDate!)
+      const onTimeCompletions = tasksWithDueDate.filter(
+        (task: WorkflowTask) => new Date(task.completedAt!) <= new Date(task.dueDate!),
       ).length
-      const onTimeCompletion = tasksWithDueDate.length > 0 ?
-        (onTimeCompletions / tasksWithDueDate.length) * 100 : 100
+      const onTimeCompletion =
+        tasksWithDueDate.length > 0 ? (onTimeCompletions / tasksWithDueDate.length) * 100 : 100
 
       // Calculate task efficiency (actual vs estimated duration)
-      const tasksWithEstimate = tasks.filter((task: WorkflowTask) =>
-        task.status === 'completed' && task.estimatedDuration && task.actualDuration
+      const tasksWithEstimate = tasks.filter(
+        (task: WorkflowTask) =>
+          task.status === 'completed' && task.estimatedDuration && task.actualDuration,
       )
       const efficiencyScores = tasksWithEstimate.map((task: WorkflowTask) => {
         const efficiency = task.estimatedDuration / (task.actualDuration || task.estimatedDuration)
         return Math.min(efficiency, 2) // Cap at 200% efficiency
       })
-      const taskEfficiency = efficiencyScores.length > 0 ?
-        (efficiencyScores.reduce((sum, score) => sum + score, 0) / efficiencyScores.length) * 100 : 100
+      const taskEfficiency =
+        efficiencyScores.length > 0
+          ? (efficiencyScores.reduce((sum, score) => sum + score, 0) / efficiencyScores.length) *
+            100
+          : 100
 
       // Calculate assignment accuracy (tasks assigned correctly on first try)
       const assignedTasks = tasks.filter((task: WorkflowTask) => task.assignedTo)
@@ -1294,46 +1406,49 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       // User productivity metrics
       const userProductivity: Record<string, number> = {}
       const userTasks = tasks.filter((task: WorkflowTask) => task.assignedTo)
-      const userGroups = userTasks.reduce((acc: Record<string, WorkflowTask[]>, task: WorkflowTask) => {
-        const userId = task.assignedTo!
-        if (!acc[userId]) acc[userId] = []
-        acc[userId].push(task)
-        return acc
-      }, {})
+      const userGroups = userTasks.reduce(
+        (acc: Record<string, WorkflowTask[]>, task: WorkflowTask) => {
+          const userId = task.assignedTo!
+          if (!acc[userId]) acc[userId] = []
+          acc[userId].push(task)
+          return acc
+        },
+        {},
+      )
 
       for (const [userId, userTaskList] of Object.entries(userGroups)) {
-        const completedUserTasks = userTaskList.filter(task => task.status === 'completed')
-        const productivity = userTaskList.length > 0 ?
-          (completedUserTasks.length / userTaskList.length) * 100 : 0
+        const completedUserTasks = userTaskList.filter((task) => task.status === 'completed')
+        const productivity =
+          userTaskList.length > 0 ? (completedUserTasks.length / userTaskList.length) * 100 : 0
         userProductivity[userId] = productivity
       }
 
       // Department metrics (simulated)
       const departmentMetrics: Record<string, TaskDepartmentMetrics> = {
-        'engineering': {
+        engineering: {
           totalTasks: Math.floor(totalTasks * 0.4),
           completedTasks: Math.floor(completedTasks * 0.4),
           averageCompletionTime: averageCompletionTime * 1.1,
-          efficiency: 85
+          efficiency: 85,
         },
-        'procurement': {
+        procurement: {
           totalTasks: Math.floor(totalTasks * 0.3),
           completedTasks: Math.floor(completedTasks * 0.3),
           averageCompletionTime: averageCompletionTime * 0.8,
-          efficiency: 92
+          efficiency: 92,
         },
-        'finance': {
+        finance: {
           totalTasks: Math.floor(totalTasks * 0.2),
           completedTasks: Math.floor(completedTasks * 0.2),
           averageCompletionTime: averageCompletionTime * 0.9,
-          efficiency: 88
+          efficiency: 88,
         },
-        'legal': {
+        legal: {
           totalTasks: Math.floor(totalTasks * 0.1),
           completedTasks: Math.floor(completedTasks * 0.1),
           averageCompletionTime: averageCompletionTime * 1.3,
-          efficiency: 78
-        }
+          efficiency: 78,
+        },
       }
 
       return {
@@ -1344,7 +1459,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         taskEfficiency,
         assignmentAccuracy,
         userProductivity,
-        departmentMetrics
+        departmentMetrics,
       }
     } catch (error) {
       console.error('Error getting task metrics:', error)
@@ -1357,24 +1472,33 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       const complianceResults = await asyncStorage.getItem(this.STORAGE_KEYS.COMPLIANCE_RESULTS, [])
 
       const totalChecks = complianceResults.length
-      const passedChecks = complianceResults.filter((result: ComplianceResult) => result.status === 'passed').length
-      const failedChecks = complianceResults.filter((result: ComplianceResult) => result.status === 'failed').length
+      const passedChecks = complianceResults.filter(
+        (result: ComplianceResult) => result.status === 'passed',
+      ).length
+      const failedChecks = complianceResults.filter(
+        (result: ComplianceResult) => result.status === 'failed',
+      ).length
 
-      const averageScore = complianceResults.length > 0 ?
-        complianceResults.reduce((sum: number, result: ComplianceResult) => sum + result.score, 0) / complianceResults.length :
-        100
+      const averageScore =
+        complianceResults.length > 0
+          ? complianceResults.reduce(
+              (sum: number, result: ComplianceResult) => sum + result.score,
+              0,
+            ) / complianceResults.length
+          : 100
 
       // Group by category (simulated)
       const complianceByCategory: Record<string, number> = {
-        'document_completeness': 92,
-        'pricing_validation': 88,
-        'technical_requirements': 85,
-        'legal_requirements': 95,
-        'financial_requirements': 90
+        document_completeness: 92,
+        pricing_validation: 88,
+        technical_requirements: 85,
+        legal_requirements: 95,
+        financial_requirements: 90,
       }
 
-      const criticalIssues = complianceResults.reduce((sum: number, result: ComplianceResult) =>
-        sum + result.summary.criticalIssues, 0
+      const criticalIssues = complianceResults.reduce(
+        (sum: number, result: ComplianceResult) => sum + result.summary.criticalIssues,
+        0,
       )
 
       // Generate trends over time (simulated)
@@ -1388,7 +1512,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
           date: date.toISOString().split('T')[0],
           score: Math.floor(averageScore + (Math.random() - 0.5) * 10),
           totalChecks: Math.floor(totalChecks / 7),
-          passedChecks: Math.floor(passedChecks / 7)
+          passedChecks: Math.floor(passedChecks / 7),
         })
       }
 
@@ -1399,7 +1523,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         averageScore,
         complianceByCategory,
         criticalIssues,
-        trendsOverTime
+        trendsOverTime,
       }
     } catch (error) {
       console.error('Error getting compliance metrics:', error)
@@ -1412,7 +1536,9 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
       const notifications = await asyncStorage.getItem(this.STORAGE_KEYS.NOTIFICATION_LOGS, [])
 
       const totalSent = notifications.length
-      const delivered = notifications.filter((log: NotificationLog) => log.status === 'delivered').length
+      const delivered = notifications.filter(
+        (log: NotificationLog) => log.status === 'delivered',
+      ).length
       const failed = notifications.filter((log: NotificationLog) => log.status === 'failed').length
 
       const deliveryRate = totalSent > 0 ? (delivered / totalSent) * 100 : 100
@@ -1424,61 +1550,61 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
 
       // Channel performance
       const channelPerformance: Record<NotificationChannel, ChannelMetrics> = {
-        'email': {
+        email: {
           sent: Math.floor(totalSent * 0.6),
           delivered: Math.floor(delivered * 0.6),
           failed: Math.floor(failed * 0.5),
-          deliveryRate: 95
+          deliveryRate: 95,
         },
-        'sms': {
+        sms: {
           sent: Math.floor(totalSent * 0.2),
           delivered: Math.floor(delivered * 0.2),
           failed: Math.floor(failed * 0.2),
-          deliveryRate: 98
+          deliveryRate: 98,
         },
-        'push': {
+        push: {
           sent: Math.floor(totalSent * 0.15),
           delivered: Math.floor(delivered * 0.15),
           failed: Math.floor(failed * 0.2),
-          deliveryRate: 92
+          deliveryRate: 92,
         },
-        'in_app': {
+        in_app: {
           sent: Math.floor(totalSent * 0.04),
           delivered: Math.floor(delivered * 0.04),
           failed: Math.floor(failed * 0.05),
-          deliveryRate: 99
+          deliveryRate: 99,
         },
-        'webhook': {
+        webhook: {
           sent: Math.floor(totalSent * 0.01),
           delivered: Math.floor(delivered * 0.01),
           failed: Math.floor(failed * 0.05),
-          deliveryRate: 88
-        }
+          deliveryRate: 88,
+        },
       }
 
       // Template performance (simulated)
       const templatePerformance: Record<string, TemplateMetrics> = {
-        'tender_alert': {
+        tender_alert: {
           sent: Math.floor(totalSent * 0.3),
           opened: Math.floor(totalSent * 0.3 * 0.7),
           clicked: Math.floor(totalSent * 0.3 * 0.15),
           openRate: 70,
-          clickRate: 15
+          clickRate: 15,
         },
-        'task_assignment': {
+        task_assignment: {
           sent: Math.floor(totalSent * 0.25),
           opened: Math.floor(totalSent * 0.25 * 0.85),
           clicked: Math.floor(totalSent * 0.25 * 0.25),
           openRate: 85,
-          clickRate: 25
+          clickRate: 25,
         },
-        'deadline_reminder': {
+        deadline_reminder: {
           sent: Math.floor(totalSent * 0.2),
           opened: Math.floor(totalSent * 0.2 * 0.9),
           clicked: Math.floor(totalSent * 0.2 * 0.3),
           openRate: 90,
-          clickRate: 30
-        }
+          clickRate: 30,
+        },
       }
 
       return {
@@ -1488,7 +1614,7 @@ class WorkflowAutomationServiceImpl implements WorkflowAutomationService {
         clickRate,
         bounceRate,
         channelPerformance,
-        templatePerformance
+        templatePerformance,
       }
     } catch (error) {
       console.error('Error getting notification metrics:', error)

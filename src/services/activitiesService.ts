@@ -1,69 +1,69 @@
 /**
  * Activities Service
- * 
+ *
  * خدمة إدارة الأنشطة وسجل العمليات
  * تتبع جميع الأنشطة والتغييرات في النظام
- * 
+ *
  * @version 1.0.0
  * @date 2024-01-15
  */
 
-import { CentralDataService } from '@/application/services/centralDataService';
-import type { Activity } from '@/components/dashboard/enhanced/EnhancedDashboardLayout';
-import { safeLocalStorage } from '@/utils/storage';
-import { STORAGE_KEYS } from '@/config/storageKeys';
+import { CentralDataService } from '@/application/services/centralDataService'
+import type { Activity } from '@/components/dashboard/enhanced/EnhancedDashboardLayout'
+import { safeLocalStorage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/config/storageKeys'
 
 /**
  * خدمة الأنشطة
  */
 export class ActivitiesService {
-  private static instance: ActivitiesService;
-  private centralDataService: CentralDataService;
-  private activitiesCache: Activity[] = [];
+  private static instance: ActivitiesService
+  private centralDataService: CentralDataService
+  private activitiesCache: Activity[] = []
 
   private constructor() {
-    this.centralDataService = CentralDataService.getInstance();
-    this.loadActivities();
-    this.generateRecentActivities();
+    this.centralDataService = CentralDataService.getInstance()
+    this.loadActivities()
+    this.generateRecentActivities()
   }
 
   public static getInstance(): ActivitiesService {
     if (!ActivitiesService.instance) {
-      ActivitiesService.instance = new ActivitiesService();
+      ActivitiesService.instance = new ActivitiesService()
     }
-    return ActivitiesService.instance;
+    return ActivitiesService.instance
   }
 
   /**
    * جلب الأنشطة الحديثة
    */
-  async getRecentActivities(limit: number = 20): Promise<Activity[]> {
+  async getRecentActivities(limit = 20): Promise<Activity[]> {
     // تحديث الأنشطة من مصادر البيانات
-    await this.generateRecentActivities();
-    
+    await this.generateRecentActivities()
+
     return this.activitiesCache
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, limit);
+      .slice(0, limit)
   }
 
   /**
    * جلب الأنشطة حسب النوع
    */
-  async getActivitiesByType(type: Activity['type'], limit: number = 10): Promise<Activity[]> {
+  async getActivitiesByType(type: Activity['type'], limit = 10): Promise<Activity[]> {
     return this.activitiesCache
-      .filter(activity => activity.type === type)
+      .filter((activity) => activity.type === type)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, limit);
+      .slice(0, limit)
   }
 
   /**
    * جلب الأنشطة حسب المستخدم
    */
-  async getActivitiesByUser(user: string, limit: number = 10): Promise<Activity[]> {
+  async getActivitiesByUser(user: string, limit = 10): Promise<Activity[]> {
     return this.activitiesCache
-      .filter(activity => activity.user === user)
+      .filter((activity) => activity.user === user)
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, limit);
+      .slice(0, limit)
   }
 
   /**
@@ -73,76 +73,77 @@ export class ActivitiesService {
     const newActivity: Activity = {
       ...activity,
       id: `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date()
-    };
+      timestamp: new Date(),
+    }
 
-    this.activitiesCache.unshift(newActivity);
-    
+    this.activitiesCache.unshift(newActivity)
+
     // الاحتفاظ بآخر 500 نشاط فقط
-    this.activitiesCache = this.activitiesCache.slice(0, 500);
-    
-    this.saveActivities();
-    return newActivity.id;
+    this.activitiesCache = this.activitiesCache.slice(0, 500)
+
+    this.saveActivities()
+    return newActivity.id
   }
 
   /**
    * حذف نشاط
    */
   async deleteActivity(activityId: string): Promise<void> {
-    this.activitiesCache = this.activitiesCache.filter(activity => activity.id !== activityId);
-    this.saveActivities();
+    this.activitiesCache = this.activitiesCache.filter((activity) => activity.id !== activityId)
+    this.saveActivities()
   }
 
   /**
    * توليد الأنشطة الحديثة من بيانات النظام
    */
   private async generateRecentActivities(): Promise<void> {
-    const newActivities: Activity[] = [];
+    const newActivities: Activity[] = []
 
     // أنشطة المشاريع
-    const projectActivities = await this.generateProjectActivities();
-    newActivities.push(...projectActivities);
+    const projectActivities = await this.generateProjectActivities()
+    newActivities.push(...projectActivities)
 
     // أنشطة المناقصات
-    const tenderActivities = await this.generateTenderActivities();
-    newActivities.push(...tenderActivities);
+    const tenderActivities = await this.generateTenderActivities()
+    newActivities.push(...tenderActivities)
 
     // أنشطة مالية
-    const financialActivities = await this.generateFinancialActivities();
-    newActivities.push(...financialActivities);
+    const financialActivities = await this.generateFinancialActivities()
+    newActivities.push(...financialActivities)
 
     // أنشطة الموارد
-    const resourceActivities = await this.generateResourceActivities();
-    newActivities.push(...resourceActivities);
+    const resourceActivities = await this.generateResourceActivities()
+    newActivities.push(...resourceActivities)
 
     // إضافة الأنشطة الجديدة فقط (تجنب التكرار)
     for (const activity of newActivities) {
-      const exists = this.activitiesCache.some(existing => 
-        existing.type === activity.type && 
-        existing.title === activity.title &&
-        this.isSameHour(existing.timestamp, activity.timestamp)
-      );
-      
+      const exists = this.activitiesCache.some(
+        (existing) =>
+          existing.type === activity.type &&
+          existing.title === activity.title &&
+          this.isSameHour(existing.timestamp, activity.timestamp),
+      )
+
       if (!exists) {
-        this.activitiesCache.unshift(activity);
+        this.activitiesCache.unshift(activity)
       }
     }
 
     // الاحتفاظ بآخر 500 نشاط فقط
-    this.activitiesCache = this.activitiesCache.slice(0, 500);
-    this.saveActivities();
+    this.activitiesCache = this.activitiesCache.slice(0, 500)
+    this.saveActivities()
   }
 
   /**
    * توليد أنشطة المشاريع
    */
   private async generateProjectActivities(): Promise<Activity[]> {
-    const projects = this.centralDataService.getAllProjects();
-    const activities: Activity[] = [];
+    const projects = this.centralDataService.getAllProjects()
+    const activities: Activity[] = []
 
     // محاكاة أنشطة حديثة للمشاريع
-    const recentProjects = projects.slice(0, 3);
-    
+    const recentProjects = projects.slice(0, 3)
+
     for (const project of recentProjects) {
       // نشاط تحديث نسبة الإنجاز
       if (project.progress && project.progress > 0) {
@@ -156,9 +157,9 @@ export class ActivitiesService {
           metadata: {
             projectId: project.id,
             projectName: project.name,
-            progress: project.progress
-          }
-        });
+            progress: project.progress,
+          },
+        })
       }
 
       // نشاط بدء مرحلة جديدة
@@ -173,25 +174,25 @@ export class ActivitiesService {
           metadata: {
             projectId: project.id,
             projectName: project.name,
-            phase: 'construction'
-          }
-        });
+            phase: 'construction',
+          },
+        })
       }
     }
 
-    return activities;
+    return activities
   }
 
   /**
    * توليد أنشطة المناقصات
    */
   private async generateTenderActivities(): Promise<Activity[]> {
-    const tenders = this.centralDataService.getAllTenders();
-    const activities: Activity[] = [];
+    const tenders = this.centralDataService.getAllTenders()
+    const activities: Activity[] = []
 
     // محاكاة أنشطة حديثة للمناقصات
-    const recentTenders = tenders.slice(0, 2);
-    
+    const recentTenders = tenders.slice(0, 2)
+
     for (const tender of recentTenders) {
       // نشاط تقديم عرض
       activities.push({
@@ -204,9 +205,9 @@ export class ActivitiesService {
         metadata: {
           tenderId: tender.id,
           tenderTitle: tender.title,
-          estimatedValue: tender.estimatedValue
-        }
-      });
+          estimatedValue: tender.estimatedValue,
+        },
+      })
 
       // نشاط تحديث حالة المناقصة
       if (tender.status === 'submitted') {
@@ -220,20 +221,20 @@ export class ActivitiesService {
           metadata: {
             tenderId: tender.id,
             tenderTitle: tender.title,
-            status: tender.status
-          }
-        });
+            status: tender.status,
+          },
+        })
       }
     }
 
-    return activities;
+    return activities
   }
 
   /**
    * توليد أنشطة مالية
    */
   private async generateFinancialActivities(): Promise<Activity[]> {
-    const activities: Activity[] = [];
+    const activities: Activity[] = []
 
     // محاكاة أنشطة مالية
     activities.push(
@@ -247,8 +248,8 @@ export class ActivitiesService {
         metadata: {
           amount: 850000,
           projectName: 'برج الرياض',
-          paymentType: 'milestone'
-        }
+          paymentType: 'milestone',
+        },
       },
       {
         id: 'invoice_generated_001',
@@ -259,8 +260,8 @@ export class ActivitiesService {
         user: this.getRandomUser(),
         metadata: {
           invoiceNumber: 'INV-2024-001',
-          amount: 1200000
-        }
+          amount: 1200000,
+        },
       },
       {
         id: 'expense_approved_001',
@@ -271,19 +272,19 @@ export class ActivitiesService {
         user: this.getRandomUser(),
         metadata: {
           expenseType: 'materials',
-          amount: 45000
-        }
-      }
-    );
+          amount: 45000,
+        },
+      },
+    )
 
-    return activities;
+    return activities
   }
 
   /**
    * توليد أنشطة الموارد
    */
   private async generateResourceActivities(): Promise<Activity[]> {
-    const activities: Activity[] = [];
+    const activities: Activity[] = []
 
     // محاكاة أنشطة الموارد
     activities.push(
@@ -296,8 +297,8 @@ export class ActivitiesService {
         user: this.getRandomUser(),
         metadata: {
           equipmentName: 'حفارة CAT-320',
-          projectName: 'مجمع الأعمال'
-        }
+          projectName: 'مجمع الأعمال',
+        },
       },
       {
         id: 'material_delivered_001',
@@ -310,8 +311,8 @@ export class ActivitiesService {
           materialType: 'أسمنت',
           quantity: 50,
           unit: 'طن',
-          projectName: 'الفيلا السكنية'
-        }
+          projectName: 'الفيلا السكنية',
+        },
       },
       {
         id: 'maintenance_completed_001',
@@ -322,12 +323,12 @@ export class ActivitiesService {
         user: this.getRandomUser(),
         metadata: {
           equipmentName: 'رافعة LIEBHERR-130',
-          maintenanceType: 'دورية'
-        }
-      }
-    );
+          maintenanceType: 'دورية',
+        },
+      },
+    )
 
-    return activities;
+    return activities
   }
 
   /**
@@ -342,36 +343,38 @@ export class ActivitiesService {
       'خالد العتيبي',
       'سارة المطيري',
       'عبدالله الشمري',
-      'هند القحطاني'
-    ];
-    return users[Math.floor(Math.random() * users.length)];
+      'هند القحطاني',
+    ]
+    return users[Math.floor(Math.random() * users.length)]
   }
 
   /**
    * تحميل الأنشطة من التخزين المحلي
    */
   private loadActivities(): void {
-    const stored = safeLocalStorage.getItem<Activity[]>('dashboard_activities', []);
-    this.activitiesCache = stored.map(activity => ({
+    const stored = safeLocalStorage.getItem<Activity[]>('dashboard_activities', [])
+    this.activitiesCache = stored.map((activity) => ({
       ...activity,
-      timestamp: new Date(activity.timestamp)
-    }));
+      timestamp: new Date(activity.timestamp),
+    }))
   }
 
   /**
    * حفظ الأنشطة في التخزين المحلي
    */
   private saveActivities(): void {
-    safeLocalStorage.setItem('dashboard_activities', this.activitiesCache);
+    safeLocalStorage.setItem('dashboard_activities', this.activitiesCache)
   }
 
   /**
    * التحقق من تطابق الساعة
    */
   private isSameHour(date1: Date, date2: Date): boolean {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate() &&
-           date1.getHours() === date2.getHours();
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate() &&
+      date1.getHours() === date2.getHours()
+    )
   }
 }

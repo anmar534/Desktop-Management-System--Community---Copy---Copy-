@@ -1,9 +1,12 @@
+/* eslint-disable no-restricted-globals */
 /**
  * Backup Service - خدمة النسخ الاحتياطي
  * Sprint 5.5: الأمان والحماية المتقدمة
- * 
+ *
  * Automatic backup and restore functionality
  * وظائف النسخ الاحتياطي والاسترداد التلقائي
+ *
+ * Note: This file uses localStorage directly for backup functionality
  */
 
 import { EncryptionService } from './encryption.service'
@@ -15,31 +18,31 @@ import { EncryptionService } from './encryption.service'
 export interface BackupMetadata {
   /** Backup ID / معرف النسخة الاحتياطية */
   id: string
-  
+
   /** Timestamp / الوقت */
   timestamp: Date
-  
+
   /** Version / الإصدار */
   version: string
-  
+
   /** User ID / معرف المستخدم */
   userId: string
-  
+
   /** User name / اسم المستخدم */
   userName: string
-  
+
   /** Backup type / نوع النسخة الاحتياطية */
   type: 'manual' | 'automatic'
-  
+
   /** Size in bytes / الحجم بالبايت */
   size: number
-  
+
   /** Encrypted / مشفرة */
   encrypted: boolean
-  
+
   /** Description / الوصف */
   description?: string
-  
+
   /** Tables included / الجداول المضمنة */
   tables: string[]
 }
@@ -47,7 +50,7 @@ export interface BackupMetadata {
 export interface BackupData {
   /** Metadata / البيانات الوصفية */
   metadata: BackupMetadata
-  
+
   /** Data / البيانات */
   data: Record<string, any[]>
 }
@@ -55,13 +58,13 @@ export interface BackupData {
 export interface BackupOptions {
   /** Encrypt backup / تشفير النسخة الاحتياطية */
   encrypt?: boolean
-  
+
   /** Encryption key / مفتاح التشفير */
   encryptionKey?: CryptoKey
-  
+
   /** Tables to include / الجداول المراد تضمينها */
   tables?: string[]
-  
+
   /** Description / الوصف */
   description?: string
 }
@@ -69,10 +72,10 @@ export interface BackupOptions {
 export interface RestoreOptions {
   /** Decryption key / مفتاح فك التشفير */
   decryptionKey?: CryptoKey
-  
+
   /** Overwrite existing data / الكتابة فوق البيانات الموجودة */
   overwrite?: boolean
-  
+
   /** Tables to restore / الجداول المراد استردادها */
   tables?: string[]
 }
@@ -106,14 +109,9 @@ export async function createBackup(
   userId: string,
   userName: string,
   type: 'manual' | 'automatic' = 'manual',
-  options: BackupOptions = {}
+  options: BackupOptions = {},
 ): Promise<BackupMetadata> {
-  const {
-    encrypt = false,
-    encryptionKey,
-    tables = DEFAULT_TABLES,
-    description,
-  } = options
+  const { encrypt = false, encryptionKey, tables = DEFAULT_TABLES, description } = options
 
   // Generate backup ID
   const id = generateBackupId()
@@ -181,15 +179,8 @@ export async function createBackup(
  * Restore from backup
  * الاسترداد من نسخة احتياطية
  */
-export async function restoreBackup(
-  backupId: string,
-  options: RestoreOptions = {}
-): Promise<void> {
-  const {
-    decryptionKey,
-    overwrite = true,
-    tables,
-  } = options
+export async function restoreBackup(backupId: string, options: RestoreOptions = {}): Promise<void> {
+  const { decryptionKey, overwrite = true, tables } = options
 
   // Load backup
   const backupString = localStorage.getItem(`${BACKUP_PREFIX}${backupId}`)
@@ -202,13 +193,13 @@ export async function restoreBackup(
   try {
     // Try to parse as regular backup
     backup = JSON.parse(backupString)
-    
+
     // Check if it's encrypted
     if (backup.metadata.encrypted) {
       if (!decryptionKey) {
         throw new Error('Decryption key required for encrypted backup')
       }
-      
+
       // Decrypt
       const encryptedData = JSON.parse(backupString)
       const decrypted = await EncryptionService.decrypt(encryptedData, decryptionKey)
@@ -241,7 +232,7 @@ export function deleteBackup(backupId: string): void {
 
   // Update backup list
   const backupList = getBackupList()
-  const updatedList = backupList.filter(b => b.id !== backupId)
+  const updatedList = backupList.filter((b) => b.id !== backupId)
   saveBackupList(updatedList)
 }
 
@@ -259,7 +250,7 @@ export function getBackups(): BackupMetadata[] {
  */
 export function getBackup(backupId: string): BackupMetadata | null {
   const backupList = getBackupList()
-  return backupList.find(b => b.id === backupId) || null
+  return backupList.find((b) => b.id === backupId) || null
 }
 
 /**
@@ -344,8 +335,8 @@ let autoBackupInterval: NodeJS.Timeout | null = null
 export async function startAutoBackup(
   userId: string,
   userName: string,
-  intervalHours: number = 24,
-  options: BackupOptions = {}
+  intervalHours = 24,
+  options: BackupOptions = {},
 ): Promise<void> {
   // Stop existing interval
   stopAutoBackup()
@@ -396,7 +387,7 @@ function getBackupList(): BackupMetadata[] {
   try {
     const stored = localStorage.getItem(BACKUP_LIST_KEY)
     if (!stored) return []
-    
+
     const list = JSON.parse(stored)
     // Convert timestamp strings back to Date objects
     return list.map((item: any) => ({
@@ -446,4 +437,3 @@ export const BackupService = {
 }
 
 export default BackupService
-

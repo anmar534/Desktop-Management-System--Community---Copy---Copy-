@@ -1,9 +1,9 @@
 /**
  * Data Import Utilities for Historical Data Integration
- * 
+ *
  * This file provides utilities for importing historical tender and project data
  * from various sources including CSV, Excel, JSON, and legacy system exports.
- * 
+ *
  * @author Desktop Management System Team
  * @version 2.0.0
  * @since Phase 2 Implementation - Historical Data Integration
@@ -132,10 +132,7 @@ class DataImportService {
   /**
    * Import historical tender data from file content
    */
-  async importHistoricalTenders(
-    fileContent: string,
-    config: ImportConfig
-  ): Promise<ImportResult> {
+  async importHistoricalTenders(fileContent: string, config: ImportConfig): Promise<ImportResult> {
     const startTime = Date.now()
     const result: ImportResult = {
       totalRecords: 0,
@@ -144,7 +141,7 @@ class DataImportService {
       skippedDuplicates: 0,
       errors: [],
       warnings: [],
-      processingTime: 0
+      processingTime: 0,
     }
 
     try {
@@ -158,12 +155,11 @@ class DataImportService {
         const batch = rawData.slice(i, i + batchSize)
         await this.processBatch(batch, config, result, i)
       }
-
     } catch (error) {
       result.errors.push({
         row: 0,
         message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        data: { error }
+        data: { error },
       })
     }
 
@@ -198,17 +194,17 @@ class DataImportService {
       throw new Error('CSV file must have at least a header row and one data row')
     }
 
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
+    const headers = lines[0].split(',').map((h) => h.trim().replace(/"/g, ''))
     const data: any[] = []
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''))
+      const values = lines[i].split(',').map((v) => v.trim().replace(/"/g, ''))
       const row: any = {}
-      
+
       headers.forEach((header, index) => {
         row[header] = values[index] || ''
       })
-      
+
       data.push(row)
     }
 
@@ -223,7 +219,9 @@ class DataImportService {
       const parsed = JSON.parse(content)
       return Array.isArray(parsed) ? parsed : [parsed]
     } catch (error) {
-      throw new Error(`Invalid JSON format: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(
+        `Invalid JSON format: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
     }
   }
 
@@ -234,7 +232,7 @@ class DataImportService {
     batch: any[],
     config: ImportConfig,
     result: ImportResult,
-    batchStartIndex: number
+    batchStartIndex: number,
   ): Promise<void> {
     for (let i = 0; i < batch.length; i++) {
       const rowIndex = batchStartIndex + i + 2 // +2 for header and 1-based indexing
@@ -243,13 +241,13 @@ class DataImportService {
       try {
         // Transform raw data to HistoricalTenderData
         const historicalData = this.transformToHistoricalData(rawRecord, config, rowIndex, result)
-        
+
         if (!historicalData) {
           continue // Skip invalid records
         }
 
         // Check for duplicates if enabled
-        if (config.skipDuplicates && await this.isDuplicate(historicalData)) {
+        if (config.skipDuplicates && (await this.isDuplicate(historicalData))) {
           result.skippedDuplicates++
           continue
         }
@@ -257,15 +255,14 @@ class DataImportService {
         // Convert to BidPerformance and import
         const bidPerformance = this.convertToBidPerformance(historicalData)
         await analyticsService.createBidPerformance(bidPerformance)
-        
-        result.successfulImports++
 
+        result.successfulImports++
       } catch (error) {
         result.failedImports++
         result.errors.push({
           row: rowIndex,
           message: error instanceof Error ? error.message : 'Unknown error',
-          data: rawRecord
+          data: rawRecord,
         })
       }
     }
@@ -278,18 +275,18 @@ class DataImportService {
     rawRecord: any,
     config: ImportConfig,
     rowIndex: number,
-    result: ImportResult
+    result: ImportResult,
   ): HistoricalTenderData | null {
     try {
       // Apply field mapping if provided
-      const mappedRecord = config.fieldMapping 
+      const mappedRecord = config.fieldMapping
         ? this.applyFieldMapping(rawRecord, config.fieldMapping)
         : rawRecord
 
       // Apply default values
       const recordWithDefaults = {
         ...config.defaultValues,
-        ...mappedRecord
+        ...mappedRecord,
       }
 
       // Validate required fields
@@ -307,7 +304,7 @@ class DataImportService {
         client: {
           name: String(recordWithDefaults.clientName || 'Unknown Client'),
           type: this.validateClientType(recordWithDefaults.clientType),
-          sector: recordWithDefaults.clientSector
+          sector: recordWithDefaults.clientSector,
         },
         project: {
           category: String(recordWithDefaults.category || 'General'),
@@ -315,7 +312,7 @@ class DataImportService {
           estimatedValue: this.parseNumber(recordWithDefaults.estimatedValue),
           actualValue: this.parseNumber(recordWithDefaults.actualValue),
           duration: this.parseNumber(recordWithDefaults.duration),
-          complexity: this.validateComplexity(recordWithDefaults.complexity)
+          complexity: this.validateComplexity(recordWithDefaults.complexity),
         },
         bidding: {
           submissionDate: this.parseDate(recordWithDefaults.submissionDate, config.dateFormat),
@@ -324,36 +321,42 @@ class DataImportService {
           outcome: this.validateOutcome(recordWithDefaults.outcome),
           winnerBidAmount: this.parseNumber(recordWithDefaults.winnerBidAmount),
           preparationTime: this.parseNumber(recordWithDefaults.preparationTime) || 40,
-          teamSize: this.parseNumber(recordWithDefaults.teamSize)
+          teamSize: this.parseNumber(recordWithDefaults.teamSize),
         },
         financial: {
           plannedMargin: this.parseNumber(recordWithDefaults.plannedMargin) || 15,
           actualMargin: this.parseNumber(recordWithDefaults.actualMargin),
           directCosts: this.parseNumber(recordWithDefaults.directCosts),
           indirectCosts: this.parseNumber(recordWithDefaults.indirectCosts),
-          contingency: this.parseNumber(recordWithDefaults.contingency)
+          contingency: this.parseNumber(recordWithDefaults.contingency),
         },
-        performance: recordWithDefaults.deliveryOnTime !== undefined ? {
-          deliveryOnTime: this.parseBoolean(recordWithDefaults.deliveryOnTime),
-          budgetVariance: this.parseNumber(recordWithDefaults.budgetVariance),
-          qualityScore: this.parseNumber(recordWithDefaults.qualityScore),
-          clientSatisfaction: this.parseNumber(recordWithDefaults.clientSatisfaction)
-        } : undefined,
+        performance:
+          recordWithDefaults.deliveryOnTime !== undefined
+            ? {
+                deliveryOnTime: this.parseBoolean(recordWithDefaults.deliveryOnTime),
+                budgetVariance: this.parseNumber(recordWithDefaults.budgetVariance),
+                qualityScore: this.parseNumber(recordWithDefaults.qualityScore),
+                clientSatisfaction: this.parseNumber(recordWithDefaults.clientSatisfaction),
+              }
+            : undefined,
         metadata: {
           source: 'import',
           importDate: new Date().toISOString(),
           notes: recordWithDefaults.notes,
-          tags: recordWithDefaults.tags ? String(recordWithDefaults.tags).split(',').map(t => t.trim()) : undefined
-        }
+          tags: recordWithDefaults.tags
+            ? String(recordWithDefaults.tags)
+                .split(',')
+                .map((t) => t.trim())
+            : undefined,
+        },
       }
 
       return historicalData
-
     } catch (error) {
       result.errors.push({
         row: rowIndex,
         message: `Data transformation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        data: rawRecord
+        data: rawRecord,
       })
       return null
     }
@@ -364,20 +367,20 @@ class DataImportService {
    */
   private applyFieldMapping(record: any, mapping: Record<string, string>): any {
     const mapped: any = {}
-    
+
     for (const [targetField, sourceField] of Object.entries(mapping)) {
       if (record[sourceField] !== undefined) {
         mapped[targetField] = record[sourceField]
       }
     }
-    
+
     // Include unmapped fields
     for (const [key, value] of Object.entries(record)) {
       if (!Object.values(mapping).includes(key)) {
         mapped[key] = value
       }
     }
-    
+
     return mapped
   }
 
@@ -387,9 +390,11 @@ class DataImportService {
   private async isDuplicate(data: HistoricalTenderData): Promise<boolean> {
     try {
       const existingPerformances = await analyticsService.getAllBidPerformances()
-      return existingPerformances.some(p => 
-        p.tenderId === data.tenderRef || 
-        (p.submissionDate === data.bidding.submissionDate && p.bidAmount === data.bidding.bidAmount)
+      return existingPerformances.some(
+        (p) =>
+          p.tenderId === data.tenderRef ||
+          (p.submissionDate === data.bidding.submissionDate &&
+            p.bidAmount === data.bidding.bidAmount),
       )
     } catch (error) {
       return false // If we can't check, assume not duplicate
@@ -399,7 +404,9 @@ class DataImportService {
   /**
    * Convert HistoricalTenderData to BidPerformance
    */
-  private convertToBidPerformance(data: HistoricalTenderData): Omit<BidPerformance, 'id' | 'createdAt' | 'updatedAt'> {
+  private convertToBidPerformance(
+    data: HistoricalTenderData,
+  ): Omit<BidPerformance, 'id' | 'createdAt' | 'updatedAt'> {
     return {
       tenderId: data.tenderRef,
       submissionDate: data.bidding.submissionDate,
@@ -417,14 +424,14 @@ class DataImportService {
         id: `client_${data.client.name.toLowerCase().replace(/\s+/g, '_')}`,
         name: data.client.name,
         type: data.client.type,
-        paymentHistory: this.inferPaymentHistory(data)
+        paymentHistory: this.inferPaymentHistory(data),
       },
       riskScore: this.calculateRiskScore(data),
       metrics: {
         roi: this.calculateROI(data),
         efficiency: this.calculateEfficiency(data),
-        strategicValue: this.calculateStrategicValue(data)
-      }
+        strategicValue: this.calculateStrategicValue(data),
+      },
     }
   }
 
@@ -432,12 +439,13 @@ class DataImportService {
   // UTILITY METHODS
   // ============================================================================
 
-  private parseNumber(value: any, required: boolean = false): number {
+  private parseNumber(value: any, required = false): number {
     if (value === undefined || value === null || value === '') {
       if (required) throw new Error('Required numeric value is missing')
       return 0
     }
-    const num = typeof value === 'string' ? parseFloat(value.replace(/[^\d.-]/g, '')) : Number(value)
+    const num =
+      typeof value === 'string' ? parseFloat(value.replace(/[^\d.-]/g, '')) : Number(value)
     if (isNaN(num)) {
       if (required) throw new Error(`Invalid number: ${value}`)
       return 0
@@ -447,13 +455,13 @@ class DataImportService {
 
   private parseDate(value: any, format?: string): string {
     if (!value) throw new Error('Date value is required')
-    
+
     // Try to parse as ISO date first
     const date = new Date(value)
     if (!isNaN(date.getTime())) {
       return date.toISOString().split('T')[0]
     }
-    
+
     throw new Error(`Invalid date format: ${value}`)
   }
 
@@ -469,13 +477,13 @@ class DataImportService {
   private validateClientType(value: any): 'government' | 'private' | 'semi-government' {
     const validTypes = ['government', 'private', 'semi-government']
     const type = String(value).toLowerCase()
-    return validTypes.includes(type) ? type as any : 'private'
+    return validTypes.includes(type) ? (type as any) : 'private'
   }
 
   private validateComplexity(value: any): 'low' | 'medium' | 'high' {
     const validComplexities = ['low', 'medium', 'high']
     const complexity = String(value).toLowerCase()
-    return validComplexities.includes(complexity) ? complexity as any : 'medium'
+    return validComplexities.includes(complexity) ? (complexity as any) : 'medium'
   }
 
   private validateOutcome(value: any): 'won' | 'lost' | 'cancelled' {
@@ -490,35 +498,35 @@ class DataImportService {
   private calculateWinProbability(data: HistoricalTenderData): number {
     // Simple heuristic based on historical factors
     let probability = 50 // Base probability
-    
+
     if (data.bidding.competitorCount <= 3) probability += 20
     else if (data.bidding.competitorCount >= 8) probability -= 20
-    
+
     if (data.financial.plannedMargin < 10) probability += 15
     else if (data.financial.plannedMargin > 25) probability -= 15
-    
+
     return Math.max(0, Math.min(100, probability))
   }
 
   private calculateRiskScore(data: HistoricalTenderData): number {
     let risk = 30 // Base risk
-    
+
     if (data.project.complexity === 'high') risk += 20
     else if (data.project.complexity === 'low') risk -= 10
-    
+
     if (data.client.type === 'government') risk -= 10
     else if (data.client.type === 'private') risk += 10
-    
+
     return Math.max(0, Math.min(100, risk))
   }
 
   private calculateROI(data: HistoricalTenderData): number {
     if (data.bidding.outcome !== 'won') return 0
-    
+
     const margin = data.financial.actualMargin || data.financial.plannedMargin
     const preparationCost = data.bidding.preparationTime * 100 // Assume $100/hour
     const revenue = data.bidding.bidAmount * (margin / 100)
-    
+
     return preparationCost > 0 ? ((revenue - preparationCost) / preparationCost) * 100 : 0
   }
 
@@ -530,11 +538,11 @@ class DataImportService {
 
   private calculateStrategicValue(data: HistoricalTenderData): number {
     let value = 50 // Base value
-    
+
     if (data.project.estimatedValue > 10000000) value += 20 // Large projects
     if (data.client.type === 'government') value += 15 // Government clients
     if (data.project.category === 'infrastructure') value += 10 // Strategic category
-    
+
     return Math.min(100, value)
   }
 
@@ -558,16 +566,16 @@ export const dataImportService = new DataImportService()
  */
 export async function importTenderDataFromCSV(
   csvContent: string,
-  options: Partial<ImportConfig> = {}
+  options: Partial<ImportConfig> = {},
 ): Promise<ImportResult> {
   const config: ImportConfig = {
     format: 'csv',
     validateData: true,
     skipDuplicates: true,
     batchSize: 50,
-    ...options
+    ...options,
   }
-  
+
   return dataImportService.importHistoricalTenders(csvContent, config)
 }
 
@@ -576,15 +584,15 @@ export async function importTenderDataFromCSV(
  */
 export async function importTenderDataFromJSON(
   jsonContent: string,
-  options: Partial<ImportConfig> = {}
+  options: Partial<ImportConfig> = {},
 ): Promise<ImportResult> {
   const config: ImportConfig = {
     format: 'json',
     validateData: true,
     skipDuplicates: true,
     batchSize: 100,
-    ...options
+    ...options,
   }
-  
+
   return dataImportService.importHistoricalTenders(jsonContent, config)
 }

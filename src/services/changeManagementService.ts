@@ -17,7 +17,7 @@ import type {
   ChangeManagementServiceInterface,
   ChangeStatus,
   ChangePriority,
-  ChangeOrderType
+  ChangeOrderType,
 } from '../types/change'
 
 class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
@@ -25,17 +25,19 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
     CHANGE_REQUESTS: 'change_requests',
     CHANGE_ORDERS: 'change_orders',
     CHANGE_COMMENTS: 'change_comments',
-    CHANGE_DOCUMENTS: 'change_documents'
+    CHANGE_DOCUMENTS: 'change_documents',
   } as const
 
   // Change Requests
-  async createChangeRequest(request: Omit<ChangeRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<ChangeRequest> {
+  async createChangeRequest(
+    request: Omit<ChangeRequest, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<ChangeRequest> {
     try {
       const newRequest: ChangeRequest = {
         ...request,
         id: this.generateId('req'),
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       const requests = await this.getAllChangeRequests()
@@ -52,18 +54,21 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   async getChangeRequest(requestId: string): Promise<ChangeRequest | null> {
     try {
       const requests = await this.getAllChangeRequests()
-      return requests.find(r => r.id === requestId) || null
+      return requests.find((r) => r.id === requestId) || null
     } catch (error) {
       console.error('Error getting change request:', error)
       throw new Error('فشل في استرجاع طلب التغيير')
     }
   }
 
-  async updateChangeRequest(requestId: string, updates: Partial<ChangeRequest>): Promise<ChangeRequest> {
+  async updateChangeRequest(
+    requestId: string,
+    updates: Partial<ChangeRequest>,
+  ): Promise<ChangeRequest> {
     try {
       const requests = await this.getAllChangeRequests()
-      const index = requests.findIndex(r => r.id === requestId)
-      
+      const index = requests.findIndex((r) => r.id === requestId)
+
       if (index === -1) {
         throw new Error('طلب التغيير غير موجود')
       }
@@ -71,7 +76,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
       const updatedRequest = {
         ...requests[index],
         ...updates,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       }
 
       requests[index] = updatedRequest
@@ -87,7 +92,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   async deleteChangeRequest(requestId: string): Promise<void> {
     try {
       const requests = await this.getAllChangeRequests()
-      const filteredRequests = requests.filter(r => r.id !== requestId)
+      const filteredRequests = requests.filter((r) => r.id !== requestId)
       await asyncStorage.setItem(this.STORAGE_KEYS.CHANGE_REQUESTS, filteredRequests)
     } catch (error) {
       console.error('Error deleting change request:', error)
@@ -98,14 +103,17 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   async getChangeRequestsByProject(projectId: string): Promise<ChangeRequest[]> {
     try {
       const requests = await this.getAllChangeRequests()
-      return requests.filter(r => r.projectId === projectId)
+      return requests.filter((r) => r.projectId === projectId)
     } catch (error) {
       console.error('Error getting change requests by project:', error)
       throw new Error('فشل في استرجاع طلبات التغيير للمشروع')
     }
   }
 
-  async convertRequestToOrder(requestId: string, additionalData?: Partial<ChangeOrder>): Promise<ChangeOrder> {
+  async convertRequestToOrder(
+    requestId: string,
+    additionalData?: Partial<ChangeOrder>,
+  ): Promise<ChangeOrder> {
     try {
       const request = await this.getChangeRequest(requestId)
       if (!request) {
@@ -134,7 +142,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
         approvalWorkflow: await this.createDefaultApprovalWorkflow(),
         documents: request.documents,
         comments: [],
-        ...additionalData
+        ...additionalData,
       }
 
       const newOrder = await this.createChangeOrder(changeOrder)
@@ -150,15 +158,17 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   }
 
   // Change Orders
-  async createChangeOrder(order: Omit<ChangeOrder, 'id' | 'createdAt' | 'updatedAt' | 'version'>): Promise<ChangeOrder> {
+  async createChangeOrder(
+    order: Omit<ChangeOrder, 'id' | 'createdAt' | 'updatedAt' | 'version'>,
+  ): Promise<ChangeOrder> {
     try {
       const newOrder: ChangeOrder = {
         ...order,
         id: this.generateId('co'),
-        number: order.number || await this.generateChangeOrderNumber(order.projectId),
+        number: order.number || (await this.generateChangeOrderNumber(order.projectId)),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        version: 1
+        version: 1,
       }
 
       const orders = await this.getAllChangeOrders()
@@ -175,7 +185,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   async getChangeOrder(orderId: string): Promise<ChangeOrder | null> {
     try {
       const orders = await this.getAllChangeOrders()
-      return orders.find(o => o.id === orderId) || null
+      return orders.find((o) => o.id === orderId) || null
     } catch (error) {
       console.error('Error getting change order:', error)
       throw new Error('فشل في استرجاع أمر التغيير')
@@ -185,8 +195,8 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   async updateChangeOrder(orderId: string, updates: Partial<ChangeOrder>): Promise<ChangeOrder> {
     try {
       const orders = await this.getAllChangeOrders()
-      const index = orders.findIndex(o => o.id === orderId)
-      
+      const index = orders.findIndex((o) => o.id === orderId)
+
       if (index === -1) {
         throw new Error('أمر التغيير غير موجود')
       }
@@ -195,7 +205,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
         ...orders[index],
         ...updates,
         updatedAt: new Date().toISOString(),
-        version: orders[index].version + 1
+        version: orders[index].version + 1,
       }
 
       orders[index] = updatedOrder
@@ -211,7 +221,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   async deleteChangeOrder(orderId: string): Promise<void> {
     try {
       const orders = await this.getAllChangeOrders()
-      const filteredOrders = orders.filter(o => o.id !== orderId)
+      const filteredOrders = orders.filter((o) => o.id !== orderId)
       await asyncStorage.setItem(this.STORAGE_KEYS.CHANGE_ORDERS, filteredOrders)
 
       // Also delete related comments and documents
@@ -223,10 +233,13 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
     }
   }
 
-  async getChangeOrdersByProject(projectId: string, filters?: ChangeOrderFilters): Promise<ChangeOrder[]> {
+  async getChangeOrdersByProject(
+    projectId: string,
+    filters?: ChangeOrderFilters,
+  ): Promise<ChangeOrder[]> {
     try {
       const orders = await this.getAllChangeOrders()
-      let filteredOrders = orders.filter(o => o.projectId === projectId)
+      let filteredOrders = orders.filter((o) => o.projectId === projectId)
 
       if (filters) {
         filteredOrders = this.applyFilters(filteredOrders, filters)
@@ -249,7 +262,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
 
       const updatedOrder = await this.updateChangeOrder(orderId, {
         status: 'submitted',
-        currentApprovalStep: 0
+        currentApprovalStep: 0,
       })
 
       return updatedOrder
@@ -259,7 +272,12 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
     }
   }
 
-  async approveChangeOrder(orderId: string, stepId: string, approverId: string, comments?: string): Promise<ChangeOrder> {
+  async approveChangeOrder(
+    orderId: string,
+    stepId: string,
+    approverId: string,
+    comments?: string,
+  ): Promise<ChangeOrder> {
     try {
       const order = await this.getChangeOrder(orderId)
       if (!order) {
@@ -267,27 +285,29 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
       }
 
       // Update approval step
-      const updatedWorkflow = order.approvalWorkflow.map(step => {
+      const updatedWorkflow = order.approvalWorkflow.map((step) => {
         if (step.id === stepId) {
           return {
             ...step,
             status: 'approved' as const,
             approverId,
             comments,
-            approvedAt: new Date().toISOString()
+            approvedAt: new Date().toISOString(),
           }
         }
         return step
       })
 
       // Check if all steps are approved
-      const allApproved = updatedWorkflow.every(step => step.status === 'approved' || step.status === 'skipped')
+      const allApproved = updatedWorkflow.every(
+        (step) => step.status === 'approved' || step.status === 'skipped',
+      )
       const newStatus: ChangeStatus = allApproved ? 'approved' : 'under_review'
 
       const updatedOrder = await this.updateChangeOrder(orderId, {
         approvalWorkflow: updatedWorkflow,
         status: newStatus,
-        currentApprovalStep: allApproved ? undefined : (order.currentApprovalStep || 0) + 1
+        currentApprovalStep: allApproved ? undefined : (order.currentApprovalStep || 0) + 1,
       })
 
       // Add comment if provided
@@ -297,7 +317,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
           authorName: 'Approver', // This should be fetched from user service
           content: comments,
           type: 'approval',
-          isInternal: true
+          isInternal: true,
         })
       }
 
@@ -308,7 +328,12 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
     }
   }
 
-  async rejectChangeOrder(orderId: string, stepId: string, approverId: string, reason: string): Promise<ChangeOrder> {
+  async rejectChangeOrder(
+    orderId: string,
+    stepId: string,
+    approverId: string,
+    reason: string,
+  ): Promise<ChangeOrder> {
     try {
       const order = await this.getChangeOrder(orderId)
       if (!order) {
@@ -316,14 +341,14 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
       }
 
       // Update approval step
-      const updatedWorkflow = order.approvalWorkflow.map(step => {
+      const updatedWorkflow = order.approvalWorkflow.map((step) => {
         if (step.id === stepId) {
           return {
             ...step,
             status: 'rejected' as const,
             approverId,
             comments: reason,
-            approvedAt: new Date().toISOString()
+            approvedAt: new Date().toISOString(),
           }
         }
         return step
@@ -331,7 +356,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
 
       const updatedOrder = await this.updateChangeOrder(orderId, {
         approvalWorkflow: updatedWorkflow,
-        status: 'rejected'
+        status: 'rejected',
       })
 
       // Add rejection comment
@@ -340,7 +365,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
         authorName: 'Approver', // This should be fetched from user service
         content: reason,
         type: 'rejection',
-        isInternal: true
+        isInternal: true,
       })
 
       return updatedOrder
@@ -358,28 +383,29 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
       }
 
       // Update approval step
-      const updatedWorkflow = order.approvalWorkflow.map(step => {
+      const updatedWorkflow = order.approvalWorkflow.map((step) => {
         if (step.id === stepId) {
           return {
             ...step,
             status: 'skipped' as const,
             comments: reason,
-            approvedAt: new Date().toISOString()
+            approvedAt: new Date().toISOString(),
           }
         }
         return step
       })
 
       // Check if all remaining steps are completed
-      const allCompleted = updatedWorkflow.every(step => 
-        step.status === 'approved' || step.status === 'skipped' || step.status === 'rejected'
+      const allCompleted = updatedWorkflow.every(
+        (step) =>
+          step.status === 'approved' || step.status === 'skipped' || step.status === 'rejected',
       )
       const newStatus: ChangeStatus = allCompleted ? 'approved' : 'under_review'
 
       const updatedOrder = await this.updateChangeOrder(orderId, {
         approvalWorkflow: updatedWorkflow,
         status: newStatus,
-        currentApprovalStep: allCompleted ? undefined : (order.currentApprovalStep || 0) + 1
+        currentApprovalStep: allCompleted ? undefined : (order.currentApprovalStep || 0) + 1,
       })
 
       return updatedOrder
@@ -390,14 +416,18 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   }
 
   // Implementation
-  async startImplementation(orderId: string, implementedBy: string, plan?: string): Promise<ChangeOrder> {
+  async startImplementation(
+    orderId: string,
+    implementedBy: string,
+    plan?: string,
+  ): Promise<ChangeOrder> {
     try {
       const updatedOrder = await this.updateChangeOrder(orderId, {
         status: 'implementing',
         implementedBy,
         implementedByName: 'Implementation Team', // This should be fetched from user service
         implementationPlan: plan,
-        implementationStartDate: new Date().toISOString()
+        implementationStartDate: new Date().toISOString(),
       })
 
       return updatedOrder
@@ -407,12 +437,16 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
     }
   }
 
-  async completeImplementation(orderId: string, actualCost?: number, notes?: string): Promise<ChangeOrder> {
+  async completeImplementation(
+    orderId: string,
+    actualCost?: number,
+    notes?: string,
+  ): Promise<ChangeOrder> {
     try {
       const updatedOrder = await this.updateChangeOrder(orderId, {
         status: 'completed',
         implementationEndDate: new Date().toISOString(),
-        actualCost
+        actualCost,
       })
 
       if (notes) {
@@ -421,7 +455,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
           authorName: 'Implementation Team',
           content: notes,
           type: 'implementation',
-          isInternal: true
+          isInternal: true,
         })
       }
 
@@ -440,7 +474,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
       const updatedOrder = await this.updateChangeOrder(orderId, {
         impacts,
         totalCostImpact: costImpact,
-        totalScheduleImpact: scheduleImpact
+        totalScheduleImpact: scheduleImpact,
       })
 
       return updatedOrder
@@ -452,19 +486,25 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
 
   calculateTotalImpact(impacts: ChangeImpact[]): { costImpact: number; scheduleImpact: number } {
     const costImpact = impacts.reduce((total, impact) => total + (impact.estimatedCost || 0), 0)
-    const scheduleImpact = impacts.reduce((total, impact) => total + (impact.estimatedDuration || 0), 0)
+    const scheduleImpact = impacts.reduce(
+      (total, impact) => total + (impact.estimatedDuration || 0),
+      0,
+    )
 
     return { costImpact, scheduleImpact }
   }
 
   // Comments
-  async addComment(orderId: string, comment: Omit<ChangeComment, 'id' | 'changeOrderId' | 'createdAt'>): Promise<ChangeComment> {
+  async addComment(
+    orderId: string,
+    comment: Omit<ChangeComment, 'id' | 'changeOrderId' | 'createdAt'>,
+  ): Promise<ChangeComment> {
     try {
       const newComment: ChangeComment = {
         ...comment,
         id: this.generateId('comment'),
         changeOrderId: orderId,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       }
 
       const comments = await this.getAllComments()
@@ -481,7 +521,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   async getComments(orderId: string): Promise<ChangeComment[]> {
     try {
       const comments = await this.getAllComments()
-      return comments.filter(c => c.changeOrderId === orderId)
+      return comments.filter((c) => c.changeOrderId === orderId)
     } catch (error) {
       console.error('Error getting comments:', error)
       throw new Error('فشل في استرجاع التعليقات')
@@ -489,12 +529,15 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   }
 
   // Documents
-  async addDocument(orderId: string, document: Omit<ChangeOrderDocument, 'id' | 'uploadedAt'>): Promise<ChangeOrderDocument> {
+  async addDocument(
+    orderId: string,
+    document: Omit<ChangeOrderDocument, 'id' | 'uploadedAt'>,
+  ): Promise<ChangeOrderDocument> {
     try {
       const newDocument: ChangeOrderDocument = {
         ...document,
         id: this.generateId('doc'),
-        uploadedAt: new Date().toISOString()
+        uploadedAt: new Date().toISOString(),
       }
 
       const documents = await this.getAllDocuments()
@@ -505,7 +548,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
       const order = await this.getChangeOrder(orderId)
       if (order) {
         await this.updateChangeOrder(orderId, {
-          documents: [...order.documents, newDocument]
+          documents: [...order.documents, newDocument],
         })
       }
 
@@ -519,13 +562,13 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   async removeDocument(documentId: string): Promise<void> {
     try {
       const documents = await this.getAllDocuments()
-      const filteredDocuments = documents.filter(d => d.id !== documentId)
+      const filteredDocuments = documents.filter((d) => d.id !== documentId)
       await asyncStorage.setItem(this.STORAGE_KEYS.CHANGE_DOCUMENTS, filteredDocuments)
 
       // Also remove from change orders
       const orders = await this.getAllChangeOrders()
       for (const order of orders) {
-        const updatedDocuments = order.documents.filter(d => d.id !== documentId)
+        const updatedDocuments = order.documents.filter((d) => d.id !== documentId)
         if (updatedDocuments.length !== order.documents.length) {
           await this.updateChangeOrder(order.id, { documents: updatedDocuments })
         }
@@ -543,20 +586,22 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
 
       const summary = {
         totalChangeOrders: orders.length,
-        pendingApprovals: orders.filter(o => o.status === 'under_review' || o.status === 'submitted').length,
-        inProgress: orders.filter(o => o.status === 'implementing').length,
-        completed: orders.filter(o => o.status === 'completed').length,
+        pendingApprovals: orders.filter(
+          (o) => o.status === 'under_review' || o.status === 'submitted',
+        ).length,
+        inProgress: orders.filter((o) => o.status === 'implementing').length,
+        completed: orders.filter((o) => o.status === 'completed').length,
         totalCostImpact: orders.reduce((total, o) => total + o.totalCostImpact, 0),
         totalScheduleImpact: orders.reduce((total, o) => total + o.totalScheduleImpact, 0),
-        averageApprovalTime: this.calculateAverageApprovalTime(orders)
+        averageApprovalTime: this.calculateAverageApprovalTime(orders),
       }
 
       const recentChanges = orders
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 5)
 
-      const pendingApprovals = orders.filter(o =>
-        o.status === 'under_review' || o.status === 'submitted'
+      const pendingApprovals = orders.filter(
+        (o) => o.status === 'under_review' || o.status === 'submitted',
       )
 
       const costImpactTrend = this.calculateCostImpactTrend(orders)
@@ -570,7 +615,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
         pendingApprovals,
         costImpactTrend,
         changesByType,
-        approvalMetrics
+        approvalMetrics,
       }
     } catch (error) {
       console.error('Error getting dashboard:', error)
@@ -586,7 +631,10 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
       const reportData = JSON.stringify(orders, null, 2)
 
       return new Blob([reportData], {
-        type: format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        type:
+          format === 'pdf'
+            ? 'application/pdf'
+            : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       })
     } catch (error) {
       console.error('Error generating change report:', error)
@@ -595,28 +643,35 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   }
 
   // Analytics
-  async getChangeMetrics(projectId: string, period: { start: string; end: string }): Promise<ChangeMetrics> {
+  async getChangeMetrics(
+    projectId: string,
+    period: { start: string; end: string },
+  ): Promise<ChangeMetrics> {
     try {
       const orders = await this.getChangeOrdersByProject(projectId)
-      const filteredOrders = orders.filter(o => {
+      const filteredOrders = orders.filter((o) => {
         const createdDate = new Date(o.createdAt)
         return createdDate >= new Date(period.start) && createdDate <= new Date(period.end)
       })
 
       const totalChanges = filteredOrders.length
-      const approvedChanges = filteredOrders.filter(o => o.status === 'approved' || o.status === 'completed').length
-      const rejectedChanges = filteredOrders.filter(o => o.status === 'rejected').length
-      const pendingChanges = filteredOrders.filter(o =>
-        o.status === 'draft' || o.status === 'submitted' || o.status === 'under_review'
+      const approvedChanges = filteredOrders.filter(
+        (o) => o.status === 'approved' || o.status === 'completed',
+      ).length
+      const rejectedChanges = filteredOrders.filter((o) => o.status === 'rejected').length
+      const pendingChanges = filteredOrders.filter(
+        (o) => o.status === 'draft' || o.status === 'submitted' || o.status === 'under_review',
       ).length
 
-      const averageCostImpact = totalChanges > 0
-        ? filteredOrders.reduce((sum, o) => sum + o.totalCostImpact, 0) / totalChanges
-        : 0
+      const averageCostImpact =
+        totalChanges > 0
+          ? filteredOrders.reduce((sum, o) => sum + o.totalCostImpact, 0) / totalChanges
+          : 0
 
-      const averageScheduleImpact = totalChanges > 0
-        ? filteredOrders.reduce((sum, o) => sum + o.totalScheduleImpact, 0) / totalChanges
-        : 0
+      const averageScheduleImpact =
+        totalChanges > 0
+          ? filteredOrders.reduce((sum, o) => sum + o.totalScheduleImpact, 0) / totalChanges
+          : 0
 
       const changesByType = this.groupByType(filteredOrders)
       const changesByPriority = this.groupByPriority(filteredOrders)
@@ -631,7 +686,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
         averageScheduleImpact,
         changesByType,
         changesByPriority,
-        monthlyTrends
+        monthlyTrends,
       }
     } catch (error) {
       console.error('Error getting change metrics:', error)
@@ -642,17 +697,20 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   async getApprovalMetrics(projectId: string): Promise<ApprovalMetrics> {
     try {
       const orders = await this.getChangeOrdersByProject(projectId)
-      const completedOrders = orders.filter(o =>
-        o.status === 'approved' || o.status === 'rejected' || o.status === 'completed'
+      const completedOrders = orders.filter(
+        (o) => o.status === 'approved' || o.status === 'rejected' || o.status === 'completed',
       )
 
       const averageApprovalTime = this.calculateAverageApprovalTime(completedOrders)
-      const approvalRate = completedOrders.length > 0
-        ? orders.filter(o => o.status === 'approved' || o.status === 'completed').length / completedOrders.length
-        : 0
-      const rejectionRate = completedOrders.length > 0
-        ? orders.filter(o => o.status === 'rejected').length / completedOrders.length
-        : 0
+      const approvalRate =
+        completedOrders.length > 0
+          ? orders.filter((o) => o.status === 'approved' || o.status === 'completed').length /
+            completedOrders.length
+          : 0
+      const rejectionRate =
+        completedOrders.length > 0
+          ? orders.filter((o) => o.status === 'rejected').length / completedOrders.length
+          : 0
 
       const bottleneckSteps = this.identifyBottleneckSteps(orders)
       const approverPerformance = this.calculateApproverPerformance(orders)
@@ -662,7 +720,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
         approvalRate,
         rejectionRate,
         bottleneckSteps,
-        approverPerformance
+        approverPerformance,
       }
     } catch (error) {
       console.error('Error getting approval metrics:', error)
@@ -707,7 +765,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
     }
   }
 
-  private generateId(prefix: string = 'change'): string {
+  private generateId(prefix = 'change'): string {
     return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
 
@@ -730,7 +788,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
         status: 'pending' as const,
         requiredDocuments: ['technical_drawing', 'specification'],
         conditions: ['Impact assessment completed', 'Cost estimate provided'],
-        conditionsAr: ['تم إكمال تقييم التأثير', 'تم توفير تقدير التكلفة']
+        conditionsAr: ['تم إكمال تقييم التأثير', 'تم توفير تقدير التكلفة'],
       },
       {
         id: this.generateId('step'),
@@ -742,7 +800,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
         status: 'pending' as const,
         requiredDocuments: ['cost_estimate'],
         conditions: ['Budget impact within limits'],
-        conditionsAr: ['تأثير الميزانية ضمن الحدود المسموحة']
+        conditionsAr: ['تأثير الميزانية ضمن الحدود المسموحة'],
       },
       {
         id: this.generateId('step'),
@@ -754,8 +812,8 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
         status: 'pending' as const,
         requiredDocuments: [],
         conditions: ['All previous approvals obtained'],
-        conditionsAr: ['تم الحصول على جميع الموافقات السابقة']
-      }
+        conditionsAr: ['تم الحصول على جميع الموافقات السابقة'],
+      },
     ]
   }
 
@@ -763,34 +821,35 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
     let filtered = orders
 
     if (filters.status && filters.status.length > 0) {
-      filtered = filtered.filter(o => filters.status!.includes(o.status))
+      filtered = filtered.filter((o) => filters.status!.includes(o.status))
     }
 
     if (filters.type && filters.type.length > 0) {
-      filtered = filtered.filter(o => filters.type!.includes(o.type))
+      filtered = filtered.filter((o) => filters.type!.includes(o.type))
     }
 
     if (filters.priority && filters.priority.length > 0) {
-      filtered = filtered.filter(o => filters.priority!.includes(o.priority))
+      filtered = filtered.filter((o) => filters.priority!.includes(o.priority))
     }
 
     if (filters.requestedBy) {
-      filtered = filtered.filter(o => o.requestedBy === filters.requestedBy)
+      filtered = filtered.filter((o) => o.requestedBy === filters.requestedBy)
     }
 
     if (filters.dateRange) {
       const start = new Date(filters.dateRange.start)
       const end = new Date(filters.dateRange.end)
-      filtered = filtered.filter(o => {
+      filtered = filtered.filter((o) => {
         const createdDate = new Date(o.createdAt)
         return createdDate >= start && createdDate <= end
       })
     }
 
     if (filters.costRange) {
-      filtered = filtered.filter(o =>
-        o.totalCostImpact >= filters.costRange!.min &&
-        o.totalCostImpact <= filters.costRange!.max
+      filtered = filtered.filter(
+        (o) =>
+          o.totalCostImpact >= filters.costRange!.min &&
+          o.totalCostImpact <= filters.costRange!.max,
       )
     }
 
@@ -798,14 +857,14 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   }
 
   private calculateAverageApprovalTime(orders: ChangeOrder[]): number {
-    const approvedOrders = orders.filter(o => o.status === 'approved' || o.status === 'completed')
+    const approvedOrders = orders.filter((o) => o.status === 'approved' || o.status === 'completed')
     if (approvedOrders.length === 0) return 0
 
     const totalTime = approvedOrders.reduce((sum, order) => {
       const requestedDate = new Date(order.requestedAt)
       const lastApprovalDate = order.approvalWorkflow
-        .filter(step => step.approvedAt)
-        .map(step => new Date(step.approvedAt!))
+        .filter((step) => step.approvedAt)
+        .map((step) => new Date(step.approvedAt!))
         .sort((a, b) => b.getTime() - a.getTime())[0]
 
       if (lastApprovalDate) {
@@ -820,7 +879,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
   private calculateCostImpactTrend(orders: ChangeOrder[]) {
     const monthlyData: Record<string, { totalImpact: number; approvedImpact: number }> = {}
 
-    orders.forEach(order => {
+    orders.forEach((order) => {
       const month = new Date(order.createdAt).toISOString().substring(0, 7) // YYYY-MM
       if (!monthlyData[month]) {
         monthlyData[month] = { totalImpact: 0, approvedImpact: 0 }
@@ -833,14 +892,14 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
 
     return Object.entries(monthlyData).map(([month, data]) => ({
       month,
-      ...data
+      ...data,
     }))
   }
 
   private groupChangesByType(orders: ChangeOrder[]) {
     const grouped: Record<ChangeOrderType, { count: number; totalCost: number }> = {} as any
 
-    orders.forEach(order => {
+    orders.forEach((order) => {
       if (!grouped[order.type]) {
         grouped[order.type] = { count: 0, totalCost: 0 }
       }
@@ -850,21 +909,23 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
 
     return Object.entries(grouped).map(([type, data]) => ({
       type: type as ChangeOrderType,
-      ...data
+      ...data,
     }))
   }
 
   private async calculateApprovalMetrics(orders: ChangeOrder[]) {
     const averageApprovalTime = this.calculateAverageApprovalTime(orders)
-    const completedOrders = orders.filter(o =>
-      o.status === 'approved' || o.status === 'rejected' || o.status === 'completed'
+    const completedOrders = orders.filter(
+      (o) => o.status === 'approved' || o.status === 'rejected' || o.status === 'completed',
     )
 
-    const approvalRate = completedOrders.length > 0
-      ? orders.filter(o => o.status === 'approved' || o.status === 'completed').length / completedOrders.length
-      : 0
+    const approvalRate =
+      completedOrders.length > 0
+        ? orders.filter((o) => o.status === 'approved' || o.status === 'completed').length /
+          completedOrders.length
+        : 0
 
-    const onTimeApprovals = completedOrders.filter(order => {
+    const onTimeApprovals = completedOrders.filter((order) => {
       const approvalTime = this.calculateOrderApprovalTime(order)
       return approvalTime <= 5 // Assuming 5 days is the target
     }).length
@@ -873,13 +934,13 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
       averageApprovalTime,
       approvalRate,
       rejectionRate: 1 - approvalRate,
-      onTimeApprovals
+      onTimeApprovals,
     }
   }
 
   private groupByType(orders: ChangeOrder[]): Record<ChangeOrderType, number> {
     const grouped: Record<ChangeOrderType, number> = {} as any
-    orders.forEach(order => {
+    orders.forEach((order) => {
       grouped[order.type] = (grouped[order.type] || 0) + 1
     })
     return grouped
@@ -887,16 +948,19 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
 
   private groupByPriority(orders: ChangeOrder[]): Record<ChangePriority, number> {
     const grouped: Record<ChangePriority, number> = {} as any
-    orders.forEach(order => {
+    orders.forEach((order) => {
       grouped[order.priority] = (grouped[order.priority] || 0) + 1
     })
     return grouped
   }
 
   private calculateMonthlyTrends(orders: ChangeOrder[]) {
-    const monthlyData: Record<string, { count: number; totalCost: number; approvalTimes: number[] }> = {}
+    const monthlyData: Record<
+      string,
+      { count: number; totalCost: number; approvalTimes: number[] }
+    > = {}
 
-    orders.forEach(order => {
+    orders.forEach((order) => {
       const month = new Date(order.createdAt).toISOString().substring(0, 7)
       if (!monthlyData[month]) {
         monthlyData[month] = { count: 0, totalCost: 0, approvalTimes: [] }
@@ -914,17 +978,18 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
       month,
       count: data.count,
       totalCost: data.totalCost,
-      averageApprovalTime: data.approvalTimes.length > 0
-        ? data.approvalTimes.reduce((sum, time) => sum + time, 0) / data.approvalTimes.length
-        : 0
+      averageApprovalTime:
+        data.approvalTimes.length > 0
+          ? data.approvalTimes.reduce((sum, time) => sum + time, 0) / data.approvalTimes.length
+          : 0,
     }))
   }
 
   private identifyBottleneckSteps(orders: ChangeOrder[]) {
     const stepData: Record<string, { totalTime: number; count: number }> = {}
 
-    orders.forEach(order => {
-      order.approvalWorkflow.forEach(step => {
+    orders.forEach((order) => {
+      order.approvalWorkflow.forEach((step) => {
         if (step.approvedAt) {
           const stepTime = 1 // Placeholder - would calculate actual time spent on step
           if (!stepData[step.name]) {
@@ -940,17 +1005,20 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
       .map(([stepName, data]) => ({
         stepName,
         averageTime: data.count > 0 ? data.totalTime / data.count : 0,
-        count: data.count
+        count: data.count,
       }))
       .sort((a, b) => b.averageTime - a.averageTime)
       .slice(0, 5)
   }
 
   private calculateApproverPerformance(orders: ChangeOrder[]) {
-    const approverData: Record<string, { totalTime: number; approvals: number; rejections: number }> = {}
+    const approverData: Record<
+      string,
+      { totalTime: number; approvals: number; rejections: number }
+    > = {}
 
-    orders.forEach(order => {
-      order.approvalWorkflow.forEach(step => {
+    orders.forEach((order) => {
+      order.approvalWorkflow.forEach((step) => {
         if (step.approverId && step.approvedAt) {
           if (!approverData[step.approverId]) {
             approverData[step.approverId] = { totalTime: 0, approvals: 0, rejections: 0 }
@@ -975,20 +1043,24 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
         approverName: 'Approver Name', // Would be fetched from user service
         averageTime: totalDecisions > 0 ? data.totalTime / totalDecisions : 0,
         approvalRate: totalDecisions > 0 ? data.approvals / totalDecisions : 0,
-        totalApprovals: data.approvals
+        totalApprovals: data.approvals,
       }
     })
   }
 
   private calculateOrderApprovalTime(order: ChangeOrder): number {
-    if (order.status !== 'approved' && order.status !== 'completed' && order.status !== 'rejected') {
+    if (
+      order.status !== 'approved' &&
+      order.status !== 'completed' &&
+      order.status !== 'rejected'
+    ) {
       return 0
     }
 
     const requestedDate = new Date(order.requestedAt)
     const lastApprovalDate = order.approvalWorkflow
-      .filter(step => step.approvedAt)
-      .map(step => new Date(step.approvedAt!))
+      .filter((step) => step.approvedAt)
+      .map((step) => new Date(step.approvedAt!))
       .sort((a, b) => b.getTime() - a.getTime())[0]
 
     if (lastApprovalDate) {
@@ -999,7 +1071,7 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
 
   private async deleteCommentsByOrder(orderId: string): Promise<void> {
     const comments = await this.getAllComments()
-    const filteredComments = comments.filter(c => c.changeOrderId !== orderId)
+    const filteredComments = comments.filter((c) => c.changeOrderId !== orderId)
     await asyncStorage.setItem(this.STORAGE_KEYS.CHANGE_COMMENTS, filteredComments)
   }
 
@@ -1007,8 +1079,8 @@ class ChangeManagementServiceImpl implements ChangeManagementServiceInterface {
     const order = await this.getChangeOrder(orderId)
     if (order) {
       const documents = await this.getAllDocuments()
-      const documentIds = order.documents.map(d => d.id)
-      const filteredDocuments = documents.filter(d => !documentIds.includes(d.id))
+      const documentIds = order.documents.map((d) => d.id)
+      const filteredDocuments = documents.filter((d) => !documentIds.includes(d.id))
       await asyncStorage.setItem(this.STORAGE_KEYS.CHANGE_DOCUMENTS, filteredDocuments)
     }
   }

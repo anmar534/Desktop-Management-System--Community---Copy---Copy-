@@ -1,12 +1,12 @@
 /**
  * Prediction Models for Advanced Analytics
- * 
+ *
  * This module provides machine learning-inspired prediction models for:
  * - Win probability prediction based on historical data
  * - Bid success forecasting using multiple factors
  * - Risk assessment and competitive positioning
  * - Market trend prediction and analysis
- * 
+ *
  * @author Desktop Management System Team
  * @version 2.0.0
  * @since Phase 2 - Advanced Analytics Implementation
@@ -103,26 +103,26 @@ export function predictWinProbability(
   region: string,
   clientType: string,
   historicalPerformances: BidPerformance[],
-  competitors: CompetitorData[] = []
+  competitors: CompetitorData[] = [],
 ): WinProbabilityPrediction {
   const factors: PredictionFactor[] = []
   let baselineProbability = 50
   let confidence = 30
 
   // 1. Historical Performance Analysis
-  const categoryHistory = historicalPerformances.filter(p => p.category === category)
-  const regionHistory = historicalPerformances.filter(p => p.region === region)
-  
+  const categoryHistory = historicalPerformances.filter((p) => p.category === category)
+  const regionHistory = historicalPerformances.filter((p) => p.region === region)
+
   if (categoryHistory.length > 0) {
     const categoryWinRate = calculateWinRate(categoryHistory)
     baselineProbability = categoryWinRate
     confidence += Math.min(30, categoryHistory.length * 2)
-    
+
     factors.push({
       name: 'تاريخ الأداء في الفئة',
       weight: (categoryWinRate - 50) * 0.4,
       description: `معدل الفوز في فئة ${category}: ${categoryWinRate.toFixed(1)}%`,
-      category: 'historical'
+      category: 'historical',
     })
   }
 
@@ -132,7 +132,7 @@ export function predictWinProbability(
     name: 'التحليل التنافسي',
     weight: competitiveWeight,
     description: `${competitorCount} منافسين في المناقصة`,
-    category: 'competitive'
+    category: 'competitive',
   })
 
   // 3. Bid Amount Analysis
@@ -142,7 +142,7 @@ export function predictWinProbability(
     name: 'تحليل مبلغ العطاء',
     weight: bidWeight,
     description: `نسبة العطاء إلى القيمة المقدرة: ${(bidRatio * 100).toFixed(1)}%`,
-    category: 'financial'
+    category: 'financial',
   })
 
   // 4. Regional Performance
@@ -153,12 +153,12 @@ export function predictWinProbability(
       name: 'الأداء الإقليمي',
       weight: regionWeight,
       description: `معدل الفوز في منطقة ${region}: ${regionWinRate.toFixed(1)}%`,
-      category: 'historical'
+      category: 'historical',
     })
   }
 
   // 5. Client Type Analysis
-  const clientHistory = historicalPerformances.filter(p => p.client.type === clientType)
+  const clientHistory = historicalPerformances.filter((p) => p.client.type === clientType)
   if (clientHistory.length > 0) {
     const clientWinRate = calculateWinRate(clientHistory)
     const clientWeight = (clientWinRate - 50) * 0.25
@@ -166,7 +166,7 @@ export function predictWinProbability(
       name: 'تحليل نوع العميل',
       weight: clientWeight,
       description: `معدل الفوز مع العملاء من نوع ${clientType}: ${clientWinRate.toFixed(1)}%`,
-      category: 'client'
+      category: 'client',
     })
   }
 
@@ -182,7 +182,7 @@ export function predictWinProbability(
     confidence: Math.min(95, confidence),
     factors,
     recommendations,
-    historicalDataPoints: historicalPerformances.length
+    historicalDataPoints: historicalPerformances.length,
   }
 }
 
@@ -192,7 +192,7 @@ export function predictWinProbability(
 function calculateCompetitiveWeight(
   competitorCount: number,
   competitors: CompetitorData[],
-  category: string
+  category: string,
 ): number {
   let weight = 0
 
@@ -202,8 +202,8 @@ function calculateCompetitiveWeight(
   else if (competitorCount > 1) weight -= 5
 
   // Analyze specific competitors if available
-  const relevantCompetitors = competitors.filter(c => 
-    c.categories.includes(category) && c.status === 'active'
+  const relevantCompetitors = competitors.filter(
+    (c) => c.categories.includes(category) && c.status === 'active',
   )
 
   for (const competitor of relevantCompetitors) {
@@ -221,7 +221,10 @@ function calculateCompetitiveWeight(
 /**
  * Calculate bid amount weight based on historical success rates
  */
-function calculateBidAmountWeight(bidRatio: number, historicalPerformances: BidPerformance[]): number {
+function calculateBidAmountWeight(
+  bidRatio: number,
+  historicalPerformances: BidPerformance[],
+): number {
   if (historicalPerformances.length === 0) return 0
 
   // Analyze historical bid ratios and success rates
@@ -229,12 +232,12 @@ function calculateBidAmountWeight(bidRatio: number, historicalPerformances: BidP
     { min: 0.8, max: 0.9, label: 'aggressive' },
     { min: 0.9, max: 1.0, label: 'competitive' },
     { min: 1.0, max: 1.1, label: 'conservative' },
-    { min: 1.1, max: 1.3, label: 'high' }
+    { min: 1.1, max: 1.3, label: 'high' },
   ]
 
   for (const range of bidRanges) {
     if (bidRatio >= range.min && bidRatio < range.max) {
-      const similarBids = historicalPerformances.filter(p => {
+      const similarBids = historicalPerformances.filter((p) => {
         const ratio = p.bidAmount / p.estimatedValue
         return ratio >= range.min && ratio < range.max
       })
@@ -259,7 +262,7 @@ function calculateBidAmountWeight(bidRatio: number, historicalPerformances: BidP
 function generateWinProbabilityRecommendations(
   factors: PredictionFactor[],
   probability: number,
-  bidRatio: number
+  bidRatio: number,
 ): string[] {
   const recommendations: string[] = []
 
@@ -275,12 +278,12 @@ function generateWinProbabilityRecommendations(
   }
 
   // Factor-specific recommendations
-  const competitiveFactor = factors.find(f => f.category === 'competitive')
+  const competitiveFactor = factors.find((f) => f.category === 'competitive')
   if (competitiveFactor && competitiveFactor.weight < -10) {
     recommendations.push('منافسة شديدة - ركز على نقاط القوة الفريدة')
   }
 
-  const financialFactor = factors.find(f => f.category === 'financial')
+  const financialFactor = factors.find((f) => f.category === 'financial')
   if (financialFactor && financialFactor.weight < -5) {
     recommendations.push('راجع استراتيجية التسعير لتحسين القدرة التنافسية')
   }
@@ -300,23 +303,23 @@ export function predictMarketTrend(
   region: string,
   historicalOpportunities: MarketOpportunity[],
   historicalTrends: MarketTrend[],
-  timeHorizon: number = 6 // months
+  timeHorizon = 6, // months
 ): MarketTrendPrediction {
   // Filter relevant historical data
-  const relevantOpportunities = historicalOpportunities.filter(o => 
-    o.category === category && o.region === region
+  const relevantOpportunities = historicalOpportunities.filter(
+    (o) => o.category === category && o.region === region,
   )
 
-  const relevantTrends = historicalTrends.filter(t => 
-    t.category === category && t.region === region
+  const relevantTrends = historicalTrends.filter(
+    (t) => t.category === category && t.region === region,
   )
 
   // Analyze opportunity volume trends
   const monthlyOpportunities = groupOpportunitiesByMonth(relevantOpportunities)
-  const volumeTrend = calculateTrendDirection(monthlyOpportunities.map(m => m.count))
+  const volumeTrend = calculateTrendDirection(monthlyOpportunities.map((m) => m.count))
 
   // Analyze value trends
-  const valueTrend = calculateTrendDirection(monthlyOpportunities.map(m => m.totalValue))
+  const valueTrend = calculateTrendDirection(monthlyOpportunities.map((m) => m.totalValue))
 
   // Combine trends
   let direction: 'up' | 'down' | 'stable' = 'stable'
@@ -338,7 +341,7 @@ export function predictMarketTrend(
     strength: Math.round(strength),
     duration: timeHorizon,
     drivers,
-    confidence: Math.min(85, relevantOpportunities.length * 5 + relevantTrends.length * 3)
+    confidence: Math.min(85, relevantOpportunities.length * 5 + relevantTrends.length * 3),
   }
 }
 
@@ -347,17 +350,20 @@ export function predictMarketTrend(
  */
 function groupOpportunitiesByMonth(opportunities: MarketOpportunity[]) {
   const monthlyData: Array<{ month: string; count: number; totalValue: number }> = []
-  
+
   // Group by month
-  const grouped = opportunities.reduce((acc, opp) => {
-    const month = opp.deadline.substring(0, 7) // YYYY-MM
-    if (!acc[month]) {
-      acc[month] = { count: 0, totalValue: 0 }
-    }
-    acc[month].count++
-    acc[month].totalValue += opp.estimatedValue
-    return acc
-  }, {} as Record<string, { count: number; totalValue: number }>)
+  const grouped = opportunities.reduce(
+    (acc, opp) => {
+      const month = opp.deadline.substring(0, 7) // YYYY-MM
+      if (!acc[month]) {
+        acc[month] = { count: 0, totalValue: 0 }
+      }
+      acc[month].count++
+      acc[month].totalValue += opp.estimatedValue
+      return acc
+    },
+    {} as Record<string, { count: number; totalValue: number }>,
+  )
 
   // Convert to array and sort
   return Object.entries(grouped)
@@ -370,7 +376,7 @@ function groupOpportunitiesByMonth(opportunities: MarketOpportunity[]) {
  */
 function calculateTrendDirection(values: number[]) {
   if (values.length < 2) return { slope: 0, rSquared: 0 }
-  
+
   const xValues = values.map((_, index) => index)
   return calculateLinearRegression(xValues, values)
 }
@@ -378,7 +384,10 @@ function calculateTrendDirection(values: number[]) {
 /**
  * Identify key drivers for market trends
  */
-function identifyTrendDrivers(trends: MarketTrend[], direction: 'up' | 'down' | 'stable'): string[] {
+function identifyTrendDrivers(
+  trends: MarketTrend[],
+  direction: 'up' | 'down' | 'stable',
+): string[] {
   const drivers: string[] = []
 
   if (direction === 'up') {
