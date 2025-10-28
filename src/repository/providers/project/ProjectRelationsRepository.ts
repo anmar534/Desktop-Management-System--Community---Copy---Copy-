@@ -3,7 +3,7 @@
  * Handles integration with Tenders and Purchase Orders
  */
 
-import type { EnhancedProject, TenderProjectLink } from '@/types/projects'
+import type { EnhancedProject, TenderProjectLink } from '@/shared/types/projects'
 import type { ProjectPurchaseRelation } from '@/repository/types'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import {

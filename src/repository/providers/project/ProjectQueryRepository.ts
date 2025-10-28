@@ -3,8 +3,8 @@
  * Handles advanced queries and filtering for projects
  */
 
-import type { EnhancedProject, ProjectFilters, ProjectSortOptions } from '@/types/projects'
-import type { Status } from '@/types/contracts'
+import type { EnhancedProject, ProjectFilters, ProjectSortOptions } from '@/shared/types/projects'
+import type { Status } from '@/shared/types/contracts'
 import { projectCRUDRepository } from './ProjectCRUDRepository'
 
 export class ProjectQueryRepository {

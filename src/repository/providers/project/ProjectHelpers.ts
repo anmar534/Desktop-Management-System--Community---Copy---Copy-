@@ -1,9 +1,9 @@
 /**
  * Project Helper Functions
- * Utility functions for creating default project entities and generating IDs
+ * Utility functions for project management
  */
 
-import type { ProjectBudget, ProjectTeam, ProjectPhase } from '@/types/projects'
+import type { ProjectBudget, ProjectTeam, ProjectPhase } from '@/shared/types/projects'
 
 // ============================================================================
 // ID and Code Generation

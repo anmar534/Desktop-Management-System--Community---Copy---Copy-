@@ -7,7 +7,7 @@ import type {
   CreateProjectRequest,
   UpdateProjectRequest,
   ProjectValidationResult,
-} from '@/types/projects'
+} from '@/shared/types/projects'
 import { projectCRUDRepository } from './ProjectCRUDRepository'
 
 export class ProjectValidationRepository {

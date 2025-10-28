@@ -3,8 +3,12 @@
  * Handles basic Create, Read, Update, Delete operations for projects
  */
 
-import type { EnhancedProject, CreateProjectRequest, UpdateProjectRequest } from '@/types/projects'
-import type { Status, Health } from '@/types/contracts'
+import type {
+  EnhancedProject,
+  CreateProjectRequest,
+  UpdateProjectRequest,
+} from '@/shared/types/projects'
+import type { Status, Health } from '@/shared/types/contracts'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import {
   generateProjectId,
