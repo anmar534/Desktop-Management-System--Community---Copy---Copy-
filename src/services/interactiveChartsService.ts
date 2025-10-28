@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * خدمة الرسوم البيانية التفاعلية المتقدمة
  * Interactive Charts Service
@@ -69,15 +70,13 @@ export interface DrillDownLevel {
 }
 
 export interface ChartInteractionEvent {
-  type: 'click' | 'hover' | 'zoom' | 'filter' | 'drilldown'
+  type: 'click' | 'hover' | 'zoom' | 'filter' | 'drilldown' | 'refresh'
   data: any
   timestamp: string
 }
 
 export class InteractiveChartsService {
-  private readonly STORAGE_KEY = 'interactive_charts'
   private readonly CONFIG_KEY = 'chart_configurations'
-  private readonly CACHE_KEY = 'chart_data_cache'
   private updateIntervals = new Map<string, NodeJS.Timeout>()
   private eventListeners = new Map<string, Array<(...args: unknown[]) => void>>()
 
@@ -105,7 +104,7 @@ export class InteractiveChartsService {
    * الحصول على جميع تكوينات الرسوم البيانية
    */
   async getChartConfigurations(): Promise<ChartConfiguration[]> {
-    return (await asyncStorage.getItem(this.CONFIG_KEY)) || []
+    return await asyncStorage.getItem(this.CONFIG_KEY, [])
   }
 
   /**
@@ -156,7 +155,7 @@ export class InteractiveChartsService {
    * الحصول على بيانات الرسم البياني للمشاريع
    */
   async getProjectChartData(chartType: string, filters?: ChartFilter[]): Promise<ChartDataPoint[]> {
-    const projects = (await asyncStorage.getItem('projects')) || []
+    const projects = await asyncStorage.getItem('projects', [])
     let data: ChartDataPoint[] = []
 
     switch (chartType) {
@@ -183,7 +182,7 @@ export class InteractiveChartsService {
    * الحصول على بيانات الرسم البياني للمنافسات
    */
   async getTenderChartData(chartType: string, filters?: ChartFilter[]): Promise<ChartDataPoint[]> {
-    const tenders = (await asyncStorage.getItem('tenders')) || []
+    const tenders = await asyncStorage.getItem('tenders', [])
     let data: ChartDataPoint[] = []
 
     switch (chartType) {
@@ -213,7 +212,7 @@ export class InteractiveChartsService {
     chartType: string,
     filters?: ChartFilter[],
   ): Promise<ChartDataPoint[]> {
-    const financialData = (await asyncStorage.getItem('financial_data')) || {}
+    const financialData = await asyncStorage.getItem('financial_data', {})
     let data: ChartDataPoint[] = []
 
     switch (chartType) {
@@ -244,7 +243,10 @@ export class InteractiveChartsService {
     period: 'daily' | 'weekly' | 'monthly' | 'yearly',
   ): Promise<TimeSeriesDataPoint[]> {
     const cacheKey = `timeseries_${dataSource}_${period}`
-    const cached = await asyncStorage.getItem(cacheKey)
+    const cached = await asyncStorage.getItem<{
+      timestamp: string
+      data: TimeSeriesDataPoint[]
+    } | null>(cacheKey, null)
 
     if (cached && this.isCacheValid(cached.timestamp)) {
       return cached.data
@@ -648,21 +650,21 @@ export class InteractiveChartsService {
   }
 
   // دوال مساعدة للسلاسل الزمنية
-  private async getProjectTimeSeriesData(period: string): Promise<TimeSeriesDataPoint[]> {
-    const projects = (await asyncStorage.getItem('projects')) || []
+  private async getProjectTimeSeriesData(_period: string): Promise<TimeSeriesDataPoint[]> {
     // تنفيذ منطق السلاسل الزمنية للمشاريع
+    // TODO: Implement time series logic for projects
     return []
   }
 
-  private async getTenderTimeSeriesData(period: string): Promise<TimeSeriesDataPoint[]> {
-    const tenders = (await asyncStorage.getItem('tenders')) || []
+  private async getTenderTimeSeriesData(_period: string): Promise<TimeSeriesDataPoint[]> {
     // تنفيذ منطق السلاسل الزمنية للمنافسات
+    // TODO: Implement time series logic for tenders
     return []
   }
 
-  private async getFinancialTimeSeriesData(period: string): Promise<TimeSeriesDataPoint[]> {
-    const financialData = (await asyncStorage.getItem('financial_data')) || {}
+  private async getFinancialTimeSeriesData(_period: string): Promise<TimeSeriesDataPoint[]> {
     // تنفيذ منطق السلاسل الزمنية للبيانات المالية
+    // TODO: Implement time series logic for financial data
     return []
   }
 
