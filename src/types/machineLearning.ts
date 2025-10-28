@@ -21,7 +21,7 @@ export interface MLModel {
   isActive: boolean
 }
 
-export type MLModelType = 
+export type MLModelType =
   | 'pricing_optimization'
   | 'win_probability'
   | 'margin_optimization'
@@ -31,12 +31,7 @@ export type MLModelType =
   | 'cost_estimation'
   | 'competitor_analysis'
 
-export type MLModelStatus = 
-  | 'training'
-  | 'ready'
-  | 'updating'
-  | 'error'
-  | 'deprecated'
+export type MLModelStatus = 'training' | 'ready' | 'updating' | 'error' | 'deprecated'
 
 // Training Data and Features
 export interface TrainingDataset {
@@ -64,13 +59,7 @@ export interface MLFeature {
   isRequired: boolean
 }
 
-export type FeatureType = 
-  | 'numerical'
-  | 'categorical'
-  | 'boolean'
-  | 'text'
-  | 'date'
-  | 'currency'
+export type FeatureType = 'numerical' | 'categorical' | 'boolean' | 'text' | 'date' | 'currency'
 
 export interface DataQuality {
   completeness: number
@@ -81,7 +70,7 @@ export interface DataQuality {
   overall: number
 }
 
-export type DataSource = 
+export type DataSource =
   | 'historical_bids'
   | 'market_data'
   | 'competitor_data'
@@ -93,13 +82,13 @@ export type DataSource =
 // Model Parameters and Configuration
 export interface MLModelParameters {
   algorithm: MLAlgorithm
-  hyperparameters: Record<string, any>
+  hyperparameters: Record<string, string | number | boolean>
   featureSelection: FeatureSelectionConfig
   validation: ValidationConfig
   optimization: OptimizationConfig
 }
 
-export type MLAlgorithm = 
+export type MLAlgorithm =
   | 'linear_regression'
   | 'random_forest'
   | 'gradient_boosting'
@@ -237,13 +226,13 @@ export interface PricingFactor {
   nameAr: string
   impact: number // -1 to 1
   weight: number
-  value: any
+  value: string | number | boolean
   description: string
   descriptionAr: string
   category: FactorCategory
 }
 
-export type FactorCategory = 
+export type FactorCategory =
   | 'project_characteristics'
   | 'market_conditions'
   | 'competitor_analysis'
@@ -273,7 +262,7 @@ export interface PricingRisk {
   mitigation: string[]
 }
 
-export type RiskType = 
+export type RiskType =
   | 'market_volatility'
   | 'competitor_response'
   | 'cost_escalation'
@@ -320,7 +309,7 @@ export interface PatternRecognition {
   lastUpdated: string
 }
 
-export type PatternType = 
+export type PatternType =
   | 'seasonal_pricing'
   | 'competitor_behavior'
   | 'win_loss_patterns'
@@ -342,7 +331,7 @@ export interface IdentifiedPattern {
 export interface PatternCondition {
   feature: string
   operator: 'equals' | 'greater' | 'less' | 'between' | 'contains'
-  value: any
+  value: string | number | boolean | [number, number]
   weight: number
 }
 
@@ -357,8 +346,8 @@ export interface PatternOutcome {
 export interface PatternExample {
   tenderId: string
   date: string
-  conditions: Record<string, any>
-  outcome: Record<string, any>
+  conditions: Record<string, unknown>
+  outcome: Record<string, unknown>
   accuracy: number
 }
 
@@ -436,22 +425,22 @@ export interface MachineLearningService {
   trainModel(config: TrainingConfig): Promise<MLModel>
   updateModel(id: string, updates: Partial<MLModel>): Promise<MLModel>
   deleteModel(id: string): Promise<void>
-  
+
   // Predictions
   getPricingPrediction(tenderId: string, context: PricingContext): Promise<PricingPrediction>
   getBatchPredictions(tenderIds: string[]): Promise<PricingPrediction[]>
   updatePrediction(id: string, feedback: LearningFeedback): Promise<void>
-  
+
   // Pattern Recognition
-  identifyPatterns(data: any[], type: PatternType): Promise<PatternRecognition>
+  identifyPatterns(data: Record<string, unknown>[], type: PatternType): Promise<PatternRecognition>
   getPatterns(type?: PatternType): Promise<PatternRecognition[]>
-  applyPattern(patternId: string, context: any): Promise<PatternApplication>
-  
+  applyPattern(patternId: string, context: Record<string, unknown>): Promise<PatternApplication>
+
   // Learning and Feedback
   submitFeedback(feedback: LearningFeedback): Promise<void>
   getLearningInsights(): Promise<LearningInsight[]>
   scheduleModelUpdate(modelId: string, updateType: ModelUpdate['type']): Promise<void>
-  
+
   // Analytics
   getModelPerformance(modelId: string): Promise<ModelPerformance>
   getPerformanceTrends(modelId: string, timeRange: string): Promise<PerformanceTrends>
@@ -468,10 +457,10 @@ export interface TrainingConfig {
 }
 
 export interface PricingContext {
-  tender: any
+  tender: Record<string, unknown>
   market: MarketContext
-  competitors: any[]
-  historical: any[]
+  competitors: Record<string, unknown>[]
+  historical: Record<string, unknown>[]
   constraints: PricingConstraint[]
 }
 
@@ -507,7 +496,7 @@ export interface LearningInsight {
 
 export interface ModelExport {
   model: MLModel
-  data: any[]
+  data: Record<string, unknown>[]
   performance: ModelPerformance
   patterns: PatternRecognition[]
   format: 'json' | 'csv' | 'xlsx'
