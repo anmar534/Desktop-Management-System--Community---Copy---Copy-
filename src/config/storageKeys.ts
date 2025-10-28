@@ -68,7 +68,6 @@ export const STORAGE_KEYS = {
   // Backups & Stats (new unified keys)
   TENDER_BACKUPS: 'app_tender_backups',
   TENDER_STATS: 'app_tender_stats',
-  TENDER_PRICING_WIZARDS: 'app_tender_pricing_wizards',
   // Notifications
   NOTIFICATIONS: 'app_tender_notifications',
 
@@ -100,7 +99,7 @@ export const STORAGE_KEYS = {
   COST_VARIANCE_CONFIG: 'app_cost_variance_config',
   COST_VARIANCE_CACHE: 'app_cost_variance_cache',
   // Security & Monitoring
-  SECURITY_AUDIT_LOG: 'app_security_audit_log'
-} as const;
+  SECURITY_AUDIT_LOG: 'app_security_audit_log',
+} as const
 
-export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
+export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
