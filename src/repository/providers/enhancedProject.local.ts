@@ -14,7 +14,7 @@ import type {
   ProjectKPI,
   ProjectValidationResult,
   TenderProjectLink,
-} from '../../types/projects'
+} from '@/shared/types/projects'
 
 import { projectCRUDRepository } from './project/ProjectCRUDRepository'
 import { projectQueryRepository } from './project/ProjectQueryRepository'

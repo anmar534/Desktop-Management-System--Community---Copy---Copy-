@@ -14,7 +14,7 @@ import type {
   ProjectValidationResult,
   TenderProjectLink,
   ProjectFromTender,
-} from '../types/projects'
+} from '../shared/types/projects'
 
 export interface IEnhancedProjectRepository {
   // Basic CRUD Operations
