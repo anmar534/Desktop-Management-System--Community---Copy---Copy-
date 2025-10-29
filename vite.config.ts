@@ -88,7 +88,7 @@ export default defineConfig({
   },
   build: {
     target: 'esnext',
-    outDir: 'build',
+    outDir: 'dist',
     sourcemap: 'hidden', // Fix sourcemap warnings
     cssCodeSplit: true,
     chunkSizeWarningLimit: 500, // Increased to accommodate optimized chunks

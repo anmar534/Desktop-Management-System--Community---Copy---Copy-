@@ -17,11 +17,7 @@ win:
     - target: nsis
       arch:
         - x64
-  publisherName: ${env.WINDOWS_PUBLISHER_NAME}
-  certificateFile: ${env.WINDOWS_CERT_PATH}
-  certificatePassword: ${env.WINDOWS_CERT_PASSWORD}
-  signingHashAlgorithms:
-    - sha256
+  forceCodeSigning: false
 nsis:
   oneClick: false
   perMachine: false
@@ -52,7 +48,3 @@ extraResources:
   - from: build/resources/
     to: resources
 npmRebuild: false
-mac:
-  enabled: false
-linux:
-  enabled: false
