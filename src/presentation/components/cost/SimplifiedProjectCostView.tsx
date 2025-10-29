@@ -353,10 +353,10 @@ export const SimplifiedProjectCostView: React.FC<SimplifiedProjectCostViewProps>
           <div className="flex items-center gap-2">
             {tenderId && (
               <button
-                onClick={handleRebuildBOQ}
+                onClick={handleImportFromTender}
                 disabled={isImporting}
                 className="flex items-center gap-2 rounded-lg bg-info px-4 py-2 text-sm text-info-foreground hover:bg-info/90 disabled:opacity-50"
-                title="إعادة بناء جدول الكميات من المنافسة (يصلح مشكلة الأوصاف المفقودة)"
+                title="استيراد/تحديث جدول الكميات المسعر من المنافسة (يشمل جميع التكاليف التقديرية)"
               >
                 {isImporting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
