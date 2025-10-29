@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { app, BrowserWindow, Menu, dialog, shell, ipcMain, powerMonitor } = require('electron')
 const path = require('path')
 const crypto = require('crypto')
@@ -18,8 +19,87 @@ if (isDev) {
   process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 }
 
-// استيراد إعدادات التطوير المشتركة
-const DEV_CONFIG = require('../../dev.config.cjs')
+// إعدادات التطوير الافتراضية مع تحميل اختياري لملف dev.config.cjs في وضع التطوير فقط
+const createDefaultDevConfig = () => {
+  const net = require('net')
+
+  const defaults = {
+    DEFAULT_DEV_PORT: 3003,
+    FALLBACK_DEV_PORT: 3002,
+    PORT_RANGE: {
+      MIN: 3002,
+      MAX: 3010,
+    },
+    WEB_DEV_PORT: 3003,
+    ELECTRON_CONFIG: {
+      DEV_TOOLS: !app.isPackaged,
+      SHOW_CONSOLE_LOGS: true,
+      AUTO_RETRY: true,
+      RETRY_DELAY: 2000,
+    },
+  }
+
+  defaults.isPortAvailable = async (port) => {
+    return new Promise((resolve) => {
+      const server = net.createServer()
+
+      server.once('error', () => resolve(false))
+      server.once('listening', () => {
+        server.once('close', () => resolve(true))
+        server.close()
+      })
+
+      server.listen(port, '127.0.0.1')
+    })
+  }
+
+  defaults.findAvailablePort = async (startPort = defaults.DEFAULT_DEV_PORT) => {
+    for (let port = startPort; port <= defaults.PORT_RANGE.MAX; port += 1) {
+      if (await defaults.isPortAvailable(port)) {
+        return port
+      }
+    }
+
+    for (let port = 4000; port <= 4100; port += 1) {
+      if (await defaults.isPortAvailable(port)) {
+        console.log(`⚠️ Using fallback port range: ${port}`)
+        return port
+      }
+    }
+
+    throw new Error('❌ No available ports found!')
+  }
+
+  return defaults
+}
+
+const DEV_CONFIG = (() => {
+  const defaults = createDefaultDevConfig()
+
+  // Only try to load dev.config.cjs in development mode and when not packaged
+  if (!app.isPackaged && isDev) {
+    try {
+      // Use dynamic path resolution to avoid webpack bundling issues
+      const configPath = path.join(__dirname, '../../dev.config.cjs')
+      // Check if file exists before requiring
+      if (fsSync.existsSync(configPath)) {
+        const externalConfig = require(configPath)
+        console.log('✓ Loaded dev.config.cjs')
+        return Object.assign(defaults, externalConfig)
+      } else {
+        console.warn('⚠️ dev.config.cjs not found, using defaults')
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to load dev.config.cjs, continuing with defaults:', error?.message || error)
+    }
+  }
+
+  if (app.isPackaged) {
+    console.log('ℹ️ Packaged build detected - using default config')
+  }
+
+  return defaults
+})()
 
 const resolveScopedAppName = () => {
   const rawName = app.getName() || 'ConstructionSystem'
@@ -48,7 +128,9 @@ try {
   const cacheRoot = path.join(base, safeName);
   app.commandLine.appendSwitch('disk-cache-dir', path.join(cacheRoot, 'Cache'));
   app.commandLine.appendSwitch('disk-cache-size', '0');
-} catch {}
+} catch (error) {
+  console.warn('⚠️ Failed to initialize safe cache paths:', error?.message || error)
+}
 
 // تهيئة مسارات آمنة وقابلة للكتابة للتخزين المؤقت وبيانات المستخدم لتفادي أخطاء الصلاحيات على ويندوز
 function setupSafePaths() {
@@ -484,6 +566,7 @@ const appendAuditLogEvent = async (details) => {
 
 const sanitizeDesktopFilename = (value, fallback = 'file') => {
   const raw = value === undefined || value === null ? fallback : String(value);
+  /* eslint-disable-next-line no-control-regex */
   let name = raw.trim().replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_');
 
   if (!name) {
@@ -950,7 +1033,7 @@ if (isDev && !isE2E) {
   
   // فحص المنفذ المطلوب
   DEV_CONFIG.isPortAvailable(configuredPort).then(isAvailable => {
-    let finalPort = configuredPort;
+  const finalPort = configuredPort;
     
     if (!isAvailable) {
       console.log(`⚠️ Port ${configuredPort} is busy, searching for alternative...`);
@@ -984,7 +1067,7 @@ if (isDev && !isE2E) {
     const fallbackUrl = `http://localhost:${DEV_CONFIG.FALLBACK_DEV_PORT}`;
     
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.loadURL(fallbackUrl).catch(finalErr => {
+  mainWindow.loadURL(fallbackUrl).catch((_finalErr) => {
         console.error('💥 All connection attempts failed!');
         console.error('🔧 Please check if Vite development server is running');
         
