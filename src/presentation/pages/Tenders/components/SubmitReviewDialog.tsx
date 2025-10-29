@@ -59,6 +59,9 @@ export function SubmitReviewDialog({ open, tender, onClose, onConfirm }: SubmitR
   const pricedItems = getPricedItemsCount()
   const completionPercentage = getCompletionPercentage()
   const totalValue = getTotalValue()
+  const vatRate = 0.15
+  const vatAmount = totalValue * vatRate
+  const totalWithVat = totalValue + vatAmount
   const isComplete = completionPercentage === 100
 
   return (
@@ -130,9 +133,26 @@ export function SubmitReviewDialog({ open, tender, onClose, onConfirm }: SubmitR
 
               <Separator />
 
-              <div className="rounded-lg bg-primary/5 p-4 text-center">
-                <p className="text-sm text-muted-foreground mb-1">القيمة الإجمالية</p>
-                <p className="text-3xl font-bold text-primary">{formatCurrency(totalValue)}</p>
+              <div className="rounded-lg bg-primary/5 p-4 text-center space-y-2">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">القيمة قبل الضريبة</p>
+                  <p className="text-xl font-semibold text-muted-foreground">
+                    {formatCurrency(totalValue)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">ضريبة القيمة المضافة (15%)</p>
+                  <p className="text-xl font-semibold text-muted-foreground">
+                    {formatCurrency(vatAmount)}
+                  </p>
+                </div>
+                <Separator />
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    القيمة الإجمالية (شاملة الضريبة)
+                  </p>
+                  <p className="text-3xl font-bold text-primary">{formatCurrency(totalWithVat)}</p>
+                </div>
               </div>
 
               {/* Completion Status */}

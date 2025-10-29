@@ -18,8 +18,11 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { getBOQRepository } from '@/application/services/serviceRegistry'
-import { getTenderRepository } from '@/application/services/serviceRegistry'
+import { TenderPricingRepository } from '@/infrastructure/repositories/TenderPricingRepository'
+import { pricingService } from '@/application/services/pricingService'
 import type { BOQData, BOQItem } from '@/shared/types/boq'
+import type { PricingData as FullPricingData } from '@/shared/types/pricing'
+import type { QuantityItem } from '@/presentation/pages/Tenders/TenderPricing/types'
 
 // Types
 interface PricingData {
@@ -75,7 +78,10 @@ interface TenderPricingState {
   loadPricing: (tenderId: string) => Promise<void>
   updateItemPricing: (itemId: string, pricing: Partial<PricingData>) => void
   markDirty: () => void
-  savePricing: () => Promise<void>
+  savePricing: (
+    fullPricingData?: Map<string, FullPricingData>,
+    quantityItems?: QuantityItem[],
+  ) => Promise<void>
   resetDirty: () => void
   reset: () => void
 
@@ -239,8 +245,11 @@ export const useTenderPricingStore = create<TenderPricingState>()(
           })
         },
 
-        savePricing: async () => {
-          const { currentTenderId, pricingData, boqItems } = get()
+        savePricing: async (
+          fullPricingData?: Map<string, FullPricingData>,
+          quantityItems?: QuantityItem[],
+        ) => {
+          const { currentTenderId, boqItems } = get()
           if (!currentTenderId) {
             console.warn('[TenderPricingStore] No tender selected for save')
             return
@@ -254,51 +263,86 @@ export const useTenderPricingStore = create<TenderPricingState>()(
           })
 
           try {
-            // 1. Update BOQ with pricing
-            const updatedBOQ: BOQItem[] = boqItems.map((item) => {
-              const pricing = pricingData.get(item.id)
-              return {
-                ...item,
-                unitPrice: pricing?.unitPrice || 0,
-                totalPrice: pricing?.totalPrice || 0,
-              }
-            })
+            const tenderPricingRepo = new TenderPricingRepository()
 
-            const boqRepo = getBOQRepository()
-            // Use createOrUpdate with skipRefresh to prevent reload loop
-            await boqRepo.createOrUpdate(
-              {
-                tenderId: currentTenderId,
-                items: updatedBOQ,
-                updatedAt: new Date().toISOString(),
-              },
-              { skipRefresh: true }, // ← منع reload في TendersPage
-            )
+            // Use provided fullPricingData if available, otherwise try to load from pricingService
+            let pricingDataMap = fullPricingData
 
-            // 2. Update tender metadata with skipRefresh
-            const tenderRepo = getTenderRepository()
-            const tender = await tenderRepo.getById(currentTenderId)
-            if (tender) {
-              const totalValue = get().getTotalValue()
-              const pricedItems = get().getPricedItemsCount()
-              const completionPercentage = get().getCompletionPercentage()
-
-              await tenderRepo.update(
-                currentTenderId,
-                {
-                  ...tender,
-                  totalValue,
-                  pricedItems,
-                  totalItems: boqItems.length,
-                  completionPercentage,
-                  status: completionPercentage === 100 ? 'ready_to_submit' : 'under_action',
-                },
-                { skipRefresh: true }, // ← منع reload في TendersPage
+            if (!pricingDataMap) {
+              console.log(
+                '[TenderPricingStore] No fullPricingData provided, loading from pricingService...',
               )
+              const savedPricing = await pricingService.loadTenderPricing(currentTenderId)
+
+              if (!savedPricing || !savedPricing.pricing || savedPricing.pricing.length === 0) {
+                console.warn(
+                  '[TenderPricingStore] No pricing data available - cannot save empty BOQ',
+                )
+                set((state) => {
+                  state.isLoading = false
+                })
+                return
+              }
+
+              pricingDataMap = new Map(savedPricing.pricing) as Map<string, FullPricingData>
             }
 
-            // Note: No need to manually dispatch TENDER_UPDATED event here
-            // tender.local.ts update() method already emits it with skipRefresh flag
+            console.log('[TenderPricingStore] Pricing data ready:', {
+              itemsCount: pricingDataMap.size,
+              firstItem: Array.from(pricingDataMap.keys())[0],
+            })
+
+            console.log('[TenderPricingStore] QuantityItems check:', {
+              providedQuantityItems: quantityItems?.length || 0,
+              boqItemsLength: boqItems.length,
+            })
+
+            // Use provided quantityItems, or convert from boqItems if available
+            let itemsToSave: QuantityItem[]
+
+            if (quantityItems && quantityItems.length > 0) {
+              itemsToSave = quantityItems
+              console.log(
+                '[TenderPricingStore] Using provided quantityItems:',
+                quantityItems.length,
+              )
+            } else if (boqItems.length > 0) {
+              // Convert BOQItems to QuantityItems format
+              itemsToSave = boqItems.map((item, index) => ({
+                id: item.id,
+                itemNumber: String(index + 1).padStart(2, '0'),
+                description: item.description,
+                unit: item.unit || 'وحدة',
+                quantity: item.quantity || 1,
+                unitPrice: item.unitPrice || 0,
+                totalPrice: item.totalPrice || 0,
+                specifications: 'حسب المواصفات الفنية',
+                canonicalDescription: item.description,
+              }))
+              console.log('[TenderPricingStore] Converted from boqItems:', itemsToSave.length)
+            } else {
+              console.error('[TenderPricingStore] No quantityItems available - cannot save BOQ')
+              set((state) => {
+                state.isLoading = false
+              })
+              return
+            }
+
+            // Get default percentages from saved pricing or use defaults
+            const defaultPercentages = {
+              administrative: 10,
+              operational: 5,
+              profit: 8,
+            }
+
+            // Persist using TenderPricingRepository with full data
+            await tenderPricingRepo.persistPricingAndBOQ(
+              currentTenderId,
+              pricingDataMap,
+              itemsToSave,
+              defaultPercentages,
+              { skipEvent: false }, // Allow event to update progress
+            )
 
             set((state) => {
               state.isDirty = false
@@ -306,11 +350,12 @@ export const useTenderPricingStore = create<TenderPricingState>()(
               state.lastSaved = new Date().toISOString()
             })
 
+            // Event is dispatched by TenderPricingRepository.updateTenderStatus
+            // with allowRefresh=true to update tender list
+
             console.log('✅ [TenderPricingStore] Saved successfully:', {
               tenderId: currentTenderId,
-              totalValue: get().getTotalValue(),
-              pricedItems: get().getPricedItemsCount(),
-              completionPercentage: get().getCompletionPercentage(),
+              pricedItems: pricingDataMap.size,
             })
           } catch (error) {
             console.error('[TenderPricingStore] Save failed:', error)

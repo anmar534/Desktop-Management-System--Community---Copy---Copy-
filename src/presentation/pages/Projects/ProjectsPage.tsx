@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Button } from '@/presentation/components/ui/button'
 import {
   AlertDialog,
@@ -13,6 +12,7 @@ import {
 } from '@/presentation/components/ui/alert-dialog'
 import { PageLayout } from '@/presentation/components/layout/PageLayout'
 import { NewProjectForm } from './components/NewProjectForm'
+import { EnhancedProjectDetails } from './components/EnhancedProjectDetails'
 import { Clients } from './components/Clients'
 import { AlertCircle, ArrowRight, Building2 } from 'lucide-react'
 import type { Project } from '@/data/centralData'
@@ -41,12 +41,26 @@ export function ProjectsView({
   onDeleteProject,
   onUpdateProject,
 }: ProjectsViewProps) {
-  const navigate = useNavigate()
+  console.log('🏗️ [ProjectsView] Rendering with projects count:', projects.length)
+  if (projects.length > 0) {
+    console.log('📊 [ProjectsView] First project sample:', {
+      id: projects[0].id,
+      name: projects[0].name,
+      contractValue: projects[0].contractValue,
+      estimatedCost: projects[0].estimatedCost,
+      value: projects[0].value,
+      budget: projects[0].budget,
+    })
+  }
+
   const [searchTerm] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null)
   const [projectToEdit, setProjectToEdit] = useState<ProjectWithLegacyFields | null>(null)
-  const [currentView, setCurrentView] = useState<'list' | 'new' | 'edit' | 'clients'>('list')
+  const [currentView, setCurrentView] = useState<'list' | 'new' | 'edit' | 'clients' | 'details'>(
+    'list',
+  )
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
 
   const { formatCurrencyValue } = useProjectCurrencyFormatter()
   const projectAggregates = useProjectAggregates()
@@ -76,12 +90,13 @@ export function ProjectsView({
   const handleBackToList = () => {
     setCurrentView('list')
     setProjectToEdit(null)
-    navigate('/')
+    setSelectedProjectId(null)
   }
 
   const handleViewProject = (projectId: string) => {
     console.info('[ProjectsView] Navigating to project details', { projectId })
-    navigate(`/${projectId}`)
+    setSelectedProjectId(projectId)
+    setCurrentView('details')
   }
 
   const handleViewClients = () => {
@@ -107,7 +122,7 @@ export function ProjectsView({
 
       return projects.filter((project) => {
         if (!statusFilter(project)) return false
-        
+
         const nameMatches = project.name?.toLowerCase().includes(normalizedSearch) ?? false
         const clientMatches = project.client?.toLowerCase().includes(normalizedSearch) ?? false
         return nameMatches || clientMatches
@@ -172,6 +187,16 @@ export function ProjectsView({
 
   if (currentView === 'edit' && projectToEdit) {
     return <NewProjectForm mode="edit" editProject={projectToEdit} onBack={handleBackToList} />
+  }
+
+  if (currentView === 'details' && selectedProjectId) {
+    return (
+      <EnhancedProjectDetails
+        projectId={selectedProjectId}
+        onBack={handleBackToList}
+        onSectionChange={onSectionChange}
+      />
+    )
   }
 
   if (currentView === 'clients') {

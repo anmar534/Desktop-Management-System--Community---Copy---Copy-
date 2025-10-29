@@ -65,7 +65,7 @@ export function useSummaryOperations({
   updateRow: _updateRow,
   deleteRow: _deleteRow,
   markDirty,
-  updateTenderStatus,
+  updateTenderStatus: _updateTenderStatus, // Not used - status updates only on save
   pricingData: _pricingData,
   setPricingData,
   currentPricing: _currentPricing,
@@ -126,11 +126,12 @@ export function useSummaryOperations({
         return updated
       })
 
-      updateTenderStatus()
+      // Don't update tender status here - only mark as dirty
+      // Status will be updated on save
       markDirty()
       toast.success(`تم إضافة صف جديد في ${getSectionDisplayName(section)}`)
     },
-    [pricingViewItems, setPricingData, updateTenderStatus, markDirty],
+    [pricingViewItems, setPricingData, markDirty],
   )
 
   /**
@@ -304,12 +305,13 @@ export function useSummaryOperations({
       })
 
       markDirty()
-      updateTenderStatus()
+      // Don't update tender status here - only mark as dirty
+      // Status will be updated on save
       toast.success('تم حفظ السعر الإفرادي بنجاح', {
         description: 'تم احتساب النسب تلقائياً بناءً على الإعدادات الافتراضية',
       })
     },
-    [setPricingData, markDirty, updateTenderStatus],
+    [setPricingData, markDirty],
   )
 
   return {

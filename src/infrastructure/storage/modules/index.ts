@@ -5,7 +5,6 @@
  * @description Exports for specialized storage modules
  */
 
-export { ProjectsStorage, projectsStorage } from './ProjectsStorage'
 export { PricingStorage, pricingStorage } from './PricingStorage'
 export { BackupStorage, backupStorage } from './BackupStorage'
 export { ClientsStorage, clientsStorage } from './ClientsStorage'

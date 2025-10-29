@@ -23,7 +23,6 @@ import type {
 } from '@/presentation/pages/Tenders/TenderPricing/types'
 import type { Tender } from '@/data/centralData'
 // Phase 2 authoring engine adoption helpers (flag-guarded)
-import { isPricingEntry } from '@/shared/utils/pricing/pricingHelpers'
 import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
 // REMOVED: applyDefaultsToPricingMap - no longer auto-applying after Draft removal
 import { EmptyState } from '@/presentation/components/layout/PageLayout'
@@ -74,7 +73,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   const {
     boqItems,
     loadPricing,
-    savePricing,
+    savePricing: storeSavePricing,
     isDirty,
     markDirty: storeMarkDirty,
   } = useTenderPricingStore()
@@ -134,6 +133,11 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     // This will be removed in Week 6 (Legacy Cleanup)
     return parseQuantityItems(tender, [], 'legacy', 'loading')
   }, [boqItems, tender])
+
+  // Wrapper to pass pricingData and quantityItems to store before saving
+  const savePricing = useCallback(async () => {
+    await storeSavePricing(pricingData, quantityItems)
+  }, [storeSavePricing, pricingData, quantityItems])
 
   const leaveConfirmationDialog = (
     <ConfirmationDialog
@@ -268,9 +272,13 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
   const notifyPricingUpdate = useCallback(async () => {
     // Dispatch event to notify other components of pricing updates
+    // ONLY called after explicit Save action
     window.dispatchEvent(
       new CustomEvent(APP_EVENTS.TENDER_UPDATED, {
-        detail: { tenderId: tender.id },
+        detail: {
+          tenderId: tender.id,
+          skipRefresh: true, // Don't reload the page - changes already in memory
+        },
       }),
     )
   }, [tender.id])
@@ -341,16 +349,36 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     return (completedCount / quantityItems.length) * 100
   }, [completedCount, quantityItems.length])
 
-  // تحميل بيانات التسعير الافتراضية عند فتح الصفحة لأول مرة
+  // تحميل بيانات التسعير الكاملة من pricingService
+  // Store يخزن فقط BOQ (الأساسيات)، pricingService يخزن التفاصيل الكاملة
   useEffect(() => {
     let mounted = true
     void (async () => {
       try {
+        console.log(
+          '[TenderPricingPage] Loading pricing from pricingService for tender:',
+          tender.id,
+        )
         const loaded = await pricingService.loadTenderPricing(tender.id)
+        console.log(
+          '[TenderPricingPage] Loaded pricing data:',
+          loaded
+            ? {
+                hasPricing: !!loaded.pricing,
+                pricingCount: loaded.pricing?.length || 0,
+                hasDefaultPercentages: !!loaded.defaultPercentages,
+              }
+            : 'null',
+        )
+
         if (!mounted) return
-        if (loaded) {
-          const entries = Array.isArray(loaded.pricing) ? loaded.pricing.filter(isPricingEntry) : []
-          setPricingData(new Map(entries))
+
+        if (loaded && loaded.pricing) {
+          // Use saved pricing data from pricingService
+          const pricingMap = new Map(loaded.pricing) as Map<string, PricingData>
+          console.log('[TenderPricingPage] Setting pricingData with', pricingMap.size, 'items')
+          setPricingData(pricingMap)
+
           if (loaded.defaultPercentages) {
             setDefaultPercentages(loaded.defaultPercentages)
             setDefaultPercentagesInput({
@@ -360,6 +388,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
             })
           }
         } else {
+          // No saved pricing - use empty Map
           setPricingData(new Map())
         }
       } finally {
@@ -461,7 +490,9 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       defaultPercentages,
       lastUpdated: new Date().toISOString(),
     })
-    void persistPricingAndBOQ(updatedPricingData)
+    // Don't call persistPricingAndBOQ here - this is not the main Save button
+    // User must click Save to persist changes
+    // void persistPricingAndBOQ(updatedPricingData)
 
     try {
       markDirty()
@@ -483,7 +514,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   }, [
     currentItem,
     defaultPercentages,
-    persistPricingAndBOQ,
     pricingData,
     quantityItems,
     recordPricingAudit,

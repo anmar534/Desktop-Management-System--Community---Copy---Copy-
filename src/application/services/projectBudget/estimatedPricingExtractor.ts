@@ -16,11 +16,23 @@ export class EstimatedPricingExtractor {
     tenderId: string,
   ): Promise<Map<string, EstimatedPricingData>> {
     try {
+      console.log('📋 [EstimatedPricingExtractor] Loading pricing for tender:', tenderId)
       const pricingData = await pricingService.loadTenderPricing(tenderId)
+
+      console.log('📋 [EstimatedPricingExtractor] Pricing data loaded:', {
+        hasPricingData: !!pricingData,
+        hasPricing: !!pricingData?.pricing,
+        pricingLength: pricingData?.pricing?.length ?? 0,
+        isArray: Array.isArray(pricingData?.pricing),
+      })
+
       const result = new Map<string, EstimatedPricingData>()
 
-      if (pricingData?.pricing) {
+      if (pricingData?.pricing && Array.isArray(pricingData.pricing)) {
         const pricingEntries = pricingData.pricing as [string, PricingItemInput][]
+
+        console.log('📋 [EstimatedPricingExtractor] Processing entries:', pricingEntries.length)
+
         for (const [itemId, itemPricing] of pricingEntries) {
           if (itemPricing) {
             // حساب الإجماليات
@@ -76,11 +88,21 @@ export class EstimatedPricingExtractor {
             })
           }
         }
+      } else {
+        console.warn('⚠️ [EstimatedPricingExtractor] No pricing data found for tender:', tenderId)
+        console.info('ℹ️ This tender was likely created before the pricing system was implemented.')
       }
 
+      console.log(
+        '✅ [EstimatedPricingExtractor] Extraction complete. Items extracted:',
+        result.size,
+      )
       return result
     } catch (error) {
-      console.error('خطأ في استخراج بيانات التسعير التقديرية:', error)
+      console.error(
+        '❌ [EstimatedPricingExtractor] خطأ في استخراج بيانات التسعير التقديرية:',
+        error,
+      )
       return new Map()
     }
   }

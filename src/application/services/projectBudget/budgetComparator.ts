@@ -6,7 +6,6 @@
 import type { ProjectBudgetComparison } from './types'
 import { DataLoader } from './dataLoader'
 import { EstimatedPricingExtractor } from './estimatedPricingExtractor'
-import { ResourceCalculator } from './resourceCalculator'
 
 export class BudgetComparator {
   /**
@@ -14,24 +13,36 @@ export class BudgetComparator {
    */
   static async compareProjectBudget(projectId: string): Promise<ProjectBudgetComparison[]> {
     try {
+      console.log('🔍 [BudgetComparator] Starting comparison for project:', projectId)
+
       // البحث عن المنافسة المرتبطة بالمشروع
       const relatedTender = await DataLoader.resolveTenderForProject(projectId)
       if (!relatedTender) {
-        console.warn('لم يتم العثور على منافسة مرتبطة بالمشروع')
+        console.warn('⚠️ [BudgetComparator] لم يتم العثور على منافسة مرتبطة بالمشروع')
         return []
       }
+
+      console.log(
+        '✅ [BudgetComparator] Found related tender:',
+        relatedTender.id,
+        relatedTender.name,
+      )
 
       // استخراج البيانات التقديرية من المنافسة
       const estimatedData = await EstimatedPricingExtractor.extractEstimatedPricing(
         relatedTender.id,
       )
 
-      // استخراج البيانات الفعلية من المشروع
-      const projectBOQ = await DataLoader.loadProjectBOQ(projectId)
+      console.log('📊 [BudgetComparator] Extracted estimated data items:', estimatedData.size)
+
+      // استخراج البيانات الفعلية من المشروع - نستخدم tenderId لأن BOQ مخزن بالمنافسة
+      const projectBOQ = await DataLoader.loadProjectBOQ(relatedTender.id)
       if (!projectBOQ) {
-        console.warn('لم يتم العثور على BOQ للمشروع')
+        console.warn('❌ [BudgetComparator] لم يتم العثور على BOQ للمنافسة:', relatedTender.id)
         return []
       }
+
+      console.log('✅ [BudgetComparator] Loaded BOQ with items:', projectBOQ.items?.length ?? 0)
 
       const comparisons: ProjectBudgetComparison[] = []
 
@@ -60,17 +71,26 @@ export class BudgetComparator {
           const estimatedTotal =
             estimatedSubtotal + estimatedAdmin + estimatedOperational + estimatedProfit
 
-          // حساب البيانات الفعلية
-          const actualMaterials = ResourceCalculator.sumLegacyResourceTotals(boqItem.materials)
-          const actualLabor = ResourceCalculator.sumLegacyResourceTotals(boqItem.labor)
-          const actualEquipment = ResourceCalculator.sumLegacyResourceTotals(boqItem.equipment)
-          const actualSubcontractors = ResourceCalculator.sumLegacyResourceTotals(
-            boqItem.subcontractors,
-          )
+          // حساب البيانات الفعلية - استخدام actual.totalPrice مباشرة
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const actualQuantity = (boqItem as any).actual?.quantity ?? boqItem.quantity ?? 0
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const actualUnitPrice = (boqItem as any).actual?.unitPrice ?? 0
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const actualTotal =
-            boqItem.actualQuantity && boqItem.actualUnitPrice
-              ? boqItem.actualQuantity * boqItem.actualUnitPrice
-              : actualMaterials + actualLabor + actualEquipment + actualSubcontractors
+            (boqItem as any).actual?.totalPrice ?? actualQuantity * actualUnitPrice
+
+          console.log(`💰 [BudgetComparator] Item ${boqItem.id}:`, {
+            description: (boqItem.canonicalDescription || boqItem.description || '').substring(
+              0,
+              40,
+            ),
+            estimated: {
+              total: estimatedTotal,
+              unitPrice: (boqItem.quantity ?? 0) > 0 ? estimatedTotal / (boqItem.quantity ?? 0) : 0,
+            },
+            actual: { total: actualTotal, unitPrice: actualUnitPrice, quantity: actualQuantity },
+          })
 
           // حساب الفرق
           const varianceAmount = actualTotal - estimatedTotal
@@ -99,7 +119,8 @@ export class BudgetComparator {
 
           comparisons.push({
             itemId: boqItem.id,
-            description: boqItem.description,
+            description:
+              boqItem.canonicalDescription || boqItem.description || `بند رقم ${boqItem.id}`,
             unit: boqItem.unit ?? '',
             quantity: boqItem.quantity ?? 0,
             estimated: {
@@ -114,12 +135,12 @@ export class BudgetComparator {
               unitPrice: (boqItem.quantity ?? 0) > 0 ? estimatedTotal / (boqItem.quantity ?? 0) : 0,
             },
             actual: {
-              materials: actualMaterials,
-              labor: actualLabor,
-              equipment: actualEquipment,
-              subcontractors: actualSubcontractors,
+              materials: 0,
+              labor: 0,
+              equipment: 0,
+              subcontractors: 0,
               total: actualTotal,
-              unitPrice: (boqItem.quantity ?? 0) > 0 ? actualTotal / (boqItem.quantity ?? 0) : 0,
+              unitPrice: actualUnitPrice,
             },
             variance: {
               amount: varianceAmount,

@@ -27,11 +27,8 @@ import {
   getFilterDescription,
 } from '@/shared/utils/tender/tenderTabHelpers'
 import { createQuickActions } from '@/shared/utils/tender/tenderQuickActions'
-import {
-  createDeleteHandler,
-  createSubmitHandler,
-  createRevertHandler,
-} from '@/shared/utils/tender/tenderEventHandlers'
+import { createDeleteHandler, createSubmitHandler } from '@/shared/utils/tender/tenderEventHandlers'
+import { toast } from 'sonner'
 
 // Components
 import {
@@ -137,17 +134,42 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [formatCurrencyValue, refreshTenders],
   )
 
-  const handleRevert = useMemo(() => createRevertHandler(updateTender), [updateTender])
-
   const handleRevertStatus = useCallback(
     async (tender: Tender, newStatus: Tender['status']) => {
-      if (tender.status === 'submitted' && newStatus === 'ready_to_submit') {
-        const { purchaseOrderService } = await import('@/application/services/purchaseOrderService')
-        await purchaseOrderService.deleteTenderRelatedOrders(tender.id)
+      try {
+        // Delete purchase orders if reverting from submitted
+        if (tender.status === 'submitted' && newStatus === 'ready_to_submit') {
+          const { purchaseOrderService } = await import(
+            '@/application/services/purchaseOrderService'
+          )
+          await purchaseOrderService.deleteTenderRelatedOrders(tender.id)
+        }
+
+        // Update tender with new status directly
+        await updateTender({
+          ...tender,
+          status: newStatus,
+          lastUpdate: new Date().toISOString(),
+          lastAction:
+            newStatus === 'submitted'
+              ? 'تراجع من النتيجة النهائية - عودة لحالة مُرسلة'
+              : newStatus === 'ready_to_submit'
+                ? 'تراجع عن الإرسال - عودة لحالة جاهز للإرسال'
+                : newStatus === 'under_action'
+                  ? 'تراجع للتسعير والتعديل'
+                  : 'تراجع عن الحالة',
+        } as Tender)
+
+        toast.success('تم التراجع بنجاح', {
+          description: `تم إعادة المنافسة "${tender.name}" إلى الحالة السابقة`,
+          duration: 3000,
+        })
+      } catch (error) {
+        console.error('خطأ في التراجع:', error)
+        toast.error('فشل في التراجع عن الحالة')
       }
-      await handleRevert({ ...tender, status: newStatus } as Tender)
     },
-    [handleRevert],
+    [updateTender],
   )
 
   const handleEditTender = useCallback(

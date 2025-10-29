@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import type { Project } from '@/data/centralData'
-import { projectsStorage } from '@/infrastructure/storage/modules/ProjectsStorage'
 import { APP_EVENTS } from '@/events/bus'
 import { getProjectRepository } from '@/application/services/serviceRegistry'
 import { useRepository } from '@/application/services/RepositoryProvider'
@@ -14,60 +13,51 @@ export const useProjects = () => {
   const isMountedRef = useRef(true)
 
   const updateProjectsFromRepository = useCallback(async () => {
+    console.log('🔄 [useProjects] Fetching projects from repository...')
     const list = await repository.getAll()
+    console.log('📊 [useProjects] Fetched projects:', {
+      count: list.length,
+      names: list.map((p) => p.name),
+    })
     if (isMountedRef.current) {
       setProjects(list)
+      console.log('✅ [useProjects] Projects state updated')
+    } else {
+      console.warn('⚠️ [useProjects] Component unmounted, skipping state update')
     }
     return list
   }, [repository])
 
-  const importAndHydrate = useCallback(
-    async (entries: Project[]) => {
-      const imported = await repository.importMany(entries, { replace: true })
-      if (isMountedRef.current) {
-        setProjects(imported)
-      }
-      return imported
-    },
-    [repository],
-  )
-
   const initialize = useCallback(async () => {
     if (!isMountedRef.current) return
+    console.log('🚀 [useProjects.initialize] Starting initialization...')
     setIsLoading(true)
     try {
-      // Initialize projects storage module
-      await projectsStorage.initialize()
-
-      // Get projects from new storage module
-      const saved = await projectsStorage.getAll()
-      if (saved && Array.isArray(saved) && saved.length > 0) {
-        await importAndHydrate(saved)
-        return
-      }
-
-      // Update from repository if no saved data
+      // Load directly from repository (single source of truth)
+      console.log('📚 [useProjects.initialize] Loading from repository...')
       const current = await repository.getAll()
-      if (current.length > 0) {
-        await repository.importMany(current, { replace: true })
-      }
+      console.log('✅ [useProjects.initialize] Loaded from repository:', current.length, 'projects')
+
       if (isMountedRef.current) {
         setProjects(current)
+        console.log('✅ [useProjects.initialize] State updated with', current.length, 'projects')
       }
     } catch (error) {
-      console.error('تعذر تحميل أو ترحيل بيانات المشاريع', error)
+      console.error('❌ [useProjects.initialize] Error loading projects:', error)
       await updateProjectsFromRepository()
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false)
       }
     }
-  }, [importAndHydrate, repository, updateProjectsFromRepository])
+  }, [repository, updateProjectsFromRepository])
 
   useEffect(() => {
+    console.log('🎬 [useProjects] Component mounting, starting initialization...')
     isMountedRef.current = true
     void initialize()
     return () => {
+      console.log('👋 [useProjects] Component unmounting')
       isMountedRef.current = false
     }
   }, [initialize])
@@ -77,11 +67,20 @@ export const useProjects = () => {
       return undefined
     }
     const handler: EventListener = () => {
-      updateProjectsFromRepository().catch((error) => {
-        console.debug('تعذر مزامنة قائمة المشاريع بعد حدث التحديث', error)
-      })
+      console.log('🔔 [useProjects] PROJECTS_UPDATED event received - refreshing projects list...')
+      updateProjectsFromRepository()
+        .then((updatedList) => {
+          console.log(
+            '✅ [useProjects] Projects refreshed successfully. Count:',
+            updatedList.length,
+          )
+        })
+        .catch((error) => {
+          console.error('❌ [useProjects] Failed to sync projects after update event:', error)
+        })
     }
     window.addEventListener(APP_EVENTS.PROJECTS_UPDATED, handler)
+    console.log('👂 [useProjects] Listening for PROJECTS_UPDATED events')
     return () => {
       window.removeEventListener(APP_EVENTS.PROJECTS_UPDATED, handler)
     }

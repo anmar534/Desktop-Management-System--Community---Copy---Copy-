@@ -2,7 +2,7 @@
 // Manages tender state and data loading
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing.store'
+import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { APP_EVENTS } from '@/events/bus'
 import type { CollapsedSections, TabValue, QuantityItem } from '../types'

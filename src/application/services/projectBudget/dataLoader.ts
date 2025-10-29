@@ -38,14 +38,31 @@ export class DataLoader {
   }
 
   /**
-   * Load project BOQ data
+   * Load BOQ data by tender ID
+   * BOQ is stored with tenderId, not projectId
    */
-  static async loadProjectBOQ(projectId: string): Promise<BOQData | null> {
+  static async loadProjectBOQ(tenderIdOrProjectId: string): Promise<BOQData | null> {
     try {
       const boqRepository = getBOQRepository()
-      return await boqRepository.getByProjectId(projectId)
+
+      // أولاً حاول البحث بـ tenderId مباشرة
+      const boqByTender = await boqRepository.getByTenderId(tenderIdOrProjectId)
+      if (boqByTender) {
+        console.log('✅ [DataLoader] Found BOQ by tenderId:', tenderIdOrProjectId)
+        return boqByTender
+      }
+
+      // إذا لم يُعثر عليه، حاول البحث بـ projectId
+      const boqByProject = await boqRepository.getByProjectId(tenderIdOrProjectId)
+      if (boqByProject) {
+        console.log('✅ [DataLoader] Found BOQ by projectId:', tenderIdOrProjectId)
+        return boqByProject
+      }
+
+      console.warn('❌ [DataLoader] No BOQ found for:', tenderIdOrProjectId)
+      return null
     } catch (error) {
-      console.error('تعذر تحميل بيانات BOQ للمشروع من المستودع', error)
+      console.error('تعذر تحميل بيانات BOQ من المستودع', error)
       return null
     }
   }

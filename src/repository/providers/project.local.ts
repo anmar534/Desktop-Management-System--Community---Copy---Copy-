@@ -15,11 +15,15 @@ import {
 const generateId = () => `project_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
 
 const loadAll = (): Project[] => {
+  console.log('📖 [loadAll] Reading from storage key:', STORAGE_KEYS.PROJECTS)
   const stored = safeLocalStorage.getItem<Project[]>(STORAGE_KEYS.PROJECTS, [])
+  console.log('📖 [loadAll] Raw stored data:', stored ? `${stored.length} items` : 'null/empty')
   const source = Array.isArray(stored) ? stored : []
   const sanitized = sanitizeProjectCollection(source)
+  console.log('✅ [loadAll] Sanitized projects:', sanitized.length)
 
   if (sanitized.length !== source.length || hasDifferences(source, sanitized)) {
+    console.log('🔧 [loadAll] Differences detected, persisting sanitized data')
     persist(sanitized)
   }
 
@@ -50,7 +54,12 @@ const hasDifferences = (original: Project[], sanitized: Project[]): boolean => {
 
 export class LocalProjectRepository implements IProjectRepository {
   async getAll(): Promise<Project[]> {
-    return loadAll()
+    const projects = loadAll()
+    console.log('📚 [ProjectRepository.getAll] Loaded projects:', {
+      count: projects.length,
+      ids: projects.map((p) => p.id),
+    })
+    return projects
   }
 
   async getById(id: string): Promise<Project | null> {
@@ -59,12 +68,24 @@ export class LocalProjectRepository implements IProjectRepository {
   }
 
   async create(data: Omit<Project, 'id'>): Promise<Project> {
+    console.log('📝 [ProjectRepository] Creating new project:', {
+      name: data.name,
+      contractValue: data.contractValue,
+      client: data.client,
+    })
     const projects = loadAll()
+    console.log('📊 [ProjectRepository] Current projects count:', projects.length)
     const payload = validateProjectPayload(data)
     const project = validateProject({ ...payload, id: generateId() })
     projects.push(project)
     persist(projects)
+    console.log('💾 [ProjectRepository] Project persisted. New count:', projects.length)
+    console.log('✅ [ProjectRepository] Created project:', {
+      id: project.id,
+      name: project.name,
+    })
     emitProjectsUpdated()
+    console.log('📡 [ProjectRepository] PROJECTS_UPDATED event emitted')
     return project
   }
 

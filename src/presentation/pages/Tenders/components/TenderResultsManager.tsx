@@ -100,7 +100,8 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
       await updateDevelopmentStats('won_tender', updatedTender)
 
       // إنشاء مشروع تلقائياً من المنافسة الفائزة
-      console.log('🏗️ بدء إنشاء مشروع تلقائي للمنافسة الفائزة...')
+      console.log('🏗️ [TenderResults] بدء إنشاء مشروع تلقائي للمنافسة الفائزة:', updatedTender.name)
+      console.log('📊 [TenderResults] Tender totalValue:', updatedTender.totalValue)
       const projectCreationResult = await ProjectAutoCreationService.createProjectFromWonTender(
         updatedTender,
         {
@@ -111,19 +112,30 @@ export function TenderResultsManager({ tender, onUpdate }: TenderResultsManagerP
         },
       )
 
+      console.log('📋 [TenderResults] Project creation result:', projectCreationResult)
+
       if (projectCreationResult.success) {
         const projectName = projectCreationResult.project?.name ?? updatedTender.name
         toast.success('تم الفوز بالمنافسة وإنشاء المشروع!', {
           description: `تم إنشاء مشروع "${projectName}" تلقائياً`,
         })
-        console.log('✅ تم إنشاء المشروع بنجاح:', projectCreationResult.projectId)
+        console.log('✅ [TenderResults] تم إنشاء المشروع بنجاح:', {
+          projectId: projectCreationResult.projectId,
+          projectName,
+        })
+      } else if (projectCreationResult.projectId) {
+        // المشروع موجود بالفعل - هذا طبيعي
+        toast.success('تم الفوز بالمنافسة!', {
+          description: 'المشروع مرتبط بهذه المنافسة مسبقاً',
+        })
+        console.log('ℹ️ [TenderResults] المشروع موجود مسبقاً:', projectCreationResult.projectId)
       } else {
         const errorMessage =
           projectCreationResult.errors?.join(', ') ?? 'لا يمكن إنشاء مشروع تلقائي'
         toast.success('تم الفوز بالمنافسة!', {
           description: `تحديث الإحصائيات تم - ${errorMessage}`,
         })
-        console.warn('⚠️ خطأ في إنشاء المشروع:', projectCreationResult.errors)
+        console.warn('⚠️ [TenderResults] خطأ في إنشاء المشروع:', projectCreationResult.errors)
       }
 
       // عدم إعادة التوجيه - البقاء في نفس الصفحة

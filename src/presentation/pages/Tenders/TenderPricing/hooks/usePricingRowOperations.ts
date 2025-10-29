@@ -69,7 +69,7 @@ export function usePricingRowOperations({
   setCurrentPricing,
   currentItem,
   markDirty,
-  updateTenderStatus,
+  updateTenderStatus: _updateTenderStatus, // Not used - status updates only on save
   recordPricingAudit,
   getErrorMessage,
 }: UsePricingRowOperationsParams): UsePricingRowOperationsReturn {
@@ -222,20 +222,30 @@ export function usePricingRowOperations({
    */
   const addRow = useCallback(
     <Section extends ActualPricingSection>(type: Section) => {
+      console.log('[usePricingRowOperations] addRow called:', {
+        type,
+        currentItem: currentItem?.id,
+      })
+
       setCurrentPricing((prev) =>
         mutateSectionRows(prev, type, (rows) => {
           const newRow = createEmptyRow(type)
           if ((type === 'materials' || type === 'subcontractors') && currentItem) {
             newRow.quantity = currentItem.quantity
           }
+          console.log('[usePricingRowOperations] Adding row:', {
+            type,
+            newRow,
+            totalRows: rows.length + 1,
+          })
           return [...rows, recalculateRow(type, newRow)]
         }),
       )
       markDirty()
 
-      // Update status immediately when adding first row
-      updateTenderStatus()
-      recordPricingAudit('info', 'status-updated-after-add-row', {
+      // Don't update tender status here - only mark as dirty
+      // Status will be updated on save
+      recordPricingAudit('info', 'row-added', {
         section: type,
         itemId: currentItem?.id ?? 'unknown',
       })
@@ -247,7 +257,6 @@ export function usePricingRowOperations({
       recalculateRow,
       currentItem,
       markDirty,
-      updateTenderStatus,
       recordPricingAudit,
     ],
   )
@@ -310,9 +319,9 @@ export function usePricingRowOperations({
           ),
         )
 
-        // Update status immediately after editing
-        updateTenderStatus()
-        recordPricingAudit('info', 'status-updated-after-edit', {
+        // Don't update tender status here - only mark as dirty
+        // Status will be updated on save
+        recordPricingAudit('info', 'row-updated', {
           section: type,
           itemId: currentItem?.id ?? 'unknown',
           rowId: id,
@@ -342,7 +351,6 @@ export function usePricingRowOperations({
       mutateSectionRows,
       sanitizeRowValue,
       recalculateRow,
-      updateTenderStatus,
       recordPricingAudit,
       currentItem,
       markDirty,

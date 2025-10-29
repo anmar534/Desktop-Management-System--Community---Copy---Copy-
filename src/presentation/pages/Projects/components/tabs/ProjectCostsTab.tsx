@@ -9,7 +9,7 @@
 
 import { Button } from '@/presentation/components/ui/button'
 import { BarChart3 } from 'lucide-react'
-import { SimplifiedProjectCostView } from '../cost/SimplifiedProjectCostView'
+import { SimplifiedProjectCostView } from '@/presentation/components/cost/SimplifiedProjectCostView'
 import type { Tender } from '@/data/centralData'
 
 // ===============================

@@ -38,13 +38,24 @@ export class ProjectBuilder {
     let contractValue = tender.value ?? 0
     let estimatedCost = contractValue * 0.8
 
+    console.log('🔍 [ProjectBuilder] Building project from tender:', {
+      tenderName: tender.name,
+      tenderValue: tender.value,
+      tenderTotalValue: tender.totalValue,
+      inheritBudget,
+    })
+
     if (inheritBudget && tender.totalValue != null) {
       contractValue = tender.totalValue
       estimatedCost = contractValue * 0.8
+      console.log('✅ [ProjectBuilder] Using tender.totalValue (includes VAT):', contractValue)
+    } else {
+      console.log('⚠️ [ProjectBuilder] Using tender.value (may not include VAT):', contractValue)
     }
 
     if (contractValue === 0) {
       warnings.push('Contract value is zero - please review tender data')
+      console.warn('⚠️ [ProjectBuilder] Contract value is zero!')
     }
 
     const managerName = this.coalesceString(tender.manager, 'Unassigned')
@@ -56,8 +67,15 @@ export class ProjectBuilder {
     const endDate = this.calculateProjectEndDate(tender.deadline)
     const lastUpdate = new Date().toISOString()
 
+    // Don't add "Project" prefix if tender name already contains it
+    const projectName = tender.name.toLowerCase().includes('project')
+      ? tender.name
+      : `Project ${tender.name}`
+
+    console.log('📝 [ProjectBuilder] Project name:', projectName)
+
     const projectData: Omit<Project, 'id'> = {
-      name: `Project ${tender.name}`,
+      name: projectName,
       client: tender.client,
       status: 'planning' as const,
       priority: 'medium' as const,

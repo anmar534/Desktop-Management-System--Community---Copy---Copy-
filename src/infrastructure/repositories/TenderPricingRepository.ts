@@ -142,6 +142,22 @@ export class TenderPricingRepository {
     options?: SavePricingOptions,
   ): Promise<void> {
     try {
+      console.log('[TenderPricingRepository] persistPricingAndBOQ called:', {
+        tenderId,
+        pricingDataSize: pricingData.size,
+        quantityItemsCount: quantityItems.length,
+        pricingDataPreview: Array.from(pricingData.entries())
+          .slice(0, 2)
+          .map(([id, p]) => ({
+            id,
+            pricingMethod: p.pricingMethod,
+            directUnitPrice: p.directUnitPrice,
+            completed: p.completed,
+            materials: p.materials?.length || 0,
+            labor: p.labor?.length || 0,
+          })),
+      })
+
       // 1. Save pricing data
       await this.savePricing(tenderId, pricingData, defaultPercentages)
 
@@ -152,6 +168,68 @@ export class TenderPricingRepository {
         quantityItems,
         defaultPercentages,
         options,
+      )
+
+      // 3. Update tender status and progress
+      const completedCount = Array.from(pricingData.values()).filter(
+        (p) => p?.completed === true,
+      ).length
+
+      // Calculate total value from quantity items (more accurate than pricingData.totalValue)
+      const totalValue = quantityItems.reduce((sum, item) => {
+        const itemPricing = pricingData.get(item.id)
+        if (!itemPricing || !itemPricing.completed) return sum
+
+        // For direct pricing, use directUnitPrice
+        if (itemPricing.pricingMethod === 'direct' && itemPricing.directUnitPrice) {
+          return sum + itemPricing.directUnitPrice * item.quantity
+        }
+
+        // For detailed pricing, calculate from materials + labor + equipment + subcontractors
+        const materialsCost = itemPricing.materials?.reduce((s, m) => s + (m.total || 0), 0) || 0
+        const laborCost = itemPricing.labor?.reduce((s, l) => s + (l.total || 0), 0) || 0
+        const equipmentCost = itemPricing.equipment?.reduce((s, e) => s + (e.total || 0), 0) || 0
+        const subcontractorsCost =
+          itemPricing.subcontractors?.reduce((s, sc) => s + (sc.total || 0), 0) || 0
+
+        const baseCost = materialsCost + laborCost + equipmentCost + subcontractorsCost
+        const percentages = itemPricing.additionalPercentages || defaultPercentages
+        const administrative = baseCost * (percentages.administrative / 100)
+        const operational = baseCost * (percentages.operational / 100)
+        const profit = baseCost * (percentages.profit / 100)
+
+        return sum + baseCost + administrative + operational + profit
+      }, 0)
+
+      // Calculate total with VAT (15%)
+      const vatRate = 0.15
+      const vatAmount = totalValue * vatRate
+      const totalWithVat = totalValue + vatAmount
+
+      console.log('[TenderPricingRepository] Calculated totalValue:', {
+        totalValue,
+        vatAmount,
+        totalWithVat,
+        completedCount,
+        totalCount: quantityItems.length,
+        itemsBreakdown: quantityItems.map((item) => {
+          const pricing = pricingData.get(item.id)
+          return {
+            id: item.id,
+            quantity: item.quantity,
+            pricingMethod: pricing?.pricingMethod,
+            directUnitPrice: pricing?.directUnitPrice,
+            completed: pricing?.completed,
+          }
+        }),
+      })
+
+      await this.updateTenderStatus(
+        tenderId,
+        completedCount,
+        quantityItems.length,
+        totalWithVat, // Use total WITH VAT for tender card
+        { allowRefresh: true }, // Allow refresh from Save button
       )
 
       recordAuditEvent({
@@ -189,76 +267,165 @@ export class TenderPricingRepository {
   ): Promise<void> {
     const round2 = (value: number): number => Math.round(value * 100) / 100
 
-    const items = quantityItems
-      .map<PersistedBOQItem | null>((quantityItem) => {
-        const itemPricing = pricingData.get(quantityItem.id)
-        if (!itemPricing) {
-          return null
+    console.log('[TenderPricingRepository] updateBOQRepository called:', {
+      tenderId,
+      pricingDataSize: pricingData.size,
+      quantityItemsCount: quantityItems.length,
+      pricingDataKeys: Array.from(pricingData.keys()),
+      directPricingItems: Array.from(pricingData.entries())
+        .filter(([_, p]) => p.pricingMethod === 'direct')
+        .map(([id, p]) => ({ id, directUnitPrice: p.directUnitPrice })),
+    })
+
+    // Build items: include ALL quantityItems, not just priced ones
+    const items = quantityItems.map<PersistedBOQItem>((quantityItem) => {
+      const itemPricing = pricingData.get(quantityItem.id)
+
+      // If no pricing data, create basic BOQ item with zero prices
+      if (!itemPricing) {
+        return {
+          id: quantityItem.id,
+          description: quantityItem.canonicalDescription ?? quantityItem.description,
+          canonicalDescription: quantityItem.canonicalDescription ?? quantityItem.description,
+          unit: quantityItem.unit,
+          quantity: quantityItem.quantity,
+          unitPrice: 0,
+          totalPrice: 0,
+          category: 'BOQ' as const,
+          breakdown: {
+            materials: 0,
+            labor: 0,
+            equipment: 0,
+            subcontractors: 0,
+            administrative: 0,
+            operational: 0,
+            profit: 0,
+          },
+          estimated: {
+            quantity: quantityItem.quantity,
+            unitPrice: 0,
+            totalPrice: 0,
+            materials: [],
+            labor: [],
+            equipment: [],
+            subcontractors: [],
+            additionalPercentages: {
+              administrative: defaultPercentages.administrative,
+              operational: defaultPercentages.operational,
+              profit: defaultPercentages.profit,
+            },
+          },
         }
+      }
 
-        // Calculate totals
-        const materialsTotal = itemPricing.materials.reduce((sum, row) => sum + (row.total || 0), 0)
-        const laborTotal = itemPricing.labor.reduce((sum, row) => sum + (row.total || 0), 0)
-        const equipmentTotal = itemPricing.equipment.reduce((sum, row) => sum + (row.total || 0), 0)
-        const subcontractorsTotal = itemPricing.subcontractors.reduce(
-          (sum, row) => sum + (row.total || 0),
-          0,
-        )
-        const subtotal = materialsTotal + laborTotal + equipmentTotal + subcontractorsTotal
+      // Check if this is DIRECT PRICING (unitPrice entered directly without breakdown)
+      if (itemPricing.pricingMethod === 'direct' && itemPricing.directUnitPrice) {
+        const unitPrice = itemPricing.directUnitPrice
+        const totalPrice = round2(unitPrice * quantityItem.quantity)
 
-        // Get percentages (use item-specific or defaults)
-        const adminPercentage =
-          itemPricing.additionalPercentages?.administrative ?? defaultPercentages.administrative
-        const operationalPercentage =
-          itemPricing.additionalPercentages?.operational ?? defaultPercentages.operational
-        const profitPercentage =
-          itemPricing.additionalPercentages?.profit ?? defaultPercentages.profit
+        // Use derived percentages if available, otherwise defaults
+        const percentages =
+          itemPricing.derivedPercentages || itemPricing.additionalPercentages || defaultPercentages
 
-        // Calculate additional costs
-        const administrative = (subtotal * adminPercentage) / 100
-        const operational = (subtotal * operationalPercentage) / 100
-        const profit = (subtotal * profitPercentage) / 100
-        const total = subtotal + administrative + operational + profit
-        const unitPrice = quantityItem.quantity > 0 ? total / quantityItem.quantity : total
-
-        // Build persisted item
-        const persistedItem: PersistedBOQItem = {
+        return {
           id: quantityItem.id,
           description: quantityItem.canonicalDescription ?? quantityItem.description,
           canonicalDescription: quantityItem.canonicalDescription ?? quantityItem.description,
           unit: quantityItem.unit,
           quantity: quantityItem.quantity,
           unitPrice: round2(unitPrice),
-          totalPrice: round2(total),
-          category: 'BOQ',
+          totalPrice: totalPrice,
+          category: 'BOQ' as const,
           breakdown: {
-            materials: round2(materialsTotal),
-            labor: round2(laborTotal),
-            equipment: round2(equipmentTotal),
-            subcontractors: round2(subcontractorsTotal),
-            administrative: round2(administrative),
-            operational: round2(operational),
-            profit: round2(profit),
+            materials: 0,
+            labor: 0,
+            equipment: 0,
+            subcontractors: 0,
+            administrative: 0,
+            operational: 0,
+            profit: 0,
           },
           estimated: {
             quantity: quantityItem.quantity,
             unitPrice: round2(unitPrice),
-            totalPrice: round2(total),
-            materials: itemPricing.materials,
-            labor: itemPricing.labor,
-            equipment: itemPricing.equipment,
-            subcontractors: itemPricing.subcontractors,
+            totalPrice: totalPrice,
+            materials: [],
+            labor: [],
+            equipment: [],
+            subcontractors: [],
             additionalPercentages: {
-              administrative: adminPercentage,
-              operational: operationalPercentage,
-              profit: profitPercentage,
+              administrative: percentages.administrative,
+              operational: percentages.operational,
+              profit: percentages.profit,
             },
+            pricingMethod: 'direct',
+            directUnitPrice: unitPrice,
           },
         }
+      }
 
-        return persistedItem
-      })
-      .filter((item): item is PersistedBOQItem => item !== null)
+      // DETAILED PRICING (materials, labor, equipment, subcontractors)
+      const materialsTotal =
+        itemPricing.materials?.reduce((sum, row) => sum + (row.total || 0), 0) || 0
+      const laborTotal = itemPricing.labor?.reduce((sum, row) => sum + (row.total || 0), 0) || 0
+      const equipmentTotal =
+        itemPricing.equipment?.reduce((sum, row) => sum + (row.total || 0), 0) || 0
+      const subcontractorsTotal =
+        itemPricing.subcontractors?.reduce((sum, row) => sum + (row.total || 0), 0) || 0
+      const subtotal = materialsTotal + laborTotal + equipmentTotal + subcontractorsTotal
+
+      // Get percentages (use item-specific or defaults)
+      const adminPercentage =
+        itemPricing.additionalPercentages?.administrative ?? defaultPercentages.administrative
+      const operationalPercentage =
+        itemPricing.additionalPercentages?.operational ?? defaultPercentages.operational
+      const profitPercentage =
+        itemPricing.additionalPercentages?.profit ?? defaultPercentages.profit
+
+      // Calculate additional costs
+      const administrative = (subtotal * adminPercentage) / 100
+      const operational = (subtotal * operationalPercentage) / 100
+      const profit = (subtotal * profitPercentage) / 100
+      const total = subtotal + administrative + operational + profit
+      const unitPrice = quantityItem.quantity > 0 ? total / quantityItem.quantity : total
+
+      // Build persisted item
+      const persistedItem: PersistedBOQItem = {
+        id: quantityItem.id,
+        description: quantityItem.canonicalDescription ?? quantityItem.description,
+        canonicalDescription: quantityItem.canonicalDescription ?? quantityItem.description,
+        unit: quantityItem.unit,
+        quantity: quantityItem.quantity,
+        unitPrice: round2(unitPrice),
+        totalPrice: round2(total),
+        category: 'BOQ',
+        breakdown: {
+          materials: round2(materialsTotal),
+          labor: round2(laborTotal),
+          equipment: round2(equipmentTotal),
+          subcontractors: round2(subcontractorsTotal),
+          administrative: round2(administrative),
+          operational: round2(operational),
+          profit: round2(profit),
+        },
+        estimated: {
+          quantity: quantityItem.quantity,
+          unitPrice: round2(unitPrice),
+          totalPrice: round2(total),
+          materials: itemPricing.materials,
+          labor: itemPricing.labor,
+          equipment: itemPricing.equipment,
+          subcontractors: itemPricing.subcontractors,
+          additionalPercentages: {
+            administrative: adminPercentage,
+            operational: operationalPercentage,
+            profit: profitPercentage,
+          },
+        },
+      }
+
+      return persistedItem
+    })
 
     // Calculate totals
     const totalValue = items.reduce((sum, item) => sum + item.totalPrice, 0)
@@ -377,10 +544,20 @@ export class TenderPricingRepository {
     completedCount: number,
     totalCount: number,
     totalValue: number,
+    options?: { allowRefresh?: boolean },
   ): Promise<void> {
     try {
       const completionPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
       const tenderRepo = getTenderRepository()
+
+      console.log('[TenderPricingRepository] updateTenderStatus:', {
+        tenderId,
+        completedCount,
+        totalCount,
+        totalValue,
+        completionPercentage,
+        allowRefresh: options?.allowRefresh,
+      })
 
       // Determine tender status
       const newTenderStatus = completionPercentage === 100 ? 'ready_to_submit' : 'under_action'
@@ -397,11 +574,23 @@ export class TenderPricingRepository {
         { skipRefresh: true },
       )
 
-      // Emit event
+      // Emit event - skipRefresh depends on whether this is from Save button or internal update
+      // If allowRefresh=true (from Save button), allow tender list to refresh
+      // Otherwise, use skipRefresh to prevent page reload during editing
       if (typeof window !== 'undefined') {
+        const skipRefresh = !options?.allowRefresh
+        console.log('[TenderPricingRepository] Dispatching TENDER_UPDATED event:', {
+          tenderId,
+          skipRefresh,
+          allowRefresh: options?.allowRefresh,
+        })
+
         window.dispatchEvent(
           new CustomEvent(APP_EVENTS.TENDER_UPDATED, {
-            detail: { tenderId, skipRefresh: true },
+            detail: {
+              tenderId,
+              skipRefresh, // Allow refresh only from Save button
+            },
           }),
         )
       }

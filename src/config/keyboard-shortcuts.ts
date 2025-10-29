@@ -3,7 +3,7 @@
  * Sprint 5.4.4: اختصارات لوحة المفاتيح
  */
 
-import { KeyboardShortcut } from '@/hooks/useKeyboardShortcuts'
+import { KeyboardShortcut } from '@/application/hooks/useKeyboardShortcuts'
 
 // ============================================================================
 // Global Shortcuts
@@ -21,7 +21,7 @@ export const globalShortcuts: Omit<KeyboardShortcut, 'callback'>[] = [
     preventDefault: true,
     allowInInput: true,
   },
-  
+
   // Search
   {
     id: 'focus-search',
@@ -32,7 +32,7 @@ export const globalShortcuts: Omit<KeyboardShortcut, 'callback'>[] = [
     enabled: true,
     preventDefault: true,
   },
-  
+
   // Navigation
   {
     id: 'go-home',
@@ -79,7 +79,7 @@ export const globalShortcuts: Omit<KeyboardShortcut, 'callback'>[] = [
     enabled: true,
     preventDefault: true,
   },
-  
+
   // Actions
   {
     id: 'save',
@@ -135,7 +135,7 @@ export const globalShortcuts: Omit<KeyboardShortcut, 'callback'>[] = [
     enabled: true,
     preventDefault: true,
   },
-  
+
   // View
   {
     id: 'toggle-sidebar',
@@ -191,7 +191,7 @@ export const globalShortcuts: Omit<KeyboardShortcut, 'callback'>[] = [
     enabled: true,
     preventDefault: true,
   },
-  
+
   // Help
   {
     id: 'show-shortcuts',
@@ -433,4 +433,3 @@ export default {
   form: formShortcuts,
   all: allShortcuts,
 }
-
