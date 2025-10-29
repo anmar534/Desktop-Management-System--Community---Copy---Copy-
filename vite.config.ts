@@ -89,90 +89,21 @@ export default defineConfig({
   build: {
     target: 'esnext',
     outDir: 'dist',
-    sourcemap: 'hidden', // Fix sourcemap warnings
+    sourcemap: false,
+    minify: 'esbuild',
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 500, // Increased to accommodate optimized chunks
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
-      external: [
-        // Allow dynamic imports that may not be available at build time
-        '@/domain/monitoring/pricingRuntimeMonitor',
-        // Services that may not be available at build time
-        '../../services/bidComparisonService',
-        '../../services/competitorDatabaseService',
-        '../../services/decisionSupportService',
-        '../../services/earnedValueCalculator',
-        '../../services/enhancedProjectService',
-        '../../services/financialAnalyticsService',
-        '../../services/financialIntegrationService',
-        '../../services/financialStatementsService',
-        '../../services/integrationService',
-        '../../services/kpiCalculationEngine',
-        '../../services/marketIntelligenceService',
-        '../../services/paymentsReceivablesService',
-        '../../services/performanceOptimizationService',
-        '../../services/procurementCostIntegrationService',
-        '../../services/procurementIntegrationService',
-        '../../services/procurementReportingService',
-        '../../services/profitabilityAnalysisService',
-        '../../services/projectReportingService',
-        '../../services/reportExportService',
-        '../../services/riskManagementService',
-        '../../services/saudiTaxService',
-        '../../services/schedulingService',
-        '../../services/supplierManagementService',
-        '../../services/systemIntegrationService',
-        '../../services/taskManagementService',
-        '../../services/unifiedSystemIntegrationService',
-      ],
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            // Phase 1.5: Strategic vendor bundle splitting
-
-            // Core React (~300 KB) - Loaded immediately
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'vendor-react'
-            }
-
-            // UI Components (~400 KB) - Loaded immediately
-            if (id.includes('@radix-ui')) {
-              return 'vendor-ui'
-            }
-
-            // Charts (~600 KB) - Lazy loaded
-            if (id.includes('echarts') || id.includes('recharts')) {
-              return 'vendor-charts'
-            }
-
-            // Data/Tables (~200 KB) - Lazy loaded
-            if (
-              id.includes('@tanstack') ||
-              id.includes('xlsx') ||
-              id.includes('react-grid-layout')
-            ) {
-              return 'vendor-data'
-            }
-
-            // Animations (~150 KB) - Loaded immediately
-            if (id.includes('framer-motion') || id.includes('motion')) {
-              return 'vendor-animation'
-            }
-
-            // Forms & Validation (~100 KB) - Loaded immediately
-            if (id.includes('react-hook-form') || id.includes('zod')) {
-              return 'vendor-forms'
-            }
-
-            // Icons (~50 KB) - Loaded immediately
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons'
-            }
-
-            // Utilities - Everything else
-            return 'vendor-utils'
-          }
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'charts': ['echarts', 'echarts-for-react', 'recharts'],
+          'ui': ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs'],
         },
       },
+      external: [
+        '@/domain/monitoring/pricingRuntimeMonitor',
+      ],
     },
   },
   server: {
