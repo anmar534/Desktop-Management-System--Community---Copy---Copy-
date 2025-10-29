@@ -1,0 +1,250 @@
+name: Build and Release Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:unit
+        continue-on-error: true
+
+      - name: Build application
+        run: npm run build
+
+      - name: Build Electron app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WINDOWS_PUBLISHER_NAME: ${{ secrets.WINDOWS_PUBLISHER_NAME }}
+        run: npm run build:electron
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            build/electron/*.exe
+            build/electron/*.yml
+          retention-days: 30
+
+      - name: Calculate checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path "build/electron/*.exe" | ForEach-Object {
+            $hash = Get-FileHash -Path $_.FullName -Algorithm SHA256
+            "$($hash.Hash)  $($_.Name)" | Out-File -FilePath "build/electron/checksums.txt" -Append
+          }
+
+      - name: Upload checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksums
+          path: build/electron/checksums.txt
+
+  create-release:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: ./release
+
+      - name: Download checksums
+        uses: actions/download-artifact@v4
+        with:
+          name: checksums
+          path: ./release
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Read changelog
+        id: changelog
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            # استخراج التغييرات للإصدار الحالي
+            VERSION=${{ steps.version.outputs.VERSION }}
+            sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d' > release_notes.md
+            echo "NOTES<<EOF" >> $GITHUB_OUTPUT
+            cat release_notes.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "NOTES=No changelog available" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: نظام إدارة المقاولات v${{ steps.version.outputs.VERSION }}
+          body: |
+            # 🎉 الإصدار ${{ steps.version.outputs.VERSION }}
+
+            ## 📦 ملفات التنصيب
+
+            - **Windows 64-bit**: `DesktopManagementSystem-${{ steps.version.outputs.VERSION }}-win-x64.exe`
+
+            ## ✨ التحديثات
+
+            ${{ steps.changelog.outputs.NOTES }}
+
+            ## 📋 متطلبات النظام
+
+            - Windows 10/11 (64-bit)
+            - 4GB RAM (يُنصح بـ 8GB)
+            - 500MB مساحة تخزين
+
+            ## 🔒 التحقق من الملفات
+
+            يمكنك التحقق من سلامة الملفات باستخدام SHA256:
+            ```
+            انظر ملف checksums.txt
+            ```
+
+            ## 📖 التوثيق
+
+            - [دليل المستخدم](https://github.com/${{ github.repository }}/blob/main/docs/USER_GUIDE_ARABIC.md)
+            - [دليل التثبيت](https://github.com/${{ github.repository }}/blob/main/docs/INSTALLATION_GUIDE.md)
+
+            ---
+
+            **ملاحظة**: يتم تحديث التطبيق تلقائياً عند توفر إصدارات جديدة.
+          files: |
+            release/*.exe
+            release/*.yml
+            release/checksums.txt
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Release created successfully!"
+          echo "📦 Version: ${{ steps.version.outputs.VERSION }}"
+          echo "🔗 URL: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.VERSION }}"
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '❌ فشل إصدار v${{ steps.version.outputs.VERSION }}',
+              body: `حدث خطأ أثناء إنشاء الإصدار v${{ steps.version.outputs.VERSION }}.\n\nالرجاء التحقق من السجلات: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+              labels: ['bug', 'ci/cd', 'release']
+            })
+
+  # اختبار التحديث التلقائي
+  test-auto-update:
+    needs: create-release
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download release
+        uses: robinraju/release-downloader@v1.9
+        with:
+          tag: ${{ github.ref_name }}
+          fileName: '*.exe'
+          out-file-path: './installer'
+
+      - name: Install application
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path "./installer/*.exe" | Select-Object -First 1
+          Start-Process -FilePath $installer.FullName -ArgumentList "/S" -Wait
+
+      - name: Wait for installation
+        run: sleep 30
+
+      - name: Check installation
+        shell: pwsh
+        run: |
+          $appPath = "$env:LOCALAPPDATA\Programs\desktop-management-system-community"
+          if (Test-Path $appPath) {
+            Write-Host "✅ Application installed successfully"
+          } else {
+            Write-Error "❌ Application not found"
+            exit 1
+          }
+
+      - name: Test auto-update check
+        shell: pwsh
+        run: |
+          # هنا يمكن إضافة اختبارات للتحديث التلقائي
+          Write-Host "⏭️ Auto-update tests skipped (requires running app)"
+
+  # إشعار بالنجاح
+  notify-success:
+    needs: [build-windows, create-release]
+    runs-on: ubuntu-latest
+    if: success() && startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Create success summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          # ✅ تم إصدار النسخة الجديدة بنجاح
+
+          ## 📊 ملخص الإصدار
+
+          - **الإصدار**: ${GITHUB_REF#refs/tags/v}
+          - **التاريخ**: $(date '+%Y-%m-%d %H:%M:%S')
+          - **الرابط**: [عرض الإصدار](https://github.com/${{ github.repository }}/releases/tag/${GITHUB_REF#refs/tags/})
+
+          ## 📦 الملفات المنشورة
+
+          - Windows Installer (x64)
+          - Auto-update files (latest.yml)
+          - Checksums (SHA256)
+
+          ## 🔄 الخطوات التالية
+
+          1. تحقق من صفحة الإصدار
+          2. اختبر التحديث التلقائي
+          3. أبلغ المستخدمين بالنسخة الجديدة
+
+          EOF

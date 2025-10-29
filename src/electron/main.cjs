@@ -11,6 +11,7 @@ const fsSync = require('fs')
 const { validateIpcPayload, redactArgs } = require('./ipcGuard.cjs')
 const { buildContentSecurityPolicy, generateNonce } = require('./cspBuilder.cjs')
 const { initTelemetry, captureException, addBreadcrumb, isTelemetryEnabled } = require('./telemetry.cjs')
+const { initErrorReporter, logError, sendNow: sendErrorsNow, getErrorStats, cleanup: cleanupErrorReporter } = require('./errorReporter.cjs')
 
 // إيقاف تحذيرات الأمان في وضع التطوير
 if (isDev) {
@@ -1477,6 +1478,19 @@ function setupIPC() {
     const result = await dialog.showSaveDialog(target, options)
     return result
   })
+
+  // معالجات نظام تسجيل الأخطاء
+  registerGuardedHandler('error-reporter-stats', async () => {
+    return getErrorStats();
+  })
+
+  registerGuardedHandler('error-reporter-send-now', async () => {
+    return await sendErrorsNow();
+  })
+
+  registerGuardedHandler('error-reporter-log', async (_event, error, context) => {
+    return await logError(error, context);
+  })
 }
 
 function setupLifecycleObservers() {
@@ -1643,6 +1657,10 @@ app.whenReady().then(async () => {
 
   // اضبط المسارات الآمنة بعد ready وقبل تهيئة أي موارد تعتمد على userData
   setupSafePaths();
+  
+  // تهيئة نظام تسجيل الأخطاء
+  await initErrorReporter();
+  
   await createStore();
   await ensureEncryptionKey();
   setupIPC();
@@ -1687,15 +1705,16 @@ if (!gotTheLock) {
 // معالجة الأخطاء غير المتوقعة
 process.on('uncaughtException', (error) => {
   console.error('خطأ غير متوقع:', error)
+  logError(error, { scope: 'uncaughtException' });
   captureException(error, { scope: 'uncaughtException' });
   dialog.showErrorBox('خطأ في التطبيق', `حدث خطأ غير متوقع: ${error.message}`)
 })
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Promise مرفوض:', promise, 'السبب:', reason)
-  captureException(reason instanceof Error ? reason : new Error(String(reason)), {
-    scope: 'unhandledRejection'
-  });
+  const error = reason instanceof Error ? reason : new Error(String(reason));
+  logError(error, { scope: 'unhandledRejection' });
+  captureException(error, { scope: 'unhandledRejection' });
 })
 
 // إضافات لوج تفصيلية لدورة الحياة
@@ -1705,10 +1724,12 @@ app.on('before-quit', () => {
     logLifecycleResult('prepare-before-quit', result);
   });
   releaseCachedSecureKey();
+  cleanupErrorReporter();
 });
 app.on('will-quit', () => {
   console.log('⚙️ [lifecycle] will-quit fired – cleaning up');
   releaseCachedSecureKey();
+  cleanupErrorReporter();
 });
 app.on('quit', (event, exitCode) => {
   console.log('⚙️ [lifecycle] quit event exitCode=', exitCode);
