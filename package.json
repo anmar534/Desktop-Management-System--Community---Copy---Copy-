@@ -1,6 +1,8 @@
 {
   "name": "desktop-management-system-community",
-  "version": "1.0.1",
+  "version": "1.0.5",
+  "description": "نظام إدارة شركة المقاولات - Desktop Management System for Construction Companies",
+  "author": "MBM Desktop Management Team",
   "private": true,
   "type": "module",
   "main": "src/electron/main.cjs",
@@ -139,6 +141,7 @@
     "test:smoke": "vitest run tests/smoke",
     "test:e2e:desktop": "cross-env E2E_TEST=1 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 playwright test --config=playwright.desktop.config.ts",
     "build:electron": "vite build && electron-builder",
+    "build:electron:publish": "vite build && electron-builder --publish always",
     "electron": "electron .",
     "clean-install": "rm -rf node_modules package-lock.json && npm install",
     "reset-project": "npm run clean-install && npm run build",
