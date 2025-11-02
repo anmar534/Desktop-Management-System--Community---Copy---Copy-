@@ -1513,6 +1513,63 @@ function setupIPC() {
     return app.getVersion()
   })
 
+  // معالج للتحقق اليدوي من التحديثات
+  registerGuardedHandler('check-for-updates', async () => {
+    if (isDev || isE2E) {
+      return {
+        success: false,
+        error: 'التحديثات التلقائية غير متاحة في وضع التطوير'
+      }
+    }
+
+    try {
+      logAutoUpdaterEvent('check-manual', 'success', { source: 'user-request' })
+      const result = await autoUpdater.checkForUpdatesAndNotify()
+      
+      if (result && result.updateInfo) {
+        // تحديث متاح - سيتم عرض الرسالة من event handler
+        return {
+          success: true,
+          updateAvailable: true,
+          version: result.updateInfo.version,
+          releaseDate: result.updateInfo.releaseDate
+        }
+      } else {
+        // لا يوجد تحديث - عرض رسالة للمستخدم
+        dialog.showMessageBox(mainWindow, {
+          type: 'info',
+          title: 'لا توجد تحديثات',
+          message: `أنت تستخدم أحدث إصدار (${app.getVersion()})`,
+          buttons: ['موافق']
+        }).catch(() => {});
+        
+        return {
+          success: true,
+          updateAvailable: false,
+          currentVersion: app.getVersion()
+        }
+      }
+    } catch (error) {
+      logAutoUpdaterEvent('check-manual-failed', 'error', {
+        source: 'user-request',
+        error: error instanceof Error ? error.message : String(error)
+      })
+      
+      // عرض رسالة خطأ للمستخدم
+      dialog.showMessageBox(mainWindow, {
+        type: 'error',
+        title: 'خطأ في التحقق من التحديثات',
+        message: `فشل التحقق من التحديثات:\n${error instanceof Error ? error.message : String(error)}`,
+        buttons: ['موافق']
+      }).catch(() => {});
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      }
+    }
+  })
+
   registerGuardedHandler('security-get-csp-nonce', () => {
     return getActiveCspNonce()
   })
@@ -1608,8 +1665,40 @@ function setupLifecycleObservers() {
 // معالج التحديث التلقائي مع سجل أمني
 function setupAutoUpdater() {
   try {
+    // تكوين GitHub provider صراحة
+    const updateToken = process.env.GITHUB_UPDATE_TOKEN || '';
+    
+    const feedConfig = {
+      provider: 'github',
+      owner: 'anmar534',
+      repo: 'Desktop-Management-System--Community---Copy---Copy-',
+      releaseType: 'release'
+    };
+    
+    // إذا كان المستودع خاص، أضف token
+    if (updateToken) {
+      feedConfig.private = true;
+      feedConfig.token = updateToken;
+      console.log('✅ Using private repository with token');
+    } else {
+      console.log('⚠️ No GITHUB_UPDATE_TOKEN - assuming public repository');
+    }
+    
+    autoUpdater.setFeedURL(feedConfig);
+
+    // تمكين السجلات للتشخيص
+    autoUpdater.logger = console;
+    autoUpdater.logger.transports.file.level = 'info';
+
+    // إعدادات التحديث
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.allowPrerelease = false;
+
+    console.log('✅ AutoUpdater configured:', {
+      currentVersion: app.getVersion(),
+      feedURL: 'github:anmar534/Desktop-Management-System--Community---Copy---Copy-'
+    });
   } catch (error) {
     console.warn('⚠️ Failed to configure autoUpdater defaults:', error?.message || error);
   }
@@ -1640,6 +1729,10 @@ function setupAutoUpdater() {
   };
 
   autoUpdater.on('checking-for-update', () => {
+    console.log('🔍 Checking for updates...', {
+      currentVersion: app.getVersion(),
+      feedURL: 'github:anmar534/Desktop-Management-System--Community---Copy---Copy-'
+    });
     logAutoUpdaterEvent('checking-for-update', 'success', {});
   });
 
@@ -1649,13 +1742,14 @@ function setupAutoUpdater() {
       releaseDate: info?.releaseDate,
       files: info?.files?.length
     };
+    console.log('✨ Update available!', payload);
     logAutoUpdaterEvent('update-available', 'success', payload);
     emitUpdateEventToRenderer('update-available', payload);
     dialog
       .showMessageBox(mainWindow, {
         type: 'info',
         title: 'تحديث متاح',
-        message: `تحديث جديد متاح (Electron ${info?.version ?? ''}). سيتم تحميله في الخلفية.`,
+        message: `تحديث جديد متاح!\n\nالإصدار الحالي: ${app.getVersion()}\nالإصدار الجديد: ${info?.version ?? ''}\n\nسيتم تحميل التحديث في الخلفية.`,
         buttons: ['موافق']
       })
       .catch(() => {
@@ -1664,6 +1758,10 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('update-not-available', (info) => {
+    console.log('ℹ️ No updates available', {
+      currentVersion: app.getVersion(),
+      latestVersion: info?.version
+    });
     logAutoUpdaterEvent('update-not-available', 'success', {
       version: info?.version || app.getVersion()
     });
@@ -1700,9 +1798,13 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('error', (error) => {
-    logAutoUpdaterEvent('error', 'error', {
-      message: error?.message || String(error)
-    });
+    const errorDetails = {
+      message: error?.message || String(error),
+      stack: error?.stack,
+      currentVersion: app.getVersion()
+    };
+    console.error('❌ AutoUpdater error:', errorDetails);
+    logAutoUpdaterEvent('error', 'error', errorDetails);
   });
 
   void performCheck('startup');

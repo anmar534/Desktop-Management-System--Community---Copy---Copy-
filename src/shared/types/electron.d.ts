@@ -44,6 +44,12 @@ interface ElectronDesktop {
   secureAction: (payload: unknown) => Promise<unknown>
 }
 
+interface ElectronUpdates {
+  check: () => Promise<unknown>
+  onAvailable: (callback: (payload: unknown) => void) => () => void
+  onDownloaded: (callback: (payload: unknown) => void) => () => void
+}
+
 interface ElectronAPI {
   store?: ElectronStore
   secureStore?: ElectronSecureStore
@@ -52,6 +58,7 @@ interface ElectronAPI {
   fs?: ElectronFS
   dialog?: ElectronDialog
   desktop?: ElectronDesktop
+  updates?: ElectronUpdates
   database?: unknown // Extended by specific modules
   on?: (channel: string, callback: (event: unknown, payload: unknown) => void) => void
   removeListener?: (channel: string, callback: (event: unknown, payload: unknown) => void) => void

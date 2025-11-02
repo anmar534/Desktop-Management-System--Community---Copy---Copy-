@@ -7,7 +7,8 @@ import { TenderStatusCards } from '@/presentation/pages/Tenders/components/Tende
 import { RemindersCard } from './components/RemindersCard'
 import { FinancialSummaryCard } from './components/FinancialSummaryCard'
 import { LazyMonthlyExpensesChart } from '@/presentation/components/charts/LazyCharts'
-import { AnnualKPICards } from './components/AnnualKPICards'
+import { DashboardKPIPreferencesDialog } from './components/DashboardKPIPreferencesDialog'
+import { useKPIs } from '@/application/hooks/useKPIs'
 import { useFinancialState } from '@/application/context'
 import { useDashboardMetrics } from '@/application/hooks/useDashboardMetrics'
 import { formatTime } from '@/shared/utils/formatters/formatters'
@@ -18,6 +19,16 @@ interface DashboardProps {
 
 function Dashboard({ onSectionChange }: DashboardProps) {
   const { currency, lastRefreshAt } = useFinancialState()
+  const {
+    allKpis,
+    visibleKpis,
+    selectedIds,
+    setSelectedIds,
+    maxCards,
+    isLoading: kpiLoading,
+  } = useKPIs()
+  const hasGoals = allKpis.length > 0
+  const [preferencesOpen, setPreferencesOpen] = useState(false)
 
   const {
     data: dashboardMetrics,
@@ -227,33 +238,38 @@ function Dashboard({ onSectionChange }: DashboardProps) {
                 مقارنة الإنجازات الفعلية مع الأهداف المحددة
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onSectionChange('development')}
-              className="text-primary hover:text-primary/80"
-            >
-              إدارة الأهداف ←
-            </Button>
-          </div>
-          <DashboardKPICards onSectionChange={onSectionChange} />
-        </div>
-
-        {/* الصف الثاني: مؤشرات الأداء السنوية */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">مؤشرات الأداء السنوية</h2>
-              <p className="text-sm text-muted-foreground">تفاصيل الأداء السنوي حسب الأقسام</p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPreferencesOpen(true)}
+                disabled={!hasGoals}
+                className="hover:bg-primary/10"
+              >
+                تخصيص المؤشرات
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onSectionChange('development')}
+                className="text-primary hover:text-primary/80"
+              >
+                إدارة الأهداف ←
+              </Button>
             </div>
-            <Badge variant="secondary" className="text-sm">
-              {new Date().getFullYear()}
-            </Badge>
           </div>
-          <AnnualKPICards onSectionChange={onSectionChange} />
+          <DashboardKPICards
+            kpis={visibleKpis}
+            isLoading={kpiLoading}
+            maxCards={maxCards}
+            hasGoals={hasGoals}
+            onSectionChange={onSectionChange}
+            onAddGoals={() => onSectionChange('development')}
+            onCustomize={() => setPreferencesOpen(true)}
+          />
         </div>
 
-        {/* الصف الثالث: المنافسات والتذكيرات والمالية */}
+        {/* الصف التالي: المنافسات والتذكيرات والمالية */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* المنافسات - عرض مزدوج */}
           <div className="lg:col-span-2">
@@ -295,6 +311,14 @@ function Dashboard({ onSectionChange }: DashboardProps) {
           <LazyMonthlyExpensesChart onSectionChange={onSectionChange} />
         </div>
       </div>
+      <DashboardKPIPreferencesDialog
+        open={preferencesOpen}
+        onOpenChange={setPreferencesOpen}
+        kpis={allKpis}
+        selectedIds={selectedIds}
+        maxSelectable={maxCards}
+        onSave={setSelectedIds}
+      />
     </div>
   )
 }

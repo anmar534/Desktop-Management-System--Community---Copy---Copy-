@@ -1,4 +1,29 @@
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires */
 const { contextBridge, ipcRenderer } = require('electron')
+
+const UPDATE_EVENT_CHANNELS = new Set(['update-available', 'update-downloaded'])
+
+const subscribeToUpdateChannel = (channel, callback) => {
+  if (!UPDATE_EVENT_CHANNELS.has(channel) || typeof callback !== 'function') {
+    return () => {
+      /* noop */
+    }
+  }
+
+  const handler = (_event, payload) => {
+    try {
+      callback(payload)
+    } catch (error) {
+      console.warn(`⚠️ [preload] update handler for ${channel} threw:`, error)
+    }
+  }
+
+  ipcRenderer.on(channel, handler)
+
+  return () => {
+    ipcRenderer.removeListener(channel, handler)
+  }
+}
 
 // تعريض APIs آمنة للعملية المرئية
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -47,6 +72,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // واجهة ميزات سطح المكتب المؤمنة
   desktop: {
     secureAction: (payload) => ipcRenderer.invoke('desktop-secure-action', payload)
+  },
+
+  updates: {
+    check: () => ipcRenderer.invoke('check-for-updates'),
+    onAvailable: (callback) => subscribeToUpdateChannel('update-available', callback),
+    onDownloaded: (callback) => subscribeToUpdateChannel('update-downloaded', callback)
   },
 
   // مستمعات الأحداث

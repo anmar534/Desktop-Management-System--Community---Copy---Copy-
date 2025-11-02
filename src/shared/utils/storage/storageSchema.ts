@@ -443,6 +443,40 @@ const STORAGE_SCHEMA: SchemaMap = {
   [STORAGE_KEYS.BANK_ACCOUNTS]: createEntry(2, normalizeBankAccounts),
   [STORAGE_KEYS.PRICING_DATA]: createEntry(2, normalizePricingStore),
   [STORAGE_KEYS.SECURITY_AUDIT_LOG]: createEntry(1, normalizeAuditLog),
+  [STORAGE_KEYS.DEVELOPMENT_GOALS]: createEntry(1, (value: unknown) => {
+    if (!Array.isArray(value)) return []
+    return value.filter(isPlainObject).map((item) => {
+      const record = { ...(item as Record<string, unknown>) }
+      const title = typeof record.title === 'string' ? record.title : ''
+      const category = typeof record.category === 'string' ? record.category : 'tenders'
+      const type = record.type === 'monthly' || record.type === 'yearly' ? record.type : 'yearly'
+      const unit =
+        record.unit === 'currency' || record.unit === 'percentage' || record.unit === 'number'
+          ? record.unit
+          : 'number'
+      const currentValue = toNumber(record.currentValue ?? 0, 0)
+      const targetValue2025 = toNumber(record.targetValue2025 ?? 0, 0)
+      const targetValue2026 = toNumber(record.targetValue2026 ?? 0, 0)
+      const targetValue2027 = toNumber(record.targetValue2027 ?? 0, 0)
+      const id =
+        typeof record.id === 'string' && record.id.trim() !== ''
+          ? record.id
+          : `goal-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+      const description = typeof record.description === 'string' ? record.description : undefined
+      return {
+        id,
+        title,
+        category,
+        type,
+        unit,
+        currentValue,
+        targetValue2025,
+        targetValue2026,
+        targetValue2027,
+        ...(description ? { description } : {}),
+      }
+    })
+  }),
 }
 
 export const getSchemaEntry = (key: string): StorageSchemaEntry => {

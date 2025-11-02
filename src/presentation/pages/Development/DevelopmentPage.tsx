@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Target,
@@ -34,7 +34,8 @@ import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { formatCurrency } from '@/data/centralData'
 import type { DevelopmentGoal } from '@/application/hooks/useDevelopment'
 import { useDevelopment } from '@/application/hooks/useDevelopment'
-import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { useKPIMetrics } from '@/application/hooks/useKPIMetrics'
+import { getDevelopmentGoalsRepository } from '@/application/services/serviceRegistry'
 
 type SupportedYear = '2025' | '2026' | '2027'
 type YearTargetField = `targetValue${SupportedYear}`
@@ -146,6 +147,44 @@ export function Development() {
     deleteGoal: removeGoal,
     updateCurrentValues,
   } = useDevelopment()
+  const { metrics } = useKPIMetrics()
+
+  const resolveGoalActualValue = useCallback(
+    (goal: DevelopmentGoal): number => {
+      if (goal.type === 'yearly') {
+        switch (goal.category) {
+          case 'tenders':
+            return metrics.totalTenders
+          case 'projects':
+            return metrics.totalProjects
+          case 'revenue':
+            return metrics.totalRevenueMillions
+          case 'profit':
+            return metrics.totalProfitMillions
+          case 'performance':
+            return metrics.averageProgress
+          default:
+            break
+        }
+      }
+      return goal.currentValue ?? 0
+    },
+    [metrics],
+  )
+
+  useEffect(() => {
+    if (goals.length === 0) return
+    const updates: Record<string, number> = {}
+    goals.forEach((goal) => {
+      const actual = resolveGoalActualValue(goal)
+      if (Number.isFinite(actual) && actual !== goal.currentValue) {
+        updates[goal.id] = actual
+      }
+    })
+    if (Object.keys(updates).length > 0) {
+      void updateCurrentValues(updates)
+    }
+  }, [goals, resolveGoalActualValue, updateCurrentValues])
 
   const yearProgressMap = useMemo(() => {
     const base: Record<SupportedYear, number> = { '2025': 0, '2026': 0, '2027': 0 }
@@ -156,10 +195,11 @@ export function Development() {
       (acc, year) => {
         const total = goals.reduce((sum, goal) => {
           const target = getTargetValueForYear(goal, year)
+          const actual = resolveGoalActualValue(goal)
           if (target <= 0) {
-            return sum + (goal.currentValue > 0 ? 1 : 0)
+            return sum + (actual > 0 ? 1 : 0)
           }
-          const ratio = Math.min(Math.max(goal.currentValue / target, 0), 1)
+          const ratio = Math.min(Math.max(actual / target, 0), 1)
           return sum + ratio
         }, 0)
         acc[year] = Math.round((total / goals.length) * 100)
@@ -167,7 +207,7 @@ export function Development() {
       },
       { ...base },
     )
-  }, [goals])
+  }, [goals, resolveGoalActualValue])
 
   const summary = useMemo(() => {
     const totalGoals = goals.length
@@ -181,21 +221,22 @@ export function Development() {
     goals.forEach((goal) => {
       const target = getTargetValueForYear(goal, selectedYear)
       const normalizedTarget = target > 0 ? target : 0
+      const actualValue = resolveGoalActualValue(goal)
       const progress =
-        normalizedTarget > 0 ? goal.currentValue / normalizedTarget : goal.currentValue > 0 ? 1 : 0
+        normalizedTarget > 0 ? actualValue / normalizedTarget : actualValue > 0 ? 1 : 0
       const clampedProgress = Number.isFinite(progress) ? Math.max(0, Math.min(progress, 1)) : 0
 
       progressSum += clampedProgress
 
       if (
-        (normalizedTarget > 0 && goal.currentValue >= normalizedTarget) ||
-        (normalizedTarget === 0 && goal.currentValue > 0)
+        (normalizedTarget > 0 && actualValue >= normalizedTarget) ||
+        (normalizedTarget === 0 && actualValue > 0)
       ) {
         achievedGoals += 1
       } else {
         pending.push({
           goal,
-          gap: Math.max(normalizedTarget - goal.currentValue, 0),
+          gap: Math.max(normalizedTarget - actualValue, 0),
           target: normalizedTarget,
         })
       }
@@ -212,8 +253,8 @@ export function Development() {
       categoryMap[categoryKey].count += 1
       categoryMap[categoryKey].progress += clampedProgress
       if (
-        (normalizedTarget > 0 && goal.currentValue >= normalizedTarget) ||
-        (normalizedTarget === 0 && goal.currentValue > 0)
+        (normalizedTarget > 0 && actualValue >= normalizedTarget) ||
+        (normalizedTarget === 0 && actualValue > 0)
       ) {
         categoryMap[categoryKey].achieved += 1
       }
@@ -247,7 +288,7 @@ export function Development() {
       categoryStats,
       topGaps,
     }
-  }, [goals, selectedYear])
+  }, [goals, selectedYear, resolveGoalActualValue])
 
   const completionPercent = Math.round(summary.completionRate * 100)
   const averageProgressPercent = Math.round(summary.averageProgress * 100)
@@ -490,8 +531,12 @@ export function Development() {
       label: 'تحديث القيم الفعلية',
       icon: RefreshCw,
       onClick: async () => {
-        await updateCurrentValues({})
-        toast.success('تم تحديث القيم الحالية من البيانات الفعلية')
+        const updates = goals.reduce<Record<string, number>>((acc, goal) => {
+          acc[goal.id] = resolveGoalActualValue(goal)
+          return acc
+        }, {})
+        await updateCurrentValues(updates)
+        toast.success('تمت مزامنة القيم الحالية مع البيانات الفعلية')
       },
       variant: 'outline' as const,
       primary: false,
@@ -499,9 +544,10 @@ export function Development() {
     {
       label: 'حفظ الخطة محلياً',
       icon: Save,
-      onClick: () => {
+      onClick: async () => {
         try {
-          safeLocalStorage.setItem('development_goals', goals)
+          const repo = getDevelopmentGoalsRepository()
+          await repo.setAll(goals)
           toast.success('تم حفظ الأهداف في التخزين المحلي')
         } catch (error) {
           console.error('❌ فشل حفظ الأهداف في التخزين المحلي', error)
@@ -645,10 +691,11 @@ export function Development() {
                 ) : (
                   summary.topGaps.map(({ goal, gap }) => {
                     const target = getTargetValueForYear(goal, selectedYear)
+                    const actual = resolveGoalActualValue(goal)
                     const progressValue =
                       target > 0
-                        ? Math.min(Math.max((goal.currentValue / target) * 100, 0), 100)
-                        : goal.currentValue > 0
+                        ? Math.min(Math.max((actual / target) * 100, 0), 100)
+                        : actual > 0
                           ? 100
                           : 0
 
@@ -719,7 +766,7 @@ export function Development() {
                 {goals.map((goal) => {
                   const Icon = getCategoryIcon(goal.category)
                   const targetValue = getTargetValueForYear(goal, selectedYear)
-                  const currentValue = goal.currentValue
+                  const currentValue = resolveGoalActualValue(goal)
                   const progress =
                     targetValue > 0
                       ? Math.min(Math.max((currentValue / targetValue) * 100, 0), 100)

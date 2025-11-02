@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { safeLocalStorage } from '@/shared/utils/storage/storage'
+import { useCallback, useEffect } from 'react'
+import { useDevelopmentGoalsStore } from '@/stores/developmentGoals.store'
 
 export interface DevelopmentGoal {
   id: string
@@ -14,45 +14,77 @@ export interface DevelopmentGoal {
   description?: string
 }
 
-const STORAGE_KEY = 'development_goals'
-
 export function useDevelopment() {
-  const [goals, setGoals] = useState<DevelopmentGoal[]>(() =>
-    safeLocalStorage.getItem(STORAGE_KEY, []),
-  )
+  const goals = useDevelopmentGoalsStore((s) => s.goals)
+  const hydrate = useDevelopmentGoalsStore((s) => s.hydrate)
+  const add = useDevelopmentGoalsStore((s) => s.add)
+  const setAll = useDevelopmentGoalsStore((s) => s.setAll)
+  const update = useDevelopmentGoalsStore((s) => s.update)
+  const remove = useDevelopmentGoalsStore((s) => s.remove)
 
   useEffect(() => {
-    safeLocalStorage.setItem(STORAGE_KEY, goals)
+    let mounted = true
+    console.info('[useDevelopment] Hydration requested')
+    void hydrate()
+      .then(() => {
+        if (mounted) {
+          console.info('[useDevelopment] Hydration completed')
+        }
+      })
+      .catch((error) => {
+        console.error('[useDevelopment] Hydration failed:', error)
+      })
+    return () => {
+      mounted = false
+    }
+  }, [hydrate])
+
+  useEffect(() => {
+    console.info('[useDevelopment] Goals state updated', {
+      count: goals.length,
+      sample: goals.slice(0, 5).map((goal) => ({
+        id: goal.id,
+        title: goal.title,
+        category: goal.category,
+        type: goal.type,
+        currentValue: goal.currentValue,
+        targetValue2025: goal.targetValue2025,
+      })),
+    })
   }, [goals])
 
-  const updateGoal = useCallback(async (id: string, updates: Partial<DevelopmentGoal>) => {
-    setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, ...updates } : g)))
-  }, [])
+  const updateGoal = useCallback(
+    async (id: string, updates: Partial<DevelopmentGoal>) => {
+      console.info('[useDevelopment] updateGoal invoked', { id, updates })
+      await update(id, updates)
+    },
+    [update],
+  )
 
-  const addGoal = useCallback(async (goal: Omit<DevelopmentGoal, 'id'> & { id?: string }) => {
-    const resolveGoalId = () => {
-      if (typeof globalThis.crypto?.randomUUID === 'function') {
-        return globalThis.crypto.randomUUID()
-      }
-      return `goal-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-    }
+  const addGoal = useCallback(
+    async (goal: Omit<DevelopmentGoal, 'id'> & { id?: string }) => {
+      console.info('[useDevelopment] addGoal invoked', goal)
+      await add(goal)
+    },
+    [add],
+  )
 
-    setGoals((prev) => [
-      ...prev,
-      {
-        ...goal,
-        id: goal.id ?? resolveGoalId(),
-      },
-    ])
-  }, [])
+  const deleteGoal = useCallback(
+    async (id: string) => {
+      console.info('[useDevelopment] deleteGoal invoked', { id })
+      await remove(id)
+    },
+    [remove],
+  )
 
-  const deleteGoal = useCallback(async (id: string) => {
-    setGoals((prev) => prev.filter((g) => g.id !== id))
-  }, [])
-
-  const updateCurrentValues = useCallback(async (updates: Record<string, number>) => {
-    setGoals((prev) => prev.map((g) => ({ ...g, currentValue: updates[g.id] ?? g.currentValue })))
-  }, [])
+  const updateCurrentValues = useCallback(
+    async (updates: Record<string, number>) => {
+      console.info('[useDevelopment] updateCurrentValues invoked', updates)
+      const next = goals.map((g) => ({ ...g, currentValue: updates[g.id] ?? g.currentValue }))
+      setAll(next)
+    },
+    [goals, setAll],
+  )
 
   return { goals, addGoal, updateGoal, deleteGoal, updateCurrentValues }
 }

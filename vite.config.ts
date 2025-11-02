@@ -97,13 +97,11 @@ export default defineConfig({
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'charts': ['echarts', 'echarts-for-react', 'recharts'],
-          'ui': ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs'],
+          charts: ['echarts', 'echarts-for-react', 'recharts'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-select', '@radix-ui/react-tabs'],
         },
       },
-      external: [
-        '@/domain/monitoring/pricingRuntimeMonitor',
-      ],
+      // لا نستثني أسعار المراقبة أثناء البناء حتى تتوفر في الحزمة الإنتاجية
     },
   },
   server: {

@@ -1,22 +1,9 @@
-import { Card, CardContent } from '@/presentation/components/ui/card'
-import { Progress } from '@/presentation/components/ui/progress'
-import { StatusBadge, type StatusBadgeProps } from '@/presentation/components/ui/status-badge'
-import {
-  Trophy,
-  Building2,
-  DollarSign,
-  TrendingUp,
-  Target,
-  BarChart3,
-  ArrowUpRight,
-  ArrowDownRight,
-  CheckCircle,
-  AlertTriangle,
-  Zap,
-} from 'lucide-react'
+import { Trophy, Building2, DollarSign, BarChart3 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { getProgressColor } from '@/shared/utils/ui/statusColors'
+
 import { useFinancialState } from '@/application/context'
+import { useDevelopment } from '@/application/hooks/useDevelopment'
+import { UnifiedKPICard } from '@/presentation/components/kpi/UnifiedKPICard'
 import type { Tender, Project } from '@/data/centralData'
 // Removed unused imports of systemStats and formatCurrency
 import { calculateTenderStats } from '@/calculations/tender'
@@ -43,6 +30,7 @@ export function AnnualKPICards({ onSectionChange }: AnnualKPICardsProps) {
   const { tenders: tendersState, projects: projectsState } = useFinancialState()
   const { tenders, isLoading: tendersLoading } = tendersState
   const { projects, isLoading: projectsLoading } = projectsState
+  const { goals } = useDevelopment()
 
   // حساب الإحصائيات من البيانات الحقيقية
   const tenderKpi = () => {
@@ -127,230 +115,87 @@ export function AnnualKPICards({ onSectionChange }: AnnualKPICardsProps) {
   const revenueStats = calculateRevenue()
   const performanceStats = calculateProjectPerformance()
 
-  // البيانات السنوية للمؤشرات - محدثة بالبيانات الحقيقية
+  // helper: resolve yearly target from Development goals by category
+  const getYearlyTarget = (category: string, fallback: number) => {
+    const year = new Date().getFullYear()
+    const key = `targetValue${year}` as keyof (typeof goals)[number]
+    const goal = goals.find((g) => g.category === category && g.type === 'yearly')
+    const value = goal && typeof goal[key] === 'number' ? (goal[key] as number) : undefined
+
+    return typeof value === 'number' && value >= 0 ? value : fallback
+  }
+
+  // البيانات السنوية للمؤشرات - أهداف من إدارة التطوير + قيم فعلية من النظام
   const annualKPIs = [
     {
       id: 'tender-success-rate',
       title: 'نسبة فوز المنافسات',
       current: tenderStats.winRate,
-      target: 80,
+      target: getYearlyTarget('tenders', 80),
       unit: '%',
-      trend: tenderStats.winRate >= 70 ? 'up' : 'down',
-      change:
-        tenderStats.winRate >= 70
-          ? `+${tenderStats.winRate - 65}%`
-          : `${tenderStats.winRate - 70}%`,
-      changeValue: Math.round((tenderStats.winRate / 80) * 100),
-      icon: Trophy,
-      color: 'text-warning',
-      bgColor: 'bg-warning/10',
-      borderColor: 'border-warning/30',
-      description: 'من إجمالي المنافسات المقدمة',
-      details: tenderStats.details,
-      action: () => onSectionChange('tenders'),
+      icon: <Trophy className="h-4 w-4 text-warning" />,
+      colorClass: 'text-warning',
+      bgClass: 'bg-warning/10',
+      onClick: () => onSectionChange('tenders'),
     },
     {
       id: 'projects-count',
       title: 'عدد المشاريع',
       current: projectStats.total,
-      target: 25,
-      unit: 'مشروع',
-      trend: 'up',
-      change: `+${Math.max(0, projectStats.total - 15)}`,
-      changeValue: Math.round((projectStats.total / 25) * 100),
-      icon: Building2,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
-      borderColor: 'border-primary/20',
-      description: 'المشاريع المنفذة والجارية',
-      details: projectStats.details,
-      action: () => onSectionChange('projects'),
+      target: getYearlyTarget('projects', 25),
+      unit: 'number',
+      icon: <Building2 className="h-4 w-4 text-primary" />,
+      colorClass: 'text-primary',
+      bgClass: 'bg-primary/10',
+      onClick: () => onSectionChange('projects'),
     },
     {
       id: 'revenue',
-      title: 'الإيرادات',
+      title: 'الإيرادات (مليون ريال)',
       current: revenueStats.current,
-      target: 60.0,
-      unit: 'مليون ريال',
-      trend: revenueStats.current >= 40 ? 'up' : 'down',
-      change:
-        revenueStats.current >= 40
-          ? `+${(revenueStats.current - 32.8).toFixed(1)}M`
-          : `${(revenueStats.current - 40).toFixed(1)}M`,
-      changeValue: Math.round((revenueStats.current / 60) * 100),
-      icon: DollarSign,
-      color: 'text-success',
-      bgColor: 'bg-success/10',
-      borderColor: 'border-success/30',
-      description: 'الإيرادات المحققة لهذا العام',
-      details: revenueStats.details,
-      action: () => onSectionChange('financial'),
+      target: getYearlyTarget('revenue', 60.0),
+      unit: 'number',
+      icon: <DollarSign className="h-4 w-4 text-success" />,
+      colorClass: 'text-success',
+      bgClass: 'bg-success/10',
+      onClick: () => onSectionChange('financial'),
     },
     {
       id: 'project-performance',
       title: 'أداء المشاريع',
       current: performanceStats.performance,
-      target: 90,
+      target: getYearlyTarget('performance', 90),
       unit: '%',
-      trend: performanceStats.performance >= 85 ? 'up' : 'down',
-      change:
-        performanceStats.performance >= 85
-          ? `+${performanceStats.performance - 82}%`
-          : `${performanceStats.performance - 90}%`,
-      changeValue: Math.round((performanceStats.performance / 90) * 100),
-      icon: BarChart3,
-      color: 'text-info',
-      bgColor: 'bg-info/10',
-      borderColor: 'border-info/30',
-      description: 'متوسط الأداء العام للمشاريع',
-      details: performanceStats.details,
-      action: () => onSectionChange('projects'),
+      icon: <BarChart3 className="h-4 w-4 text-info" />,
+      colorClass: 'text-info',
+      bgClass: 'bg-info/10',
+      onClick: () => onSectionChange('projects'),
     },
   ]
 
-  // progress color provided by unified statusColors
-
-  const getStatusBadge = (
-    percentage: number,
-  ): { label: string; status: StatusBadgeProps['status'] } => {
-    if (percentage >= 90) return { label: 'ممتاز', status: 'success' }
-    if (percentage >= 70) return { label: 'جيد', status: 'onTrack' }
-    if (percentage >= 50) return { label: 'متوسط', status: 'warning' }
-    return { label: 'يحتاج تحسين', status: 'error' }
-  }
-
-  const calculatePercentage = (current: number, target: number) => {
-    return Math.min(Math.round((current / target) * 100), 100)
-  }
-
-  const getVarianceIcon = (current: number, target: number) => {
-    const percentage = calculatePercentage(current, target)
-    if (percentage >= 95) return <CheckCircle className="h-4 w-4 text-status-completed" />
-    if (percentage >= 70) return <TrendingUp className="h-4 w-4 text-status-on-track" />
-    return <AlertTriangle className="h-4 w-4 text-status-overdue" />
-  }
+  // no extra status widgets; simplified card handles status visuals
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {annualKPIs.map((kpi, index) => {
-        const percentage = calculatePercentage(kpi.current, kpi.target)
-        const status = getStatusBadge(percentage)
-
-        return (
-          <motion.div
-            key={kpi.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Card
-              className={`bg-card border-border shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group hover:border-primary/50`}
-              onClick={kpi.action}
-            >
-              <CardContent className="p-4">
-                {/* الصف العلوي - الأيقونة والعنوان والحالة */}
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-2 ${kpi.bgColor} rounded-lg`}>
-                      <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-semibold text-card-foreground leading-tight">
-                        {kpi.title}
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    {getVarianceIcon(kpi.current, kpi.target)}
-                    <StatusBadge
-                      status={status.status}
-                      label={status.label}
-                      size="sm"
-                      className="shadow-none"
-                    />
-                  </div>
-                </div>
-
-                {/* الأرقام الرئيسية */}
-                <div className="mb-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-baseline gap-1">
-                      <span className={`text-xl font-bold ${kpi.color}`}>
-                        {typeof kpi.current === 'number' && kpi.current > 100
-                          ? kpi.current.toFixed(1)
-                          : kpi.current}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{kpi.unit}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs text-muted-foreground">الهدف</div>
-                      <div className="text-sm font-semibold text-foreground/80">
-                        {kpi.target} {kpi.unit}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* شريط التقدم */}
-                  <div className="mb-2">
-                    <Progress
-                      value={percentage}
-                      className="h-1.5"
-                      indicatorClassName={getProgressColor(percentage)}
-                    />
-                  </div>
-
-                  {/* نسبة الإنجاز */}
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">{percentage}% من الهدف</span>
-                    <div
-                      className={`flex items-center gap-1 ${
-                        kpi.trend === 'up' ? 'text-success' : 'text-destructive'
-                      }`}
-                    >
-                      {kpi.trend === 'up' ? (
-                        <ArrowUpRight className="h-3 w-3" />
-                      ) : (
-                        <ArrowDownRight className="h-3 w-3" />
-                      )}
-                      <span className="font-medium">{kpi.change}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* الوصف والتفاصيل */}
-                <div className="space-y-1 mb-3">
-                  <p className="text-xs text-muted-foreground">{kpi.description}</p>
-                  <p className="text-xs font-medium text-foreground">{kpi.details}</p>
-                </div>
-
-                {/* مؤشر الأداء */}
-                <div className={`p-2 bg-muted border rounded-lg`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <Target className={`h-3 w-3 ${kpi.color}`} />
-                      <span className="text-xs font-medium text-muted-foreground">
-                        التقدم السنوي
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className={`text-sm font-bold ${kpi.color}`}>{percentage}%</span>
-                      {percentage >= 90 && <Zap className="h-3 w-3 text-success" />}
-                    </div>
-                  </div>
-                </div>
-
-                {/* مؤشر التفاعل */}
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 mt-2">
-                  <div className="text-center">
-                    <div className="text-xs text-muted-foreground">انقر للتفاصيل</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )
-      })}
+      {annualKPIs.map((kpi, index) => (
+        <motion.div
+          key={kpi.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+        >
+          <UnifiedKPICard
+            title={kpi.title}
+            icon={kpi.icon}
+            current={kpi.current}
+            target={kpi.target}
+            unit={kpi.unit === '%' ? 'percentage' : kpi.unit === 'number' ? 'number' : kpi.unit}
+            colorClass={kpi.colorClass}
+            bgClass={kpi.bgClass}
+            onClick={kpi.onClick}
+          />
+        </motion.div>
+      ))}
     </div>
   )
 }

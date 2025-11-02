@@ -653,6 +653,13 @@ const CHANNEL_RULES = {
       throw new Error('lifecycle-ack expects a single payload argument');
     }
     return [sanitizeLifecycleAckPayload(args[0])];
+  },
+  // تحديثات التطبيق (لا تقبل معاملات)
+  'check-for-updates': (args) => {
+    if (args.length !== 0) {
+      throw new Error('check-for-updates does not accept arguments');
+    }
+    return [];
   }
 };
 
