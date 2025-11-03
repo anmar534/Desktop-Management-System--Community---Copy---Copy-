@@ -2,13 +2,35 @@
  * BOQ Sync Repository
  *
  * @module infrastructure/repositories/pricing/BOQSyncRepository
- * @description Focused repository for synchronizing pricing data with BOQ
+ * @description Focused repository for synchronizing pricing data with Bill of Quantities (BOQ)
  *
  * Responsibilities:
- * - Convert pricing data to BOQ items
- * - Calculate totals and breakdowns
- * - Update BOQ repository
- * - Handle direct vs detailed pricing methods
+ * - Convert pricing data to BOQ items with full breakdowns
+ * - Calculate totals, subtotals, and VAT
+ * - Handle direct pricing method (directUnitPrice)
+ * - Handle detailed pricing method (materials, labor, equipment, subcontractors)
+ * - Update BOQ repository with synchronized data
+ * - Apply administrative, operational, and profit percentages
+ *
+ * Architecture Pattern: Repository + Adapter
+ * - Isolates BOQ synchronization logic
+ * - Adapts PricingData to BOQItem format
+ * - Provides clean API for pricing-to-BOQ conversion
+ *
+ * @see {@link https://github.com/anmar534/Desktop-Management-System/docs/TENDER_SYSTEM_ARCHITECTURE.md}
+ *
+ * @example
+ * ```typescript
+ * import { boqSyncRepository } from '@/infrastructure/repositories/pricing'
+ *
+ * // Sync pricing to BOQ
+ * await boqSyncRepository.syncPricingToBOQ(
+ *   'tender-123',
+ *   pricingDataMap,
+ *   quantityItems,
+ *   { administrative: 0.15, operational: 0.05, profit: 0.10 }
+ * )
+ * ```
  */
 
 import { getBOQRepository } from '@/application/services/serviceRegistry'
@@ -24,6 +46,9 @@ import { recordAuditEvent } from '@/shared/utils/storage/auditLog'
 
 /**
  * Save options for BOQ sync
+ *
+ * @interface BOQSyncOptions
+ * @property {boolean} [skipEvent] - Skip emitting update event to prevent loops
  */
 export interface BOQSyncOptions {
   /** Skip emitting update event (prevent loops) */
@@ -33,12 +58,42 @@ export interface BOQSyncOptions {
 /**
  * BOQ Sync Repository
  * Handles synchronization of pricing data with BOQ repository
+ *
+ * @class BOQSyncRepository
+ * @description
+ * Repository for synchronizing pricing calculations with Bill of Quantities.
+ * Features:
+ * - Converts PricingData to BOQItem format
+ * - Handles both direct and detailed pricing methods
+ * - Calculates comprehensive breakdowns (materials, labor, equipment, etc.)
+ * - Applies percentage-based calculations (admin, operational, profit)
+ * - Calculates VAT and final totals
+ * - Updates BOQ repository with calculated data
+ *
+ * Pattern: Singleton
+ * - Use `BOQSyncRepository.getInstance()` to get the instance
+ * - Or import the pre-created `boqSyncRepository` instance
+ *
+ * @example
+ * ```typescript
+ * // Get singleton instance
+ * const repository = BOQSyncRepository.getInstance()
+ *
+ * // Or use the exported instance
+ * import { boqSyncRepository } from './BOQSyncRepository'
+ * ```
  */
 export class BOQSyncRepository {
   private static instance: BOQSyncRepository
 
   private constructor() {}
 
+  /**
+   * Get the singleton instance of BOQSyncRepository
+   *
+   * @static
+   * @returns {BOQSyncRepository} The singleton instance
+   */
   public static getInstance(): BOQSyncRepository {
     if (!BOQSyncRepository.instance) {
       BOQSyncRepository.instance = new BOQSyncRepository()
@@ -52,6 +107,53 @@ export class BOQSyncRepository {
 
   /**
    * Update BOQ repository with calculated pricing data
+   *
+   * @async
+   * @param {string} tenderId - The tender ID
+   * @param {Map<string, PricingData>} pricingData - Map of item IDs to pricing data
+   * @param {QuantityItem[]} quantityItems - Array of quantity items (BOQ structure)
+   * @param {PricingPercentages} defaultPercentages - Default percentages for calculations
+   * @param {BOQSyncOptions} [options] - Optional sync options
+   * @returns {Promise<void>}
+   *
+   * @description
+   * Synchronizes pricing data with BOQ repository by:
+   * 1. Converting each QuantityItem to PersistedBOQItem
+   * 2. Handling direct pricing (directUnitPrice) and detailed pricing (materials/labor/equipment)
+   * 3. Calculating breakdowns for each item
+   * 4. Applying administrative, operational, and profit percentages
+   * 5. Calculating total value and VAT
+   * 6. Updating BOQ repository with all calculated data
+   *
+   * Pricing Methods:
+   * - Direct: Uses directUnitPrice directly
+   * - Detailed: Sums materials, labor, equipment, subcontractors + applies percentages
+   *
+   * @throws {Error} If BOQ repository update fails
+   *
+   * @example
+   * ```typescript
+   * const pricingMap = new Map([
+   *   ['item-1', {
+   *     pricingMethod: 'direct',
+   *     directUnitPrice: 100,
+   *     completed: true
+   *   }],
+   *   ['item-2', {
+   *     pricingMethod: 'detailed',
+   *     materials: [{ quantity: 10, unitPrice: 5 }],
+   *     labor: [{ quantity: 2, unitPrice: 50 }],
+   *     completed: true
+   *   }]
+   * ])
+   *
+   * await boqSyncRepository.syncPricingToBOQ(
+   *   'tender-123',
+   *   pricingMap,
+   *   quantityItems,
+   *   { administrative: 0.15, operational: 0.05, profit: 0.10 }
+   * )
+   * ```
    */
   async syncPricingToBOQ(
     tenderId: string,
@@ -151,6 +253,15 @@ export class BOQSyncRepository {
 
   /**
    * Create empty BOQ item for unpriced quantity item
+   *
+   * @private
+   * @param {QuantityItem} quantityItem - The quantity item
+   * @param {PricingPercentages} defaultPercentages - Default percentages
+   * @returns {PersistedBOQItem} Empty BOQ item with zero values
+   *
+   * @description
+   * Creates a BOQ item for quantity items that haven't been priced yet.
+   * All price fields are set to 0, but structure is maintained for consistency.
    */
   private createEmptyBOQItem(
     quantityItem: QuantityItem,
@@ -193,6 +304,17 @@ export class BOQSyncRepository {
 
   /**
    * Create BOQ item for direct pricing method
+   *
+   * @private
+   * @param {QuantityItem} quantityItem - The quantity item
+   * @param {PricingData} itemPricing - The pricing data (must have directUnitPrice)
+   * @param {PricingPercentages} defaultPercentages - Default percentages
+   * @returns {PersistedBOQItem} BOQ item with direct pricing
+   *
+   * @description
+   * Creates a BOQ item for items priced using direct unit price method.
+   * The directUnitPrice is used as-is without breakdown calculations.
+   * Percentages are stored but not applied (direct pricing includes all costs).
    */
   private createDirectPricingBOQItem(
     quantityItem: QuantityItem,
@@ -244,6 +366,22 @@ export class BOQSyncRepository {
 
   /**
    * Create BOQ item for detailed pricing method
+   *
+   * @private
+   * @param {QuantityItem} quantityItem - The quantity item
+   * @param {PricingData} itemPricing - The pricing data with materials/labor/equipment
+   * @param {PricingPercentages} defaultPercentages - Default percentages
+   * @returns {PersistedBOQItem} BOQ item with detailed breakdown
+   *
+   * @description
+   * Creates a BOQ item for items priced using detailed method.
+   * Calculation steps:
+   * 1. Sum materials, labor, equipment, subcontractors
+   * 2. Apply administrative percentage
+   * 3. Apply operational percentage
+   * 4. Apply profit percentage
+   * 5. Calculate unit price = total / quantity
+   * 6. Build complete breakdown for transparency
    */
   private createDetailedPricingBOQItem(
     quantityItem: QuantityItem,
@@ -312,7 +450,27 @@ export class BOQSyncRepository {
   }
 
   /**
-   * Update BOQ repository with calculated data
+   * Update BOQ repository with calculated items
+   *
+   * @private
+   * @async
+   * @param {string} tenderId - The tender ID
+   * @param {PersistedBOQItem[]} items - Array of calculated BOQ items
+   * @param {number} totalValue - Total value of all items
+   * @param {Record<string, number>} totals - Calculated totals and percentages
+   * @param {BOQSyncOptions} [options] - Optional sync options
+   * @returns {Promise<void>}
+   *
+   * @description
+   * Updates the BOQ repository with calculated data.
+   * Features:
+   * - Compares with existing data to skip unnecessary updates
+   * - Preserves BOQ ID and projectId if exists
+   * - Emits 'boqUpdated' event (unless skipEvent is true)
+   * - Records audit events for tracking
+   * - Handles both create and update operations
+   *
+   * @throws {Error} If BOQ repository update fails
    */
   private async updateBOQRepository(
     tenderId: string,
@@ -380,5 +538,24 @@ export class BOQSyncRepository {
   }
 }
 
-// Export singleton instance
+/**
+ * Singleton instance of BOQSyncRepository
+ *
+ * @type {BOQSyncRepository}
+ * @description Pre-instantiated repository instance ready for use
+ *
+ * @example
+ * ```typescript
+ * import { boqSyncRepository } from '@/infrastructure/repositories/pricing'
+ *
+ * // Sync pricing to BOQ
+ * await boqSyncRepository.syncPricingToBOQ(
+ *   'tender-123',
+ *   pricingDataMap,
+ *   quantityItems,
+ *   { administrative: 0.15, operational: 0.05, profit: 0.10 },
+ *   { skipEvent: false }
+ * )
+ * ```
+ */
 export const boqSyncRepository = BOQSyncRepository.getInstance()

@@ -25,6 +25,20 @@ interface ElectronApp {
   getVersion: () => Promise<string>
 }
 
+interface ElectronMigration {
+  getStatus: () => Promise<{
+    success: boolean
+    status?: {
+      version: string
+      lastMigration: string
+      timestamp: string
+      appliedMigrations: string[]
+      appVersion: string
+    }
+    error?: string
+  }>
+}
+
 interface ElectronLifecycle {
   ack: (payload: unknown) => Promise<void>
 }
@@ -54,6 +68,7 @@ interface ElectronAPI {
   store?: ElectronStore
   secureStore?: ElectronSecureStore
   app?: ElectronApp
+  migration?: ElectronMigration
   lifecycle?: ElectronLifecycle
   fs?: ElectronFS
   dialog?: ElectronDialog

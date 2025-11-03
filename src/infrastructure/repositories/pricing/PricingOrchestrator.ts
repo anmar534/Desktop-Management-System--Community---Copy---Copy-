@@ -14,6 +14,21 @@
  * - Delegates persistence to PricingDataRepository
  * - Delegates BOQ sync to BOQSyncRepository
  * - Delegates status updates to TenderStatusRepository
+ *
+ * @see {@link https://github.com/anmar534/Desktop-Management-System/docs/TENDER_SYSTEM_ARCHITECTURE.md}
+ *
+ * @example
+ * ```typescript
+ * import { pricingOrchestrator } from '@/infrastructure/repositories/pricing'
+ *
+ * // Persist pricing and BOQ in one transaction
+ * await pricingOrchestrator.persistPricingAndBOQ(
+ *   tenderId,
+ *   pricingDataMap,
+ *   quantityItems,
+ *   defaultPercentages
+ * )
+ * ```
  */
 
 import type { PricingData, PricingPercentages } from '@/shared/types/pricing'
@@ -26,6 +41,9 @@ import { tenderStatusRepository } from './TenderStatusRepository'
 
 /**
  * Save options for pricing operations
+ *
+ * @interface SavePricingOptions
+ * @property {boolean} [skipEvent] - Skip emitting update event to prevent loops
  */
 export interface SavePricingOptions {
   /** Skip emitting update event (prevent loops) */
@@ -35,12 +53,36 @@ export interface SavePricingOptions {
 /**
  * Pricing Orchestrator
  * Coordinates multi-step pricing operations across specialized repositories
+ *
+ * @class PricingOrchestrator
+ * @description
+ * This class implements the Facade/Orchestrator pattern to coordinate
+ * complex pricing operations that span multiple repositories.
+ *
+ * Pattern: Singleton
+ * - Use `PricingOrchestrator.getInstance()` to get the instance
+ * - Or import the pre-created `pricingOrchestrator` instance
+ *
+ * @example
+ * ```typescript
+ * // Get singleton instance
+ * const orchestrator = PricingOrchestrator.getInstance()
+ *
+ * // Or use the exported instance
+ * import { pricingOrchestrator } from './PricingOrchestrator'
+ * ```
  */
 export class PricingOrchestrator {
   private static instance: PricingOrchestrator
 
   private constructor() {}
 
+  /**
+   * Get the singleton instance of PricingOrchestrator
+   *
+   * @static
+   * @returns {PricingOrchestrator} The singleton instance
+   */
   public static getInstance(): PricingOrchestrator {
     if (!PricingOrchestrator.instance) {
       PricingOrchestrator.instance = new PricingOrchestrator()
@@ -54,7 +96,17 @@ export class PricingOrchestrator {
 
   /**
    * Load pricing data for a tender
-   * Delegates to PricingDataRepository
+   *
+   * @async
+   * @param {string} tenderId - The tender ID
+   * @returns {Promise<Map<string, PricingData>>} Map of item IDs to pricing data
+   * @description Delegates to PricingDataRepository
+   *
+   * @example
+   * ```typescript
+   * const pricingData = await pricingOrchestrator.loadPricing('tender-123')
+   * console.log('Loaded pricing for', pricingData.size, 'items')
+   * ```
    */
   async loadPricing(tenderId: string): Promise<Map<string, PricingData>> {
     return pricingDataRepository.loadPricing(tenderId)
@@ -66,7 +118,22 @@ export class PricingOrchestrator {
 
   /**
    * Save pricing data for a tender
-   * Delegates to PricingDataRepository
+   *
+   * @async
+   * @param {string} tenderId - The tender ID
+   * @param {Map<string, PricingData>} pricingData - Map of item IDs to pricing data
+   * @param {PricingPercentages} defaultPercentages - Default percentages for calculations
+   * @returns {Promise<void>}
+   * @description Delegates to PricingDataRepository
+   *
+   * @example
+   * ```typescript
+   * await pricingOrchestrator.savePricing(
+   *   'tender-123',
+   *   pricingDataMap,
+   *   defaultPercentages
+   * )
+   * ```
    */
   async savePricing(
     tenderId: string,
@@ -82,13 +149,47 @@ export class PricingOrchestrator {
 
   /**
    * Persist pricing data and sync with BOQ repository
-   * This is the core "persistence" operation that:
-   * 1. Saves pricing data to storage
-   * 2. Updates BOQ repository with calculated totals
-   * 3. Updates tender status and progress
-   * 4. Emits update events (unless skipEvent is true)
    *
-   * This method orchestrates multiple repositories in a transaction-like manner
+   * @async
+   * @param {string} tenderId - The tender ID
+   * @param {Map<string, PricingData>} pricingData - Map of item IDs to pricing data
+   * @param {QuantityItem[]} quantityItems - Array of quantity items (BOQ)
+   * @param {PricingPercentages} defaultPercentages - Default percentages for calculations
+   * @param {SavePricingOptions} [options] - Optional save options
+   * @returns {Promise<void>}
+   *
+   * @description
+   * This is the core "persistence" operation that performs the following steps:
+   * 1. Saves pricing data to storage (via PricingDataRepository)
+   * 2. Updates BOQ repository with calculated totals (via BOQSyncRepository)
+   * 3. Updates tender status and progress (via TenderStatusRepository)
+   * 4. Emits update events (unless skipEvent is true)
+   * 5. Records audit events for success/failure
+   *
+   * This method orchestrates multiple repositories in a transaction-like manner.
+   * If any step fails, an error is thrown and audit event is recorded.
+   *
+   * @throws {Error} If any persistence operation fails
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   await pricingOrchestrator.persistPricingAndBOQ(
+   *     'tender-123',
+   *     pricingDataMap,
+   *     quantityItems,
+   *     { overhead: 0.15, profit: 0.10 },
+   *     { skipEvent: false }
+   *   )
+   *   console.log('Pricing saved and BOQ synced successfully')
+   * } catch (error) {
+   *   console.error('Failed to persist pricing:', error)
+   * }
+   * ```
+   *
+   * @see {@link PricingDataRepository}
+   * @see {@link BOQSyncRepository}
+   * @see {@link TenderStatusRepository}
    */
   async persistPricingAndBOQ(
     tenderId: string,
@@ -180,7 +281,27 @@ export class PricingOrchestrator {
 
   /**
    * Update tender status based on pricing completion
-   * Delegates to TenderStatusRepository
+   *
+   * @async
+   * @param {string} tenderId - The tender ID
+   * @param {number} completedCount - Number of completed pricing items
+   * @param {number} totalCount - Total number of pricing items
+   * @param {number} totalValue - Total calculated value of the tender
+   * @param {Object} [options] - Optional settings
+   * @param {boolean} [options.allowRefresh] - Allow refreshing tender data
+   * @returns {Promise<void>}
+   * @description Delegates to TenderStatusRepository to update tender status and progress
+   *
+   * @example
+   * ```typescript
+   * await pricingOrchestrator.updateTenderStatus(
+   *   'tender-123',
+   *   15,  // 15 items completed
+   *   20,  // out of 20 total
+   *   1500000,  // total value
+   *   { allowRefresh: true }
+   * )
+   * ```
    */
   async updateTenderStatus(
     tenderId: string,
@@ -204,7 +325,20 @@ export class PricingOrchestrator {
 
   /**
    * Get default percentages for a tender
-   * Delegates to PricingDataRepository
+   *
+   * @async
+   * @param {string} tenderId - The tender ID
+   * @returns {Promise<PricingPercentages | null>} Default percentages or null if not found
+   * @description Delegates to PricingDataRepository
+   *
+   * @example
+   * ```typescript
+   * const percentages = await pricingOrchestrator.getDefaultPercentages('tender-123')
+   * if (percentages) {
+   *   console.log('Overhead:', percentages.overhead)
+   *   console.log('Profit:', percentages.profit)
+   * }
+   * ```
    */
   async getDefaultPercentages(tenderId: string): Promise<PricingPercentages | null> {
     return pricingDataRepository.getDefaultPercentages(tenderId)
@@ -212,12 +346,56 @@ export class PricingOrchestrator {
 
   /**
    * Update default percentages for a tender
-   * Delegates to PricingDataRepository
+   *
+   * @async
+   * @param {string} tenderId - The tender ID
+   * @param {PricingPercentages} percentages - New default percentages
+   * @returns {Promise<void>}
+   * @description Delegates to PricingDataRepository
+   *
+   * @example
+   * ```typescript
+   * await pricingOrchestrator.updateDefaultPercentages('tender-123', {
+   *   overhead: 0.15,
+   *   profit: 0.10,
+   *   insurance: 0.02
+   * })
+   * ```
    */
   async updateDefaultPercentages(tenderId: string, percentages: PricingPercentages): Promise<void> {
     return pricingDataRepository.updateDefaultPercentages(tenderId, percentages)
   }
 }
 
-// Export singleton instance
+/**
+ * Singleton instance of PricingOrchestrator
+ *
+ * @type {PricingOrchestrator}
+ * @description Pre-instantiated orchestrator instance ready for use
+ *
+ * @example
+ * ```typescript
+ * import { pricingOrchestrator } from '@/infrastructure/repositories/pricing'
+ *
+ * // Persist pricing and BOQ
+ * await pricingOrchestrator.persistPricingAndBOQ(
+ *   tenderId,
+ *   pricingDataMap,
+ *   quantityItems,
+ *   defaultPercentages
+ * )
+ *
+ * // Load pricing
+ * const pricing = await pricingOrchestrator.loadPricing(tenderId)
+ *
+ * // Update status
+ * await pricingOrchestrator.updateTenderStatus(
+ *   tenderId,
+ *   15,
+ *   20,
+ *   1500000,
+ *   { allowRefresh: true }
+ * )
+ * ```
+ */
 export const pricingOrchestrator = PricingOrchestrator.getInstance()

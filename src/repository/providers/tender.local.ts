@@ -1,4 +1,5 @@
 import type { Tender } from '@/data/centralData'
+import { ConflictError } from '@/domain/errors/ConflictError'
 
 // Pagination types
 export interface PaginationOptions {
@@ -55,6 +56,30 @@ const allowedStatuses: Tender['status'][] = [
 ]
 
 const generateId = () => `tender_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+
+/**
+ * Get current user ID for audit trail
+ * Returns 'system' if no auth service available (desktop mode)
+ */
+const getCurrentUserId = (): string => {
+  try {
+    // Try to get from auth service if available
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const authService = (window as any).authService
+      if (authService) {
+        const user = authService.getCurrentUser()
+        if (user?.id) {
+          return user.id
+        }
+      }
+    }
+    // Desktop mode fallback
+    return 'system'
+  } catch {
+    return 'system'
+  }
+}
 
 const isDifferent = (a: Tender, b: Tender): boolean => JSON.stringify(a) !== JSON.stringify(b)
 
@@ -206,12 +231,18 @@ export class LocalTenderRepository implements ITenderRepository {
   async create(data: Omit<Tender, 'id'>): Promise<Tender> {
     const tenders = loadAll()
     const payload = validateTenderPayload(data)
+
+    // ⭐ Phase 5: Initialize version control fields for new tender
     const tender = validateTender(
       normalizeTender({
         ...payload,
         id: generateId(),
+        version: 1, // Start with version 1
+        lastModified: new Date(),
+        lastModifiedBy: getCurrentUserId(),
       }),
     )
+
     tenders.push(tender)
     persist(tenders)
     const detail = { action: 'create' as const, tender }
@@ -231,8 +262,40 @@ export class LocalTenderRepository implements ITenderRepository {
       return null
     }
 
+    const current = tenders[index]
+
+    // ⭐ Phase 5: Optimistic Locking - Check for version conflict
+    if (updates.version !== undefined) {
+      const currentVersion = current.version ?? 0
+      const attemptedVersion = updates.version
+
+      if (currentVersion !== attemptedVersion) {
+        // Conflict detected! Throw ConflictError
+        throw new ConflictError({
+          message:
+            'تم تحديث المنافسة من قبل مستخدم آخر. يرجى إعادة تحميل البيانات والمحاولة مرة أخرى.',
+          current,
+          attempted: { ...current, ...updates } as Tender,
+        })
+      }
+    }
+
+    // Validate and merge updates
     const sanitizedUpdates = validateTenderUpdate({ ...updates, id })
-    const updated = validateTender(normalizeTender({ ...tenders[index], ...sanitizedUpdates, id }))
+
+    // ⭐ Phase 5: Increment version and update audit fields
+    const nextVersion = (current.version ?? 0) + 1
+    const updated = validateTender(
+      normalizeTender({
+        ...current,
+        ...sanitizedUpdates,
+        id,
+        version: nextVersion,
+        lastModified: new Date(),
+        lastModifiedBy: getCurrentUserId(),
+      }),
+    )
+
     tenders[index] = updated
     persist(tenders)
     const detail = {

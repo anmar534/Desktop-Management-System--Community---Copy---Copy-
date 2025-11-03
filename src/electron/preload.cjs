@@ -52,6 +52,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getVersion: () => ipcRenderer.invoke('app-get-version')
   },
 
+  // واجهة Migration (للتشخيص)
+  migration: {
+    getStatus: () => ipcRenderer.invoke('migration-get-status')
+  },
+
   lifecycle: {
     ack: (payload) => ipcRenderer.invoke('lifecycle-ack', payload)
   },

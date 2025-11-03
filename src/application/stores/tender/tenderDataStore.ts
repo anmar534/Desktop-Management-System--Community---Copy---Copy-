@@ -197,7 +197,7 @@ export const useTenderDataStore = create<TenderDataStore>()(
 
           set((state) => {
             const index = state.tenders.findIndex((t) => t.id === id)
-            if (index !== -1) {
+            if (index !== -1 && updatedTender) {
               state.tenders[index] = updatedTender
             }
           })

@@ -8,7 +8,7 @@
  * Related: TENDER_SYSTEM_ENHANCEMENT_PLAN.md Phase 5.1
  */
 
-import type { Tender } from '@/types/contracts'
+import type { Tender } from '@/data/centralData'
 
 export type ConflictResolutionStrategy = 'merge' | 'overwrite' | 'cancel' | 'manual'
 
@@ -55,12 +55,24 @@ export class ConflictError extends Error {
   getConflictSummary(): string {
     const { current, attempted } = this.details
 
+    // Type assertion for version control fields
+    const currentWithVersion = current as Tender & {
+      version?: number
+      lastModified?: Date
+      lastModifiedBy?: string
+    }
+    const attemptedWithVersion = attempted as Partial<Tender> & {
+      version?: number
+      lastModified?: Date
+      lastModifiedBy?: string
+    }
+
     return `
       Conflict detected for Tender: ${current.title} (${current.id})
-      Current version: ${current.version || 'unknown'}
-      Attempted version: ${attempted.version || 'unknown'}
-      Last modified by: ${current.lastModifiedBy || 'unknown'}
-      Last modified at: ${current.lastModified || 'unknown'}
+      Current version: ${currentWithVersion.version ?? 'unknown'}
+      Attempted version: ${attemptedWithVersion.version ?? 'unknown'}
+      Last modified by: ${currentWithVersion.lastModifiedBy ?? 'unknown'}
+      Last modified at: ${currentWithVersion.lastModified ?? 'unknown'}
     `.trim()
   }
 
@@ -120,11 +132,18 @@ export class ConflictError extends Error {
 
     const { current, attempted } = this.details
 
+    // Type assertion for version control fields
+    const currentWithVersion = current as Tender & {
+      version?: number
+      lastModified?: Date
+      lastModifiedBy?: string
+    }
+
     // Merge: take current as base, apply non-conflicting changes from attempted
     return {
       ...current,
       ...attempted,
-      version: (current.version || 0) + 1,
+      version: (currentWithVersion.version ?? 0) + 1,
       lastModified: new Date(),
       // Preserve critical fields from current
       id: current.id,

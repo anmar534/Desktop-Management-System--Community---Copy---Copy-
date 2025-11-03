@@ -1513,6 +1513,32 @@ function setupIPC() {
     return app.getVersion()
   })
 
+  // معالج للحصول على حالة Migration (للتشخيص والمراقبة)
+  registerGuardedHandler('migration-get-status', async () => {
+    try {
+      if (isDev || isE2E) {
+        return {
+          success: false,
+          error: 'Migration status not available in development/E2E mode'
+        }
+      }
+
+      const { getMigrationStatus } = require('./migrations/index.cjs')
+      const status = getMigrationStatus()
+      
+      return {
+        success: true,
+        status
+      }
+    } catch (error) {
+      console.error('Failed to get migration status:', error)
+      return {
+        success: false,
+        error: error.message || String(error)
+      }
+    }
+  })
+
   // معالج للتحقق اليدوي من التحديثات
   registerGuardedHandler('check-for-updates', async () => {
     if (isDev || isE2E) {
@@ -1848,6 +1874,54 @@ app.whenReady().then(async () => {
   
   await createStore();
   await ensureEncryptionKey();
+  
+  // ⭐ Migration Manager - تحديث البيانات تلقائياً عند التحديث
+  if (!isDev && !isE2E) {
+    try {
+      console.log('🔄 Checking for data migrations...');
+      const { checkAndRunMigrations } = require('./migrations/index.cjs');
+      const migrationResult = await checkAndRunMigrations();
+      
+      if (!migrationResult.success) {
+        console.error('❌ Migration failed:', migrationResult.error);
+        
+        const { dialog } = require('electron');
+        await dialog.showMessageBox({
+          type: 'error',
+          title: 'فشل تحديث البيانات - Migration Failed',
+          message: 'حدث خطأ أثناء تحديث بيانات التطبيق.\n\nتم استعادة البيانات من النسخة الاحتياطية.\nيرجى المحاولة مرة أخرى أو الاتصال بالدعم الفني.\n\nAn error occurred while updating application data.\n\nData has been restored from backup.\nPlease try again or contact technical support.',
+          buttons: ['موافق - OK']
+        });
+        
+        // إنهاء التطبيق - لا تفتح النافذة
+        app.quit();
+        return;
+      }
+      
+      if (migrationResult.migrationsRun > 0) {
+        console.log(`✅ Successfully applied ${migrationResult.migrationsRun} migration(s)`);
+      } else {
+        console.log('✅ Data is up to date - no migrations needed');
+      }
+    } catch (error) {
+      console.error('💥 Migration system error:', error);
+      
+      const { dialog } = require('electron');
+      await dialog.showMessageBox({
+        type: 'error',
+        title: 'خطأ في نظام التحديث - Migration System Error',
+        message: `فشل في تهيئة نظام تحديث البيانات.\n\nالخطأ: ${error.message || error}\n\nFailed to initialize migration system.\n\nError: ${error.message || error}`,
+        buttons: ['موافق - OK']
+      });
+      
+      // إنهاء التطبيق
+      app.quit();
+      return;
+    }
+  } else {
+    console.log('ℹ️  Migration skipped (development/E2E mode)');
+  }
+  
   setupIPC();
   createWindow();
   createMenu();
