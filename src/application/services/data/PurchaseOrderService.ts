@@ -110,8 +110,8 @@ export class PurchaseOrderService {
     const lowerQuery = query.toLowerCase()
     return this.getPurchaseOrders().filter(
       (po) =>
-        po.orderNumber?.toLowerCase().includes(lowerQuery) ||
-        po.supplierName?.toLowerCase().includes(lowerQuery) ||
+        po.tenderName?.toLowerCase().includes(lowerQuery) ||
+        po.client?.toLowerCase().includes(lowerQuery) ||
         po.description?.toLowerCase().includes(lowerQuery),
     )
   }
@@ -132,7 +132,7 @@ export class PurchaseOrderService {
     this.purchaseOrderCache.set(newOrder.id, newOrder)
     this.savePurchaseOrders()
 
-    console.log(`✅ تم إنشاء أمر شراء جديد: ${newOrder.orderNumber}`)
+    console.log(`✅ تم إنشاء أمر شراء جديد: ${newOrder.tenderName}`)
     return newOrder
   }
 
@@ -147,7 +147,7 @@ export class PurchaseOrderService {
     this.purchaseOrderCache.set(id, updated)
     this.savePurchaseOrders()
 
-    console.log(`🔄 تم تحديث أمر الشراء: ${existing.orderNumber}`)
+    console.log(`🔄 تم تحديث أمر الشراء: ${existing.tenderName}`)
     return updated
   }
 
@@ -210,7 +210,7 @@ export class PurchaseOrderService {
     const pending = orders.filter((o) => o.status === 'pending').length
     const approved = orders.filter((o) => o.status === 'approved').length
     const completed = orders.filter((o) => o.status === 'completed').length
-    const totalValue = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
+    const totalValue = orders.reduce((sum, o) => sum + (o.value || 0), 0)
 
     return {
       total,

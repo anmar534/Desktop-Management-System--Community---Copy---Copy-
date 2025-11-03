@@ -110,7 +110,7 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
               lostDate: currentDate,
               resultDate: currentDate,
               lastAction: 'لم يتم الفوز بالمنافسة',
-              winningBidValue: winningBidAmount,
+              winningBidValue: winningBidAmount ?? undefined,
               ourBidValue: tenderBaseValue,
             }),
       }

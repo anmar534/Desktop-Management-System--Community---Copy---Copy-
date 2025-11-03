@@ -158,13 +158,12 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
 
   // إعداد بيانات المرفقات
   const attachmentsData = useMemo(() => {
-    const originalAttachments = tender.attachments || []
+    const originalAttachments = tender.documents || []
     let technicalFiles: UploadedFile[] = []
 
     try {
       technicalFiles = FileUploadService.getFilesByTender(tender.id).map((file) => ({
         ...file,
-        source: 'technical',
         type: 'technical',
       }))
     } catch (error) {
@@ -223,7 +222,7 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
       allAttachments,
       technicalFilesCount: technicalFiles.length,
     }
-  }, [tender.attachments, tender.id])
+  }, [tender.documents, tender.id])
 
   const handlePreviewAttachment = useCallback((attachment: UploadedFile) => {
     if (attachment.source === 'technical') {
@@ -361,9 +360,7 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
             </Button>
             <div>
               <h1 className="text-xl lg:text-2xl font-bold">{tender.name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {tender.client || tender.ownerEntity || 'غير محدد'}
-              </p>
+              <p className="text-sm text-muted-foreground">{tender.client || 'غير محدد'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

@@ -43,7 +43,7 @@ export class TenderDataService {
    */
   private loadTenders(): void {
     try {
-      const data = safeLocalStorage.getItem(STORAGE_KEYS.TENDERS)
+      const data = safeLocalStorage.getItem(STORAGE_KEYS.TENDERS, '')
       if (data) {
         const tenders = JSON.parse(data) as Tender[]
         this.tenderCache.clear()
@@ -124,7 +124,8 @@ export class TenderDataService {
     return this.getTenders().filter(
       (t) =>
         t.name?.toLowerCase().includes(lowerQuery) ||
-        t.referenceNumber?.toLowerCase().includes(lowerQuery),
+        t.title?.toLowerCase().includes(lowerQuery) ||
+        t.client?.toLowerCase().includes(lowerQuery),
     )
   }
 

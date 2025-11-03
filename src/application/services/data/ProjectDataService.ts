@@ -42,7 +42,7 @@ export class ProjectDataService {
    */
   private loadProjects(): void {
     try {
-      const data = safeLocalStorage.getItem(STORAGE_KEYS.PROJECTS)
+      const data = safeLocalStorage.getItem(STORAGE_KEYS.PROJECTS, '')
       if (data) {
         const projects = JSON.parse(data) as Project[]
         this.projectCache.clear()
@@ -97,8 +97,8 @@ export class ProjectDataService {
     return this.getProjects().filter(
       (p) =>
         p.name?.toLowerCase().includes(lowerQuery) ||
-        p.projectNumber?.toLowerCase().includes(lowerQuery) ||
-        p.description?.toLowerCase().includes(lowerQuery),
+        p.client?.toLowerCase().includes(lowerQuery) ||
+        p.location?.toLowerCase().includes(lowerQuery),
     )
   }
 
@@ -206,17 +206,15 @@ export class ProjectDataService {
   public getProjectStats() {
     const projects = this.getProjects()
     const total = projects.length
-    const active = projects.filter(
-      (p) => p.status === 'active' || p.status === 'in_progress',
-    ).length
+    const active = projects.filter((p) => p.status === 'active').length
     const completed = projects.filter((p) => p.status === 'completed').length
-    const onHold = projects.filter((p) => p.status === 'on_hold').length
+    const paused = projects.filter((p) => p.status === 'paused').length
 
     return {
       total,
       active,
       completed,
-      onHold,
+      onHold: paused,
       completionRate: total > 0 ? (completed / total) * 100 : 0,
     }
   }

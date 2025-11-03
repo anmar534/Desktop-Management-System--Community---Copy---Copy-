@@ -28,6 +28,10 @@ export const STORAGE_KEYS = {
   BOQ_DATA: 'app_boq_data',
   PRICING_DATA: 'app_pricing_data',
 
+  // علاقات بين الكيانات (Relationships)
+  TENDER_PROJECT_RELATIONS: 'app_tender_project_relations',
+  PROJECT_PURCHASE_RELATIONS: 'app_project_purchase_relations',
+
   // Procurement Management
   SUPPLIERS: 'app_suppliers',
   SUPPLIER_CONTRACTS: 'app_supplier_contracts',
