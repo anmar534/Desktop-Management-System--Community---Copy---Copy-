@@ -57,7 +57,7 @@ export interface TenderDataActions {
   updateTender: (id: string, updates: Partial<Tender>) => Promise<void>
 
   /** Delete a tender */
-  deleteTender: (id: string) => Promise<void>
+  deleteTender: (id: string) => Promise<boolean>
 
   /** Manually set tenders (useful for testing/migration) */
   setTenders: (tenders: Tender[]) => void
@@ -212,7 +212,7 @@ export const useTenderDataStore = create<TenderDataStore>()(
       },
 
       // Delete a tender
-      deleteTender: async (id: string) => {
+      deleteTender: async (id: string): Promise<boolean> => {
         set({ error: null })
 
         try {
@@ -222,6 +222,8 @@ export const useTenderDataStore = create<TenderDataStore>()(
           set((state) => {
             state.tenders = state.tenders.filter((t) => t.id !== id)
           })
+
+          return true
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Failed to delete tender'
 

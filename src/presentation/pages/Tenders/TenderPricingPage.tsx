@@ -36,8 +36,10 @@ import { usePricingRowOperations } from '@/presentation/pages/Tenders/TenderPric
 import { useSummaryOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useSummaryOperations'
 import { useItemNavigation } from '@/presentation/pages/Tenders/TenderPricing/hooks/useItemNavigation'
 import { usePricingEventHandlers } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingEventHandlers'
+import { usePricingForm } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingForm'
+import { usePricingValidation } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingValidation'
 import { AlertCircle } from 'lucide-react'
-import { TenderPricingRepository } from '@/infrastructure/repositories/TenderPricingRepository.js'
+import { tenderPricingRepository } from '@/infrastructure/repositories/TenderPricingRepository.js'
 import { APP_EVENTS } from '@/events/bus.js'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { TenderPricingTabs } from '@/presentation/components/pricing/tender-pricing-process/views/TenderPricingTabs'
@@ -103,14 +105,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
   const handleAttemptLeave = requestLeave
 
-  // Default pricing percentages with input state
-  const [defaultPercentages, setDefaultPercentages] = useState<PricingPercentages>(
-    DEFAULT_PRICING_PERCENTAGES,
-  )
-  const [defaultPercentagesInput, setDefaultPercentagesInput] = useState(
-    percentagesToInputStrings(DEFAULT_PRICING_PERCENTAGES),
-  )
-
   // استخراج بيانات جدول الكميات من المنافسة مع البحث المحسّن
   // Uses Zustand Store boqItems as primary source, with fallback to legacy parseQuantityItems
   const quantityItems: QuantityItem[] = useMemo(() => {
@@ -133,6 +127,30 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     // This will be removed in Week 6 (Legacy Cleanup)
     return parseQuantityItems(tender, [], 'legacy', 'loading')
   }, [boqItems, tender])
+
+  const currentItem = quantityItems[currentItemIndex]
+
+  // Use new pricing form hook for state management
+  const {
+    currentPricing,
+    setCurrentPricing,
+    defaultPercentages,
+    setDefaultPercentages,
+    defaultPercentagesInput,
+    setDefaultPercentagesInput,
+  } = usePricingForm({
+    currentItem,
+    pricingData,
+    onDirty: markDirty,
+  })
+
+  // Use validation hook
+  const { completedCount, completionPercentage, canSaveCurrentItem } = usePricingValidation({
+    currentPricing,
+    currentItem,
+    pricingData,
+    quantityItems,
+  })
 
   // Wrapper to pass pricingData and quantityItems to store before saving
   const savePricing = useCallback(async () => {
@@ -221,21 +239,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     }))
   }, [domainPricing, quantityItems])
 
-  const currentItem = quantityItems[currentItemIndex]
-  const [currentPricing, setCurrentPricing] = useState<PricingData>({
-    materials: [],
-    labor: [],
-    equipment: [],
-    subcontractors: [],
-    technicalNotes: '',
-    additionalPercentages: {
-      administrative: defaultPercentages.administrative,
-      operational: defaultPercentages.operational,
-      profit: defaultPercentages.profit,
-    },
-    completed: false,
-  })
-
   // Event handlers hook - manages simple form event handlers
   const {
     handleViewChange,
@@ -268,7 +271,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   })
 
   // === Phase 2.3: Repository-based persistence replacing useTenderPricingPersistence hook ===
-  const tenderPricingRepository = useMemo(() => new TenderPricingRepository(), [])
 
   const notifyPricingUpdate = useCallback(async () => {
     // Dispatch event to notify other components of pricing updates
@@ -293,7 +295,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       )
       await notifyPricingUpdate()
     },
-    [tenderPricingRepository, tender.id, quantityItems, defaultPercentages, notifyPricingUpdate],
+    [tender.id, quantityItems, defaultPercentages, notifyPricingUpdate],
   )
 
   const updateTenderStatus = useCallback(
@@ -319,7 +321,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
         await tenderRepo.update(tender.id, { status: newStatus as unknown as Tender['status'] })
       }
     },
-    [tenderPricingRepository, tender.id, quantityItems.length, pricingData, calculateProjectTotal],
+    [tender.id, quantityItems.length, pricingData, calculateProjectTotal],
   )
 
   // Custom hook for backup management
@@ -336,18 +338,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       recordPricingAudit(level as AuditEventLevel, action, details, status as AuditEventStatus),
     getErrorMessage,
   })
-
-  const completedCount = useMemo(() => {
-    // Count ONLY items explicitly marked as completed (saved items)
-    return Array.from(pricingData.values()).filter((value) => value?.completed === true).length
-  }, [pricingData])
-
-  const completionPercentage = useMemo(() => {
-    if (quantityItems.length === 0) {
-      return 0
-    }
-    return (completedCount / quantityItems.length) * 100
-  }, [completedCount, quantityItems.length])
 
   // تحميل بيانات التسعير الكاملة من pricingService
   // Store يخزن فقط BOQ (الأساسيات)، pricingService يخزن التفاصيل الكاملة
@@ -400,28 +390,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     }
   }, [tender.id])
 
-  // تحميل بيانات التسعير للبند الحالي أو تهيئة بنود جديدة بالنسب الافتراضية
-  useEffect(() => {
-    if (!currentItem) return
-    const saved = pricingData.get(currentItem.id)
-    if (saved) {
-      setCurrentPricing(saved)
-    } else {
-      setCurrentPricing({
-        materials: [],
-        labor: [],
-        equipment: [],
-        subcontractors: [],
-        technicalNotes: '',
-        additionalPercentages: {
-          administrative: defaultPercentages.administrative,
-          operational: defaultPercentages.operational,
-          profit: defaultPercentages.profit,
-        },
-        completed: false,
-      })
-    }
-  }, [currentItem, pricingData, defaultPercentages])
+  // Note: Loading pricing for current item is now handled by usePricingForm hook
 
   // تطبيق النسب الافتراضية على البنود الموجودة
   const applyDefaultPercentagesToExistingItems = useCallback(() => {

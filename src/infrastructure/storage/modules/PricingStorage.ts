@@ -30,6 +30,7 @@ export interface TenderPricingPayload {
   pricing: PricingEntry[]
   defaultPercentages?: DefaultPercentages
   lastUpdated?: string
+  lastSavedAt?: string // Optional timestamp for last save
   version?: number
 }
 

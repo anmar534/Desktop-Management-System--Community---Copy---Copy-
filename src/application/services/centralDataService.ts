@@ -4,7 +4,7 @@
  *
  * 📦 Phase 3 Refactoring:
  * تم تحويل هذه الخدمة من God Service (767 سطر) إلى Facade Pattern
- * الآن تستخدم 6 خدمات متخصصة تحتها:
+ * الآن تستخدم 7 خدمات متخصصة تحتها:
  *
  * - TenderDataService: إدارة المنافسات
  * - ProjectDataService: إدارة المشاريع
@@ -12,6 +12,7 @@
  * - RelationshipService: إدارة العلاقات
  * - BOQDataService: إدارة جداول الكميات
  * - PurchaseOrderService: إدارة أوامر الشراء
+ * - TenderAnalyticsService: تحليلات وإحصائيات المنافسات
  *
  * ✅ Backward Compatibility: 100%
  * ✅ Zero Breaking Changes
@@ -23,11 +24,6 @@ import type { Tender, Project, Client } from '@/data/centralData'
 import type { PurchaseOrder } from '@/shared/types/contracts'
 import { APP_EVENTS, emit } from '@/events/bus'
 import type { BOQData } from '@/shared/types/boq'
-import {
-  selectWonTendersCount,
-  selectLostTendersCount,
-  selectWinRate,
-} from '@/domain/selectors/tenderSelectors'
 
 // Import focused services
 import { tenderDataService } from './data/TenderDataService'
@@ -36,10 +32,17 @@ import { clientDataService } from './data/ClientDataService'
 import { relationshipService } from './data/RelationshipService'
 import { boqDataService } from './data/BOQDataService'
 import { purchaseOrderService } from './data/PurchaseOrderService'
+import { tenderAnalyticsService } from './data/TenderAnalyticsService'
 
 // Re-export types for backward compatibility
 export type { BOQBreakdown, BOQItemValues, BOQItem, BOQData } from '@/shared/types/boq'
 export type { TenderProjectRelation, ProjectPurchaseRelation } from './data/RelationshipService'
+export type {
+  TenderStatsByStatus,
+  ComprehensiveTenderStats,
+  FinancialSummary,
+  PerformanceMetrics,
+} from './data/TenderAnalyticsService'
 
 /**
  * خدمة البيانات المركزية (Facade)
@@ -243,23 +246,14 @@ export class CentralDataService {
 
   public getTenderStats() {
     const tenders = tenderDataService.getTenders()
-    const stats = tenderDataService.getTenderStats()
+    const stats = tenderAnalyticsService.getComprehensiveStats(tenders)
 
     return {
       total: stats.total,
-      won: selectWonTendersCount(tenders),
-      lost: selectLostTendersCount(tenders),
-      winRate: selectWinRate(tenders),
-      byStatus: {
-        new: tenders.filter((t) => t.status === 'new').length,
-        underAction: tenders.filter((t) => t.status === 'under_action').length,
-        readyToSubmit: tenders.filter((t) => t.status === 'ready_to_submit').length,
-        submitted: tenders.filter((t) => t.status === 'submitted').length,
-        won: stats.won,
-        lost: stats.lost,
-        expired: tenders.filter((t) => t.status === 'expired').length,
-        cancelled: tenders.filter((t) => t.status === 'cancelled').length,
-      },
+      won: stats.won,
+      lost: stats.lost,
+      winRate: stats.winRate,
+      byStatus: stats.byStatus,
     }
   }
 

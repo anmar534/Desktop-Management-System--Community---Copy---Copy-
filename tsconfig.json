@@ -31,6 +31,7 @@
       "@/application/services/*": ["src/application/services/*"],
       "@/infrastructure/*": ["src/infrastructure/*"],
       "@/storage/*": ["src/infrastructure/storage/*"],
+      "@/repository/*": ["src/repository/*"],
       "@/presentation/*": ["src/presentation/*"],
       "@/presentation/pages/*": ["src/presentation/pages/*"],
       "@/presentation/components/*": ["src/presentation/components/*"],

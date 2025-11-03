@@ -1,18 +1,6 @@
 // TendersPage shows the tenders dashboard, filters, and quick actions.
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import {
-  Trophy,
-  Search,
-  ListChecks,
-  AlertTriangle,
-  FileText,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-} from 'lucide-react'
+import { Trophy, Search } from 'lucide-react'
 
 import type { Tender } from '@/data/centralData'
 
@@ -36,16 +24,16 @@ import { toast } from 'sonner'
 import {
   TenderTabs,
   TenderDeleteDialog,
-  TenderPerformanceCards,
   TenderDetails,
   VirtualizedTenderList,
 } from '@/presentation/components/tenders'
 import { SubmitReviewDialog } from './components/SubmitReviewDialog'
 
 import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
-import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { TenderPricingPage, type TenderWithPricingSources } from './TenderPricingPage'
 import { TenderResultsManager } from './components/TenderResultsManager'
+import { TendersPagination } from './components/TendersPagination'
+import { TendersHeaderSection } from './components/TendersHeaderSection'
 
 import { useFinancialState } from '@/application/context'
 import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
@@ -203,83 +191,10 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [onSectionChange, setSelectedTender],
   )
 
-  // شريط المعلومات العلوي مع البطاقات التحليلية - مثل صفحة المشاريع
-  const headerMetadata = useMemo(
-    () => (
-      <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
-        <StatusBadge
-          status="default"
-          label={`الكل ${tenderSummary.total}`}
-          icon={ListChecks}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.urgent > 0 ? 'warning' : 'default'}
-          label={`عاجل ${tenderSummary.urgent}`}
-          icon={AlertTriangle}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.new > 0 ? 'info' : 'default'}
-          label={`جديد ${tenderSummary.new}`}
-          icon={FileText}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.underAction > 0 ? 'info' : 'default'}
-          label={`تحت الإجراء ${tenderSummary.underAction}`}
-          icon={Clock}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.waitingResults > 0 ? 'warning' : 'default'}
-          label={`بانتظار النتائج ${tenderSummary.waitingResults}`}
-          icon={Calendar}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.won > 0 ? 'success' : 'default'}
-          label={`فائز ${tenderSummary.won}`}
-          icon={CheckCircle}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.lost > 0 ? 'error' : 'default'}
-          label={`خاسر ${tenderSummary.lost}`}
-          icon={XCircle}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status="info"
-          label={`معدل الفوز ${tenderSummary.winRate.toFixed(1)}%`}
-          icon={Trophy}
-          size="sm"
-          className="shadow-none"
-        />
-      </div>
-    ),
-    [tenderSummary],
-  )
-
+  // Header section with metadata and performance cards
   const headerExtraContent = useMemo(
-    () => (
-      <div className="space-y-4">
-        <div className="rounded-3xl border border-primary/20 bg-gradient-to-l from-primary/10 via-card/40 to-background p-5 shadow-sm">
-          {headerMetadata}
-        </div>
-        <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
-          <TenderPerformanceCards tenderSummary={tenderSummary} />
-        </div>
-      </div>
-    ),
-    [headerMetadata, tenderSummary],
+    () => <TendersHeaderSection tenderSummary={tenderSummary} />,
+    [tenderSummary],
   )
 
   if (currentView === 'pricing' && selectedTender) {
@@ -332,56 +247,14 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
             {/* Pagination Controls */}
             {filteredTenders.length > currentPageSize && (
-              <div className="mt-6 flex items-center justify-between rounded-lg border border-border/40 bg-card/50 p-4">
-                {/* Page Info */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>
-                    الصفحة {currentPage} من {totalPages}
-                  </span>
-                  <span className="text-xs">({filteredTenders.length} منافسة)</span>
-                </div>
-
-                {/* Page Size Selector */}
-                <div className="flex items-center gap-2">
-                  <label htmlFor="pageSize" className="text-sm text-muted-foreground">
-                    عدد العناصر:
-                  </label>
-                  <select
-                    id="pageSize"
-                    value={currentPageSize}
-                    onChange={(e) => {
-                      setCurrentPageSize(Number(e.target.value))
-                      setCurrentPage(1) // Reset to page 1 when changing page size
-                    }}
-                    className="rounded-md border border-border/40 bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-                </div>
-
-                {/* Navigation Buttons */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setCurrentPage((p) => p - 1)}
-                    disabled={currentPage === 1}
-                    className="flex items-center gap-1 rounded-md border border-border/40 bg-background px-3 py-1.5 text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                    <span>السابق</span>
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage((p) => p + 1)}
-                    disabled={currentPage >= totalPages}
-                    className="flex items-center gap-1 rounded-md border border-border/40 bg-background px-3 py-1.5 text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <span>التالي</span>
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
+              <TendersPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={currentPageSize}
+                totalItems={filteredTenders.length}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setCurrentPageSize}
+              />
             )}
           </>
         ) : tenders.length > 0 ? (

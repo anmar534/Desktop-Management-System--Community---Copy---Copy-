@@ -18,7 +18,7 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { getBOQRepository } from '@/application/services/serviceRegistry'
-import { TenderPricingRepository } from '@/infrastructure/repositories/TenderPricingRepository'
+import { tenderPricingRepository } from '@/infrastructure/repositories/TenderPricingRepository'
 import { pricingService } from '@/application/services/pricingService'
 import type { BOQData, BOQItem } from '@/shared/types/boq'
 import type { PricingData as FullPricingData } from '@/shared/types/pricing'
@@ -263,8 +263,6 @@ export const useTenderPricingStore = create<TenderPricingState>()(
           })
 
           try {
-            const tenderPricingRepo = new TenderPricingRepository()
-
             // Use provided fullPricingData if available, otherwise try to load from pricingService
             let pricingDataMap = fullPricingData
 
@@ -336,7 +334,7 @@ export const useTenderPricingStore = create<TenderPricingState>()(
             }
 
             // Persist using TenderPricingRepository with full data
-            await tenderPricingRepo.persistPricingAndBOQ(
+            await tenderPricingRepository.persistPricingAndBOQ(
               currentTenderId,
               pricingDataMap,
               itemsToSave,

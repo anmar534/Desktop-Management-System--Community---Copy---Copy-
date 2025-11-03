@@ -164,59 +164,13 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
     try {
       technicalFiles = FileUploadService.getFilesByTender(tender.id).map((file) => ({
         ...file,
-        type: 'technical',
+        source: 'technical' as const,
       }))
     } catch (error) {
       console.log('خطأ في قراءة الملفات الفنية:', error)
     }
 
-    let allAttachments = [...originalAttachments, ...technicalFiles]
-
-    // إذا لم توجد مرفقات، استخدم بيانات افتراضية
-    if (allAttachments.length === 0) {
-      allAttachments = [
-        {
-          id: '1',
-          name: 'كراسة الشروط والمواصفات.pdf',
-          type: 'specifications',
-          size: '2.5 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          id: '2',
-          name: 'جدول الكميات.xlsx',
-          type: 'quantity',
-          size: '1.2 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          id: '3',
-          name: 'المخططات المعمارية.dwg',
-          type: 'drawings',
-          size: '8.7 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          id: '4',
-          name: 'تقرير الموقع.pdf',
-          type: 'report',
-          size: '3.1 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          id: '5',
-          name: 'العرض الفني والمواصفات التقنية.pdf',
-          type: 'technical',
-          size: '4.8 MB',
-          uploadDate: '2024-08-20',
-          source: 'technical',
-        },
-      ]
-    }
+    const allAttachments = [...originalAttachments, ...technicalFiles]
 
     return {
       allAttachments,
