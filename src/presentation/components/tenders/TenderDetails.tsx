@@ -1,6 +1,4 @@
 // TenderDetails renders the full tender workspace with tabs, documents, and workflow.
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Button } from '@/presentation/components/ui/button'
 import { Badge } from '@/presentation/components/ui/badge'
@@ -17,6 +15,8 @@ import {
 } from '@/presentation/components/ui/alert-dialog'
 import { Calendar, ArrowRight, FileText, Paperclip, Grid3X3, Info, Send } from 'lucide-react'
 import { toast } from 'sonner'
+import type { Tender } from '@/data/centralData'
+import type { UploadedFile } from '@/shared/utils/fileUploadService'
 import { TenderStatusManager } from '@/presentation/pages/Tenders/components/TenderStatusManager'
 import { APP_EVENTS } from '@/events/bus'
 import { FileUploadService } from '@/shared/utils/fileUploadService'
@@ -47,7 +47,17 @@ import {
  */
 // legacy normalizePricing utilities removed (buildPricingMap no longer needed after snapshot adoption)
 
-export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => void }) {
+/**
+ * Props for TenderDetails component
+ */
+interface TenderDetailsProps {
+  /** The tender to display details for */
+  tender: Tender
+  /** Callback function to navigate back to the list */
+  onBack: () => void
+}
+
+export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
   const [activeTab, setActiveTab] = useState('general')
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
   const [localTender, setLocalTender] = useState(tender)
@@ -135,7 +145,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
       hasTotals: !!unified.totals,
       totalsContent: unified.totals,
       firstItem: unified.items[0],
-      itemsWithPrices: unified.items.filter((it: any) => it.unitPrice || it.totalPrice).length,
+      itemsWithPrices: unified.items.filter((it) => it.unitPrice || it.totalPrice).length,
     })
   }, [
     unified.status,
@@ -149,14 +159,14 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
   // إعداد بيانات المرفقات
   const attachmentsData = useMemo(() => {
     const originalAttachments = tender.attachments || []
-    let technicalFiles: any[] = []
+    let technicalFiles: UploadedFile[] = []
 
     try {
       technicalFiles = FileUploadService.getFilesByTender(tender.id).map((file) => ({
         ...file,
         source: 'technical',
         type: 'technical',
-      })) as any[]
+      }))
     } catch (error) {
       console.log('خطأ في قراءة الملفات الفنية:', error)
     }
@@ -215,7 +225,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
     }
   }, [tender.attachments, tender.id])
 
-  const handlePreviewAttachment = useCallback((attachment: any) => {
+  const handlePreviewAttachment = useCallback((attachment: UploadedFile) => {
     if (attachment.source === 'technical') {
       alert(`معاينة الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
     } else {
@@ -223,7 +233,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
     }
   }, [])
 
-  const handleDownloadAttachment = useCallback((attachment: any) => {
+  const handleDownloadAttachment = useCallback((attachment: UploadedFile) => {
     if (attachment.source === 'technical') {
       alert(`تحميل الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
     } else {
