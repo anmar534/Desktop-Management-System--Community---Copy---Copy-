@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/presentation/components/ui/alert-dialog'
 import { Trophy, XCircle, AlertCircle, Zap } from 'lucide-react'
-import { useFinancialState } from '@/application/context'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { APP_EVENTS, emit } from '@/events/bus'
 import { toast } from 'sonner'
 import { TenderNotificationService } from '@/shared/utils/tender/tenderNotifications'
@@ -47,8 +47,7 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
   const [notes, setNotes] = useState('')
   const [isUpdating, setIsUpdating] = useState(false)
 
-  const { tenders } = useFinancialState()
-  const { updateTender } = tenders
+  const { updateTender } = useTenderListStore()
   const { formatCurrencyValue } = useCurrencyFormatter()
 
   // دالة تحديث إحصائيات التطوير

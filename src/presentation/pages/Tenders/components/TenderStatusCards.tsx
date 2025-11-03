@@ -17,7 +17,7 @@ import {
 import { motion } from 'framer-motion'
 import { formatCurrency } from '@/shared/utils/formatters/formatters'
 import { useMemo } from 'react'
-import { useFinancialState } from '@/application/context'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { calculateTenderStats } from '@/calculations/tender'
 import type { Tender } from '@/data/centralData'
 import { InlineAlert } from '@/presentation/components/ui/inline-alert'
@@ -43,8 +43,7 @@ interface TenderStatusCardsProps {
 }
 
 export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
-  const { tenders: tendersState } = useFinancialState()
-  const { tenders, isLoading } = tendersState
+  const { tenders, isLoading } = useTenderListStore()
 
   // إحصائيات موحدة للمنافسات
   const tenderStats = useMemo(() => calculateTenderStats(tenders), [tenders])

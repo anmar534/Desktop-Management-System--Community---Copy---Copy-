@@ -211,6 +211,10 @@ export function useTenderListStore() {
     setTenders: dataStore.setTenders,
     refreshTenders: dataStore.refreshTenders,
     loadTenders: dataStore.loadTenders,
+    addTender: dataStore.addTender,
+    updateTender: dataStore.updateTender,
+    deleteTender: dataStore.deleteTender,
+    getTender: dataStore.getTender,
 
     // Filter operations
     setFilter: <K extends keyof TenderFilters>(key: K, value: TenderFilters[K]) => {

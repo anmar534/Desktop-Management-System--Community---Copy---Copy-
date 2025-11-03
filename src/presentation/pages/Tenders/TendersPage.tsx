@@ -48,6 +48,7 @@ import { TenderPricingPage, type TenderWithPricingSources } from './TenderPricin
 import { TenderResultsManager } from './components/TenderResultsManager'
 
 import { useFinancialState } from '@/application/context'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import {
   useTenderDetailNavigation,
@@ -64,10 +65,12 @@ interface TendersProps {
 }
 
 export function Tenders({ onSectionChange }: TendersProps) {
-  const { tenders: tendersState, metrics } = useFinancialState()
-  const { tenders: tendersData, deleteTender, refreshTenders, updateTender } = tendersState
+  // Use new adapter-based store instead of context
+  const { tenders, deleteTender, refreshTenders, updateTender } = useTenderListStore()
 
-  const tenders = useMemo(() => tendersData, [tendersData])
+  // Still need metrics from context (until metrics are migrated)
+  const { metrics } = useFinancialState()
+
   const rawTenderMetrics = metrics.tenders as AggregatedTenderMetrics
 
   const tenderPerformance = useMemo<TenderMetricsSummary>(

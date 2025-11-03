@@ -12,7 +12,7 @@ import { FileUploadService } from '@/shared/utils/fileUploadService'
 import { formatDateValue } from '@/shared/utils/formatters/formatters'
 import { authorizeDragAndDrop } from '@/shared/utils/security/desktopSecurity'
 import type { DragFileDescriptor } from '@/shared/utils/security/desktopSecurity'
-import { useFinancialState } from '@/application/context'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { toast } from 'sonner'
 import { APP_EVENTS, emit } from '@/events/bus'
 
@@ -28,8 +28,7 @@ export function TechnicalFilesUpload({ tenderId }: TechnicalFilesUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // استخدام hooks للتحديث التلقائي
-  const { tenders: tendersState } = useFinancialState()
-  const { tenders, updateTender } = tendersState
+  const { tenders, updateTender } = useTenderListStore()
 
   const formattedTenderFiles = useMemo(() => files, [files])
 
@@ -133,19 +132,18 @@ export function TechnicalFilesUpload({ tenderId }: TechnicalFilesUploadProps) {
       const hasFiles = tenderFiles.length > 0
 
       // تحديث حالة المنافسة
-      const updatedTender = {
-        ...currentTender,
+      const updates = {
         technicalFilesUploaded: hasFiles,
         lastUpdate: new Date().toISOString(),
         lastAction: hasFiles ? 'تم رفع ملفات العرض الفني' : 'تم حذف ملفات العرض الفني',
       }
 
-      await updateTender(updatedTender)
+      await updateTender(tenderId, updates)
 
       // إطلاق حدث مخصص لإشعار المكونات الأخرى
       emit(APP_EVENTS.TENDERS_UPDATED, {
         tenderId,
-        updatedTender,
+        updatedTender: { ...currentTender, ...updates },
         technicalFilesUploaded: hasFiles,
       })
 
