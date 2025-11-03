@@ -11,6 +11,7 @@
 
 import type { Project, Tender } from '@/data/centralData'
 import { calculateTenderStats } from '@/calculations/tender'
+import { selectWonTendersCount as selectWonTendersCountFromTenderSelectors } from '@/domain/selectors/tenderSelectors'
 
 /**
  * حساب إجمالي الإيرادات من المشاريع النشطة
@@ -38,9 +39,11 @@ export function selectTotalTendersCount(tenders: Tender[]): number {
 
 /**
  * حساب عدد المنافسات الفائزة
+ *
+ * ملاحظة: تم نقل التنفيذ إلى tenderSelectors.ts لتجنب التكرار
  */
 export function selectWonTendersCount(tenders: Tender[]): number {
-  return tenders.filter((t) => t.status === 'won').length
+  return selectWonTendersCountFromTenderSelectors(tenders)
 }
 
 /**

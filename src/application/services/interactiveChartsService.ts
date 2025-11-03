@@ -7,6 +7,7 @@
  */
 
 import { asyncStorage } from '@/shared/utils/storage/storage'
+import { selectWonTendersCount, selectLostTendersCount } from '@/domain/selectors/tenderSelectors'
 
 // أنواع البيانات للرسوم البيانية
 export interface ChartDataPoint {
@@ -69,8 +70,8 @@ export interface DrillDownLevel {
 }
 
 export interface ChartInteractionEvent {
-  type: 'click' | 'hover' | 'zoom' | 'filter' | 'drilldown'
-  data: any
+  type: 'click' | 'hover' | 'zoom' | 'filter' | 'drilldown' | 'refresh'
+  data: Record<string, unknown>
   timestamp: string
 }
 
@@ -105,7 +106,7 @@ export class InteractiveChartsService {
    * الحصول على جميع تكوينات الرسوم البيانية
    */
   async getChartConfigurations(): Promise<ChartConfiguration[]> {
-    return (await asyncStorage.getItem(this.CONFIG_KEY)) || []
+    return (await asyncStorage.getItem(this.CONFIG_KEY, [])) || []
   }
 
   /**
@@ -156,7 +157,7 @@ export class InteractiveChartsService {
    * الحصول على بيانات الرسم البياني للمشاريع
    */
   async getProjectChartData(chartType: string, filters?: ChartFilter[]): Promise<ChartDataPoint[]> {
-    const projects = (await asyncStorage.getItem('projects')) || []
+    const projects = (await asyncStorage.getItem('projects', [])) || []
     let data: ChartDataPoint[] = []
 
     switch (chartType) {
@@ -183,7 +184,7 @@ export class InteractiveChartsService {
    * الحصول على بيانات الرسم البياني للمنافسات
    */
   async getTenderChartData(chartType: string, filters?: ChartFilter[]): Promise<ChartDataPoint[]> {
-    const tenders = (await asyncStorage.getItem('tenders')) || []
+    const tenders = (await asyncStorage.getItem('tenders', [])) || []
     let data: ChartDataPoint[] = []
 
     switch (chartType) {
@@ -213,7 +214,7 @@ export class InteractiveChartsService {
     chartType: string,
     filters?: ChartFilter[],
   ): Promise<ChartDataPoint[]> {
-    const financialData = (await asyncStorage.getItem('financial_data')) || {}
+    const financialData = (await asyncStorage.getItem('financial_data', {})) || {}
     let data: ChartDataPoint[] = []
 
     switch (chartType) {
@@ -244,7 +245,7 @@ export class InteractiveChartsService {
     period: 'daily' | 'weekly' | 'monthly' | 'yearly',
   ): Promise<TimeSeriesDataPoint[]> {
     const cacheKey = `timeseries_${dataSource}_${period}`
-    const cached = await asyncStorage.getItem(cacheKey)
+    const cached = await asyncStorage.getItem(cacheKey, { data: [], timestamp: '' })
 
     if (cached && this.isCacheValid(cached.timestamp)) {
       return cached.data
@@ -505,8 +506,8 @@ export class InteractiveChartsService {
   }
 
   private aggregateTendersBySuccessRate(tenders: any[]): ChartDataPoint[] {
-    const wonTenders = tenders.filter((t) => t.status === 'فائز' || t.status === 'won').length
-    const lostTenders = tenders.filter((t) => t.status === 'خاسر' || t.status === 'lost').length
+    const wonTenders = selectWonTendersCount(tenders)
+    const lostTenders = selectLostTendersCount(tenders)
     const pendingTenders = tenders.filter(
       (t) => t.status === 'قيد المراجعة' || t.status === 'pending',
     ).length
@@ -648,20 +649,17 @@ export class InteractiveChartsService {
   }
 
   // دوال مساعدة للسلاسل الزمنية
-  private async getProjectTimeSeriesData(period: string): Promise<TimeSeriesDataPoint[]> {
-    const projects = (await asyncStorage.getItem('projects')) || []
+  private async getProjectTimeSeriesData(_period: string): Promise<TimeSeriesDataPoint[]> {
     // تنفيذ منطق السلاسل الزمنية للمشاريع
     return []
   }
 
-  private async getTenderTimeSeriesData(period: string): Promise<TimeSeriesDataPoint[]> {
-    const tenders = (await asyncStorage.getItem('tenders')) || []
+  private async getTenderTimeSeriesData(_period: string): Promise<TimeSeriesDataPoint[]> {
     // تنفيذ منطق السلاسل الزمنية للمنافسات
     return []
   }
 
-  private async getFinancialTimeSeriesData(period: string): Promise<TimeSeriesDataPoint[]> {
-    const financialData = (await asyncStorage.getItem('financial_data')) || {}
+  private async getFinancialTimeSeriesData(_period: string): Promise<TimeSeriesDataPoint[]> {
     // تنفيذ منطق السلاسل الزمنية للبيانات المالية
     return []
   }
@@ -672,7 +670,7 @@ export class InteractiveChartsService {
 
     return data.filter((point) => {
       return filters.every((filter) => {
-        const value = (point as any)[filter.field]
+        const value = (point as unknown as Record<string, unknown>)[filter.field]
         switch (filter.operator) {
           case 'equals':
             return value === filter.value

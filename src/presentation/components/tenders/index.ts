@@ -9,6 +9,7 @@ export type { TenderMetricsDisplayProps } from './TenderMetricsDisplay'
 
 export { TenderPerformanceCards } from './TenderPerformanceCards'
 export { EnhancedTenderCard } from './EnhancedTenderCard'
+export { VirtualizedTenderList } from './VirtualizedTenderList'
 
 // Tender Details & Management
 export { TenderDetails } from './TenderDetails'

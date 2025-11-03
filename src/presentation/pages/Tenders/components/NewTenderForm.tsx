@@ -22,7 +22,6 @@ import type { QuantityItem } from '@/shared/types/contracts'
 import {
   parseNumericValue,
   calculateDaysRemaining,
-  isTenderFormValid,
 } from '@/shared/utils/tender/tenderFormValidators'
 import {
   buildFormData,
@@ -93,9 +92,6 @@ export function NewTenderForm({ onSave, onBack, existingTender }: NewTenderFormP
       [field]: value,
     }))
   }, [])
-
-  // Form validation
-  const isFormValid = useMemo(() => isTenderFormValid(formData), [formData])
 
   // Save handler
   const handleSave = useCallback(async () => {

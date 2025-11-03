@@ -1,5 +1,5 @@
 // TendersPage shows the tenders dashboard, filters, and quick actions.
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   Trophy,
   Search,
@@ -10,6 +10,8 @@ import {
   CheckCircle,
   XCircle,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 
 import type { Tender } from '@/data/centralData'
@@ -36,7 +38,7 @@ import {
   TenderDeleteDialog,
   TenderPerformanceCards,
   TenderDetails,
-  EnhancedTenderCard,
+  VirtualizedTenderList,
 } from '@/presentation/components/tenders'
 import { SubmitReviewDialog } from './components/SubmitReviewDialog'
 
@@ -98,6 +100,10 @@ export function Tenders({ onSectionChange }: TendersProps) {
   const [tenderToDelete, setTenderToDelete] = useState<Tender | null>(null)
   const [tenderToSubmit, setTenderToSubmit] = useState<Tender | null>(null)
 
+  // Local pagination state for frontend-only pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPageSize, setCurrentPageSize] = useState(10)
+
   const normalisedSearch = useMemo(() => normaliseSearchQuery(searchTerm), [searchTerm])
 
   const tenderSummary = useMemo(
@@ -111,6 +117,21 @@ export function Tenders({ onSectionChange }: TendersProps) {
     () => computeFilteredTenders(tenders, normalisedSearch, activeTab),
     [tenders, normalisedSearch, activeTab],
   )
+
+  // Apply pagination to filtered tenders using local state
+  const paginatedTenders = useMemo(() => {
+    const startIndex = (currentPage - 1) * currentPageSize
+    const endIndex = startIndex + currentPageSize
+    return filteredTenders.slice(startIndex, endIndex)
+  }, [filteredTenders, currentPage, currentPageSize])
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredTenders.length / currentPageSize)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filteredTenders.length, activeTab, searchTerm])
 
   const quickActions = useMemo(() => createQuickActions(onSectionChange), [onSectionChange])
 
@@ -293,23 +314,74 @@ export function Tenders({ onSectionChange }: TendersProps) {
         }
       >
         {filteredTenders.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredTenders.map((tender, index) => (
-              <EnhancedTenderCard
-                key={tender.id}
-                tender={tender}
-                index={index}
-                onOpenDetails={navigateToDetails}
-                onStartPricing={navigateToPricing}
-                onSubmitTender={setTenderToSubmit}
-                onEdit={handleEditTender}
-                onDelete={setTenderToDelete}
-                onOpenResults={navigateToResults}
-                onRevertStatus={handleRevertStatus}
-                formatCurrencyValue={formatCurrencyValue}
-              />
-            ))}
-          </div>
+          <>
+            {/* Use VirtualizedTenderList for better performance */}
+            <VirtualizedTenderList
+              items={paginatedTenders}
+              onOpenDetails={navigateToDetails}
+              onStartPricing={navigateToPricing}
+              onSubmitTender={setTenderToSubmit}
+              onEdit={handleEditTender}
+              onDelete={setTenderToDelete}
+              onOpenResults={navigateToResults}
+              onRevertStatus={handleRevertStatus}
+              formatCurrencyValue={formatCurrencyValue}
+            />
+
+            {/* Pagination Controls */}
+            {filteredTenders.length > currentPageSize && (
+              <div className="mt-6 flex items-center justify-between rounded-lg border border-border/40 bg-card/50 p-4">
+                {/* Page Info */}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span>
+                    الصفحة {currentPage} من {totalPages}
+                  </span>
+                  <span className="text-xs">({filteredTenders.length} منافسة)</span>
+                </div>
+
+                {/* Page Size Selector */}
+                <div className="flex items-center gap-2">
+                  <label htmlFor="pageSize" className="text-sm text-muted-foreground">
+                    عدد العناصر:
+                  </label>
+                  <select
+                    id="pageSize"
+                    value={currentPageSize}
+                    onChange={(e) => {
+                      setCurrentPageSize(Number(e.target.value))
+                      setCurrentPage(1) // Reset to page 1 when changing page size
+                    }}
+                    className="rounded-md border border-border/40 bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage((p) => p - 1)}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1 rounded-md border border-border/40 bg-background px-3 py-1.5 text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                    <span>السابق</span>
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((p) => p + 1)}
+                    disabled={currentPage >= totalPages}
+                    className="flex items-center gap-1 rounded-md border border-border/40 bg-background px-3 py-1.5 text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span>التالي</span>
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         ) : tenders.length > 0 ? (
           <EmptyState
             title="لا توجد منافسات مطابقة"

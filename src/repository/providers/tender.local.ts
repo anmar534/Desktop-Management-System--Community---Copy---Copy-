@@ -1,10 +1,27 @@
 import type { Tender } from '@/data/centralData'
 
+// Pagination types
+export interface PaginationOptions {
+  page: number
+  pageSize: number
+  sortBy?: string
+  sortDir?: 'asc' | 'desc'
+}
+
+export interface PaginatedResult<T> {
+  items: T[]
+  page: number
+  pageSize: number
+  total: number
+  hasMore: boolean
+}
+
 // ITenderRepository interface (moved from tender.repository.ts)
 export interface ITenderRepository {
   getAll(): Promise<Tender[]>
   getById(id: string): Promise<Tender | null>
   getByProjectId?(projectId: string): Promise<Tender | null>
+  getPage(options: PaginationOptions): Promise<PaginatedResult<Tender>>
   create(data: Omit<Tender, 'id'>): Promise<Tender>
   update(
     id: string,
@@ -51,32 +68,23 @@ const normalizeTender = (tender: Tender): Tender => {
   }
 
   // Normalize quantities field to quantityTable for pricing compatibility
-  const normalized = { ...tender, status }
+  const normalized = { ...tender, status } as Record<string, unknown>
 
   // If quantities exists but quantityTable doesn't, copy quantities to quantityTable
-  if (Array.isArray((normalized as any).quantities) && (normalized as any).quantities.length > 0) {
-    if (
-      !Array.isArray((normalized as any).quantityTable) ||
-      (normalized as any).quantityTable.length === 0
-    ) {
-      ;(normalized as any).quantityTable = (normalized as any).quantities
+  if (Array.isArray(normalized.quantities) && normalized.quantities.length > 0) {
+    if (!Array.isArray(normalized.quantityTable) || normalized.quantityTable.length === 0) {
+      normalized.quantityTable = normalized.quantities
     }
   }
 
   // Also ensure quantityItems is populated for backward compatibility
-  if (
-    Array.isArray((normalized as any).quantityTable) &&
-    (normalized as any).quantityTable.length > 0
-  ) {
-    if (
-      !Array.isArray((normalized as any).quantityItems) ||
-      (normalized as any).quantityItems.length === 0
-    ) {
-      ;(normalized as any).quantityItems = (normalized as any).quantityTable
+  if (Array.isArray(normalized.quantityTable) && normalized.quantityTable.length > 0) {
+    if (!Array.isArray(normalized.quantityItems) || normalized.quantityItems.length === 0) {
+      normalized.quantityItems = normalized.quantityTable
     }
   }
 
-  return normalized
+  return normalized as unknown as Tender
 }
 
 const persist = (tenders: Tender[]): void => {
@@ -153,6 +161,46 @@ export class LocalTenderRepository implements ITenderRepository {
       return null
     }
     return this.getById(tenderId)
+  }
+
+  async getPage(options: PaginationOptions): Promise<PaginatedResult<Tender>> {
+    let tenders = await this.getAll()
+
+    // Sort tenders if specified
+    if (options.sortBy) {
+      const sortDir = options.sortDir === 'desc' ? -1 : 1
+      tenders = tenders.sort((a: Tender, b: Tender) => {
+        const aVal = a[options.sortBy as keyof Tender]
+        const bVal = b[options.sortBy as keyof Tender]
+
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          return aVal.localeCompare(bVal) * sortDir
+        }
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return (aVal - bVal) * sortDir
+        }
+        return 0
+      })
+    }
+
+    // Calculate pagination
+    const total = tenders.length
+    const page = Math.max(1, options.page)
+    const pageSize = Math.max(1, options.pageSize)
+    const startIndex = (page - 1) * pageSize
+    const endIndex = startIndex + pageSize
+
+    // Get page items
+    const items = tenders.slice(startIndex, endIndex)
+    const hasMore = endIndex < total
+
+    return {
+      items,
+      page,
+      pageSize,
+      total,
+      hasMore,
+    }
   }
 
   async create(data: Omit<Tender, 'id'>): Promise<Tender> {

@@ -59,7 +59,7 @@ export const DecisionSupport: React.FC<DecisionSupportProps> = React.memo(
     showAnalytics = true,
     compactMode = false,
     projectId,
-    tenderId,
+    // tenderId is currently unused but kept for future extensibility
   }) => {
     const [activeTab, setActiveTab] = useState('scenarios')
     const [loading, setLoading] = useState(true)

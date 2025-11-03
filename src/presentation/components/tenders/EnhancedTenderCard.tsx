@@ -398,8 +398,9 @@ const EnhancedTenderCard = memo<EnhancedTenderCardProps>(
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05 }}
+        transition={{ delay: Math.min(index * 0.02, 0.3) }}
         whileHover={{ y: -2 }}
+        className="h-full"
       >
         <Card className={getCardClassName()}>
           <CardContent className="p-5">

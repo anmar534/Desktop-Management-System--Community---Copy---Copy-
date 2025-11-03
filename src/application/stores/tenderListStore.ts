@@ -267,9 +267,6 @@ export const useTenderListStore = create<TenderListStore>()(
 
       try {
         // TODO: Implement actual refresh logic via service
-        // const tenders = await TenderService.getAll();
-        // get().setTenders(tenders);
-
         set((state) => {
           state.isRefreshing = false
         })

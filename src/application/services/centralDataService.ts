@@ -17,6 +17,11 @@ import { migrateTenderStatus, needsMigration } from '@/shared/utils/tender/tende
 import type { PurchaseOrder } from '@/shared/types/contracts'
 import { APP_EVENTS, emit } from '@/events/bus'
 import type { BOQData } from '@/shared/types/boq'
+import {
+  selectWonTendersCount,
+  selectLostTendersCount,
+  selectWinRate,
+} from '@/domain/selectors/tenderSelectors'
 export type { BOQBreakdown, BOQItemValues, BOQItem, BOQData } from '@/shared/types/boq'
 
 // NOTE: يتم الآن استيراد المفاتيح من مصدر موحد ../config/storageKeys
@@ -676,9 +681,9 @@ export class CentralDataService {
     const tenders = this.getTenders()
     const total = tenders.length
     const submitted = tenders.filter((t) => ['submitted', 'won', 'lost'].includes(t.status)).length
-    const won = tenders.filter((t) => t.status === 'won').length
-    const lost = tenders.filter((t) => t.status === 'lost').length
-    const winRate = submitted > 0 ? Math.round((won / submitted) * 100) : 0
+    const won = selectWonTendersCount(tenders)
+    const lost = selectLostTendersCount(tenders)
+    const winRate = selectWinRate(tenders)
 
     return {
       total,

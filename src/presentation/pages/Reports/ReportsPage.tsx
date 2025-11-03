@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatCurrency, calculateDaysLeft } from '@/data/centralData'
+import { selectWonTendersCount } from '@/domain/selectors/tenderSelectors'
 import { calculateTenderStats } from '@/calculations/tender'
 import { useFinancialState } from '@/application/context'
 
@@ -88,7 +89,7 @@ export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
       const daysLeft = calculateDaysLeft(tender.deadline)
       return daysLeft <= 7 && daysLeft >= 0 ? count + 1 : count
     }, 0)
-    const wonTenders = tenders.filter((tender) => tender.status === 'won').length
+    const wonTenders = selectWonTendersCount(tenders)
 
     const totalClients = clients.length
     const activeClients = clients.filter((client) => client.status === 'active').length

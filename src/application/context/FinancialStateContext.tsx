@@ -103,6 +103,12 @@ export function FinancialStateProvider({ children }: { children: ReactNode }) {
     updateTender,
     deleteTender,
     stats: tenderStats,
+    loadPage,
+    nextPage,
+    prevPage,
+    setPageSize,
+    pagination,
+    paginatedResult,
   } = tendersState
 
   const {
@@ -264,8 +270,28 @@ export function FinancialStateProvider({ children }: { children: ReactNode }) {
       updateTender,
       deleteTender,
       stats: tenderStats,
+      loadPage,
+      nextPage,
+      prevPage,
+      setPageSize,
+      pagination,
+      paginatedResult,
     }),
-    [tenders, tendersLoading, refreshTenders, addTender, updateTender, deleteTender, tenderStats],
+    [
+      tenders,
+      tendersLoading,
+      refreshTenders,
+      addTender,
+      updateTender,
+      deleteTender,
+      tenderStats,
+      loadPage,
+      nextPage,
+      prevPage,
+      setPageSize,
+      pagination,
+      paginatedResult,
+    ],
   )
 
   const clientsValue = useMemo<UseClientsReturn>(

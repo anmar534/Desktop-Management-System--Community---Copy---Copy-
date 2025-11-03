@@ -3,15 +3,29 @@ import type { Tender } from '@/data/centralData'
 import { APP_EVENTS } from '@/events/bus'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 import { useRepository } from '@/application/services/RepositoryProvider'
+import type { PaginationOptions, PaginatedResult } from '@/repository/providers/tender.local'
+import {
+  selectActiveTendersCount,
+  selectWonTendersCount,
+  selectLostTendersCount,
+} from '@/domain/selectors/tenderSelectors'
 
 /**
  * Hook متوافق لإدارة المناقصات يعتمد على طبقة المستودعات
  * يحافظ على نفس الواجهة المتوقعة من المكونات الحالية
+ * مع إضافة دعم Pagination
  */
 export function useTenders() {
   const repository = useRepository(getTenderRepository)
   const [tenders, setTenders] = useState<Tender[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    total: 0,
+    hasMore: false,
+  })
+  const [paginatedResult, setPaginatedResult] = useState<PaginatedResult<Tender> | null>(null)
   const isMountedRef = useRef(true)
 
   const syncTenders = useCallback(async () => {
@@ -21,6 +35,58 @@ export function useTenders() {
     }
     return list
   }, [repository])
+
+  const loadPage = useCallback(
+    async (options: PaginationOptions) => {
+      setIsLoading(true)
+      try {
+        const result = await repository.getPage(options)
+        if (isMountedRef.current) {
+          setPaginatedResult(result)
+          setPagination({
+            page: result.page,
+            pageSize: result.pageSize,
+            total: result.total,
+            hasMore: result.hasMore,
+          })
+        }
+        return result
+      } finally {
+        if (isMountedRef.current) {
+          setIsLoading(false)
+        }
+      }
+    },
+    [repository],
+  )
+
+  const nextPage = useCallback(async () => {
+    if (pagination.hasMore) {
+      await loadPage({
+        page: pagination.page + 1,
+        pageSize: pagination.pageSize,
+      })
+    }
+  }, [pagination, loadPage])
+
+  const prevPage = useCallback(async () => {
+    if (pagination.page > 1) {
+      await loadPage({
+        page: pagination.page - 1,
+        pageSize: pagination.pageSize,
+      })
+    }
+  }, [pagination, loadPage])
+
+  const setPageSize = useCallback(
+    async (pageSize: number) => {
+      await loadPage({
+        page: 1,
+        pageSize,
+      })
+    },
+    [loadPage],
+  )
 
   useEffect(() => {
     isMountedRef.current = true
@@ -50,9 +116,9 @@ export function useTenders() {
       })
     }
     const events = [APP_EVENTS.TENDERS_UPDATED, APP_EVENTS.TENDER_UPDATED] as const
-    events.forEach(eventName => window.addEventListener(eventName, handler))
+    events.forEach((eventName) => window.addEventListener(eventName, handler))
     return () => {
-      events.forEach(eventName => window.removeEventListener(eventName, handler))
+      events.forEach((eventName) => window.removeEventListener(eventName, handler))
     }
   }, [syncTenders])
 
@@ -60,40 +126,60 @@ export function useTenders() {
     await syncTenders()
   }, [syncTenders])
 
-  const addTender = useCallback(async (tenderData: Omit<Tender, 'id'>) => {
-    const created = await repository.create(tenderData)
-    await syncTenders()
-    return created
-  }, [repository, syncTenders])
-
-  const updateTender = useCallback(async (updatedTender: Tender) => {
-    const saved = await repository.update(updatedTender.id, updatedTender)
-    if (!saved) {
-      throw new Error('المنافسة غير موجودة')
-    }
-    await syncTenders()
-    return saved
-  }, [repository, syncTenders])
-
-  const deleteTender = useCallback(async (id: string) => {
-    const removed = await repository.delete(id)
-    if (removed) {
+  const addTender = useCallback(
+    async (tenderData: Omit<Tender, 'id'>) => {
+      const created = await repository.create(tenderData)
       await syncTenders()
-    }
-    return removed
-  }, [repository, syncTenders])
+      return created
+    },
+    [repository, syncTenders],
+  )
+
+  const updateTender = useCallback(
+    async (updatedTender: Tender) => {
+      const saved = await repository.update(updatedTender.id, updatedTender)
+      if (!saved) {
+        throw new Error('المنافسة غير موجودة')
+      }
+      await syncTenders()
+      return saved
+    },
+    [repository, syncTenders],
+  )
+
+  const deleteTender = useCallback(
+    async (id: string) => {
+      const removed = await repository.delete(id)
+      if (removed) {
+        await syncTenders()
+      }
+      return removed
+    },
+    [repository, syncTenders],
+  )
 
   const stats = useMemo(() => {
-    const active = tenders.filter(t => t.status === 'new' || t.status === 'under_action')
-    const won = tenders.filter(t => t.status === 'won')
-    const lost = tenders.filter(t => t.status === 'lost')
     return {
       totalTenders: tenders.length,
-      activeTenders: active.length,
-      wonTenders: won.length,
-      lostTenders: lost.length,
+      activeTenders: selectActiveTendersCount(tenders),
+      wonTenders: selectWonTendersCount(tenders),
+      lostTenders: selectLostTendersCount(tenders),
     }
   }, [tenders])
 
-  return { tenders, isLoading, refreshTenders, addTender, updateTender, deleteTender, stats }
+  return {
+    tenders,
+    isLoading,
+    refreshTenders,
+    addTender,
+    updateTender,
+    deleteTender,
+    stats,
+    loadPage,
+    nextPage,
+    prevPage,
+    setPageSize,
+    pagination,
+    paginatedResult,
+  }
 }
