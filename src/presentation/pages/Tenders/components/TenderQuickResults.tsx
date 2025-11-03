@@ -93,8 +93,9 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
 
     try {
       const currentDate = new Date().toISOString()
-      const updatedTender = {
-        ...tender,
+
+      // Prepare updates object - only changed fields
+      const updates: Partial<Tender> = {
         status: selectedResult,
         lastUpdate: currentDate,
         resultNotes: notes,
@@ -112,9 +113,14 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
               winningBidValue: winningBidAmount,
               ourBidValue: tenderBaseValue,
             }),
-      } as Tender
+      }
 
-      await updateTender(updatedTender)
+      // Use updateTender(id, updates) signature
+      await updateTender(tender.id, updates)
+
+      // Create full tender object for notifications (merge tender + updates)
+      const updatedTender = { ...tender, ...updates } as Tender
+
       TenderNotificationService.notifyStatusChange(tender, selectedResult)
 
       // تحديث إحصائيات التطوير

@@ -1194,7 +1194,7 @@ Test Coverage:
 4. **TechnicalFilesUpload.tsx** ✅
    - استبدال `useFinancialState` بـ `useTenderListStore`
    - تحديث: `const { tenders, updateTender } = useTenderListStore()`
-   - إصلاح `updateTender` signature: من `updateTender(tender)` إلى `updateTender(id, updates)`
+   - ✅ **إصلاح `updateTender` signature:** من `updateTender(tender)` إلى `updateTender(id, updates)`
    - Build: ✅ Success
 
 **📝 ملاحظات مهمة:**
@@ -1203,12 +1203,59 @@ Test Coverage:
 - **TenderCard.tsx**: غير موجود كملف مستقل (جزء من EnhancedTenderCard)
 - **TenderDetails.tsx**: يستخدم props وليس stores مباشرة (لا حاجة للتحديث)
 
-**🔧 تحديثات إضافية على الـ Adapter:**
+**🔧 تحديثات على الـ Adapter و Components:**
 
-- ✅ إضافة `addTender` للـ adapter (كانت ناقصة)
-- ✅ إضافة `updateTender` للـ adapter (كانت ناقصة)
-- ✅ إضافة `deleteTender` للـ adapter (كانت ناقصة)
-- ✅ إضافة `getTender` للـ adapter (كانت ناقصة)
+**Adapter Enhancements:**
+
+- ✅ إضافة `addTender(tender)` - CRUD Create
+- ✅ إضافة `updateTender(id, updates)` - CRUD Update with **proper signature**
+- ✅ إضافة `deleteTender(id)` - CRUD Delete
+- ✅ إضافة `getTender(id)` - CRUD Read single
+
+**⚠️ API Signature Standardization (Hotfix):**
+
+**المشكلة المكتشفة:**
+
+- التوثيق ذكر `updateTender(id, updates)` ✅
+- لكن المكونات كانت تستخدم `updateTender(fullTender)` ❌
+
+**الحل المطبق:**
+
+1. ✅ **TendersPage.tsx** - إصلاح handleRevertStatus:
+
+   ```typescript
+   // قبل
+   await updateTender({ ...tender, status: newStatus, ... } as Tender)
+
+   // بعد
+   await updateTender(tender.id, { status: newStatus, ... })
+   ```
+
+2. ✅ **TenderQuickResults.tsx** - إصلاح handleConfirmResult:
+
+   ```typescript
+   // قبل
+   const updatedTender = { ...tender, status, ... } as Tender
+   await updateTender(updatedTender)
+
+   // بعد
+   const updates: Partial<Tender> = { status, ... }
+   await updateTender(tender.id, updates)
+   const updatedTender = { ...tender, ...updates } // for notifications
+   ```
+
+**✅ الـ Signature النهائي الموحد:**
+
+```typescript
+updateTender: (id: string, updates: Partial<Tender>) => Promise<void>
+```
+
+**الفوائد:**
+
+- ✅ Type safety أفضل
+- ✅ Performance أفضل (نرسل فقط التغييرات)
+- ✅ Consistency عبر الكود
+- ✅ Best practices (Partial updates)
 
 **الملفات المعدلة:**
 

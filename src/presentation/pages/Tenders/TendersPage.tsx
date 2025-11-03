@@ -169,9 +169,8 @@ export function Tenders({ onSectionChange }: TendersProps) {
           await purchaseOrderService.deleteTenderRelatedOrders(tender.id)
         }
 
-        // Update tender with new status directly
-        await updateTender({
-          ...tender,
+        // Update tender with new status - use updateTender(id, updates) signature
+        await updateTender(tender.id, {
           status: newStatus,
           lastUpdate: new Date().toISOString(),
           lastAction:
@@ -182,7 +181,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
                 : newStatus === 'under_action'
                   ? 'تراجع للتسعير والتعديل'
                   : 'تراجع عن الحالة',
-        } as Tender)
+        })
 
         toast.success('تم التراجع بنجاح', {
           description: `تم إعادة المنافسة "${tender.name}" إلى الحالة السابقة`,
