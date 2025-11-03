@@ -22,6 +22,20 @@ export {
   type TenderFiltersActions,
 } from './tenderFiltersStore'
 
-// TODO: Add more stores as they are created
-// export { useTenderSelectionStore } from './tenderSelectionStore'
-// export { useTenderSortStore } from './tenderSortStore'
+// Selection store - manages selection state
+export {
+  useTenderSelectionStore,
+  type TenderSelectionStore,
+  type TenderSelectionState,
+  type TenderSelectionActions,
+} from './tenderSelectionStore'
+
+// Sort store - manages sorting state
+export {
+  useTenderSortStore,
+  type TenderSortStore,
+  type TenderSortState,
+  type TenderSortActions,
+  type SortField,
+  type SortDirection,
+} from './tenderSortStore'
