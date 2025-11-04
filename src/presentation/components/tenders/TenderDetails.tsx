@@ -20,12 +20,9 @@ import type { UploadedFile } from '@/shared/utils/fileUploadService'
 import { TenderStatusManager } from '@/presentation/pages/Tenders/components/TenderStatusManager'
 import { APP_EVENTS } from '@/events/bus'
 import { FileUploadService } from '@/shared/utils/fileUploadService'
-// (legacy pricingService import removed – unified hook supplies data)
-// Removed pricingDataSyncService (legacy dual-write path)
-// Removed normalizeAndEnrich / dedupePricingItems legacy enrichment utilities – unified hook supplies final items
-// Removed direct snapshot utilities & metrics – unified hook manages snapshot reading
-// Removed useTenderPricing (legacy hook) – unified hook is now sole source of truth here
-import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
+// Phase 2: Migrated to Zustand Store (Week 1 - Day 1)
+// Removed useUnifiedTenderPricing - replaced with useTenderPricingStore
+import { useTenderPricingStore } from '@/stores/tenderPricingStore'
 import { getStatusColor } from '@/shared/utils/ui/statusColors'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
@@ -110,8 +107,40 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
 
   // أزيل مستمع pricingDataUpdated وإعادة بناء snapshot – الاعتماد على تزامن مركزي لاحق (إن لزم) عبر unified hook.
 
-  const unified = useUnifiedTenderPricing(tender)
+  // Phase 2: Use Zustand Store instead of useUnifiedTenderPricing
+  const { boqItems, loadPricing, getTotalValue } = useTenderPricingStore()
   const { formatCurrencyValue } = useCurrencyFormatter()
+
+  // Load pricing when tender changes
+  useEffect(() => {
+    if (tender?.id) {
+      void loadPricing(tender.id)
+    }
+  }, [tender?.id, loadPricing])
+
+  // Create unified interface for compatibility with tabs
+  const unified = useMemo(() => {
+    const items = boqItems.map((item, idx) => ({
+      ...item,
+      description: item.description || item.canonicalDescription || `البند ${idx + 1}`,
+      canonicalDescription: item.canonicalDescription || item.description,
+      unitPrice: item.unitPrice ?? item.estimated?.unitPrice ?? 0,
+      totalPrice: item.totalPrice ?? item.estimated?.totalPrice ?? 0,
+      quantity: item.quantity ?? item.estimated?.quantity ?? 0,
+    }))
+
+    const totalValue = getTotalValue()
+    const hasPricing = items.some((it) => it.unitPrice > 0 || it.totalPrice > 0)
+
+    return {
+      status: items.length > 0 ? 'ready' : 'empty',
+      items,
+      totals: hasPricing ? { totalValue } : null,
+      meta: null,
+      source: 'central-boq',
+      refresh: () => loadPricing(tender.id),
+    }
+  }, [boqItems, getTotalValue, loadPricing, tender.id])
   const quantityFormatter = useMemo(
     () =>
       new Intl.NumberFormat('ar-SA', {
@@ -135,26 +164,19 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
     },
     [quantityFormatter],
   )
-  // تشخيص مبسط للمصدر الموحد فقط
+  // تشخيص مبسط للمصدر الموحد (من Store)
   useEffect(() => {
-    console.log('[TenderDetails] Unified pricing diagnostic', {
+    console.log('[TenderDetails] Store-based pricing diagnostic', {
       tenderId: tender?.id,
-      unifiedStatus: unified.status,
-      unifiedSource: unified.source,
+      status: unified.status,
+      source: unified.source,
       items: unified.items.length,
       hasTotals: !!unified.totals,
       totalsContent: unified.totals,
       firstItem: unified.items[0],
       itemsWithPrices: unified.items.filter((it) => it.unitPrice || it.totalPrice).length,
     })
-  }, [
-    unified.status,
-    unified.source,
-    unified.items.length,
-    unified.totals,
-    unified.items,
-    tender?.id,
-  ])
+  }, [unified, tender?.id])
 
   // إعداد بيانات المرفقات
   const attachmentsData = useMemo(() => {
