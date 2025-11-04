@@ -99,7 +99,15 @@ try {
   console.log(`➕ Generated test tenders: ${newTenders.length}`)
 
   // Merge (keep existing real tenders, add test ones)
-  const realTenders = existingTenders.filter(t => !t.id.startsWith('test_tender_'))
+  // Defensive filter: only exclude if id is a string and starts with test prefix
+  const realTenders = existingTenders.filter(t => {
+    // If id is missing or not a string, treat as real tender (keep it)
+    if (typeof t.id !== 'string') {
+      return true
+    }
+    // Only exclude if it's a test tender
+    return !t.id.startsWith('test_tender_')
+  })
   const allTenders = [...realTenders, ...newTenders]
 
   // Update data

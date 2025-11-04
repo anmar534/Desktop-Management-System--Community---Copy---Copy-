@@ -72,6 +72,74 @@ export function isTenderSubmitted(tender: Tender | null | undefined): tender is 
   return tender?.status === 'submitted'
 }
 
+/**
+ * هل المنافسة منتهية؟
+ *
+ * المنافسة تعتبر منتهية إذا:
+ * 1. حالتها 'expired' أو 'cancelled'
+ * 2. أو تجاوز موعد الإغلاق ولم تُرسل بعد
+ *
+ * ملاحظة: المنافسات المرسلة أو التي لها نتيجة (won/lost) لا تعتبر منتهية
+ */
+export function isTenderExpired(tender: Tender | null | undefined): boolean {
+  if (!tender) return false
+
+  const status = tender.status
+
+  // المنافسات الملغاة صراحة
+  if (status === 'expired' || status === 'cancelled') {
+    return true
+  }
+
+  // المنافسات المرسلة أو التي لها نتيجة نهائية لا تعتبر منتهية
+  if (status === 'submitted' || status === 'won' || status === 'lost') {
+    return false
+  }
+
+  // فحص موعد الإغلاق للمنافسات الأخرى
+  const deadline = tender.deadline
+  if (!deadline) {
+    return false
+  }
+
+  const now = new Date()
+  const deadlineDate = new Date(deadline)
+
+  return deadlineDate < now
+}
+
+/**
+ * هل المنافسة عاجلة؟
+ *
+ * المنافسة تعتبر عاجلة إذا:
+ * - حالتها نشطة (new, under_action, ready_to_submit)
+ * - المتبقي على موعد الإغلاق ≤ 7 أيام وليست منتهية
+ */
+export function isTenderUrgent(tender: Tender | null | undefined): boolean {
+  if (!tender) return false
+
+  const urgentStatuses: Tender['status'][] = ['new', 'under_action', 'ready_to_submit']
+  if (!urgentStatuses.includes(tender.status)) {
+    return false
+  }
+
+  if (isTenderExpired(tender)) {
+    return false
+  }
+
+  const deadline = tender.deadline
+  if (!deadline) {
+    return false
+  }
+
+  const now = new Date()
+  const deadlineDate = new Date(deadline)
+  const diffTime = deadlineDate.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  return diffDays >= 0 && diffDays <= 7
+}
+
 // ==========================================
 // 📊 حسابات العدادات (Count Selectors)
 // ==========================================
@@ -118,6 +186,52 @@ export function selectSubmittedTendersCount(tenders: readonly Tender[]): number 
   return tenders.filter(isTenderSubmitted).length
 }
 
+/**
+ * عدد المنافسات المنتهية
+ */
+export function selectExpiredTendersCount(tenders: readonly Tender[]): number {
+  return tenders.filter(isTenderExpired).length
+}
+
+/**
+ * عدد المنافسات العاجلة
+ */
+export function selectUrgentTendersCount(tenders: readonly Tender[]): number {
+  return tenders.filter(isTenderUrgent).length
+}
+
+/**
+ * عدد المنافسات النشطة غير المنتهية
+ * (تستثني المنافسات المنتهية من العدادات النشطة)
+ */
+export function selectActiveNonExpiredCount(tenders: readonly Tender[]): number {
+  return tenders.filter((t) => isTenderActive(t) && !isTenderExpired(t)).length
+}
+
+/**
+ * عدد المنافسات التي تم إرسالها وحصلت على نتائج
+ * (المُرسلة بانتظار النتائج + الفائزة + الخاسرة)
+ *
+ * تُستخدم لحساب نسبة الفوز الصحيحة
+ */
+export function selectTotalSentTendersCount(tenders: readonly Tender[]): number {
+  const submitted = selectSubmittedTendersCount(tenders)
+  const won = selectWonTendersCount(tenders)
+  const lost = selectLostTendersCount(tenders)
+  return submitted + won + lost
+}
+
+/**
+ * عدد المنافسات النشطة (غير المنتهية)
+ * يشمل: new, under_action, ready_to_submit, submitted, won, lost
+ * يستثني: expired, cancelled
+ *
+ * يُستخدم في تبويب "الكل" والإحصائيات العامة
+ */
+export function selectActiveTendersTotal(tenders: readonly Tender[]): number {
+  return tenders.filter((t) => !isTenderExpired(t)).length
+}
+
 // ==========================================
 // 💰 حسابات القيم المالية (Value Selectors)
 // ==========================================
@@ -155,9 +269,10 @@ export function selectActiveTendersValue(tenders: readonly Tender[]): number {
 // ==========================================
 
 /**
- * معدل الفوز (نسبة الفائزة من المُرسلة)
+ * نسبة الفوز (Win Rate)
  *
- * الصيغة: (عدد الفائزة / عدد المُرسلة) × 100
+ * الصيغة: (عدد الفائزة / (عدد المُرسلة + عدد الفائزة + عدد الخاسرة)) × 100
+ * تشمل: المنافسات المرسلة (بانتظار النتائج) + الفائزة + الخاسرة
  *
  * @example
  * selectWinRate([...]) // 45.5
@@ -165,9 +280,11 @@ export function selectActiveTendersValue(tenders: readonly Tender[]): number {
 export function selectWinRate(tenders: readonly Tender[]): number {
   const won = selectWonTendersCount(tenders)
   const submitted = selectSubmittedTendersCount(tenders)
+  const lost = selectLostTendersCount(tenders)
+  const total = submitted + won + lost
 
-  if (submitted === 0) return 0
-  return Math.round((won / submitted) * 100 * 10) / 10 // دقة عشرية واحدة
+  if (total === 0) return 0
+  return Math.round((won / total) * 100 * 10) / 10 // دقة عشرية واحدة
 }
 
 /**

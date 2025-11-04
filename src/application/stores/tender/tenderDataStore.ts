@@ -195,9 +195,14 @@ export const useTenderDataStore = create<TenderDataStore>()(
           const repository = getTenderRepository()
           const updatedTender = await repository.update(id, updates)
 
+          // Check if update was successful
+          if (!updatedTender) {
+            throw new Error(`Failed to update tender: ${id} - Repository returned null/undefined`)
+          }
+
           set((state) => {
             const index = state.tenders.findIndex((t) => t.id === id)
-            if (index !== -1 && updatedTender) {
+            if (index !== -1) {
               state.tenders[index] = updatedTender
             }
           })

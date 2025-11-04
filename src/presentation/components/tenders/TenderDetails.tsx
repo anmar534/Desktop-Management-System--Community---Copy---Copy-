@@ -158,8 +158,12 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
 
   // إعداد بيانات المرفقات
   const attachmentsData = useMemo(() => {
-    const originalAttachments = tender.documents || []
-    let technicalFiles: UploadedFile[] = []
+    const originalAttachments = (tender.documents || []).map((doc) => ({
+      ...doc,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      type: (doc as any).type || doc.mimeType || 'application/octet-stream',
+    }))
+    let technicalFiles: (UploadedFile & { source?: string })[] = []
 
     try {
       technicalFiles = FileUploadService.getFilesByTender(tender.id).map((file) => ({
@@ -178,7 +182,7 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
     }
   }, [tender.documents, tender.id])
 
-  const handlePreviewAttachment = useCallback((attachment: UploadedFile) => {
+  const handlePreviewAttachment = useCallback((attachment: UploadedFile & { source?: string }) => {
     if (attachment.source === 'technical') {
       alert(`معاينة الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
     } else {
@@ -186,7 +190,7 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
     }
   }, [])
 
-  const handleDownloadAttachment = useCallback((attachment: UploadedFile) => {
+  const handleDownloadAttachment = useCallback((attachment: UploadedFile & { source?: string }) => {
     if (attachment.source === 'technical') {
       alert(`تحميل الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
     } else {

@@ -3,10 +3,9 @@ import { motion } from 'framer-motion'
 
 import { useFinancialState } from '@/application/context'
 import { useDevelopment } from '@/application/hooks/useDevelopment'
+import { useTenders } from '@/application/hooks/useTenders'
 import { UnifiedKPICard } from '@/presentation/components/kpi/UnifiedKPICard'
 import type { Tender, Project } from '@/data/centralData'
-// Removed unused imports of systemStats and formatCurrency
-import { calculateTenderStats } from '@/calculations/tender'
 
 interface AnnualKPICardsProps {
   onSectionChange: (
@@ -31,18 +30,18 @@ export function AnnualKPICards({ onSectionChange }: AnnualKPICardsProps) {
   const { tenders, isLoading: tendersLoading } = tendersState
   const { projects, isLoading: projectsLoading } = projectsState
   const { goals } = useDevelopment()
+  const { stats: tenderStatsFromHook } = useTenders()
 
   // حساب الإحصائيات من البيانات الحقيقية
   const tenderKpi = () => {
     if (tendersLoading || !tenders) {
       return { winRate: 0, total: 0, won: 0, details: 'لا توجد بيانات' }
     }
-    const stats = calculateTenderStats(tenders)
     return {
-      winRate: stats.winRate,
-      total: stats.total,
-      won: stats.won,
-      details: `${stats.won} فوز من ${stats.total} منافسة`,
+      winRate: tenderStatsFromHook.winRate,
+      total: tenderStatsFromHook.totalTenders,
+      won: tenderStatsFromHook.wonTenders,
+      details: `${tenderStatsFromHook.wonTenders} فوز من ${tenderStatsFromHook.totalTenders} منافسة`,
     }
   }
 

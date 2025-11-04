@@ -89,14 +89,34 @@ function calculateImprovements() {
     const count = scenario.tenderCount
     const baseline = baselineEstimates[count]
 
-    if (baseline && scenario.loadTime) {
+    if (!baseline) {
+      return // Skip if no baseline for this count
+    }
+
+    // Validate and compute loadTime improvement
+    if (
+      scenario.loadTime != null &&
+      typeof scenario.loadTime === 'number' &&
+      isFinite(scenario.loadTime) &&
+      isFinite(baseline.load) &&
+      baseline.load > 0
+    ) {
       improvements.loadTime[count] = {
         before: baseline.load,
         after: scenario.loadTime,
         improvement: (((baseline.load - scenario.loadTime) / baseline.load) * 100).toFixed(1),
         faster: (baseline.load / scenario.loadTime).toFixed(1),
       }
+    }
 
+    // Validate and compute renderTime improvement
+    if (
+      scenario.renderTime != null &&
+      typeof scenario.renderTime === 'number' &&
+      isFinite(scenario.renderTime) &&
+      isFinite(baseline.render) &&
+      baseline.render > 0
+    ) {
       improvements.renderTime[count] = {
         before: baseline.render,
         after: scenario.renderTime,
@@ -105,7 +125,16 @@ function calculateImprovements() {
         ),
         faster: (baseline.render / scenario.renderTime).toFixed(1),
       }
+    }
 
+    // Validate and compute memoryUsage improvement
+    if (
+      scenario.memoryUsage != null &&
+      typeof scenario.memoryUsage === 'number' &&
+      isFinite(scenario.memoryUsage) &&
+      isFinite(baseline.memory) &&
+      baseline.memory > 0
+    ) {
       improvements.memoryUsage[count] = {
         before: baseline.memory,
         after: scenario.memoryUsage,

@@ -10,7 +10,6 @@ import {
   normaliseSearchQuery,
   computeFilteredTenders,
 } from '@/shared/utils/tender/tenderFilters'
-import { computeTenderSummary } from '@/shared/utils/tender/tenderSummaryCalculator'
 import {
   createTabsWithCounts,
   getActiveTabLabel,
@@ -35,8 +34,7 @@ import { TenderResultsManager } from './components/TenderResultsManager'
 import { TendersPagination } from './components/TendersPagination'
 import { TendersHeaderSection } from './components/TendersHeaderSection'
 
-import { useFinancialState } from '@/application/context'
-import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
+import { useTenders } from '@/application/hooks/useTenders'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import {
   useTenderDetailNavigation,
@@ -44,35 +42,14 @@ import {
   useTenderPricingNavigation,
 } from '@/application/hooks/useTenderEventListeners'
 import { useTenderViewNavigation } from '@/application/hooks/useTenderViewNavigation'
-import type { TenderMetricsSummary } from '@/domain/contracts/metrics'
-import type { TenderMetrics as AggregatedTenderMetrics } from '@/domain/selectors/financialMetrics'
-import { resolveTenderPerformance } from '@/domain/utils/tenderPerformance'
 
 interface TendersProps {
   onSectionChange: (section: string, tender?: Tender) => void
 }
 
 export function Tenders({ onSectionChange }: TendersProps) {
-  // Use new adapter-based store instead of context
-  const { tenders, deleteTender, refreshTenders, updateTender } = useTenderListStore()
-
-  // Still need metrics from context (until metrics are migrated)
-  const { metrics } = useFinancialState()
-
-  const rawTenderMetrics = metrics.tenders as AggregatedTenderMetrics
-
-  const tenderPerformance = useMemo<TenderMetricsSummary>(
-    () => resolveTenderPerformance(rawTenderMetrics, tenders),
-    [rawTenderMetrics, tenders],
-  )
-
-  const tenderMetrics = useMemo<AggregatedTenderMetrics>(
-    () => ({
-      ...rawTenderMetrics,
-      performance: tenderPerformance,
-    }),
-    [rawTenderMetrics, tenderPerformance],
-  )
+  // Use unified system - useTenders provides both data and stats
+  const { tenders, deleteTender, refreshTenders, updateTender, stats: tenderStats } = useTenders()
 
   const { formatCurrencyValue } = useCurrencyFormatter()
 
@@ -97,9 +74,30 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
   const normalisedSearch = useMemo(() => normaliseSearchQuery(searchTerm), [searchTerm])
 
+  // إنشاء tenderSummary من stats
   const tenderSummary = useMemo(
-    () => computeTenderSummary(tenders, tenderMetrics, tenderPerformance),
-    [tenders, tenderMetrics, tenderPerformance],
+    () => ({
+      total: tenderStats.totalTenders,
+      urgent: tenderStats.urgentTenders,
+      new: tenderStats.newTenders,
+      underAction: tenderStats.underActionTenders,
+      readyToSubmit: 0, // سيتم حسابه من tenders مباشرة
+      waitingResults: tenderStats.submittedTenders,
+      won: tenderStats.wonTenders,
+      lost: tenderStats.lostTenders,
+      expired: tenderStats.expiredTenders,
+      winRate: tenderStats.winRate,
+      totalDocumentValue: 0, // غير مستخدم في tabs
+      active: tenderStats.activeTenders,
+      submitted: tenderStats.submittedTenders,
+      averageWinChance: 0, // غير مستخدم في tabs
+      averageCycleDays: null, // غير مستخدم في tabs
+      submittedValue: tenderStats.submittedValue,
+      wonValue: tenderStats.wonValue,
+      lostValue: tenderStats.lostValue,
+      documentBookletsCount: 0, // غير مستخدم في tabs
+    }),
+    [tenderStats],
   )
 
   const tabsWithCounts = useMemo(() => createTabsWithCounts(tenderSummary), [tenderSummary])
@@ -157,8 +155,9 @@ export function Tenders({ onSectionChange }: TendersProps) {
           await purchaseOrderService.deleteTenderRelatedOrders(tender.id)
         }
 
-        // Update tender with new status - use updateTender(id, updates) signature
-        await updateTender(tender.id, {
+        // Update tender with new status
+        const updatedTender: Tender = {
+          ...tender,
           status: newStatus,
           lastUpdate: new Date().toISOString(),
           lastAction:
@@ -169,7 +168,9 @@ export function Tenders({ onSectionChange }: TendersProps) {
                 : newStatus === 'under_action'
                   ? 'تراجع للتسعير والتعديل'
                   : 'تراجع عن الحالة',
-        })
+        }
+
+        await updateTender(updatedTender)
 
         toast.success('تم التراجع بنجاح', {
           description: `تم إعادة المنافسة "${tender.name}" إلى الحالة السابقة`,
@@ -192,10 +193,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
   )
 
   // Header section with metadata and performance cards
-  const headerExtraContent = useMemo(
-    () => <TendersHeaderSection tenderSummary={tenderSummary} />,
-    [tenderSummary],
-  )
+  const headerExtraContent = useMemo(() => <TendersHeaderSection />, [])
 
   if (currentView === 'pricing' && selectedTender) {
     const tenderForPricing: TenderWithPricingSources = { ...selectedTender }

@@ -18,16 +18,29 @@ import {
 } from 'lucide-react'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { TenderPerformanceCards } from '@/presentation/components/tenders'
-import type { TenderSummary } from '@/shared/utils/tender/tenderSummaryCalculator'
-
-interface TendersHeaderSectionProps {
-  tenderSummary: TenderSummary
-}
+import { useTenders } from '@/application/hooks/useTenders'
 
 /**
  * Header section component with metadata and performance cards
+ * Uses unified system (useTenders hook) - no props needed
  */
-export const TendersHeaderSection: React.FC<TendersHeaderSectionProps> = ({ tenderSummary }) => {
+export const TendersHeaderSection: React.FC = () => {
+  const { stats } = useTenders()
+
+  // Safe win rate calculation with fallback for NaN/undefined
+  const safeWinRate = Number.isFinite(stats.winRate) ? stats.winRate : null
+
+  // Dynamic status based on win rate
+  const getWinRateStatus = (rate: number | null): 'success' | 'info' | 'warning' => {
+    if (rate === null) return 'warning'
+    if (rate >= 70) return 'success'
+    if (rate >= 40) return 'info'
+    return 'warning'
+  }
+
+  const winRateStatus = getWinRateStatus(safeWinRate)
+  const winRateDisplay = safeWinRate !== null ? `${safeWinRate.toFixed(1)}%` : '-'
+
   return (
     <div className="space-y-4">
       {/* Metadata Badges */}
@@ -35,56 +48,56 @@ export const TendersHeaderSection: React.FC<TendersHeaderSectionProps> = ({ tend
         <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
           <StatusBadge
             status="default"
-            label={`الكل ${tenderSummary.total}`}
+            label={`الكل ${stats.totalTenders}`}
             icon={ListChecks}
             size="sm"
             className="shadow-none"
           />
           <StatusBadge
-            status={tenderSummary.urgent > 0 ? 'warning' : 'default'}
-            label={`عاجل ${tenderSummary.urgent}`}
+            status={stats.urgentTenders > 0 ? 'warning' : 'default'}
+            label={`عاجل ${stats.urgentTenders}`}
             icon={AlertTriangle}
             size="sm"
             className="shadow-none"
           />
           <StatusBadge
-            status={tenderSummary.new > 0 ? 'info' : 'default'}
-            label={`جديد ${tenderSummary.new}`}
+            status={stats.newTenders > 0 ? 'info' : 'default'}
+            label={`جديد ${stats.newTenders}`}
             icon={FileText}
             size="sm"
             className="shadow-none"
           />
           <StatusBadge
-            status={tenderSummary.underAction > 0 ? 'info' : 'default'}
-            label={`تحت الإجراء ${tenderSummary.underAction}`}
+            status={stats.underActionTenders > 0 ? 'info' : 'default'}
+            label={`تحت الإجراء ${stats.underActionTenders}`}
             icon={Clock}
             size="sm"
             className="shadow-none"
           />
           <StatusBadge
-            status={tenderSummary.waitingResults > 0 ? 'warning' : 'default'}
-            label={`بانتظار النتائج ${tenderSummary.waitingResults}`}
+            status={stats.submittedTenders > 0 ? 'warning' : 'default'}
+            label={`بانتظار النتائج ${stats.submittedTenders}`}
             icon={Calendar}
             size="sm"
             className="shadow-none"
           />
           <StatusBadge
-            status={tenderSummary.won > 0 ? 'success' : 'default'}
-            label={`فائز ${tenderSummary.won}`}
+            status={stats.wonTenders > 0 ? 'success' : 'default'}
+            label={`فائز ${stats.wonTenders}`}
             icon={CheckCircle}
             size="sm"
             className="shadow-none"
           />
           <StatusBadge
-            status={tenderSummary.lost > 0 ? 'error' : 'default'}
-            label={`خاسر ${tenderSummary.lost}`}
+            status={stats.lostTenders > 0 ? 'error' : 'default'}
+            label={`خاسر ${stats.lostTenders}`}
             icon={XCircle}
             size="sm"
             className="shadow-none"
           />
           <StatusBadge
-            status="info"
-            label={`معدل الفوز ${tenderSummary.winRate.toFixed(1)}%`}
+            status={winRateStatus}
+            label={`معدل الفوز ${winRateDisplay}`}
             icon={Trophy}
             size="sm"
             className="shadow-none"
@@ -94,7 +107,7 @@ export const TendersHeaderSection: React.FC<TendersHeaderSectionProps> = ({ tend
 
       {/* Performance Cards */}
       <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
-        <TenderPerformanceCards tenderSummary={tenderSummary} />
+        <TenderPerformanceCards />
       </div>
     </div>
   )

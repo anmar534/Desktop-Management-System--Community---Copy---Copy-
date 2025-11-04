@@ -10,8 +10,11 @@
  */
 
 import type { Project, Tender } from '@/data/centralData'
-import { calculateTenderStats } from '@/calculations/tender'
-import { selectWonTendersCount as selectWonTendersCountFromTenderSelectors } from '@/domain/selectors/tenderSelectors'
+import {
+  selectWonTendersCount as selectWonTendersCountFromTenderSelectors,
+  selectWinRate,
+  selectWonTendersValue as selectWonTendersValueFromTenderSelectors,
+} from '@/domain/selectors/tenderSelectors'
 
 /**
  * حساب إجمالي الإيرادات من المشاريع النشطة
@@ -65,8 +68,7 @@ export function selectTotalProjectsCount(projects: Project[]): number {
  * حساب معدل فوز المنافسات
  */
 export function selectTenderWinRate(tenders: Tender[]): number {
-  const stats = calculateTenderStats(tenders)
-  return stats.winRate
+  return selectWinRate(tenders)
 }
 
 /**
@@ -88,9 +90,7 @@ export function selectAverageProjectProgress(projects: Project[]): number {
  * حساب إجمالي قيمة المنافسات الفائزة
  */
 export function selectWonTendersValue(tenders: Tender[]): number {
-  return tenders
-    .filter((t) => t.status === 'won')
-    .reduce((sum, t) => sum + (t.value ?? t.totalValue ?? 0), 0)
+  return selectWonTendersValueFromTenderSelectors(tenders)
 }
 
 /**

@@ -156,15 +156,16 @@ export class PricingOrchestrator {
    * @param {QuantityItem[]} quantityItems - Array of quantity items (BOQ)
    * @param {PricingPercentages} defaultPercentages - Default percentages for calculations
    * @param {SavePricingOptions} [options] - Optional save options
+   * @param {boolean} [options.skipEvent] - If true, BOQSyncRepository skips emitting 'boqUpdated' event
    * @returns {Promise<void>}
    *
    * @description
    * This is the core "persistence" operation that performs the following steps:
    * 1. Saves pricing data to storage (via PricingDataRepository)
    * 2. Updates BOQ repository with calculated totals (via BOQSyncRepository)
+   *    - BOQSyncRepository emits 'boqUpdated' event during this step (unless skipEvent is true)
    * 3. Updates tender status and progress (via TenderStatusRepository)
-   * 4. Emits update events (unless skipEvent is true)
-   * 5. Records audit events for success/failure
+   * 4. Records audit events for success/failure
    *
    * This method orchestrates multiple repositories in a transaction-like manner.
    * If any step fails, an error is thrown and audit event is recorded.

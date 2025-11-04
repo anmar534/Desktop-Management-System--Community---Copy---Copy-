@@ -144,7 +144,7 @@ export class ConflictError extends Error {
       ...current,
       ...attempted,
       version: (currentWithVersion.version ?? 0) + 1,
-      lastModified: new Date(),
+      lastModified: new Date().toISOString(),
       // Preserve critical fields from current
       id: current.id,
       createdAt: current.createdAt,

@@ -54,6 +54,8 @@ export interface TransactionResult {
   operationsExecuted: number
   operationsRolledBack: number
   error?: Error
+  /** Array of all errors encountered during rollback (populated when multiple rollback failures occur) */
+  errors?: Error[]
   duration: number
 }
 
@@ -172,6 +174,11 @@ export class TransactionManager {
 
   /**
    * Rollback all executed operations in reverse order
+   *
+   * @returns {Promise<TransactionResult>} Result with full error visibility
+   * - If multiple rollback errors occur, `result.errors` contains all errors
+   * - `result.error` is set to AggregateError (multiple errors) or single Error (one error)
+   * - All errors are logged to audit trail regardless
    */
   async rollback(): Promise<TransactionResult> {
     if (this.committed) {
@@ -230,13 +237,31 @@ export class TransactionManager {
       },
     })
 
-    return {
+    // Build result with full error visibility
+    const result: TransactionResult = {
       success: false,
       operationsExecuted: this.executedOperations.length,
       operationsRolledBack: rolledBackCount,
-      error: errors.length > 0 ? errors[0] : undefined,
       duration,
     }
+
+    // Populate error fields for backward compatibility and full visibility
+    if (errors.length > 0) {
+      result.errors = errors
+
+      // For backward compatibility: set single `error` field
+      // Use AggregateError if multiple errors, otherwise use the single error
+      if (errors.length === 1) {
+        result.error = errors[0]
+      } else {
+        result.error = new AggregateError(
+          errors,
+          `Transaction rollback encountered ${errors.length} error(s)`,
+        )
+      }
+    }
+
+    return result
   }
 
   /**

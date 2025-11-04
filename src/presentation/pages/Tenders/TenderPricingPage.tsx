@@ -7,11 +7,9 @@ import {
   createQuantityFormatter,
   createPricingAuditLogger,
   getErrorMessage,
-  DEFAULT_PRICING_PERCENTAGES,
-  percentagesToInputStrings,
 } from '@/presentation/pages/Tenders/TenderPricing/utils/tenderPricingHelpers'
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import type { PricingData, PricingPercentages, PricingViewItem } from '@/shared/types/pricing'
+import type { PricingData, PricingViewItem } from '@/shared/types/pricing'
 // Zustand Store for unified pricing state management
 import { useTenderPricingStore } from '@/stores/tenderPricingStore'
 import type {
@@ -145,7 +143,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   })
 
   // Use validation hook
-  const { completedCount, completionPercentage, canSaveCurrentItem } = usePricingValidation({
+  const { completionPercentage } = usePricingValidation({
     currentPricing,
     currentItem,
     pricingData,
@@ -388,6 +386,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     return () => {
       mounted = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tender.id])
 
   // Note: Loading pricing for current item is now handled by usePricingForm hook

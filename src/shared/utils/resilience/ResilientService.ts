@@ -80,6 +80,7 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
  */
 export class ResilientService {
   private options: Required<RetryOptions>
+  private lastAttemptsUsed = 0
 
   constructor(options: RetryOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options }
@@ -98,19 +99,24 @@ export class ResilientService {
     let attempt = 0
 
     while (attempt <= this.options.maxRetries) {
+      attempt++ // Increment attempt counter at the start of each iteration
+
       try {
         // Execute the operation
         const result = await operation()
 
+        // Store actual attempts used for successful operation
+        this.lastAttemptsUsed = attempt
+
         // Log success
-        if (attempt > 0) {
+        if (attempt > 1) {
           recordAuditEvent({
             category: 'resilience',
             action: 'retry-succeeded',
             key: operationName,
             level: 'info',
             metadata: {
-              attempt: attempt + 1,
+              attempt,
               totalAttempts: this.options.maxRetries + 1,
               duration: Date.now() - startTime,
             },
@@ -120,11 +126,13 @@ export class ResilientService {
         return result
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error))
-        attempt++
 
         // Check if we should retry
         if (attempt > this.options.maxRetries || !this.options.isRetryable(lastError)) {
           // No more retries or not retryable
+          // Store actual attempts used for failed operation
+          this.lastAttemptsUsed = attempt
+
           recordAuditEvent({
             category: 'resilience',
             action: 'retry-exhausted',
@@ -163,6 +171,8 @@ export class ResilientService {
     }
 
     // Should never reach here, but TypeScript needs it
+    // Store attempts in case we somehow reach here
+    this.lastAttemptsUsed = attempt
     throw lastError || new Error('Retry failed')
   }
 
@@ -180,14 +190,14 @@ export class ResilientService {
       return {
         success: true,
         result,
-        attemptsUsed: 1, // TODO: Track actual attempts
+        attemptsUsed: this.lastAttemptsUsed, // Use tracked actual attempts
         totalDuration: Date.now() - startTime,
       }
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error : new Error(String(error)),
-        attemptsUsed: this.options.maxRetries + 1,
+        attemptsUsed: this.lastAttemptsUsed, // Use tracked actual attempts
         totalDuration: Date.now() - startTime,
       }
     }
@@ -198,16 +208,17 @@ export class ResilientService {
    */
   private calculateDelay(attempt: number): number {
     // Exponential backoff: baseDelay * (multiplier ^ (attempt - 1))
-    let delay = this.options.baseDelay * Math.pow(this.options.backoffMultiplier, attempt - 1)
-
-    // Apply max delay cap
-    delay = Math.min(delay, this.options.maxDelay)
+    const baseDelay = this.options.baseDelay * Math.pow(this.options.backoffMultiplier, attempt - 1)
 
     // Add jitter (randomness) to prevent thundering herd
-    const jitter = delay * this.options.jitterFactor * Math.random()
-    delay = delay + jitter
+    // Jitter is calculated from the base delay before capping
+    const jitter = baseDelay * this.options.jitterFactor * Math.random()
+    const delayWithJitter = baseDelay + jitter
 
-    return Math.floor(delay)
+    // Apply max delay cap AFTER adding jitter to ensure we never exceed the limit
+    const cappedDelay = Math.min(delayWithJitter, this.options.maxDelay)
+
+    return Math.floor(cappedDelay)
   }
 
   /**

@@ -37,7 +37,7 @@ export function AdapterIntegrationTest() {
 
   // Test handlers
   const handleFilterChange = () => {
-    setFilter('status', 'active')
+    setFilter('status', 'new')
     setFilter('priority', 'high')
   }
 
@@ -149,11 +149,11 @@ export function AdapterIntegrationTest() {
                   <div className="text-sm">
                     <span
                       className={`px-2 py-1 rounded text-xs ${
-                        tender.status === 'active'
-                          ? 'bg-green-100 text-green-800'
+                        tender.status === 'new'
+                          ? 'bg-success/10 text-success'
                           : tender.status === 'submitted'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {tender.status}

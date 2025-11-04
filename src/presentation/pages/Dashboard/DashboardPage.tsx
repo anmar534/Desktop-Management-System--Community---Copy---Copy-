@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/presentation/components/ui/button'
-import { Badge } from '@/presentation/components/ui/badge'
 import { RefreshCcw, Settings, Calendar, CalendarDays, Clock } from 'lucide-react'
 import { DashboardKPICards } from './components/DashboardKPICards'
 import { TenderStatusCards } from '@/presentation/pages/Tenders/components/TenderStatusCards'
@@ -9,16 +8,14 @@ import { FinancialSummaryCard } from './components/FinancialSummaryCard'
 import { LazyMonthlyExpensesChart } from '@/presentation/components/charts/LazyCharts'
 import { DashboardKPIPreferencesDialog } from './components/DashboardKPIPreferencesDialog'
 import { useKPIs } from '@/application/hooks/useKPIs'
-import { useFinancialState } from '@/application/context'
 import { useDashboardMetrics } from '@/application/hooks/useDashboardMetrics'
-import { formatTime } from '@/shared/utils/formatters/formatters'
+import { getHijriDate } from '../../../utils/dateFormatters'
 
 interface DashboardProps {
   onSectionChange: (section: string) => void
 }
 
 function Dashboard({ onSectionChange }: DashboardProps) {
-  const { currency, lastRefreshAt } = useFinancialState()
   const {
     allKpis,
     visibleKpis,
@@ -30,16 +27,10 @@ function Dashboard({ onSectionChange }: DashboardProps) {
   const hasGoals = allKpis.length > 0
   const [preferencesOpen, setPreferencesOpen] = useState(false)
 
-  const {
-    data: dashboardMetrics,
-    isLoading: dashboardMetricsLoading,
-    lastUpdated: dashboardLastUpdated,
-    refresh: refreshDashboardMetrics,
-  } = useDashboardMetrics()
+  const { isLoading: dashboardMetricsLoading, refresh: refreshDashboardMetrics } =
+    useDashboardMetrics()
 
   const [currentTime, setCurrentTime] = useState(new Date())
-
-  const baseCurrency = currency?.baseCurrency ?? dashboardMetrics.currency.base ?? 'SAR'
 
   // تحديث الوقت كل ثانية
   useEffect(() => {
@@ -75,38 +66,6 @@ function Dashboard({ onSectionChange }: DashboardProps) {
     return { dayName, day, month, year }
   }
 
-  // تنسيق التاريخ الهجري (تقريبي)
-  const getHijriDate = (date: Date) => {
-    const hijriMonths = [
-      'محرم',
-      'صفر',
-      'ربيع الأول',
-      'ربيع الثاني',
-      'جمادى الأولى',
-      'جمادى الثانية',
-      'رجب',
-      'شعبان',
-      'رمضان',
-      'شوال',
-      'ذو القعدة',
-      'ذو الحجة',
-    ]
-
-    const gregorianYear = date.getFullYear()
-    const gregorianMonth = date.getMonth() + 1
-    const gregorianDay = date.getDate()
-
-    const hijriYear = Math.floor(((gregorianYear - 622) * 33) / 32) + 1
-    const approximateHijriMonth = (gregorianMonth + 8) % 12
-    const hijriDay = gregorianDay
-
-    return {
-      day: hijriDay,
-      month: hijriMonths[approximateHijriMonth],
-      year: hijriYear,
-    }
-  }
-
   // تنسيق الوقت
   const getFormattedTime = (date: Date) => {
     const hours = date.getHours().toString().padStart(2, '0')
@@ -123,14 +82,6 @@ function Dashboard({ onSectionChange }: DashboardProps) {
     void refreshDashboardMetrics()
   }
 
-  const dataLastUpdatedLabel = formatTime(dashboardLastUpdated ?? lastRefreshAt, {
-    locale: 'ar-EG',
-  })
-  const currencyLastUpdatedLabel = formatTime(
-    dashboardMetrics.currency.lastUpdated ?? currency?.lastUpdated ?? null,
-    { locale: 'ar-EG' },
-  )
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted">
       <div className="p-6 space-y-6 max-w-[1920px] mx-auto">
@@ -143,17 +94,6 @@ function Dashboard({ onSectionChange }: DashboardProps) {
               <p className="text-sm text-muted-foreground mb-3">
                 نظرة شاملة على مؤشرات الأداء الرئيسية والعمليات التشغيلية
               </p>
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <Badge variant="outline" className="bg-info/10 text-info border-info/30">
-                  آخر تحديث: {dataLastUpdatedLabel}
-                </Badge>
-                <Badge variant="outline" className="bg-success/10 text-success border-success/30">
-                  العملة: {baseCurrency}
-                </Badge>
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                  أسعار الصرف: {currencyLastUpdatedLabel}
-                </Badge>
-              </div>
             </div>
 
             {/* Date, Time & Actions */}

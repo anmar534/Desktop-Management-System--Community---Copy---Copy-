@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react'
 import { Calendar, CalendarDays, Clock } from 'lucide-react'
 import { cn } from '../utils'
+import { getHijriDate } from '../../../../utils/dateFormatters'
 
 // ============================================
 // Types
@@ -27,12 +28,6 @@ interface DateTimeDisplayProps {
 
 interface GregorianDate {
   dayName: string
-  day: number
-  month: string
-  year: number
-}
-
-interface HijriDate {
   day: number
   month: string
   year: number
@@ -69,42 +64,6 @@ const getGregorianDate = (date: Date): GregorianDate => {
     day: date.getDate(),
     month: arabicMonths[date.getMonth()],
     year: date.getFullYear(),
-  }
-}
-
-/**
- * Get Hijri date information (approximate)
- * الحصول على معلومات التاريخ الهجري (تقريبي)
- */
-const getHijriDate = (date: Date): HijriDate => {
-  const hijriMonths = [
-    'محرم',
-    'صفر',
-    'ربيع الأول',
-    'ربيع الثاني',
-    'جمادى الأولى',
-    'جمادى الثانية',
-    'رجب',
-    'شعبان',
-    'رمضان',
-    'شوال',
-    'ذو القعدة',
-    'ذو الحجة',
-  ]
-
-  const gregorianYear = date.getFullYear()
-  const gregorianMonth = date.getMonth() + 1
-  const gregorianDay = date.getDate()
-
-  // Approximate conversion (for display purposes)
-  const hijriYear = Math.floor(((gregorianYear - 622) * 33) / 32) + 1
-  const approximateHijriMonth = (gregorianMonth + 8) % 12
-  const hijriDay = gregorianDay
-
-  return {
-    day: hijriDay,
-    month: hijriMonths[approximateHijriMonth],
-    year: hijriYear,
   }
 }
 

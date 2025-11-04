@@ -27,9 +27,8 @@ import {
   HardDrive,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { formatCurrency, calculateDaysLeft } from '@/data/centralData'
-import { selectWonTendersCount } from '@/domain/selectors/tenderSelectors'
-import { calculateTenderStats } from '@/calculations/tender'
+import { formatCurrency } from '@/data/centralData'
+import { useTenders } from '@/application/hooks/useTenders'
 import { useFinancialState } from '@/application/context'
 
 type ReportType = 'projects' | 'financial' | 'tenders' | 'clients' | 'kpi' | 'risk' | 'unknown'
@@ -62,17 +61,14 @@ interface ReportsPageProps {
 export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
   const {
     projects: projectsState,
-    tenders: tendersState,
     financial,
     isLoading: providerLoading,
     clients: clientsState,
   } = useFinancialState()
   const { projects } = projectsState
-  const { tenders } = tendersState
   const { financialData, loading: financialLoading } = financial
   const { clients, isLoading: clientsLoading } = clientsState
-
-  const tenderStats = useMemo(() => calculateTenderStats(tenders), [tenders])
+  const { stats: tenderStats } = useTenders()
 
   const systemStats = useMemo(() => {
     const totalProjects = projects.length
@@ -80,16 +76,10 @@ export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
     const completedProjects = projects.filter((project) => project.status === 'completed').length
     const delayedProjects = projects.filter((project) => project.status === 'delayed').length
 
-    const totalTenders = tenders.length
-    const activeStatuses = new Set(['new', 'under_action', 'ready_to_submit'])
-    const activeTenders = tenders.filter((tender) => activeStatuses.has(tender.status)).length
-    const urgentTenders = tenders.reduce((count, tender) => {
-      if (!tender.deadline) return count
-      if (!activeStatuses.has(tender.status)) return count
-      const daysLeft = calculateDaysLeft(tender.deadline)
-      return daysLeft <= 7 && daysLeft >= 0 ? count + 1 : count
-    }, 0)
-    const wonTenders = selectWonTendersCount(tenders)
+    const totalTenders = tenderStats.totalTenders
+    const activeTenders = tenderStats.activeTenders
+    const urgentTenders = tenderStats.urgentTenders
+    const wonTenders = tenderStats.wonTenders
 
     const totalClients = clients.length
     const activeClients = clients.filter((client) => client.status === 'active').length
@@ -133,7 +123,7 @@ export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
         profitability,
       },
     }
-  }, [projects, tenders, clients, financialData])
+  }, [projects, clients, financialData, tenderStats])
 
   const isLoading = providerLoading || clientsLoading || financialLoading
 

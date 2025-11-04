@@ -238,7 +238,7 @@ export class LocalTenderRepository implements ITenderRepository {
         ...payload,
         id: generateId(),
         version: 1, // Start with version 1
-        lastModified: new Date(),
+        lastModified: new Date().toISOString(),
         lastModifiedBy: getCurrentUserId(),
       }),
     )
@@ -291,7 +291,7 @@ export class LocalTenderRepository implements ITenderRepository {
         ...sanitizedUpdates,
         id,
         version: nextVersion,
-        lastModified: new Date(),
+        lastModified: new Date().toISOString(),
         lastModifiedBy: getCurrentUserId(),
       }),
     )

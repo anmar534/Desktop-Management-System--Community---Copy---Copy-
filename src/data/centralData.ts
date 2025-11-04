@@ -141,7 +141,7 @@ export interface Tender {
 
   // ⭐ Phase 5: Optimistic Locking & Conflict Resolution
   version?: number // رقم الإصدار - يزداد مع كل تحديث (يبدأ من 1)
-  lastModified?: Date // تاريخ آخر تعديل
+  lastModified?: string // تاريخ آخر تعديل (ISO 8601 date string)
   lastModifiedBy?: string // معرف المستخدم الذي قام بآخر تعديل
 }
 

@@ -8,6 +8,18 @@ import {
   selectActiveTendersCount,
   selectWonTendersCount,
   selectLostTendersCount,
+  selectSubmittedTendersCount,
+  selectNewTendersCount,
+  selectUnderActionTendersCount,
+  selectExpiredTendersCount,
+  selectUrgentTendersCount,
+  selectActiveNonExpiredCount,
+  selectWinRate,
+  selectWonTendersValue,
+  selectLostTendersValue,
+  selectSubmittedTendersValue,
+  selectTotalSentTendersCount,
+  selectActiveTendersTotal,
 } from '@/domain/selectors/tenderSelectors'
 
 /**
@@ -160,10 +172,29 @@ export function useTenders() {
 
   const stats = useMemo(() => {
     return {
-      totalTenders: tenders.length,
+      // العدادات الأساسية
+      totalTenders: selectActiveTendersTotal(tenders), // المنافسات النشطة فقط (بدون منتهية)
+      allTendersIncludingExpired: tenders.length, // كل المنافسات بما فيها المنتهية
       activeTenders: selectActiveTendersCount(tenders),
       wonTenders: selectWonTendersCount(tenders),
       lostTenders: selectLostTendersCount(tenders),
+      submittedTenders: selectSubmittedTendersCount(tenders),
+      totalSentTenders: selectTotalSentTendersCount(tenders), // المُرسلة + الفائزة + الخاسرة
+
+      // عدادات إضافية
+      newTenders: selectNewTendersCount(tenders),
+      underActionTenders: selectUnderActionTendersCount(tenders),
+      expiredTenders: selectExpiredTendersCount(tenders),
+      urgentTenders: selectUrgentTendersCount(tenders),
+      activeNonExpired: selectActiveNonExpiredCount(tenders),
+
+      // الحسابات المالية
+      wonValue: selectWonTendersValue(tenders),
+      lostValue: selectLostTendersValue(tenders),
+      submittedValue: selectSubmittedTendersValue(tenders),
+
+      // النسب المئوية
+      winRate: selectWinRate(tenders),
     }
   }, [tenders])
 

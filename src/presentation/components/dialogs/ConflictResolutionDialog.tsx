@@ -13,6 +13,7 @@
  * - Auto-merge for non-critical fields
  */
 
+import { useEffect, useRef } from 'react'
 import type { Tender } from '@/data/centralData'
 import { ConflictError } from '@/domain/errors/ConflictError'
 
@@ -107,17 +108,71 @@ export function ConflictResolutionDialog({
   onCancel,
   isOpen,
 }: ConflictResolutionDialogProps): JSX.Element {
-  const { current, attempted } = error.details
-  const conflictingFields = error.getConflictingFields()
-  const canAutoMerge = error.canAutoMerge()
+  // Refs for accessibility (must be called unconditionally)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const previouslyFocusedElement = useRef<HTMLElement | null>(null)
 
+  // Null-safety guard: ensure details exists before destructuring
+  const details = error.details
+  const current = details?.current
+  const attempted = details?.attempted
+
+  // Additional safety check - extract these before hooks
+  const hasValidData = !!(details && current && attempted)
+  const conflictingFields = hasValidData ? error.getConflictingFields() : []
+  const canAutoMerge = hasValidData ? error.canAutoMerge() : false
+
+  // Focus management
+  useEffect(() => {
+    if (isOpen && hasValidData) {
+      // Store currently focused element
+      previouslyFocusedElement.current = document.activeElement as HTMLElement
+
+      // Focus dialog container
+      dialogRef.current?.focus()
+
+      // Escape key handler
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onCancel()
+        }
+      }
+
+      document.addEventListener('keydown', handleEscape)
+
+      return () => {
+        document.removeEventListener('keydown', handleEscape)
+
+        // Restore focus to previously focused element
+        if (previouslyFocusedElement.current) {
+          previouslyFocusedElement.current.focus()
+        }
+      }
+    }
+  }, [isOpen, onCancel, hasValidData])
+
+  // Early returns after all hooks
   if (!isOpen) {
+    return <></>
+  }
+
+  if (!hasValidData) {
+    console.error(
+      'ConflictResolutionDialog: Missing required data (details, current, or attempted)',
+    )
     return <></>
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="conflict-dialog-title"
+        tabIndex={-1}
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 text-white">
           <div className="flex items-center gap-3">
@@ -132,7 +187,9 @@ export function ConflictResolutionDialog({
               </svg>
             </div>
             <div>
-              <h2 className="text-xl font-bold">تعارض في التحديث - Update Conflict</h2>
+              <h2 id="conflict-dialog-title" className="text-xl font-bold">
+                تعارض في التحديث - Update Conflict
+              </h2>
               <p className="text-sm text-white/90 mt-1">تم تعديل المنافسة من قبل مستخدم آخر</p>
             </div>
           </div>
@@ -281,6 +338,7 @@ export function ConflictResolutionDialog({
           <div className="flex items-center gap-3">
             {/* Cancel */}
             <button
+              type="button"
               onClick={onCancel}
               className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
@@ -289,6 +347,7 @@ export function ConflictResolutionDialog({
 
             {/* Keep Theirs (Reload) */}
             <button
+              type="button"
               onClick={onKeepTheirs}
               className="px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-300 dark:border-blue-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
             >
@@ -308,6 +367,7 @@ export function ConflictResolutionDialog({
             {/* Auto-Merge (if possible) */}
             {canAutoMerge && onAutoMerge && (
               <button
+                type="button"
                 onClick={onAutoMerge}
                 className="px-4 py-2 text-sm font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
               >
@@ -327,6 +387,7 @@ export function ConflictResolutionDialog({
 
             {/* Keep Mine (Force Save) */}
             <button
+              type="button"
               onClick={onKeepMine}
               className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors shadow-lg"
             >

@@ -85,7 +85,7 @@ export function usePricingValidation({
         if (row.price !== undefined && row.price <= 0) {
           warnings.push(`يوجد صف مواد بسعر صفر أو سالب: ${row.description || 'بدون وصف'}`)
         }
-        if (row.quantity <= 0) {
+        if (row.quantity !== undefined && row.quantity <= 0) {
           warnings.push(`يوجد صف مواد بكمية صفر أو سالبة: ${row.description || 'بدون وصف'}`)
         }
       })
@@ -141,7 +141,7 @@ export function usePricingValidation({
     const errors: string[] = []
     const warnings: string[] = []
 
-    // Check if all items are priced
+    // Check if all items are priced (informational only - completion tracked separately)
     const unpricedItems = quantityItems.filter((item) => {
       const pricing = pricingData.get(item.id)
       return !pricing || !pricing.completed
@@ -177,7 +177,7 @@ export function usePricingValidation({
     })
 
     return {
-      isValid: errors.length === 0 && unpricedItems.length === 0,
+      isValid: errors.length === 0,
       errors,
       warnings,
     }

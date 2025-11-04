@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import type { PricingData, PricingPercentages } from '@/shared/types/pricing'
 import type { QuantityItem } from '@/presentation/pages/Tenders/TenderPricing/types'
 import {
@@ -26,21 +27,23 @@ interface UsePricingFormOptions {
 interface UsePricingFormReturn {
   // Current pricing state
   currentPricing: PricingData
-  setCurrentPricing: (pricing: PricingData) => void
+  setCurrentPricing: Dispatch<SetStateAction<PricingData>>
 
   // Default percentages
   defaultPercentages: PricingPercentages
-  setDefaultPercentages: (percentages: PricingPercentages) => void
+  setDefaultPercentages: Dispatch<SetStateAction<PricingPercentages>>
   defaultPercentagesInput: {
     administrative: string
     operational: string
     profit: string
   }
-  setDefaultPercentagesInput: (input: {
-    administrative: string
-    operational: string
-    profit: string
-  }) => void
+  setDefaultPercentagesInput: Dispatch<
+    SetStateAction<{
+      administrative: string
+      operational: string
+      profit: string
+    }>
+  >
 
   // Form state
   isFormValid: boolean
@@ -94,6 +97,7 @@ export function usePricingForm({
 
   // Dirty tracking
   const [isDirty, setIsDirty] = useState(false)
+  const [cleanPricing, setCleanPricing] = useState<PricingData | null>(null)
 
   // Load pricing data for current item
   const loadItemPricing = useCallback(
@@ -101,18 +105,23 @@ export function usePricingForm({
       const saved = pricingData.get(itemId)
       if (saved) {
         setCurrentPricing(saved)
+        setCleanPricing(saved)
+        setIsDirty(false)
       } else {
-        setCurrentPricing({
+        const emptyPricing = {
           ...EMPTY_PRICING,
           additionalPercentages: {
-            administrative: defaultPercentages.administrative,
-            operational: defaultPercentages.operational,
-            profit: defaultPercentages.profit,
+            administrative: DEFAULT_PRICING_PERCENTAGES.administrative,
+            operational: DEFAULT_PRICING_PERCENTAGES.operational,
+            profit: DEFAULT_PRICING_PERCENTAGES.profit,
           },
-        })
+        }
+        setCurrentPricing(emptyPricing)
+        setCleanPricing(emptyPricing)
+        setIsDirty(false)
       }
     },
-    [pricingData, defaultPercentages],
+    [pricingData],
   )
 
   // Load pricing when current item changes
@@ -139,11 +148,13 @@ export function usePricingForm({
     return hasDetailedPricing || hasDirectPricing
   }, [currentPricing])
 
-  // Track form changes
+  // Track form changes - only mark dirty when there's an actual change from clean state
   useEffect(() => {
-    setIsDirty(true)
-    onDirty?.()
-  }, [currentPricing, onDirty])
+    if (cleanPricing && currentPricing !== cleanPricing) {
+      setIsDirty(true)
+      onDirty?.()
+    }
+  }, [currentPricing, cleanPricing, onDirty])
 
   // Reset form
   const resetForm = useCallback(() => {

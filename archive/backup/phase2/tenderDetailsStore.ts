@@ -330,7 +330,10 @@ export const useTenderDetailsStore = create<TenderDetailsStore>()(
 
     // Reset store
     reset: () => {
-      set(initialState)
+      set({
+        ...initialState,
+        dirtyFields: new Set(), // Create fresh Set to avoid sharing mutable reference
+      })
     },
   })),
 )

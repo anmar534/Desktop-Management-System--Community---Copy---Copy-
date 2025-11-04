@@ -9,6 +9,7 @@
  */
 
 const { readFileSync, writeFileSync, existsSync } = require('fs')
+const { readFile, writeFile, access } = require('fs').promises
 const { join } = require('path')
 const { app } = require('electron')
 
@@ -144,18 +145,33 @@ async function createFullBackup() {
       },
     }
 
-    // انسخ ملف المنافسات
-    if (existsSync(tendersPath)) {
-      backup.files.tenders = JSON.parse(readFileSync(tendersPath, 'utf-8'))
+    // انسخ ملف المنافسات (async)
+    try {
+      await access(tendersPath)
+      const tendersData = await readFile(tendersPath, 'utf-8')
+      backup.files.tenders = JSON.parse(tendersData)
+    } catch (_error) {
+      // File doesn't exist or can't be read - skip
+      console.log(`⚠️ Tenders file not found or inaccessible: ${tendersPath}`)
     }
 
-    // انسخ الإعدادات
-    if (existsSync(storePath)) {
-      backup.files.config = JSON.parse(readFileSync(storePath, 'utf-8'))
+    // انسخ الإعدادات (async)
+    try {
+      const configData = await readFile(storePath, 'utf-8')
+      backup.files.config = JSON.parse(configData)
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        console.log(`⚠️ Config file not found or inaccessible: ${storePath}`)
+      } else if (error instanceof SyntaxError) {
+        console.error(`❌ Failed to parse config JSON from ${storePath}:`, error)
+        throw error
+      } else {
+        console.log(`⚠️ Config file not found or inaccessible: ${storePath}`)
+      }
     }
 
-    // احفظ النسخة الاحتياطية
-    writeFileSync(backupFile, JSON.stringify(backup, null, 2), 'utf-8')
+    // احفظ النسخة الاحتياطية (async)
+    await writeFile(backupFile, JSON.stringify(backup, null, 2), 'utf-8')
 
     console.log(`✅ Backup created successfully`)
 
@@ -173,22 +189,57 @@ async function restoreFromBackup(backupPath) {
   console.log(`🔄 Restoring from backup: ${backupPath}`)
 
   try {
-    const backup = JSON.parse(readFileSync(backupPath, 'utf-8'))
+    // Read backup file asynchronously
+    const backupData = await readFile(backupPath, 'utf-8')
+    const backup = JSON.parse(backupData)
+    
+    // Validate backup structure
+    if (!backup || typeof backup !== 'object') {
+      const errorMsg = 'Invalid backup: backup is not an object'
+      console.error(`❌ ${errorMsg}`)
+      throw new Error(errorMsg)
+    }
+    
+    if (!backup.files || typeof backup.files !== 'object') {
+      const errorMsg = 'Invalid backup: backup.files is missing or not an object'
+      console.error(`❌ ${errorMsg}`)
+      throw new Error(errorMsg)
+    }
+    
     const dataPath = getDataPath()
+    let restoredCount = 0
 
-    // استعد ملف المنافسات
-    if (backup.files.tenders) {
-      const tendersPath = join(dataPath, 'tenders.json')
-      writeFileSync(tendersPath, JSON.stringify(backup.files.tenders, null, 2), 'utf-8')
+    // استعد ملف المنافسات (async)
+    if (backup.files.tenders !== undefined) {
+      if (!Array.isArray(backup.files.tenders)) {
+        console.warn('⚠️ Skipping tenders restore: not an array')
+      } else {
+        const tendersPath = join(dataPath, 'tenders.json')
+        await writeFile(tendersPath, JSON.stringify(backup.files.tenders, null, 2), 'utf-8')
+        restoredCount++
+      }
+    } else {
+      console.warn('⚠️ No tenders data in backup')
     }
 
-    // استعد الإعدادات
-    if (backup.files.config) {
-      const storePath = join(dataPath, 'config.json')
-      writeFileSync(storePath, JSON.stringify(backup.files.config, null, 2), 'utf-8')
+    // استعد الإعدادات (async)
+    if (backup.files.config !== undefined) {
+      if (typeof backup.files.config !== 'object' || backup.files.config === null || Array.isArray(backup.files.config)) {
+        console.warn('⚠️ Skipping config restore: not a plain object')
+      } else {
+        const storePath = join(dataPath, 'config.json')
+        await writeFile(storePath, JSON.stringify(backup.files.config, null, 2), 'utf-8')
+        restoredCount++
+      }
+    } else {
+      console.warn('⚠️ No config data in backup')
     }
 
-    console.log('✅ Backup restored successfully')
+    if (restoredCount === 0) {
+      console.warn('⚠️ No files were restored from backup')
+    } else {
+      console.log(`✅ Backup restored successfully (${restoredCount} file(s))`)
+    }
   } catch (error) {
     console.error('❌ Failed to restore backup:', error)
     throw error
@@ -224,7 +275,7 @@ const MIGRATIONS = [
       } catch (error) {
         return {
           success: false,
-          error: error,
+          error: (error && error.message) ? error.message : String(error),
         }
       }
     },
@@ -289,10 +340,14 @@ async function checkAndRunMigrations() {
     backupPath = await createFullBackup()
   } catch (error) {
     console.error('❌ Failed to create backup - aborting migrations')
+    console.error(error) // Log full error for debugging
     return {
       success: false,
       migrationsRun: 0,
-      error: error,
+      error: {
+        message: String(error?.message || error),
+        name: String(error?.name || 'Error'),
+      },
     }
   }
 
@@ -310,7 +365,7 @@ async function checkAndRunMigrations() {
       if (!result.success) {
         console.error(`❌ Migration failed: ${migration.name}`)
         if (result.error) {
-          console.error(`   Error: ${result.error.message}`)
+          console.error(`   Error:`, result.error) // Log full error for debugging
         }
 
         // استعد من النسخة الاحتياطية
@@ -321,7 +376,10 @@ async function checkAndRunMigrations() {
           success: false,
           migrationsRun,
           failedMigration: migration.name,
-          error: result.error,
+          error: {
+            message: String(result.error?.message || result.error),
+            name: String(result.error?.name || 'MigrationError'),
+          },
           backupPath,
         }
       }
@@ -342,7 +400,7 @@ async function checkAndRunMigrations() {
       migrationsRun++
     } catch (error) {
       console.error(`💥 Unexpected error in migration: ${migration.name}`)
-      console.error(error)
+      console.error(error) // Log full error with stack trace for debugging
 
       // استعد من النسخة الاحتياطية
       console.log('\n🔄 Rolling back to backup...')
@@ -352,7 +410,10 @@ async function checkAndRunMigrations() {
         success: false,
         migrationsRun,
         failedMigration: migration.name,
-        error: error,
+        error: {
+          message: String(error?.message || error),
+          name: String(error?.name || 'Error'),
+        },
         backupPath,
       }
     }

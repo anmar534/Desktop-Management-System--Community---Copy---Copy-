@@ -154,14 +154,10 @@ export class TenderAnalyticsService {
     const wonCount = selectWonTendersCount(tenders)
     const lostCount = selectLostTendersCount(tenders)
 
-    // Calculate active value (tenders that are not won/lost/expired/cancelled)
+    // Calculate active value (tenders that are truly active, not yet submitted)
     const activeValue = tenders
       .filter(
-        (t) =>
-          t.status === 'new' ||
-          t.status === 'under_action' ||
-          t.status === 'ready_to_submit' ||
-          t.status === 'submitted',
+        (t) => t.status === 'new' || t.status === 'under_action' || t.status === 'ready_to_submit',
       )
       .reduce((sum, t) => sum + (t.value || 0), 0)
 
@@ -247,14 +243,17 @@ export class TenderAnalyticsService {
     const now = Date.now()
     const periodStart = now - periodDays * 24 * 60 * 60 * 1000
 
-    const recentTenders = tenders.filter((t) => {
-      const createdAt = new Date(t.submissionDate || now).getTime()
+    // Filter tenders with valid createdAt timestamps
+    const tendersWithCreatedAt = tenders.filter((t) => t.createdAt)
+
+    const recentTenders = tendersWithCreatedAt.filter((t) => {
+      const createdAt = new Date(t.createdAt!).getTime()
       return createdAt >= periodStart
     })
 
     const previousPeriodStart = periodStart - periodDays * 24 * 60 * 60 * 1000
-    const previousTenders = tenders.filter((t) => {
-      const createdAt = new Date(t.submissionDate || now).getTime()
+    const previousTenders = tendersWithCreatedAt.filter((t) => {
+      const createdAt = new Date(t.createdAt!).getTime()
       return createdAt >= previousPeriodStart && createdAt < periodStart
     })
 

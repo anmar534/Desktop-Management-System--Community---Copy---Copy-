@@ -5,7 +5,6 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import React from 'react'
 import { Tenders } from '@/presentation/pages/Tenders/TendersPage'
 import type { Tender } from '@/data/centralData'
 
@@ -360,7 +359,7 @@ describe('TendersPage - Pagination UI Tests', () => {
   })
 
   describe('Accessibility', () => {
-    it('should have proper ARIA labels on navigation buttons', () => {
+    it('should set aria-disabled on navigation buttons', () => {
       render(<Tenders onSectionChange={mockOnSectionChange} />)
 
       const prevButton = screen.getByText('السابق')
@@ -388,22 +387,10 @@ describe('TendersPage - Pagination UI Tests', () => {
     })
   })
 
-  describe('Performance', () => {
-    it('should not re-render entire page when changing pages', async () => {
-      render(<Tenders onSectionChange={mockOnSectionChange} />)
-
-      const renderCount = vi.fn()
-      vi.spyOn(React, 'useEffect').mockImplementation(renderCount)
-
-      const nextButton = screen.getByText('التالي')
-      fireEvent.click(nextButton)
-
-      await waitFor(() => {
-        expect(screen.getByText(/الصفحة 2/)).toBeInTheDocument()
-      })
-
-      // Should have minimal re-renders
-      expect(renderCount).toHaveBeenCalledTimes(1)
-    })
-  })
+  // Note: Performance and re-render testing removed.
+  // Valid performance testing requires different approaches:
+  // - React DevTools Profiler API
+  // - Spying on component before render
+  // - Tracking specific state updates
+  // The previous test was fundamentally broken (spied after render, broke useEffect).
 })

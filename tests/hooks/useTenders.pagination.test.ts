@@ -198,7 +198,9 @@ describe('useTenders - Pagination Tests', () => {
       })
 
       // Should still be on page 1
-      expect(result.current.pagination.page).toBe(1)
+      await waitFor(() => {
+        expect(result.current.pagination.page).toBe(1)
+      })
     })
 
     it('should load specific page', async () => {
@@ -310,7 +312,9 @@ describe('useTenders - Pagination Tests', () => {
         result.current.nextPage()
       })
 
-      expect(result.current.pagination.page).toBe(1)
+      await waitFor(() => {
+        expect(result.current.pagination.page).toBe(1)
+      })
     })
 
     it('should handle exact multiple of page size', async () => {
