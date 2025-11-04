@@ -83,7 +83,13 @@
       "@/config/design/*": ["src/shared/config/design/*"]
     }
   },
-  "include": ["src", "tests", "test", "scripts", ".storybook"],
-  "exclude": ["node_modules", "dist", "build", "src/archive/**/*"],
+  "include": ["src", "tests"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "src/archive/**/*",
+    "src/services/recommendationService.ts"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

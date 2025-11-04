@@ -122,7 +122,7 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <>
       {/* بطاقة المنافسات العاجلة */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -416,6 +416,6 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
+    </>
   )
 }

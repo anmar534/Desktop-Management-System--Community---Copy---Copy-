@@ -54,19 +54,23 @@ interface UsePricingFormReturn {
   loadItemPricing: (itemId: string) => void
 }
 
-const EMPTY_PRICING: PricingData = {
+/**
+ * Helper to create empty pricing with given percentages
+ * Ensures consistent initialization across the hook
+ */
+const createEmptyPricing = (percentages: PricingPercentages): PricingData => ({
   materials: [],
   labor: [],
   equipment: [],
   subcontractors: [],
   technicalNotes: '',
   additionalPercentages: {
-    administrative: DEFAULT_PRICING_PERCENTAGES.administrative,
-    operational: DEFAULT_PRICING_PERCENTAGES.operational,
-    profit: DEFAULT_PRICING_PERCENTAGES.profit,
+    administrative: percentages.administrative,
+    operational: percentages.operational,
+    profit: percentages.profit,
   },
   completed: false,
-}
+})
 
 /**
  * Custom hook for managing pricing form state
@@ -76,7 +80,7 @@ export function usePricingForm({
   pricingData,
   onDirty,
 }: UsePricingFormOptions): UsePricingFormReturn {
-  // Default percentages state
+  // Default percentages state - single source of truth for default values
   const [defaultPercentages, setDefaultPercentages] = useState<PricingPercentages>(
     DEFAULT_PRICING_PERCENTAGES,
   )
@@ -85,15 +89,10 @@ export function usePricingForm({
     percentagesToInputStrings(DEFAULT_PRICING_PERCENTAGES),
   )
 
-  // Current pricing state
-  const [currentPricing, setCurrentPricing] = useState<PricingData>({
-    ...EMPTY_PRICING,
-    additionalPercentages: {
-      administrative: defaultPercentages.administrative,
-      operational: defaultPercentages.operational,
-      profit: defaultPercentages.profit,
-    },
-  })
+  // Current pricing state - initialized with default percentages
+  const [currentPricing, setCurrentPricing] = useState<PricingData>(() =>
+    createEmptyPricing(DEFAULT_PRICING_PERCENTAGES),
+  )
 
   // Dirty tracking
   const [isDirty, setIsDirty] = useState(false)
@@ -108,20 +107,14 @@ export function usePricingForm({
         setCleanPricing(saved)
         setIsDirty(false)
       } else {
-        const emptyPricing = {
-          ...EMPTY_PRICING,
-          additionalPercentages: {
-            administrative: DEFAULT_PRICING_PERCENTAGES.administrative,
-            operational: DEFAULT_PRICING_PERCENTAGES.operational,
-            profit: DEFAULT_PRICING_PERCENTAGES.profit,
-          },
-        }
+        // Use defaultPercentages state as single source of truth
+        const emptyPricing = createEmptyPricing(defaultPercentages)
         setCurrentPricing(emptyPricing)
         setCleanPricing(emptyPricing)
         setIsDirty(false)
       }
     },
-    [pricingData],
+    [pricingData, defaultPercentages],
   )
 
   // Load pricing when current item changes
@@ -156,16 +149,9 @@ export function usePricingForm({
     }
   }, [currentPricing, cleanPricing, onDirty])
 
-  // Reset form
+  // Reset form - uses defaultPercentages as single source of truth
   const resetForm = useCallback(() => {
-    setCurrentPricing({
-      ...EMPTY_PRICING,
-      additionalPercentages: {
-        administrative: defaultPercentages.administrative,
-        operational: defaultPercentages.operational,
-        profit: defaultPercentages.profit,
-      },
-    })
+    setCurrentPricing(createEmptyPricing(defaultPercentages))
     setIsDirty(false)
   }, [defaultPercentages])
 

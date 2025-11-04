@@ -9,7 +9,7 @@
  */
 
 const { readFileSync, writeFileSync, existsSync } = require('fs')
-const { readFile, writeFile, access } = require('fs').promises
+const { readFile, writeFile } = require('fs').promises
 const { join } = require('path')
 const { app } = require('electron')
 
@@ -147,12 +147,17 @@ async function createFullBackup() {
 
     // انسخ ملف المنافسات (async)
     try {
-      await access(tendersPath)
       const tendersData = await readFile(tendersPath, 'utf-8')
       backup.files.tenders = JSON.parse(tendersData)
-    } catch (_error) {
-      // File doesn't exist or can't be read - skip
-      console.log(`⚠️ Tenders file not found or inaccessible: ${tendersPath}`)
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        console.log(`⚠️ Tenders file not found: ${tendersPath}`)
+      } else if (error instanceof SyntaxError) {
+        console.error(`❌ Failed to parse tenders JSON from ${tendersPath}:`, error.message)
+        throw error
+      } else {
+        console.error(`⚠️ Failed to read tenders file ${tendersPath}:`, error)
+      }
     }
 
     // انسخ الإعدادات (async)

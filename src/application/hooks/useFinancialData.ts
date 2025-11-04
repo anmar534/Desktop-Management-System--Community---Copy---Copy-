@@ -282,10 +282,11 @@ export const useFinancialData = (): UseFinancialDataReturn => {
         roi: (grossProfit / Math.max(totalExpenses, 1)) * 100,
       },
       kpis: {
-        revenuePerProject: totalRevenue / Math.max(projects.length, 1),
+        revenuePerProject: projects.length > 0 ? totalRevenue / projects.length : 0,
         costEfficiency: costEfficiency,
         paymentCycle: 45, // متوسط دورة التحصيل بالأيام
-        budgetVariance: (totalExpenses / totalRevenue - 0.7) * 100, // انحراف عن ميزانية مستهدفة 70%
+        budgetVariance:
+          totalRevenue > 0 && totalExpenses > 0 ? (totalExpenses / totalRevenue - 0.7) * 100 : 0, // انحراف عن ميزانية مستهدفة 70%
       },
     }
   }, [expenses, projects, getProjectsWithActualCosts, tenders])

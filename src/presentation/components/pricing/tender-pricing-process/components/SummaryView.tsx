@@ -70,6 +70,7 @@ interface SummaryViewProps {
     }>
   >
   setDefaultPercentages: React.Dispatch<React.SetStateAction<DefaultPercentages>>
+  saveDefaultPercentages: (newPercentages: DefaultPercentages) => Promise<void>
   applyDefaultPercentagesToExistingItems: () => void
   setCurrentItemIndex: (index: number) => void
   setCurrentView: (view: 'summary' | 'pricing' | 'technical') => void
@@ -114,6 +115,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   defaultPercentagesInput,
   setDefaultPercentagesInput,
   setDefaultPercentages,
+  saveDefaultPercentages,
   applyDefaultPercentagesToExistingItems,
   setCurrentItemIndex,
   setCurrentView,
@@ -243,7 +245,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                       const clamped = isNaN(num)
                         ? defaultPercentages.administrative
                         : Math.max(0, Math.min(100, num))
-                      setDefaultPercentages((prev) => ({ ...prev, administrative: clamped }))
+                      const newPercentages = { ...defaultPercentages, administrative: clamped }
+                      setDefaultPercentages(newPercentages)
+                      saveDefaultPercentages(newPercentages)
                     }}
                     className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                     aria-label="النسبة الإدارية الافتراضية"
@@ -264,7 +268,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                       const clamped = isNaN(num)
                         ? defaultPercentages.operational
                         : Math.max(0, Math.min(100, num))
-                      setDefaultPercentages((prev) => ({ ...prev, operational: clamped }))
+                      const newPercentages = { ...defaultPercentages, operational: clamped }
+                      setDefaultPercentages(newPercentages)
+                      saveDefaultPercentages(newPercentages)
                     }}
                     className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                     aria-label="النسبة التشغيلية الافتراضية"
@@ -285,7 +291,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                       const clamped = isNaN(num)
                         ? defaultPercentages.profit
                         : Math.max(0, Math.min(100, num))
-                      setDefaultPercentages((prev) => ({ ...prev, profit: clamped }))
+                      const newPercentages = { ...defaultPercentages, profit: clamped }
+                      setDefaultPercentages(newPercentages)
+                      saveDefaultPercentages(newPercentages)
                     }}
                     className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                     aria-label="نسبة الربح الافتراضية"

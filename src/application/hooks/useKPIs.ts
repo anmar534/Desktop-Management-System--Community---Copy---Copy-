@@ -84,14 +84,17 @@ export function useKPIs(): UseKPIsResult {
   const { metrics, isLoading } = useKPIMetrics()
   const { selectedIds, setSelectedIds, maxCards } = useDashboardPreferences()
 
-  const yearlyGoals = useMemo(() => goals.filter((goal) => goal.type === 'yearly'), [goals])
+  // عرض جميع الأهداف (شهرية وسنوية)
+  const allGoals = useMemo(() => goals, [goals])
 
   const allKpis = useMemo(() => {
-    console.info('[useKPIs] Mapping yearly goals to KPI cards', {
-      yearlyGoalsCount: yearlyGoals.length,
-      categories: yearlyGoals.map((goal) => goal.category),
+    console.info('[useKPIs] Mapping goals to KPI cards', {
+      totalGoalsCount: allGoals.length,
+      monthlyCount: allGoals.filter((g) => g.type === 'monthly').length,
+      yearlyCount: allGoals.filter((g) => g.type === 'yearly').length,
+      categories: allGoals.map((goal) => goal.category),
     })
-    return yearlyGoals.map((goal) => {
+    return allGoals.map((goal) => {
       const metadata = getCategoryMetadata(goal.category)
       const currentValue = resolveKpiCurrentValue(goal.category, metrics, goal.currentValue ?? 0)
       const target = getGoalTarget(goal, metadata)
@@ -118,7 +121,7 @@ export function useKPIs(): UseKPIsResult {
         metadata,
       }
     })
-  }, [yearlyGoals, metrics])
+  }, [allGoals, metrics])
 
   const availableIds = useMemo(() => allKpis.map((kpi) => kpi.id), [allKpis])
 
@@ -171,7 +174,8 @@ export function useKPIs(): UseKPIsResult {
   useEffect(() => {
     console.info('[useKPIs] Visible KPI cards updated', {
       totalGoals: goals.length,
-      yearlyGoals: yearlyGoals.length,
+      monthlyGoals: goals.filter((g) => g.type === 'monthly').length,
+      yearlyGoals: goals.filter((g) => g.type === 'yearly').length,
       allCards: allKpis.length,
       visible: visibleKpis.length,
       selected: defaultSelection,
@@ -179,12 +183,13 @@ export function useKPIs(): UseKPIsResult {
         id: card.id,
         title: card.title,
         category: card.category,
+        type: card.goal.type,
         current: card.current,
         target: card.target,
         unit: card.unit,
       })),
     })
-  }, [goals.length, yearlyGoals.length, allKpis, visibleKpis, defaultSelection])
+  }, [goals, allKpis, visibleKpis, defaultSelection])
 
   return {
     allKpis,

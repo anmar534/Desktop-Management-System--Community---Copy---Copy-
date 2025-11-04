@@ -44,10 +44,22 @@ export function TenderPerformanceCards() {
   // Get monthly tenders target from Development goals
   const monthlyTendersGoal = useMemo(() => {
     const tenderGoal = goals.find((g) => g.category === 'tenders' && g.type === 'monthly')
-    const targetKey = `targetValue${currentYear}` as keyof typeof tenderGoal
-    return tenderGoal && typeof tenderGoal[targetKey] === 'number'
-      ? (tenderGoal[targetKey] as number)
-      : 0
+
+    if (!tenderGoal) {
+      return 0
+    }
+
+    const targetKey = `targetValue${currentYear}` as const
+
+    // Runtime guard: check if the property exists and is a number
+    if (
+      Object.prototype.hasOwnProperty.call(tenderGoal, targetKey) &&
+      typeof tenderGoal[targetKey as keyof typeof tenderGoal] === 'number'
+    ) {
+      return tenderGoal[targetKey as keyof typeof tenderGoal] as number
+    }
+
+    return 0
   }, [goals, currentYear])
 
   // Calculate current month submitted tenders (no filtering logic - just count submitted this month)
@@ -93,8 +105,12 @@ export function TenderPerformanceCards() {
     return total
   }, [tenders])
 
-  const cards = useMemo(
-    () => (
+  const cards = useMemo(() => {
+    // Safe win rate calculation with guard
+    const safeWinRate = Number.isFinite(tenderStats.winRate) ? tenderStats.winRate : 0
+    const winRateFormatted = safeWinRate.toFixed(1)
+
+    return (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {/* Card 1: Monthly Submitted Tenders Count */}
         <DetailCard
@@ -119,14 +135,14 @@ export function TenderPerformanceCards() {
         {/* Card 2: Win Rate Percentage */}
         <DetailCard
           title="نسبة الفوز بالمنافسات"
-          value={`${tenderStats.winRate.toFixed(1)}%`}
+          value={`${winRateFormatted}%`}
           subtitle={`${tenderStats.wonTenders} فوز من ${tenderStats.totalSentTenders} منافسة`}
           icon={Trophy}
           color="text-success"
           bgColor="bg-success/10"
           trend={{
-            direction: tenderStats.winRate >= 50 ? 'up' : 'down',
-            value: `${tenderStats.winRate.toFixed(1)}%`,
+            direction: safeWinRate >= 50 ? 'up' : 'down',
+            value: `${winRateFormatted}%`,
           }}
         />
 
@@ -150,20 +166,19 @@ export function TenderPerformanceCards() {
           bgColor="bg-info/10"
         />
       </div>
-    ),
-    [
-      currentMonthSubmittedCount,
-      monthlyTendersGoal,
-      tenderStats.winRate,
-      tenderStats.wonTenders,
-      tenderStats.totalSentTenders,
-      tenderStats.submittedValue,
-      tenderStats.submittedTenders,
-      totalBookletsCost,
-      currentYear,
-      formatCurrencyValue,
-    ],
-  )
+    )
+  }, [
+    currentMonthSubmittedCount,
+    monthlyTendersGoal,
+    tenderStats.winRate,
+    tenderStats.wonTenders,
+    tenderStats.totalSentTenders,
+    tenderStats.submittedValue,
+    tenderStats.submittedTenders,
+    totalBookletsCost,
+    currentYear,
+    formatCurrencyValue,
+  ])
 
   return cards
 }

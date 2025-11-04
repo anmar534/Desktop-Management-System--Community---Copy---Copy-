@@ -216,8 +216,13 @@ export class PricingOrchestrator {
           })),
       })
 
-      // Step 1: Save pricing data
-      await pricingDataRepository.savePricing(tenderId, pricingData, defaultPercentages)
+      // ⚠️ REMOVED: Save pricing data with percentages
+      // النسب تُحفظ في saveDefaultPercentages فقط
+      // هنا نحفظ التسعير بدون لمس النسب الافتراضية
+
+      // Step 1: Save pricing data ONLY (without touching percentages)
+      // نحتاج pricingDataRepository جديد يحفظ التسعير فقط بدون النسب
+      await this.savePricingDataOnly(tenderId, pricingData, defaultPercentages)
 
       // Step 2: Update BOQ repository
       await boqSyncRepository.syncPricingToBOQ(
@@ -228,31 +233,27 @@ export class PricingOrchestrator {
         options,
       )
 
-      // Step 3: Update tender status and progress
-      const completedCount = Array.from(pricingData.values()).filter(
-        (p) => p?.completed === true,
-      ).length
+      // Step 3: Update tender status - SKIP for now
+      // ⚠️ تحديث الحالة يُطلق TENDER_UPDATED مما يسبب إعادة تحميل الصفحة
+      // نُعلّق هذا ونُحدّث الحالة فقط عند "اعتماد" العرض (Submit)
 
-      // Calculate total value using TenderStatusRepository helper
-      const totalValue = tenderStatusRepository.calculateTotalValue(
-        pricingData,
-        quantityItems,
-        defaultPercentages,
-      )
+      // const completedCount = Array.from(pricingData.values()).filter(
+      //   (p) => p?.completed === true,
+      // ).length
 
-      console.log('[PricingOrchestrator] Calculated totalValue:', {
-        totalValue,
-        completedCount,
-        totalCount: quantityItems.length,
-      })
+      // const totalValue = tenderStatusRepository.calculateTotalValue(
+      //   pricingData,
+      //   quantityItems,
+      //   defaultPercentages,
+      // )
 
-      await tenderStatusRepository.updateTenderStatus(
-        tenderId,
-        completedCount,
-        quantityItems.length,
-        totalValue,
-        { allowRefresh: true }, // Allow refresh from Save button
-      )
+      // await tenderStatusRepository.updateTenderStatus(
+      //   tenderId,
+      //   completedCount,
+      //   quantityItems.length,
+      //   totalValue,
+      //   { allowRefresh: false }, // Don't reload page during pricing
+      // )
 
       recordAuditEvent({
         category: 'tender-pricing',
@@ -274,6 +275,40 @@ export class PricingOrchestrator {
       })
       throw error
     }
+  }
+
+  /**
+   * Save pricing data ONLY without touching default percentages
+   *
+   * @private
+   * @async
+   * @description
+   * This method saves pricing data without modifying default percentages.
+   * Default percentages are managed separately by saveDefaultPercentages.
+   * This prevents race conditions and ensures percentages are not overwritten.
+   */
+  private async savePricingDataOnly(
+    tenderId: string,
+    pricingData: Map<string, PricingData>,
+    defaultPercentages: PricingPercentages,
+  ): Promise<void> {
+    // ⚠️ CRITICAL: Load EXISTING percentages from storage, NOT the ones passed in
+    // The passed percentages might be stale from closure
+    const existingPercentages = await pricingDataRepository.getDefaultPercentages(tenderId)
+
+    console.log('[PricingOrchestrator.savePricingDataOnly] Using percentages:', {
+      tenderId,
+      existingPercentages,
+      passedPercentages: defaultPercentages,
+      willUse: existingPercentages || defaultPercentages,
+    })
+
+    // Save pricing with EXISTING percentages (don't overwrite)
+    await pricingDataRepository.savePricing(
+      tenderId,
+      pricingData,
+      existingPercentages || defaultPercentages, // Fallback to passed if none exist
+    )
   }
 
   // ===========================

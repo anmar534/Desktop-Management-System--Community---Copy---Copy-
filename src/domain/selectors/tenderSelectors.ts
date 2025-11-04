@@ -187,6 +187,24 @@ export function selectSubmittedTendersCount(tenders: readonly Tender[]): number 
 }
 
 /**
+ * عدد المنافسات قيد الانتظار / الإجراءات
+ * يشمل: new, under_action, ready_to_submit
+ */
+export function selectWaitingTendersCount(tenders: readonly Tender[]): number {
+  return tenders.filter(
+    (t) => t.status === 'new' || t.status === 'under_action' || t.status === 'ready_to_submit',
+  ).length
+}
+
+/**
+ * عدد المنافسات قيد المراجعة
+ * (للتوافق مع الواجهات القديمة - يعود 0 دائماً)
+ */
+export function selectUnderReviewTendersCount(_tenders: readonly Tender[]): number {
+  return 0 // لا توجد هذه الحالة في النظام الحالي
+}
+
+/**
  * عدد المنافسات المنتهية
  */
 export function selectExpiredTendersCount(tenders: readonly Tender[]): number {
@@ -255,6 +273,15 @@ export function selectLostTendersValue(tenders: readonly Tender[]): number {
  */
 export function selectSubmittedTendersValue(tenders: readonly Tender[]): number {
   return tenders.filter(isTenderSubmitted).reduce((sum, tender) => sum + (tender.value || 0), 0)
+}
+
+/**
+ * إجمالي قيمة المنافسات تحت الإجراء
+ */
+export function selectUnderActionTendersValue(tenders: readonly Tender[]): number {
+  return tenders
+    .filter((t) => t.status === 'under_action')
+    .reduce((sum, tender) => sum + (tender.value || 0), 0)
 }
 
 /**
@@ -440,4 +467,123 @@ export function selectTendersByStatus(
  */
 export function getTendersCacheKey(tenders: readonly Tender[]): string {
   return `${tenders.length}-${tenders.map((t) => t.id).join(',')}`
+}
+
+// ==========================================
+// ⏱️ Advanced Metrics (Cycle Days & Monthly Stats)
+// ==========================================
+
+/**
+ * حساب متوسط أيام دورة المنافسة
+ * من تاريخ الإرسال إلى تاريخ الفوز/الخسارة
+ */
+export function selectAverageCycleDays(tenders: readonly Tender[]): number | null {
+  let totalDays = 0
+  let samples = 0
+
+  for (const tender of tenders) {
+    const submissionDate = tender.submissionDate ? new Date(tender.submissionDate) : null
+    const completionDate = tender.winDate
+      ? new Date(tender.winDate)
+      : tender.lostDate
+        ? new Date(tender.lostDate)
+        : null
+
+    if (
+      submissionDate &&
+      completionDate &&
+      !isNaN(submissionDate.getTime()) &&
+      !isNaN(completionDate.getTime())
+    ) {
+      const diff = completionDate.getTime() - submissionDate.getTime()
+      const days = diff / (1000 * 60 * 60 * 24)
+      if (days >= 0) {
+        totalDays += days
+        samples++
+      }
+    }
+  }
+
+  return samples > 0 ? totalDays / samples : null
+}
+
+/**
+ * إحصائيات شهرية للمنافسات
+ */
+export interface TenderMonthlyStat {
+  year: number
+  month: number
+  submitted: number
+  submittedValue: number
+  won: number
+  wonValue: number
+  winRate: number
+}
+
+interface MonthlyAccumulator {
+  submitted: number
+  submittedValue: number
+  won: number
+  wonValue: number
+}
+
+/**
+ * تجميع إحصائيات المنافسات حسب الشهر
+ */
+export function selectTenderMonthlyStats(tenders: readonly Tender[]): TenderMonthlyStat[] {
+  const accumulator = new Map<string, MonthlyAccumulator>()
+
+  for (const tender of tenders) {
+    const tenderValue = tender.value ?? tender.totalValue ?? 0
+    const submission = tender.submissionDate ? new Date(tender.submissionDate) : null
+
+    // تجميع المنافسات المرسلة
+    if (submission && !isNaN(submission.getTime())) {
+      const key = `${submission.getFullYear()}-${submission.getMonth() + 1}`
+      const bucket = accumulator.get(key) ?? {
+        submitted: 0,
+        submittedValue: 0,
+        won: 0,
+        wonValue: 0,
+      }
+      bucket.submitted += 1
+      bucket.submittedValue += tenderValue
+      accumulator.set(key, bucket)
+    }
+
+    // تجميع المنافسات الفائزة
+    if (tender.status === 'won') {
+      const winDate = tender.winDate ? new Date(tender.winDate) : submission
+      if (winDate && !isNaN(winDate.getTime())) {
+        const key = `${winDate.getFullYear()}-${winDate.getMonth() + 1}`
+        const bucket = accumulator.get(key) ?? {
+          submitted: 0,
+          submittedValue: 0,
+          won: 0,
+          wonValue: 0,
+        }
+        bucket.won += 1
+        bucket.wonValue += tenderValue
+        accumulator.set(key, bucket)
+      }
+    }
+  }
+
+  // تحويل إلى مصفوفة مرتبة
+  return Array.from(accumulator.entries())
+    .map(([key, data]) => {
+      const [year, month] = key.split('-').map((val) => parseInt(val, 10))
+      const winRate =
+        data.submitted > 0 ? (data.won / data.submitted) * 100 : data.won > 0 ? 100 : 0
+      return {
+        year,
+        month,
+        submitted: data.submitted,
+        submittedValue: data.submittedValue,
+        won: data.won,
+        wonValue: data.wonValue,
+        winRate,
+      }
+    })
+    .sort((a, b) => (a.year === b.year ? a.month - b.month : a.year - b.year))
 }

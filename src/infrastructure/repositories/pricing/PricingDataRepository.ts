@@ -201,6 +201,16 @@ export class PricingDataRepository {
     defaultPercentages: PricingPercentages,
   ): Promise<void> {
     try {
+      console.log('[PricingDataRepository.savePricing] Saving with percentages:', {
+        tenderId,
+        defaultPercentages: {
+          administrative: defaultPercentages.administrative,
+          operational: defaultPercentages.operational,
+          profit: defaultPercentages.profit,
+        },
+        pricingDataSize: pricingData.size,
+      })
+
       const serializedPricing = Array.from(pricingData.entries()).filter(isPricingEntry)
 
       const payload: TenderPricingPayload = {
@@ -214,6 +224,11 @@ export class PricingDataRepository {
       }
 
       await pricingStorage.saveTenderPricing(tenderId, payload)
+
+      console.log('[PricingDataRepository.savePricing] Saved successfully:', {
+        tenderId,
+        savedPercentages: payload.defaultPercentages || 'undefined',
+      })
 
       recordAuditEvent({
         category: 'tender-pricing',

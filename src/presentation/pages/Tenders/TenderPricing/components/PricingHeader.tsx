@@ -13,15 +13,7 @@ import {
 } from '@/presentation/components/ui/dropdown-menu'
 import { ConfirmationDialog } from '@/presentation/components/ui/confirmation-dialog'
 import { confirmationMessages } from '@/shared/config/confirmationMessages'
-import {
-  ArrowRight,
-  CheckCircle,
-  Settings,
-  Save,
-  RotateCcw,
-  Download,
-  TrendingUp,
-} from 'lucide-react'
+import { ArrowRight, CheckCircle, Settings, Save, Download, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface PricingHeaderProps {
@@ -32,8 +24,9 @@ interface PricingHeaderProps {
   onBack: () => void
   onSave: () => Promise<void>
   onSaveCurrentItem: () => void
-  onCreateBackup: () => Promise<void>
-  onRestoreBackupOpen: () => void
+  // ⚠️ REMOVED: Backup functions (Draft System removed)
+  // onCreateBackup: () => Promise<void>
+  // onRestoreBackupOpen: () => void
   onExportToExcel: () => void
   onUpdateStatus: () => void
   recordAudit: (
@@ -53,8 +46,7 @@ export const PricingHeader: React.FC<PricingHeaderProps> = ({
   onBack,
   onSave,
   onSaveCurrentItem,
-  onCreateBackup,
-  onRestoreBackupOpen,
+  // ⚠️ REMOVED: Backup handlers
   onExportToExcel,
   onUpdateStatus,
   recordAudit,
@@ -165,32 +157,9 @@ export const PricingHeader: React.FC<PricingHeaderProps> = ({
             />
             <DropdownMenuSeparator />
 
-            {/* Create Backup */}
-            <ConfirmationDialog
-              title="إنشاء نسخة احتياطية"
-              description="سيتم حفظ نسخة احتياطية من حالة التسعير الحالية (يتم الاحتفاظ بآخر 10 فقط). هل تريد المتابعة؟"
-              confirmText="نعم، إنشاء نسخة"
-              cancelText="إلغاء"
-              variant="success"
-              icon="save"
-              onConfirm={() => {
-                void onCreateBackup()
-              }}
-              trigger={
-                <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                  <RotateCcw className="w-4 h-4 text-info" /> إنشاء نسخة احتياطية
-                </DropdownMenuItem>
-              }
-            />
-
-            {/* Restore Backup */}
-            <DropdownMenuItem
-              onClick={onRestoreBackupOpen}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <RotateCcw className="w-4 h-4 text-info" /> استرجاع نسخة
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            {/* ⚠️ REMOVED: Backup System (Draft System removed) */}
+            {/* Create Backup - onCreateBackup */}
+            {/* Restore Backup - onRestoreBackupOpen */}
 
             {/* Export */}
             <DropdownMenuLabel>التصدير</DropdownMenuLabel>

@@ -15,6 +15,12 @@ import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import type { Tender } from '@/data/centralData'
 import { migrateTenderStatus, needsMigration } from '@/shared/utils/tender/tenderStatusMigration'
 import { APP_EVENTS, emit } from '@/events/bus'
+import {
+  selectWonTendersCount,
+  selectLostTendersCount,
+  selectActiveTendersCount,
+  selectWinRate,
+} from '@/domain/selectors/tenderSelectors'
 
 /**
  * خدمة بيانات المنافسات
@@ -236,23 +242,13 @@ export class TenderDataService {
    */
   public getTenderStats() {
     const tenders = this.getTenders()
-    const total = tenders.length
-    const won = tenders.filter((t) => t.status === 'won').length
-    const lost = tenders.filter((t) => t.status === 'lost').length
-    const active = tenders.filter(
-      (t) =>
-        t.status === 'new' ||
-        t.status === 'under_action' ||
-        t.status === 'ready_to_submit' ||
-        t.status === 'submitted',
-    ).length
 
     return {
-      total,
-      won,
-      lost,
-      active,
-      winRate: total > 0 ? (won / (won + lost)) * 100 : 0,
+      total: tenders.length,
+      won: selectWonTendersCount(tenders),
+      lost: selectLostTendersCount(tenders),
+      active: selectActiveTendersCount(tenders),
+      winRate: selectWinRate(tenders),
     }
   }
 }

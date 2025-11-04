@@ -5,6 +5,8 @@ import { DashboardKPICards } from './components/DashboardKPICards'
 import { TenderStatusCards } from '@/presentation/pages/Tenders/components/TenderStatusCards'
 import { RemindersCard } from './components/RemindersCard'
 import { FinancialSummaryCard } from './components/FinancialSummaryCard'
+import { MonthlyCalendarCard } from './components/MonthlyCalendarCard'
+import { ProjectManagementCards } from './components/ProjectManagementCards'
 import { LazyMonthlyExpensesChart } from '@/presentation/components/charts/LazyCharts'
 import { DashboardKPIPreferencesDialog } from './components/DashboardKPIPreferencesDialog'
 import { useKPIs } from '@/application/hooks/useKPIs'
@@ -209,46 +211,50 @@ function Dashboard({ onSectionChange }: DashboardProps) {
           />
         </div>
 
-        {/* الصف التالي: المنافسات والتذكيرات والمالية */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* المنافسات - عرض مزدوج */}
-          <div className="lg:col-span-2">
-            <div className="mb-4">
-              <h2 className="text-xl font-bold text-foreground">حالة المنافسات</h2>
-              <p className="text-sm text-muted-foreground">تحليل شامل لحالة المنافسات الجارية</p>
-            </div>
-            <TenderStatusCards onSectionChange={onSectionChange} />
+        {/* الصف الثاني: المنافسات العاجلة وتحليل الأداء والتقويم */}
+        <div>
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-foreground">حالة المنافسات والتقويم</h2>
+            <p className="text-sm text-muted-foreground">
+              نظرة شاملة على المنافسات والمواعيد المهمة
+            </p>
           </div>
-
-          {/* التذكيرات والملخص المالي */}
-          <div className="space-y-6">
-            {/* التذكيرات */}
-            <div>
-              <div className="mb-4">
-                <h2 className="text-xl font-bold text-foreground">التذكيرات</h2>
-                <p className="text-sm text-muted-foreground">المواعيد والمهام المهمة</p>
-              </div>
-              <RemindersCard onSectionChange={onSectionChange} />
-            </div>
-
-            {/* الملخص المالي */}
-            <div>
-              <div className="mb-4">
-                <h2 className="text-xl font-bold text-foreground">الملخص المالي</h2>
-                <p className="text-sm text-muted-foreground">نظرة سريعة على الوضع المالي</p>
-              </div>
-              <FinancialSummaryCard onSectionChange={onSectionChange} />
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <TenderStatusCards onSectionChange={onSectionChange} />
+            <MonthlyCalendarCard
+              onDateClick={(date, reminders) => {
+                console.log('Selected date:', date, 'Reminders:', reminders)
+              }}
+            />
           </div>
         </div>
 
-        {/* الصف الرابع: المصاريف الشهرية */}
+        {/* الصف الثالث: بطاقات إدارة المشاريع والتذكيرات */}
         <div>
           <div className="mb-4">
-            <h2 className="text-xl font-bold text-foreground">المصاريف الشهرية</h2>
-            <p className="text-sm text-muted-foreground">تحليل المصاريف الشهرية مقارنة بالموازنة</p>
+            <h2 className="text-xl font-bold text-foreground">إدارة المشاريع والتذكيرات</h2>
+            <p className="text-sm text-muted-foreground">
+              نظرة سريعة على أداء المشاريع والمواعيد المهمة
+            </p>
           </div>
-          <LazyMonthlyExpensesChart onSectionChange={onSectionChange} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <ProjectManagementCards onSectionChange={onSectionChange} />
+            <RemindersCard onSectionChange={onSectionChange} />
+          </div>
+        </div>
+
+        {/* الصف الرابع: المصاريف الشهرية والملخص المالي */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-foreground">المصاريف الشهرية</h2>
+              <p className="text-sm text-muted-foreground">
+                تحليل المصاريف الشهرية مقارنة بالموازنة
+              </p>
+            </div>
+            <LazyMonthlyExpensesChart onSectionChange={onSectionChange} />
+          </div>
+          <FinancialSummaryCard onSectionChange={onSectionChange} />
         </div>
       </div>
       <DashboardKPIPreferencesDialog

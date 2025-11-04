@@ -1,7 +1,6 @@
 // TenderPricingPage drives the full tender pricing workflow and persistence.
 import { pricingService } from '@/application/services/pricingService'
 import { exportTenderPricingToExcel } from '@/presentation/pages/Tenders/TenderPricing/utils/exportUtils'
-import { formatTimestamp as formatTimestampUtil } from '@/presentation/pages/Tenders/TenderPricing/utils/dateUtils'
 import { parseQuantityItems } from '@/presentation/pages/Tenders/TenderPricing/utils/parseQuantityItems'
 import {
   createQuantityFormatter,
@@ -20,16 +19,14 @@ import type {
   SectionRowMap,
 } from '@/presentation/pages/Tenders/TenderPricing/types'
 import type { Tender } from '@/data/centralData'
-// Phase 2 authoring engine adoption helpers (flag-guarded)
+// Phase 2 authoring engine adoption helpers
 import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
-// REMOVED: applyDefaultsToPricingMap - no longer auto-applying after Draft removal
 import { EmptyState } from '@/presentation/components/layout/PageLayout'
 import { ConfirmationDialog } from '@/presentation/components/ui/confirmation-dialog'
 import { confirmationMessages } from '@/shared/config/confirmationMessages'
 import { toast } from 'sonner'
 import { useTenderPricingState } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingState'
 import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
-import { useTenderPricingBackup } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingBackup'
 import { usePricingRowOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingRowOperations'
 import { useSummaryOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useSummaryOperations'
 import { useItemNavigation } from '@/presentation/pages/Tenders/TenderPricing/hooks/useItemNavigation'
@@ -43,7 +40,6 @@ import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { TenderPricingTabs } from '@/presentation/components/pricing/tender-pricing-process/views/TenderPricingTabs'
 import { type AuditEventLevel, type AuditEventStatus } from '@/shared/utils/storage/auditLog'
 import { PricingHeader } from '@/presentation/pages/Tenders/TenderPricing/components/PricingHeader'
-import { RestoreBackupDialog } from '@/presentation/pages/Tenders/TenderPricing/components/RestoreBackupDialog'
 
 export type { TenderWithPricingSources } from '@/presentation/pages/Tenders/TenderPricing/types'
 
@@ -59,16 +55,13 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
   // Create formatters
   const formatQuantity = useMemo(() => createQuantityFormatter(), [])
-  const formatTimestamp = useCallback(
-    (value: string | number | Date | null | undefined) => formatTimestampUtil(value),
-    [],
-  )
 
   // Create audit logger
   const tenderTitle = tender.title ?? tender.name ?? ''
   const recordPricingAudit = useMemo(() => createPricingAuditLogger(tender.id), [tender.id])
-  // using unified storage utils instead of useStorage
+
   const [pricingData, setPricingData] = useState<Map<string, PricingData>>(new Map())
+
   // Zustand Store: unified BOQ and pricing state
   const {
     boqItems,
@@ -96,7 +89,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     cancelLeaveRequest,
     confirmLeave,
   } = useTenderPricingState({ isDirty, onBack, tenderId: tender.id })
-  const [restoreOpen, setRestoreOpen] = useState(false)
 
   // Use store's markDirty instead of the no-op one from hook
   const markDirty = storeMarkDirty
@@ -285,57 +277,69 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
   const persistPricingAndBOQ = useCallback(
     async (updatedPricingData: Map<string, PricingData>) => {
+      // ✅ النسب محفوظة مسبقاً في saveDefaultPercentages
+      // لا حاجة لحفظها مرة أخرى - فقط نُمرّرها للحسابات
+      console.log('[persistPricingAndBOQ] Using percentages from state:', defaultPercentages)
+
+      // مزامنة التسعير مع BOQ (بدون حفظ النسب مرة أخرى)
       await tenderPricingRepository.persistPricingAndBOQ(
         tender.id,
         updatedPricingData,
         quantityItems,
-        defaultPercentages,
+        defaultPercentages, // ← للحسابات فقط، ليس للحفظ
+        { skipEvent: true }, // ⚠️ منع إطلاق أحداث
       )
+
+      // إرسال إشعار بدون إعادة تحميل
       await notifyPricingUpdate()
     },
     [tender.id, quantityItems, defaultPercentages, notifyPricingUpdate],
   )
 
+  const saveDefaultPercentages = useCallback(
+    async (newPercentages: typeof defaultPercentages) => {
+      setDefaultPercentages(newPercentages)
+      // حفظ النسب مباشرة في pricingService بدون إطلاق حدث TENDER_UPDATED
+      const currentPricingData = await pricingService.loadTenderPricing(tender.id)
+      await pricingService.saveTenderPricing(tender.id, {
+        pricing: currentPricingData?.pricing || [],
+        defaultPercentages: newPercentages,
+        lastUpdated: new Date().toISOString(),
+      })
+      console.log('[TenderPricingPage] Default percentages saved:', newPercentages)
+    },
+    [tender.id, setDefaultPercentages],
+  )
+
   const updateTenderStatus = useCallback(
     async (newStatus?: string) => {
-      const completedCount = Array.from(pricingData.values()).filter(
-        (p) => p?.completed === true,
-      ).length
-      const totalValue = calculateProjectTotal()
+      // ⚠️ REMOVED: Auto-update tender status
+      // تحديث حالة المناقصة تلقائياً يُطلق أحداث غير ضرورية
+      // الآن: الحالة تُحدّث فقط عند "اعتماد" العرض (Submit)
 
-      // If newStatus provided, just use repository logic. Otherwise calculate from completedCount
-      if (newStatus === undefined) {
-        await tenderPricingRepository.updateTenderStatus(
-          tender.id,
-          completedCount,
-          quantityItems.length,
-          totalValue,
-        )
-      } else {
-        // Manual status override (not typical, but keeping for compatibility)
+      // If manual status override requested (from Submit button)
+      if (newStatus !== undefined) {
         const tenderRepo = (
           await import('@/application/services/serviceRegistry')
         ).getTenderRepository()
-        await tenderRepo.update(tender.id, { status: newStatus as unknown as Tender['status'] })
+        await tenderRepo.update(
+          tender.id,
+          {
+            status: newStatus as unknown as Tender['status'],
+          },
+          { skipRefresh: true },
+        ) // ✅ منع إعادة التحميل
       }
+
+      // لا نُحدّث الحالة تلقائياً بناءً على نسبة الإنجاز
+      // هذا يسبب إطلاق أحداث TENDER_UPDATED عند كل حفظ
     },
-    [tender.id, quantityItems.length, pricingData, calculateProjectTotal],
+    [tender.id],
   )
 
-  // Custom hook for backup management
-  const { backupsList, createBackup, loadBackupsList, restoreBackup } = useTenderPricingBackup({
-    tenderId: tender.id,
-    tenderTitle,
-    pricingData,
-    quantityItemsCount: quantityItems.length,
-    defaultPercentages,
-    calculateProjectTotal,
-    setPricingData,
-    persistPricingAndBOQ,
-    recordAudit: (level, action, details, status) =>
-      recordPricingAudit(level as AuditEventLevel, action, details, status as AuditEventStatus),
-    getErrorMessage,
-  })
+  // ⚠️ REMOVED: useTenderPricingBackup - نظام النسخ الاحتياطي قديم (Draft System)
+  // النسخ الاحتياطي كان جزءاً من Draft System المُلغى
+  // الحفظ الآن مباشر في electron-store بدون drafts
 
   // تحميل بيانات التسعير الكاملة من pricingService
   // Store يخزن فقط BOQ (الأساسيات)، pricingService يخزن التفاصيل الكاملة
@@ -355,6 +359,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
                 hasPricing: !!loaded.pricing,
                 pricingCount: loaded.pricing?.length || 0,
                 hasDefaultPercentages: !!loaded.defaultPercentages,
+                defaultPercentagesValues: loaded.defaultPercentages, // ✅ عرض القيم الفعلية
               }
             : 'null',
         )
@@ -622,6 +627,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     defaultPercentagesInput,
     setDefaultPercentagesInput,
     setDefaultPercentages,
+    saveDefaultPercentages,
     applyDefaultPercentagesToExistingItems,
     setCurrentItemIndex,
     setCurrentView: (view: 'summary' | 'pricing' | 'technical') => handleViewChange(view),
@@ -693,28 +699,12 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
         onBack={handleAttemptLeave}
         onSave={savePricing}
         onSaveCurrentItem={saveCurrentItem}
-        onCreateBackup={createBackup}
-        onRestoreBackupOpen={() => {
-          setRestoreOpen(true)
-          void loadBackupsList()
-        }}
         onExportToExcel={exportPricingToExcel}
         onUpdateStatus={updateTenderStatus}
         recordAudit={(level, action, metadata, status) =>
           recordPricingAudit(level as AuditEventLevel, action, metadata, status as AuditEventStatus)
         }
         getErrorMessage={getErrorMessage}
-      />
-
-      {/* Restore Backup Dialog Component */}
-      <RestoreBackupDialog
-        open={restoreOpen}
-        onOpenChange={setRestoreOpen}
-        backupsList={backupsList}
-        onLoadBackupsList={loadBackupsList}
-        onRestoreBackup={restoreBackup}
-        formatCurrencyValue={formatCurrencyValue}
-        formatTimestamp={formatTimestamp}
       />
 
       <TenderPricingTabs
