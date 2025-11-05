@@ -463,9 +463,26 @@ export const useTenderPricingStore = create<TenderPricingState>()(
   ),
 )
 
-// Selectors for optimized re-renders
+// ============================================================
+// OPTIMIZED SELECTORS FOR RE-RENDER PERFORMANCE
+// ============================================================
+// Week 1 Day 4: Added comprehensive selectors
+// These selectors prevent unnecessary re-renders by selecting
+// only the specific state slices needed by components
+// ============================================================
+
+/**
+ * Selector: Get total pricing value
+ * Usage: const totalValue = useTenderPricingValue()
+ * Re-renders: Only when total value changes
+ */
 export const useTenderPricingValue = () => useTenderPricingStore((state) => state.getTotalValue())
 
+/**
+ * Selector: Get pricing progress/completion
+ * Usage: const { pricedItems, totalItems, percentage } = useTenderPricingProgress()
+ * Re-renders: Only when pricing completion changes
+ */
 export const useTenderPricingProgress = () =>
   useTenderPricingStore((state) => ({
     pricedItems: state.getPricedItemsCount(),
@@ -473,13 +490,87 @@ export const useTenderPricingProgress = () =>
     percentage: state.getCompletionPercentage(),
   }))
 
+/**
+ * Selector: Get pricing for a specific item
+ * Usage: const pricing = useItemPricing(itemId)
+ * Re-renders: Only when this specific item's pricing changes
+ */
 export const useItemPricing = (itemId: string) =>
   useTenderPricingStore((state) => state.pricingData.get(itemId))
 
+/**
+ * Selector: Get loading/dirty/error status
+ * Usage: const { isLoading, isDirty, error, lastSaved } = useTenderPricingStatus()
+ * Re-renders: Only when status changes
+ */
 export const useTenderPricingStatus = () =>
   useTenderPricingStore((state) => ({
     isLoading: state.isLoading,
     isDirty: state.isDirty,
     error: state.error,
     lastSaved: state.lastSaved,
+  }))
+
+/**
+ * Selector: Get BOQ items (for display/listing)
+ * Usage: const items = useTenderPricingItems()
+ * Re-renders: Only when BOQ items list changes
+ *
+ * Added: Week 1 Day 4
+ */
+export const useTenderPricingItems = () => useTenderPricingStore((state) => state.boqItems)
+
+/**
+ * Selector: Get current tender ID
+ * Usage: const tenderId = useCurrentTenderId()
+ * Re-renders: Only when tender ID changes
+ *
+ * Added: Week 1 Day 4
+ */
+export const useCurrentTenderId = () => useTenderPricingStore((state) => state.currentTenderId)
+
+/**
+ * Selector: Get default percentages
+ * Usage: const percentages = useDefaultPercentages()
+ * Re-renders: Only when default percentages change
+ *
+ * Added: Week 1 Day 4
+ */
+export const useDefaultPercentages = () =>
+  useTenderPricingStore((state) => state.defaultPercentages)
+
+/**
+ * Selector: Get all pricing actions (no state)
+ * Usage: const actions = useTenderPricingActions()
+ * Re-renders: Never (actions are stable)
+ *
+ * Added: Week 1 Day 4
+ */
+export const useTenderPricingActions = () =>
+  useTenderPricingStore((state) => ({
+    setCurrentTender: state.setCurrentTender,
+    loadPricing: state.loadPricing,
+    updateItemPricing: state.updateItemPricing,
+    markDirty: state.markDirty,
+    savePricing: state.savePricing,
+    resetDirty: state.resetDirty,
+    reset: state.reset,
+    setCurrentItemIndex: state.setCurrentItemIndex,
+    setCurrentPricing: state.setCurrentPricing,
+    setDefaultPercentages: state.setDefaultPercentages,
+    updateCurrentPricingField: state.updateCurrentPricingField,
+  }))
+
+/**
+ * Selector: Get computed values only
+ * Usage: const { totalValue, pricedCount, percentage } = useTenderPricingComputed()
+ * Re-renders: Only when computed values change
+ *
+ * Added: Week 1 Day 4
+ */
+export const useTenderPricingComputed = () =>
+  useTenderPricingStore((state) => ({
+    totalValue: state.getTotalValue(),
+    pricedItemsCount: state.getPricedItemsCount(),
+    completionPercentage: state.getCompletionPercentage(),
   }))

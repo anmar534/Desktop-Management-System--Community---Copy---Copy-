@@ -19,6 +19,23 @@ import { createQuickActions } from '@/shared/utils/tender/tenderQuickActions'
 import { createDeleteHandler, createSubmitHandler } from '@/shared/utils/tender/tenderEventHandlers'
 import { toast } from 'sonner'
 
+// Domain selectors for stats calculation
+import {
+  selectActiveTendersCount,
+  selectWonTendersCount,
+  selectLostTendersCount,
+  selectSubmittedTendersCount,
+  selectNewTendersCount,
+  selectUnderActionTendersCount,
+  selectExpiredTendersCount,
+  selectUrgentTendersCount,
+  selectWinRate,
+  selectWonTendersValue,
+  selectLostTendersValue,
+  selectSubmittedTendersValue,
+  selectActiveTendersTotal,
+} from '@/domain/selectors/tenderSelectors'
+
 // Components
 import {
   TenderTabs,
@@ -34,7 +51,8 @@ import { TenderResultsManager } from './components/TenderResultsManager'
 import { TendersPagination } from './components/TendersPagination'
 import { TendersHeaderSection } from './components/TendersHeaderSection'
 
-import { useTenders } from '@/application/hooks/useTenders'
+// Phase 1 Migration: Using tenderListStoreAdapter (Zustand Stores)
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import {
   useTenderDetailNavigation,
@@ -48,8 +66,29 @@ interface TendersProps {
 }
 
 export function Tenders({ onSectionChange }: TendersProps) {
-  // Use unified system - useTenders provides both data and stats
-  const { tenders, deleteTender, refreshTenders, updateTender, stats: tenderStats } = useTenders()
+  // Phase 1 Migration: Use Store-based state management
+  const storeData = useTenderListStore()
+  const { tenders, deleteTender, refreshTenders, updateTender } = storeData
+
+  // Generate stats using domain selectors (Single Source of Truth)
+  const tenderStats = useMemo(
+    () => ({
+      totalTenders: selectActiveTendersTotal(tenders),
+      activeTenders: selectActiveTendersCount(tenders),
+      wonTenders: selectWonTendersCount(tenders),
+      lostTenders: selectLostTendersCount(tenders),
+      submittedTenders: selectSubmittedTendersCount(tenders),
+      urgentTenders: selectUrgentTendersCount(tenders),
+      newTenders: selectNewTendersCount(tenders),
+      underActionTenders: selectUnderActionTendersCount(tenders),
+      expiredTenders: selectExpiredTendersCount(tenders),
+      winRate: selectWinRate(tenders),
+      submittedValue: selectSubmittedTendersValue(tenders),
+      wonValue: selectWonTendersValue(tenders),
+      lostValue: selectLostTendersValue(tenders),
+    }),
+    [tenders],
+  )
 
   const { formatCurrencyValue } = useCurrencyFormatter()
 
@@ -63,7 +102,11 @@ export function Tenders({ onSectionChange }: TendersProps) {
     navigateToResults,
   } = useTenderViewNavigation()
 
-  const [searchTerm, setSearchTerm] = useState('')
+  // Phase 1 Migration: Use Store for search, keep UI-only state local
+  const { filters, setFilter } = storeData
+  const searchTerm = filters.search || ''
+  const setSearchTerm = (value: string) => setFilter('search', value)
+
   const [activeTab, setActiveTab] = useState<TenderTabId>('all')
   const [tenderToDelete, setTenderToDelete] = useState<Tender | null>(null)
   const [tenderToSubmit, setTenderToSubmit] = useState<Tender | null>(null)
