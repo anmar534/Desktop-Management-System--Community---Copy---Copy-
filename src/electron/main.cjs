@@ -102,9 +102,9 @@ const DEV_CONFIG = (() => {
 })()
 
 const resolveScopedAppName = () => {
-  const rawName = app.getName() || 'ConstructionSystem'
-  const suffix = isE2E ? '-E2E' : (isDev ? '-Dev' : '')
-  return `${rawName}${suffix}`.replace(/[<>:"/\\|?*]/g, '_')
+  // استخدام اسم ثابت لجميع البيئات لتجنب مشكلة تعدد المجلدات
+  // هذا يضمن أن جميع الإصدارات (dev/production) تستخدم نفس مجلد البيانات
+  return 'desktop-management-system-community'
 }
 
 const PRODUCTION_INDEX_CANDIDATES = [
@@ -1868,6 +1868,27 @@ app.whenReady().then(async () => {
 
   // اضبط المسارات الآمنة بعد ready وقبل تهيئة أي موارد تعتمد على userData
   setupSafePaths();
+  
+  // 🆕 Migration: نقل البيانات من المجلد القديم (-Dev) إلى المجلد الجديد الموحد
+  // هذا يحل مشكلة v1.0.6 حيث فقد المستخدمون بياناتهم بسبب تغيير اسم المجلد
+  try {
+    console.log('🔄 Checking for user data migration...');
+    const { migrateUserData } = require('./migrations/migrate-user-data.cjs');
+    const migrationResult = await migrateUserData(app);
+    
+    if (migrationResult.success && migrationResult.migrated) {
+      console.log('✅ User data migration completed successfully');
+      console.log(`   Old path: ${migrationResult.oldPath}`);
+      console.log(`   New path: ${migrationResult.newPath}`);
+      console.log(`   Backup: ${migrationResult.backupPath}`);
+    } else if (!migrationResult.success) {
+      console.warn('⚠️ User data migration failed:', migrationResult.error);
+      // لا نوقف التطبيق، فقط نسجل التحذير
+    }
+  } catch (migrationError) {
+    console.warn('⚠️ Migration script error:', migrationError.message);
+    // لا نوقف التطبيق، المستخدم قد يكون تثبيت جديد
+  }
   
   // تهيئة نظام تسجيل الأخطاء
   await initErrorReporter();

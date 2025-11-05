@@ -1037,7 +1037,61 @@ export const syncStorage = async (): Promise<void> => {
     return
   }
 
-  console.log(`✅ [${timestamp}] Using electron-store only (legacy migration removed)`)
+  // Migration: نقل البيانات من localStorage إلى electron-store إذا لزم الأمر
+  try {
+    const migrationKey = '_localStorage_migration_completed'
+    const migrationCompleted = await storeInterface.get(migrationKey)
+
+    // eslint-disable-next-line no-restricted-properties
+    if (!migrationCompleted && typeof window !== 'undefined' && window.localStorage) {
+      console.log(`🔄 [${timestamp}] Starting localStorage migration...`)
+
+      const keysToMigrate = [
+        STORAGE_KEYS.TENDERS,
+        STORAGE_KEYS.PROJECTS,
+        STORAGE_KEYS.FINANCIAL_INVOICES,
+        STORAGE_KEYS.FINANCIAL_BUDGETS,
+        STORAGE_KEYS.BOQ_DATA,
+        STORAGE_KEYS.COMPANY_SETTINGS,
+      ]
+
+      let migratedCount = 0
+
+      for (const key of keysToMigrate) {
+        try {
+          // eslint-disable-next-line no-restricted-properties
+          const localValue = window.localStorage.getItem(key)
+          if (localValue && localValue !== 'undefined' && localValue !== 'null') {
+            // التحقق: هل البيانات موجودة في electron-store؟
+            const storeValue = await storeInterface.get(key)
+
+            if (!storeValue) {
+              // نسخ من localStorage إلى electron-store
+              await storeInterface.set(key, localValue)
+              migratedCount++
+              console.log(`✅ [${timestamp}] Migrated ${key}`)
+            } else {
+              console.log(`ℹ️ [${timestamp}] ${key} already exists in electron-store, skipping`)
+            }
+          }
+        } catch (err) {
+          console.warn(`⚠️ [${timestamp}] Failed to migrate ${key}:`, err)
+        }
+      }
+
+      // تعليم Migration كمكتمل
+      await storeInterface.set(migrationKey, 'true')
+      console.log(
+        `✅ [${timestamp}] localStorage migration completed! Migrated ${migratedCount} keys`,
+      )
+    } else {
+      console.log(
+        `✅ [${timestamp}] Using electron-store (migration ${migrationCompleted ? 'already completed' : 'not needed'})`,
+      )
+    }
+  } catch (error) {
+    console.error(`❌ [${timestamp}] Migration error:`, error)
+  }
 }
 
 export const waitForStorageReady = async (): Promise<void> => {
