@@ -12,12 +12,15 @@ import { DashboardKPIPreferencesDialog } from './components/DashboardKPIPreferen
 import { useKPIs } from '@/application/hooks/useKPIs'
 import { useDashboardMetrics } from '@/application/hooks/useDashboardMetrics'
 import { getHijriDate } from '../../../utils/dateFormatters'
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
 
 interface DashboardProps {
   onSectionChange: (section: string) => void
 }
 
 function Dashboard({ onSectionChange }: DashboardProps) {
+  // ✅ Scroll to top when dashboard loads
+  useScrollToTop()
   const {
     allKpis,
     visibleKpis,

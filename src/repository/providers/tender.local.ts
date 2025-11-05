@@ -117,7 +117,14 @@ const persist = (tenders: Tender[]): void => {
 }
 
 const loadAll = (): Tender[] => {
+  console.log('[LocalTenderRepository] loadAll() - Reading from storage:', STORAGE_KEYS.TENDERS)
   const stored = safeLocalStorage.getItem<Tender[]>(STORAGE_KEYS.TENDERS, [])
+  console.log('[LocalTenderRepository] loadAll() - Raw stored data:', { 
+    isArray: Array.isArray(stored),
+    count: Array.isArray(stored) ? stored.length : 0,
+    type: typeof stored
+  })
+  
   if (!Array.isArray(stored)) {
     return []
   }
@@ -132,6 +139,11 @@ const loadAll = (): Tender[] => {
   })
 
   const sanitized = sanitizeTenderCollection(normalized)
+  console.log('[LocalTenderRepository] loadAll() - After sanitization:', {
+    normalizedCount: normalized.length,
+    sanitizedCount: sanitized.length,
+    shouldPersist
+  })
 
   if (sanitized.length !== normalized.length || hasDifferences(normalized, sanitized)) {
     shouldPersist = true
@@ -170,7 +182,13 @@ const hasDifferences = (original: Tender[], sanitized: Tender[]): boolean => {
 
 export class LocalTenderRepository implements ITenderRepository {
   async getAll(): Promise<Tender[]> {
-    return loadAll()
+    const tenders = loadAll()
+    console.log('[LocalTenderRepository] getAll() called, loaded:', {
+      count: tenders.length,
+      storageKey: STORAGE_KEYS.TENDERS,
+      ids: tenders.map(t => t.id).slice(0, 5)
+    })
+    return tenders
   }
 
   async getById(id: string): Promise<Tender | null> {

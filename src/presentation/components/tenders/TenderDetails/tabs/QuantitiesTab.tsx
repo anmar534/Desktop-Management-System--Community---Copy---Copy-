@@ -80,7 +80,7 @@ export function QuantitiesTab({
             },
             accent: {
               container: 'bg-accent/10 border border-accent/30',
-              value: 'text-accent',
+              value: 'text-accent-foreground',
             },
             info: { container: 'bg-info/10 border border-info/30', value: 'text-info' },
           }

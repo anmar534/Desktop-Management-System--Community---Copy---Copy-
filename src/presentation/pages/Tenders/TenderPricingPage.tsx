@@ -26,7 +26,9 @@ import { ConfirmationDialog } from '@/presentation/components/ui/confirmation-di
 import { confirmationMessages } from '@/shared/config/confirmationMessages'
 import { toast } from 'sonner'
 import { useTenderPricingState } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingState'
-import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
+// ✅ Migrated to unified pricing calculations (Single Source of Truth)
+import { usePricingCalculations } from '@/shared/hooks/usePricingCalculations'
+// import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations' // LEGACY - replaced
 import { usePricingRowOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingRowOperations'
 import { useSummaryOperations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useSummaryOperations'
 import { useItemNavigation } from '@/presentation/pages/Tenders/TenderPricing/hooks/useItemNavigation'
@@ -40,6 +42,7 @@ import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { TenderPricingTabs } from '@/presentation/components/pricing/tender-pricing-process/views/TenderPricingTabs'
 import { type AuditEventLevel, type AuditEventStatus } from '@/shared/utils/storage/auditLog'
 import { PricingHeader } from '@/presentation/pages/Tenders/TenderPricing/components/PricingHeader'
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
 
 export type { TenderWithPricingSources } from '@/presentation/pages/Tenders/TenderPricing/types'
 
@@ -113,6 +116,9 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     cancelLeaveRequest,
     confirmLeave,
   } = useTenderPricingState({ isDirty, onBack, tenderId: tender.id })
+
+  // ✅ Scroll to top when view changes
+  useScrollToTop([currentView])
 
   // Use store's markDirty instead of the no-op one from hook
   const markDirty = storeMarkDirty
@@ -226,7 +232,8 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     return transformedMap
   }, [pricingData])
 
-  // Phase 2.5: Domain pricing engine (UI read path) — optional; no write path yet (moved after quantityItems definition)
+  // ⚠️ LEGACY: Domain pricing engine kept for backward compatibility
+  // TODO: Remove after full migration to usePricingCalculations
   const domainPricing = useDomainPricingEngine({
     tenderId: tender?.id,
     quantityItems,
@@ -238,7 +245,8 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     },
   })
 
-  // Unified view items list (engine vs legacy) to reduce duplicate recomputation across totals & rendering
+  // ⚠️ LEGACY: Unified view items kept for backward compatibility
+  // TODO: Remove after full migration to usePricingCalculations
   const pricingViewItems = useMemo<PricingViewItem[]>(() => {
     // (Legacy Removal 2025-09-20) المسار القديم أزيل؛ الآن نعتمد فقط على domainPricing.
     // إذا لم يكن جاهزاً (loading أو error) نعيد قائمة بنود مبدئية بدون تسعير.
@@ -265,24 +273,71 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     changeView,
   })
 
-  const {
-    calculateTotals,
-    calculateAveragePercentages,
-    calculateItemsTotal,
-    calculateVAT,
-    calculateProjectTotal,
-    calculateTotalAdministrative,
-    calculateTotalOperational,
-    calculateTotalProfit,
-  } = useTenderPricingCalculations({
-    currentPricing,
-    pricingData,
+  // ✅ Migrated to unified pricing calculations (matches SummaryView)
+  const unifiedCalculations = usePricingCalculations({
     quantityItems,
+    pricingData,
     defaultPercentages,
-    pricingViewItems,
-    domainPricing,
-    tenderId: tender.id,
   })
+
+  // Backward compatibility wrappers for existing code
+  const calculateTotals = useCallback(() => {
+    const item = pricingData.get(currentItem?.id || '')
+    if (!item) {
+      return {
+        materials: 0,
+        labor: 0,
+        equipment: 0,
+        subcontractors: 0,
+        subtotal: 0,
+        administrative: 0,
+        operational: 0,
+        profit: 0,
+        total: 0,
+      }
+    }
+    const itemCalc = unifiedCalculations.getItemCalculation(currentItem?.id || '')
+    return {
+      materials: item.materials.reduce((sum, mat) => {
+        const wastageMultiplier = mat.hasWaste ? 1 + (mat.wastePercentage ?? 0) / 100 : 1
+        return sum + (mat.quantity ?? 0) * (mat.price ?? 0) * wastageMultiplier
+      }, 0),
+      labor: item.labor.reduce((sum, lab) => sum + lab.total, 0),
+      equipment: item.equipment.reduce((sum, eq) => sum + eq.total, 0),
+      subcontractors: item.subcontractors.reduce((sum, sub) => sum + sub.total, 0),
+      subtotal: itemCalc?.subtotal || 0,
+      administrative: itemCalc?.administrative || 0,
+      operational: itemCalc?.operational || 0,
+      profit: itemCalc?.profit || 0,
+      total: itemCalc?.total || 0,
+    }
+  }, [pricingData, currentItem, unifiedCalculations])
+
+  const calculateAveragePercentages = useCallback(
+    () => unifiedCalculations.averagePercentages,
+    [unifiedCalculations],
+  )
+  const calculateItemsTotal = useCallback(
+    () => unifiedCalculations.totals.items,
+    [unifiedCalculations],
+  )
+  const calculateVAT = useCallback(() => unifiedCalculations.totals.vat, [unifiedCalculations])
+  const calculateProjectTotal = useCallback(
+    () => unifiedCalculations.totals.projectTotal,
+    [unifiedCalculations],
+  )
+  const calculateTotalAdministrative = useCallback(
+    () => unifiedCalculations.totals.administrative,
+    [unifiedCalculations],
+  )
+  const calculateTotalOperational = useCallback(
+    () => unifiedCalculations.totals.operational,
+    [unifiedCalculations],
+  )
+  const calculateTotalProfit = useCallback(
+    () => unifiedCalculations.totals.profit,
+    [unifiedCalculations],
+  )
 
   // === Phase 2.3: Repository-based persistence replacing useTenderPricingPersistence hook ===
 
@@ -629,6 +684,8 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
 
   const currentItemCompleted = Boolean(currentPricing.completed)
 
+  // ✅ SummaryView uses usePricingCalculations hook internally
+  // These legacy functions are no longer needed (kept for backward compatibility)
   const summaryViewProps = {
     quantityItems,
     pricingData,
@@ -642,6 +699,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     setCurrentView: (view: 'summary' | 'pricing' | 'technical') => handleViewChange(view),
     formatCurrencyValue,
     formatQuantity,
+    // ⚠️ LEGACY: These are ignored by SummaryView (uses usePricingCalculations internally)
     calculateProjectTotal,
     calculateAveragePercentages,
     calculateTotalAdministrative,

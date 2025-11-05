@@ -18,6 +18,7 @@ import {
 import { createQuickActions } from '@/shared/utils/tender/tenderQuickActions'
 import { createDeleteHandler, createSubmitHandler } from '@/shared/utils/tender/tenderEventHandlers'
 import { toast } from 'sonner'
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
 
 // Domain selectors for stats calculation
 import {
@@ -65,6 +66,9 @@ interface TendersProps {
 }
 
 export function Tenders({ onSectionChange }: TendersProps) {
+  // ✅ Scroll to top when component loads
+  useScrollToTop()
+
   // Phase 1 Migration: Use Store-based state management
   const storeData = useTenderListStore()
   const {
@@ -72,6 +76,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
     deleteTender,
     refreshTenders,
     updateTender,
+    loadTenders,
     // Phase 2 Migration: Navigation from Store
     currentView,
     selectedTender,
@@ -81,6 +86,12 @@ export function Tenders({ onSectionChange }: TendersProps) {
     navigateToDetails,
     navigateToResults,
   } = storeData
+
+  // 🔧 FIX: Load tenders on component mount
+  useEffect(() => {
+    console.log('[TendersPage] Component mounted, loading tenders...')
+    loadTenders()
+  }, [loadTenders])
 
   // Generate stats using domain selectors (Single Source of Truth)
   const tenderStats = useMemo(

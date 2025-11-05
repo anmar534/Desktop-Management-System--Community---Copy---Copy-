@@ -148,11 +148,17 @@ export const useTenderDataStore = create<TenderDataStore>()(
 
       // Load all tenders from repository
       loadTenders: async () => {
+        console.log('[TenderDataStore] loadTenders called')
         set({ isLoading: true, error: null })
 
         try {
           const repository = getTenderRepository()
+          console.log('[TenderDataStore] Repository obtained:', repository)
           const tenders = await repository.getAll()
+          console.log('[TenderDataStore] Loaded tenders from repository:', { 
+            count: tenders.length, 
+            ids: tenders.map(t => t.id).slice(0, 5) 
+          })
 
           set({
             tenders,

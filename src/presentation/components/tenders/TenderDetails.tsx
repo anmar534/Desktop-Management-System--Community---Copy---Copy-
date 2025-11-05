@@ -23,8 +23,11 @@ import { FileUploadService } from '@/shared/utils/fileUploadService'
 // Phase 2: Migrated to Zustand Store (Week 1 - Day 1)
 // Removed useUnifiedTenderPricing - replaced with useTenderPricingStore
 import { useTenderPricingStore } from '@/stores/tenderPricingStore'
-import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
-import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
+// ✅ Migrated to unified pricing calculations (Single Source of Truth)
+import { usePricingCalculations } from '@/shared/hooks/usePricingCalculations'
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
+// import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations' // LEGACY - replaced
+// import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine' // LEGACY - not needed
 import { getStatusColor } from '@/shared/utils/ui/statusColors'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
@@ -110,26 +113,42 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
   // أزيل مستمع pricingDataUpdated وإعادة بناء snapshot – الاعتماد على تزامن مركزي لاحق (إن لزم) عبر unified hook.
 
   // Phase 2: Use Zustand Store for data
-  const { boqItems, loadPricing, pricingData, currentPricing, defaultPercentages } =
-    useTenderPricingStore()
+  const { boqItems, loadPricing, pricingData, defaultPercentages } = useTenderPricingStore()
   const { formatCurrencyValue } = useCurrencyFormatter()
 
-  // Use domain pricing engine (required by useTenderPricingCalculations)
-  const domainPricing = useDomainPricingEngine({
-    tenderId: tender.id,
-    enabled: false, // We don't need domain pricing in TenderDetails view
+  // Transform BOQItems to QuantityItem format for usePricingCalculations
+  const quantityItems = useMemo(
+    () =>
+      boqItems.map((item) => ({
+        id: item.id,
+        itemNumber: item.originalId || item.id,
+        description: item.description,
+        unit: item.unit || 'وحدة',
+        quantity: item.quantity || 0,
+        specifications: item.canonicalDescription,
+      })),
+    [boqItems],
+  )
+
+  // ✅ Migrated to unified pricing calculations (matches TenderPricingPage & SummaryView)
+  const unifiedCalculations = usePricingCalculations({
+    quantityItems,
+    pricingData,
+    defaultPercentages,
   })
 
-  // ✅ استخدام المصدر الصحيح للحسابات: useTenderPricingCalculations
-  const pricingCalculations = useTenderPricingCalculations({
-    currentPricing,
-    pricingData,
-    quantityItems: boqItems,
-    defaultPercentages,
-    pricingViewItems: [], // Not needed for totals calculation
-    domainPricing,
-    tenderId: tender.id,
-  })
+  // Backward compatibility wrapper for existing code (memoized to avoid re-renders)
+  const pricingCalculations = useMemo(
+    () => ({
+      calculateItemsTotal: () => unifiedCalculations.totals.items,
+      calculateVAT: () => unifiedCalculations.totals.vat,
+      calculateProjectTotal: () => unifiedCalculations.totals.projectTotal,
+      calculateTotalAdministrative: () => unifiedCalculations.totals.administrative,
+      calculateTotalOperational: () => unifiedCalculations.totals.operational,
+      calculateTotalProfit: () => unifiedCalculations.totals.profit,
+    }),
+    [unifiedCalculations],
+  )
 
   // Load pricing when tender changes
   useEffect(() => {
@@ -137,6 +156,9 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
       void loadPricing(tender.id)
     }
   }, [tender?.id, loadPricing])
+
+  // ✅ Scroll to top when tender changes
+  useScrollToTop([tender?.id])
 
   // Create unified interface for compatibility with tabs
   const unified = useMemo(() => {
@@ -151,21 +173,18 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
 
     const hasPricing = items.some((it) => it.unitPrice > 0 || it.totalPrice > 0)
 
-    // ✅ الحسابات من المصدر الصحيح: useTenderPricingCalculations
+    // ✅ Unified calculations from usePricingCalculations (Single Source of Truth)
     const calculatedTotals = pricingCalculations.calculateItemsTotal()
     const vatAmount = pricingCalculations.calculateVAT()
     const totalWithVat = pricingCalculations.calculateProjectTotal()
 
-    // حساب النسب والقيم الإضافية
+    // ✅ Get all values from unified source - NO manual calculations needed
     const profitTotal = pricingCalculations.calculateTotalProfit()
     const administrativeTotal = pricingCalculations.calculateTotalAdministrative()
     const operationalTotal = pricingCalculations.calculateTotalOperational()
 
-    const profitPercentage = calculatedTotals > 0 ? (profitTotal / calculatedTotals) * 100 : 0
-    const administrativePercentage =
-      calculatedTotals > 0 ? (administrativeTotal / calculatedTotals) * 100 : 0
-    const operationalPercentage =
-      calculatedTotals > 0 ? (operationalTotal / calculatedTotals) * 100 : 0
+    // ✅ Use display percentages from Single Source of Truth
+    const displayPct = unifiedCalculations.displayPercentages
 
     const totals = hasPricing
       ? {
@@ -174,13 +193,13 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
           vatAmount: vatAmount,
           totalWithVat: totalWithVat,
           profit: profitTotal,
-          profitPercentage: profitPercentage,
+          profitPercentage: displayPct.profit,
           administrative: administrativeTotal,
-          administrativePercentage: administrativePercentage,
+          administrativePercentage: displayPct.administrative,
           operational: operationalTotal,
-          operationalPercentage: operationalPercentage,
+          operationalPercentage: displayPct.operational,
           adminOperational: administrativeTotal + operationalTotal,
-          adminOperationalPercentage: administrativePercentage + operationalPercentage,
+          adminOperationalPercentage: displayPct.adminOperational,
         }
       : null
 
@@ -192,7 +211,7 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
       source: 'central-boq',
       refresh: () => loadPricing(tender.id),
     }
-  }, [boqItems, pricingCalculations, loadPricing, tender.id])
+  }, [boqItems, pricingCalculations, unifiedCalculations.displayPercentages, loadPricing, tender.id])
   const quantityFormatter = useMemo(
     () =>
       new Intl.NumberFormat('ar-SA', {
@@ -228,7 +247,8 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
       firstItem: unified.items[0],
       itemsWithPrices: unified.items.filter((it) => it.unitPrice || it.totalPrice).length,
     })
-  }, [unified, tender?.id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tender?.id]) // ✅ فقط tenderId - تجنب infinite loop من unified object
 
   // إعداد بيانات المرفقات
   const attachmentsData = useMemo(() => {

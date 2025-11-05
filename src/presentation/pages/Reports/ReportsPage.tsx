@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatCurrency } from '@/data/centralData'
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
 import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { useFinancialState } from '@/application/context'
 import {
@@ -65,6 +66,9 @@ interface ReportsPageProps {
 }
 
 export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
+  // ✅ Scroll to top when component loads
+  useScrollToTop()
+
   const {
     projects: projectsState,
     financial,
@@ -78,12 +82,21 @@ export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
 
   // Calculate tender stats using domain selectors (replacing useTenders)
   const tenderStats = useMemo(
-    () => ({
-      totalTenders: selectActiveTendersTotal(tenders),
-      activeTenders: selectActiveTendersCount(tenders),
-      urgentTenders: selectUrgentTendersCount(tenders),
-      wonTenders: selectWonTendersCount(tenders),
-    }),
+    () => {
+      const totalTenders = selectActiveTendersTotal(tenders)
+      const activeTenders = selectActiveTendersCount(tenders)
+      const urgentTenders = selectUrgentTendersCount(tenders)
+      const wonTenders = selectWonTendersCount(tenders)
+      const winRate = totalTenders > 0 ? Math.round((wonTenders / totalTenders) * 100) : 0
+      
+      return {
+        totalTenders,
+        activeTenders,
+        urgentTenders,
+        wonTenders,
+        winRate,
+      }
+    },
     [tenders],
   )
 

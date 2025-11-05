@@ -17,7 +17,7 @@ export type {
   PricingItemInput,
   RawPricingInput,
 } from './pricing/pricingHelpers'
-export * from './pricing/unifiedCalculations'
+// export * from './pricing/unifiedCalculations' // DELETED: No usage
 
 // Tender
 export * from './tender/tenderNotifications'
@@ -33,7 +33,7 @@ export * from './data/excelProcessor'
 // Security
 export * from './security/desktopSecurity'
 export * from './security/secureStore'
-export * from './security/securityUpdates'
+// export * from './security/securityUpdates' // DELETED: No usage
 
 // Storage
 export * from './storage/backupManager'
@@ -48,7 +48,7 @@ export {
   formatInteger,
   formatNumber,
 } from './formatters/formatters'
-export * from './formatters/numberHelpers'
+// export * from './formatters/numberHelpers' // DELETED: No usage
 
 // UI
 export * from './ui/buttonStyles'
@@ -57,13 +57,13 @@ export { getHealthColor, getStatusColor } from './ui/statusColors'
 
 // ML
 export * from './ml/historicalComparison'
-export * from './ml/patternRecognition'
+// export * from './ml/patternRecognition' // DELETED: No usage
 export type { WinProbabilityPrediction, PredictionFactor } from './ml/predictionModels'
 
 // Root utilities - export specific to avoid conflicts
 export * from './storage/auditLog'
 export * from './cn'
-export * from './defaultPercentagesPropagation'
+// export * from './defaultPercentagesPropagation' // DELETED: No usage
 export * from './eventManager'
 export * from './exporters'
 export * from './fileUploadService'

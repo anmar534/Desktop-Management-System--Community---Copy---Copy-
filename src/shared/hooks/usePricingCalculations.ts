@@ -71,6 +71,12 @@ export const usePricingCalculations = ({
   const calculateItemTotals = useMemo(() => {
     const itemsMap = new Map<string, ItemCalculationResult>()
 
+    console.log('[usePricingCalculations] Recalculating totals:', {
+      itemsCount: quantityItems.length,
+      pricingDataSize: pricingData.size,
+      defaultPercentages,
+    })
+
     quantityItems.forEach((item) => {
       const itemPricing = pricingData.get(item.id)
 
@@ -98,16 +104,19 @@ export const usePricingCalculations = ({
         const itemTotal = itemPricing.directUnitPrice * item.quantity
         const subtotal = itemTotal / (1 + totalPercentage / 100)
 
-        itemsMap.set(item.id, {
+        const result = {
           subtotal,
           administrative: (subtotal * percentages.administrative) / 100,
           operational: (subtotal * percentages.operational) / 100,
           profit: (subtotal * percentages.profit) / 100,
           total: itemTotal,
           unitPrice: itemPricing.directUnitPrice,
-          method: 'direct',
+          method: 'direct' as const,
           percentages,
-        })
+        }
+
+        console.log(`[usePricingCalculations] Item ${item.id} (Direct):`, result)
+        itemsMap.set(item.id, result)
         return
       }
 
@@ -132,16 +141,31 @@ export const usePricingCalculations = ({
       const profit = (subtotal * percentages.profit) / 100
       const itemTotal = subtotal + administrative + operational + profit
 
-      itemsMap.set(item.id, {
+      const result = {
         subtotal,
         administrative,
         operational,
         profit,
         total: itemTotal,
         unitPrice: item.quantity ? itemTotal / item.quantity : 0,
-        method: 'detailed',
+        method: 'detailed' as const,
         percentages,
+      }
+
+      console.log(`[usePricingCalculations] Item ${item.id} (Detailed):`, {
+        materialsTotal,
+        laborTotal,
+        equipmentTotal,
+        subcontractorsTotal,
+        subtotal,
+        percentages,
+        administrative,
+        operational,
+        profit,
+        total: itemTotal,
       })
+
+      itemsMap.set(item.id, result)
     })
 
     return itemsMap
@@ -163,6 +187,15 @@ export const usePricingCalculations = ({
 
     const vat = totalItems * 0.15
     const projectTotal = totalItems + vat
+
+    console.log('[usePricingCalculations] Project Totals:', {
+      administrative: totalAdministrative,
+      operational: totalOperational,
+      profit: totalProfit,
+      items: totalItems,
+      vat,
+      projectTotal,
+    })
 
     return {
       administrative: totalAdministrative,
@@ -201,6 +234,17 @@ export const usePricingCalculations = ({
     }
   }, [calculateItemTotals, defaultPercentages])
 
+  // ✅ Calculate display percentages for summary cards (Single Source of Truth)
+  // These are the percentages shown in UI cards - same as averagePercentages
+  const displayPercentages = useMemo(() => {
+    return {
+      profit: averagePercentages.profit,
+      administrative: averagePercentages.administrative,
+      operational: averagePercentages.operational,
+      adminOperational: averagePercentages.administrative + averagePercentages.operational,
+    }
+  }, [averagePercentages])
+
   // ✅ Helper function to get calculation for specific item
   const getItemCalculation = (itemId: string): ItemCalculationResult | undefined => {
     return calculateItemTotals.get(itemId)
@@ -214,6 +258,7 @@ export const usePricingCalculations = ({
     // Project totals
     totals,
     averagePercentages,
+    displayPercentages, // ✅ For UI display (cards, summaries)
 
     // Individual accessors (for backward compatibility)
     calculateTotalAdministrative: () => totals.administrative,

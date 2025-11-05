@@ -27,6 +27,7 @@ import {
   type CurrencyOptions,
   type NumberFormatOptionsWithLocale,
 } from '@/shared/utils/formatters/formatters' // استخدام المنسق الموحد
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
 import {
   type LucideIcon,
   DollarSign,
@@ -134,6 +135,9 @@ interface FinancialProps {
 }
 
 export function Financial({ onSectionChange, initialTab }: FinancialProps) {
+  // ✅ Scroll to top when component loads
+  useScrollToTop()
+
   const [activeTab, setActiveTab] = useState<FinancialTabValue>(initialTab ?? 'overview')
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
 
