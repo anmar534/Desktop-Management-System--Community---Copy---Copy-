@@ -60,7 +60,7 @@ import {
   type InventoryItem,
   type StockAlert,
   type StockMovement,
-} from '@/services/inventoryManagementService'
+} from '@/application/services/inventoryManagementService'
 
 interface InventoryStats {
   totalItems: number

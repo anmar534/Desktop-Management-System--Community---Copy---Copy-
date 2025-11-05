@@ -42,8 +42,11 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import type { Supplier } from '@/services/supplierManagementService'
-import { SupplierEvaluation, supplierManagementService } from '@/services/supplierManagementService'
+import type { Supplier } from '@/application/services/supplierManagementService'
+import {
+  SupplierEvaluation,
+  supplierManagementService,
+} from '@/application/services/supplierManagementService'
 
 // ===========================
 // 📊 Types & Interfaces

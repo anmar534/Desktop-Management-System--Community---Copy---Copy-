@@ -10,7 +10,7 @@ import { safeLocalStorage } from '@/shared/utils/storage/storage'
 export { useExpenses } from './useExpenses'
 export { useProjects } from './useProjects'
 export { useClients } from './useClients'
-export { useTenders } from './useTenders'
+// Note: useTenders removed - use useTenderListStore instead
 export { useFinancialData } from './useFinancialData'
 export { useDevelopment } from './useDevelopment'
 export { useAuditLog } from './useAuditLog'

@@ -59,7 +59,6 @@ import {
   useTenderUpdateListener,
   useTenderPricingNavigation,
 } from '@/application/hooks/useTenderEventListeners'
-import { useTenderViewNavigation } from '@/application/hooks/useTenderViewNavigation'
 
 interface TendersProps {
   onSectionChange: (section: string, tender?: Tender) => void
@@ -68,7 +67,20 @@ interface TendersProps {
 export function Tenders({ onSectionChange }: TendersProps) {
   // Phase 1 Migration: Use Store-based state management
   const storeData = useTenderListStore()
-  const { tenders, deleteTender, refreshTenders, updateTender } = storeData
+  const {
+    tenders,
+    deleteTender,
+    refreshTenders,
+    updateTender,
+    // Phase 2 Migration: Navigation from Store
+    currentView,
+    selectedTender,
+    setSelectedTender,
+    backToList,
+    navigateToPricing,
+    navigateToDetails,
+    navigateToResults,
+  } = storeData
 
   // Generate stats using domain selectors (Single Source of Truth)
   const tenderStats = useMemo(
@@ -92,17 +104,9 @@ export function Tenders({ onSectionChange }: TendersProps) {
 
   const { formatCurrencyValue } = useCurrencyFormatter()
 
-  const {
-    currentView,
-    selectedTender,
-    setSelectedTender,
-    backToList,
-    navigateToPricing,
-    navigateToDetails,
-    navigateToResults,
-  } = useTenderViewNavigation()
-
-  // Phase 1 Migration: Use Store for search, keep UI-only state local
+  // Phase 1 & 2 Migration:
+  // - Phase 1: Search state from Store.filters
+  // - Phase 2: Navigation state from Store (removed useTenderViewNavigation hook)
   const { filters, setFilter } = storeData
   const searchTerm = filters.search || ''
   const setSearchTerm = (value: string) => setFilter('search', value)
@@ -199,8 +203,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
         }
 
         // Update tender with new status
-        const updatedTender: Tender = {
-          ...tender,
+        const updates: Partial<Tender> = {
           status: newStatus,
           lastUpdate: new Date().toISOString(),
           lastAction:
@@ -213,7 +216,7 @@ export function Tenders({ onSectionChange }: TendersProps) {
                   : 'تراجع عن الحالة',
         }
 
-        await updateTender(updatedTender)
+        await updateTender(tender.id, updates)
 
         toast.success('تم التراجع بنجاح', {
           description: `تم إعادة المنافسة "${tender.name}" إلى الحالة السابقة`,

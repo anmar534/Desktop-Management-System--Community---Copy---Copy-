@@ -5,7 +5,7 @@
  * Displays performance cards and statistics in the header area
  */
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   ListChecks,
   AlertTriangle,
@@ -18,14 +18,39 @@ import {
 } from 'lucide-react'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { TenderPerformanceCards } from '@/presentation/components/tenders'
-import { useTenders } from '@/application/hooks/useTenders'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
+import {
+  selectActiveTendersTotal,
+  selectUrgentTendersCount,
+  selectNewTendersCount,
+  selectUnderActionTendersCount,
+  selectSubmittedTendersCount,
+  selectWonTendersCount,
+  selectLostTendersCount,
+  selectWinRate,
+} from '@/domain/selectors/tenderSelectors'
 
 /**
  * Header section component with metadata and performance cards
- * Uses unified system (useTenders hook) - no props needed
+ * Uses Store-based system with domain selectors
  */
 export const TendersHeaderSection: React.FC = () => {
-  const { stats } = useTenders()
+  const { tenders } = useTenderListStore()
+
+  // Calculate stats using domain selectors (replacing useTenders)
+  const stats = useMemo(
+    () => ({
+      totalTenders: selectActiveTendersTotal(tenders),
+      urgentTenders: selectUrgentTendersCount(tenders),
+      newTenders: selectNewTendersCount(tenders),
+      underActionTenders: selectUnderActionTendersCount(tenders),
+      submittedTenders: selectSubmittedTendersCount(tenders),
+      wonTenders: selectWonTendersCount(tenders),
+      lostTenders: selectLostTendersCount(tenders),
+      winRate: selectWinRate(tenders),
+    }),
+    [tenders],
+  )
 
   // Safe win rate calculation with fallback for NaN/undefined
   const safeWinRate = Number.isFinite(stats.winRate) ? stats.winRate : null

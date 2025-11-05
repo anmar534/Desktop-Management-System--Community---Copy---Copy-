@@ -34,8 +34,8 @@ import {
   Search,
   RefreshCw,
 } from 'lucide-react'
-import type { ProcurementReport } from '@/services/procurementReportingService'
-import { procurementReportingService } from '@/services/procurementReportingService'
+import type { ProcurementReport } from '@/application/services/procurementReportingService'
+import { procurementReportingService } from '@/application/services/procurementReportingService'
 import { toast } from 'sonner'
 
 interface ProcurementReportsProps {

@@ -31,7 +31,7 @@ import type {
   CriticalPathAnalysis,
   GanttViewOptions,
 } from '../../types/scheduling'
-import { schedulingService } from '@/services/schedulingService'
+import { schedulingService } from '@/application/services/schedulingService'
 import { toast } from 'sonner'
 
 interface GanttChartProps {

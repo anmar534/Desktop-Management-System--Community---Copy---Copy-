@@ -10,7 +10,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
-import { riskManagementService } from '@/services/riskManagementService'
+import { riskManagementService } from '@/application/services/riskManagementService'
 import type { Risk, RiskMatrix, RiskProbability, RiskImpact, RiskCategory } from '../../types/risk'
 
 interface RiskAssessmentMatrixProps {

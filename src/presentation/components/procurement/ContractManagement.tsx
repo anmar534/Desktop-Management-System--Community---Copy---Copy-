@@ -40,8 +40,8 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import type { SupplierContract, Supplier } from '@/services/supplierManagementService'
-import { supplierManagementService } from '@/services/supplierManagementService'
+import type { SupplierContract, Supplier } from '@/application/services/supplierManagementService'
+import { supplierManagementService } from '@/application/services/supplierManagementService'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 
 // ===========================

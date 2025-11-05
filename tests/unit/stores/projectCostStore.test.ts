@@ -78,16 +78,16 @@ describe('projectCostStore', () => {
 
   describe('setEstimatedCosts', () => {
     it('should set estimated costs', () => {
+      useProjectCostStore.getState().setEstimatedCosts(mockEstimatedCosts)
       const store = useProjectCostStore.getState()
-      store.setEstimatedCosts(mockEstimatedCosts)
 
       expect(store.estimatedCosts).toHaveLength(2)
       expect(store.estimatedTotal).toBe(200000)
     })
 
     it('should trigger recalculation', () => {
+      useProjectCostStore.getState().setEstimatedCosts(mockEstimatedCosts)
       const store = useProjectCostStore.getState()
-      store.setEstimatedCosts(mockEstimatedCosts)
 
       expect(store.variance).toHaveLength(2)
     })
@@ -95,8 +95,8 @@ describe('projectCostStore', () => {
 
   describe('addEstimatedCost', () => {
     it('should add estimated cost', () => {
+      useProjectCostStore.getState().addEstimatedCost(mockEstimatedCosts[0])
       const store = useProjectCostStore.getState()
-      store.addEstimatedCost(mockEstimatedCosts[0])
 
       expect(store.estimatedCosts).toHaveLength(1)
       expect(store.estimatedTotal).toBe(50000)
@@ -109,8 +109,8 @@ describe('projectCostStore', () => {
     })
 
     it('should update estimated cost', () => {
+      useProjectCostStore.getState().updateEstimatedCost('boq-1', { totalPrice: 55000 })
       const store = useProjectCostStore.getState()
-      store.updateEstimatedCost('boq-1', { totalPrice: 55000 })
 
       expect(store.estimatedCosts[0].totalPrice).toBe(55000)
       expect(store.estimatedTotal).toBe(205000)
@@ -123,8 +123,8 @@ describe('projectCostStore', () => {
     })
 
     it('should remove estimated cost', () => {
+      useProjectCostStore.getState().removeEstimatedCost('boq-1')
       const store = useProjectCostStore.getState()
-      store.removeEstimatedCost('boq-1')
 
       expect(store.estimatedCosts).toHaveLength(1)
       expect(store.estimatedTotal).toBe(150000)
@@ -137,8 +137,8 @@ describe('projectCostStore', () => {
 
   describe('setActualCosts', () => {
     it('should set actual costs', () => {
+      useProjectCostStore.getState().setActualCosts(mockActualCosts)
       const store = useProjectCostStore.getState()
-      store.setActualCosts(mockActualCosts)
 
       expect(store.actualCosts).toHaveLength(2)
       expect(store.actualTotal).toBe(203000)
@@ -147,8 +147,8 @@ describe('projectCostStore', () => {
 
   describe('addActualCost', () => {
     it('should add actual cost', () => {
+      useProjectCostStore.getState().addActualCost(mockActualCosts[0])
       const store = useProjectCostStore.getState()
-      store.addActualCost(mockActualCosts[0])
 
       expect(store.actualCosts).toHaveLength(1)
       expect(store.actualTotal).toBe(48000)
@@ -161,8 +161,8 @@ describe('projectCostStore', () => {
     })
 
     it('should update actual cost', () => {
+      useProjectCostStore.getState().updateActualCost('exp-1', { amount: 50000 })
       const store = useProjectCostStore.getState()
-      store.updateActualCost('exp-1', { amount: 50000 })
 
       expect(store.actualCosts[0].amount).toBe(50000)
       expect(store.actualTotal).toBe(205000)
@@ -175,8 +175,8 @@ describe('projectCostStore', () => {
     })
 
     it('should remove actual cost', () => {
+      useProjectCostStore.getState().removeActualCost('exp-1')
       const store = useProjectCostStore.getState()
-      store.removeActualCost('exp-1')
 
       expect(store.actualCosts).toHaveLength(1)
       expect(store.actualTotal).toBe(155000)
@@ -331,10 +331,10 @@ describe('projectCostStore', () => {
 
   describe('recalculate', () => {
     it('should recalculate all metrics', () => {
+      useProjectCostStore.getState().setEstimatedCosts(mockEstimatedCosts)
+      useProjectCostStore.getState().setActualCosts(mockActualCosts)
+      useProjectCostStore.getState().recalculate()
       const store = useProjectCostStore.getState()
-      store.setEstimatedCosts(mockEstimatedCosts)
-      store.setActualCosts(mockActualCosts)
-      store.recalculate()
 
       expect(store.varianceTotal).toBe(-3000)
       expect(store.costStatus).toBe('on-budget')

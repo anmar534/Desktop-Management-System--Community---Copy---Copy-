@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { Project } from '@/data/centralData'
 import { useExpenses } from './useExpenses'
 import { useProjects } from './useProjects'
-import { useTenders } from './useTenders'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { selectWonTendersCount } from '@/domain/selectors/tenderSelectors'
 
 interface FinancialData {
@@ -90,7 +90,7 @@ export const useFinancialData = (): UseFinancialDataReturn => {
   // استخدام الهوكز للبيانات الحقيقية
   const { expenses, refreshExpenses, loading: expensesLoading } = useExpenses()
   const { projects, refreshProjects, isLoading: projectsLoading } = useProjects()
-  const { tenders, refreshTenders, isLoading: tendersLoading } = useTenders()
+  const { tenders, refreshTenders, isLoading: tendersLoading } = useTenderListStore()
   const [isRefreshingSources, setIsRefreshingSources] = useState(false)
 
   // بيانات الموردين (يمكن نقلها لاحقاً إلى hook منفصل)

@@ -21,7 +21,7 @@ import {
 import {
   procurementReportingService,
   type TrendAnalysisData,
-} from '@/services/procurementReportingService'
+} from '@/application/services/procurementReportingService'
 import { toast } from 'sonner'
 
 interface ProcurementTrendAnalysisProps {

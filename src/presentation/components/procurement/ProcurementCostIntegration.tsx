@@ -40,14 +40,14 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { procurementCostIntegrationService } from '@/services/procurementCostIntegrationService'
+import { procurementCostIntegrationService } from '@/application/services/procurementCostIntegrationService'
 import type {
   ProcurementCostLink,
   BudgetCategory,
   ProjectBudgetSummary,
   BudgetAlert,
   CostVarianceAnalysis,
-} from '@/services/procurementCostIntegrationService'
+} from '@/application/services/procurementCostIntegrationService'
 import { formatCurrency } from '@/shared/utils/formatters/formatters'
 
 interface ProcurementCostIntegrationProps {

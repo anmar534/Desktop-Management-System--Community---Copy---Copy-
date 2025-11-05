@@ -49,7 +49,9 @@ interface UseItemNavigationParams {
   }
   calculateProjectTotal: () => number
   formatCurrencyValue: (value: number) => string
-  persistPricingAndBOQ: (pricingMap: Map<string, PricingData>) => Promise<void>
+  // Week 4 Day 3: Renamed from persistPricingAndBOQ to handlePersistPricing
+  // Now uses Store.savePricing() directly instead of tenderPricingRepository
+  handlePersistPricing: () => Promise<void>
   notifyPricingUpdate: () => void
   updateTenderStatus: () => void
   recordPricingAudit: (
@@ -86,7 +88,7 @@ export function useItemNavigation({
   calculateTotals,
   calculateProjectTotal,
   formatCurrencyValue,
-  persistPricingAndBOQ: _persistPricingAndBOQ, // Not used - BOQ save now only on main Save button
+  handlePersistPricing: _handlePersistPricing, // Week 4 Day 3: Renamed, not used here
   notifyPricingUpdate: _notifyPricingUpdate, // Not used - events now only on main Save button
   updateTenderStatus: _updateTenderStatus, // Not used - status update now only on main Save button
   recordPricingAudit,

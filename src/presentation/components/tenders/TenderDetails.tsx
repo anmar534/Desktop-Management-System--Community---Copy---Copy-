@@ -23,6 +23,8 @@ import { FileUploadService } from '@/shared/utils/fileUploadService'
 // Phase 2: Migrated to Zustand Store (Week 1 - Day 1)
 // Removed useUnifiedTenderPricing - replaced with useTenderPricingStore
 import { useTenderPricingStore } from '@/stores/tenderPricingStore'
+import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations'
+import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine'
 import { getStatusColor } from '@/shared/utils/ui/statusColors'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
@@ -107,9 +109,27 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
 
   // أزيل مستمع pricingDataUpdated وإعادة بناء snapshot – الاعتماد على تزامن مركزي لاحق (إن لزم) عبر unified hook.
 
-  // Phase 2: Use Zustand Store instead of useUnifiedTenderPricing
-  const { boqItems, loadPricing, getTotalValue } = useTenderPricingStore()
+  // Phase 2: Use Zustand Store for data
+  const { boqItems, loadPricing, pricingData, currentPricing, defaultPercentages } =
+    useTenderPricingStore()
   const { formatCurrencyValue } = useCurrencyFormatter()
+
+  // Use domain pricing engine (required by useTenderPricingCalculations)
+  const domainPricing = useDomainPricingEngine({
+    tenderId: tender.id,
+    enabled: false, // We don't need domain pricing in TenderDetails view
+  })
+
+  // ✅ استخدام المصدر الصحيح للحسابات: useTenderPricingCalculations
+  const pricingCalculations = useTenderPricingCalculations({
+    currentPricing,
+    pricingData,
+    quantityItems: boqItems,
+    defaultPercentages,
+    pricingViewItems: [], // Not needed for totals calculation
+    domainPricing,
+    tenderId: tender.id,
+  })
 
   // Load pricing when tender changes
   useEffect(() => {
@@ -129,18 +149,50 @@ export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
       quantity: item.quantity ?? item.estimated?.quantity ?? 0,
     }))
 
-    const totalValue = getTotalValue()
     const hasPricing = items.some((it) => it.unitPrice > 0 || it.totalPrice > 0)
+
+    // ✅ الحسابات من المصدر الصحيح: useTenderPricingCalculations
+    const calculatedTotals = pricingCalculations.calculateItemsTotal()
+    const vatAmount = pricingCalculations.calculateVAT()
+    const totalWithVat = pricingCalculations.calculateProjectTotal()
+
+    // حساب النسب والقيم الإضافية
+    const profitTotal = pricingCalculations.calculateTotalProfit()
+    const administrativeTotal = pricingCalculations.calculateTotalAdministrative()
+    const operationalTotal = pricingCalculations.calculateTotalOperational()
+
+    const profitPercentage = calculatedTotals > 0 ? (profitTotal / calculatedTotals) * 100 : 0
+    const administrativePercentage =
+      calculatedTotals > 0 ? (administrativeTotal / calculatedTotals) * 100 : 0
+    const operationalPercentage =
+      calculatedTotals > 0 ? (operationalTotal / calculatedTotals) * 100 : 0
+
+    const totals = hasPricing
+      ? {
+          totalValue: calculatedTotals,
+          vatRate: 0.15,
+          vatAmount: vatAmount,
+          totalWithVat: totalWithVat,
+          profit: profitTotal,
+          profitPercentage: profitPercentage,
+          administrative: administrativeTotal,
+          administrativePercentage: administrativePercentage,
+          operational: operationalTotal,
+          operationalPercentage: operationalPercentage,
+          adminOperational: administrativeTotal + operationalTotal,
+          adminOperationalPercentage: administrativePercentage + operationalPercentage,
+        }
+      : null
 
     return {
       status: items.length > 0 ? 'ready' : 'empty',
       items,
-      totals: hasPricing ? { totalValue } : null,
+      totals,
       meta: null,
       source: 'central-boq',
       refresh: () => loadPricing(tender.id),
     }
-  }, [boqItems, getTotalValue, loadPricing, tender.id])
+  }, [boqItems, pricingCalculations, loadPricing, tender.id])
   const quantityFormatter = useMemo(
     () =>
       new Intl.NumberFormat('ar-SA', {

@@ -4,7 +4,7 @@
  *
  * Manages form state for tender pricing including:
  * - Current pricing data for active item
- * - Default percentages and their input states
+ * - Default percentages and their input states (Week 2 Day 3: now from Store)
  * - Form validation state
  * - Dirty state tracking
  */
@@ -17,6 +17,8 @@ import {
   DEFAULT_PRICING_PERCENTAGES,
   percentagesToInputStrings,
 } from '@/presentation/pages/Tenders/TenderPricing/utils/tenderPricingHelpers'
+// Week 2 Day 3: Import Store to get defaultPercentages
+import { useTenderPricingStore } from '@/stores/tenderPricingStore'
 
 interface UsePricingFormOptions {
   currentItem: QuantityItem | undefined
@@ -74,19 +76,21 @@ const createEmptyPricing = (percentages: PricingPercentages): PricingData => ({
 
 /**
  * Custom hook for managing pricing form state
+ * Week 2 Day 3: Now uses Store's defaultPercentages instead of local state
  */
 export function usePricingForm({
   currentItem,
   pricingData,
   onDirty,
 }: UsePricingFormOptions): UsePricingFormReturn {
-  // Default percentages state - single source of truth for default values
-  const [defaultPercentages, setDefaultPercentages] = useState<PricingPercentages>(
-    DEFAULT_PRICING_PERCENTAGES,
-  )
+  // Week 2 Day 3: Get defaultPercentages from Store (Single Source of Truth)
+  // Week 4 Day 3: Removed wrapper - Store.setDefaultPercentages now supports updater functions
+  const defaultPercentages = useTenderPricingStore((state) => state.defaultPercentages)
+  const setDefaultPercentages = useTenderPricingStore((state) => state.setDefaultPercentages)
 
+  // Input strings state (still local - UI only)
   const [defaultPercentagesInput, setDefaultPercentagesInput] = useState(
-    percentagesToInputStrings(DEFAULT_PRICING_PERCENTAGES),
+    percentagesToInputStrings(defaultPercentages),
   )
 
   // Current pricing state - initialized with default percentages

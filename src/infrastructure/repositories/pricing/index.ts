@@ -6,9 +6,9 @@
  *
  * Architecture:
  * - PricingOrchestrator: Facade/Coordinator for high-level operations
- * - PricingDataRepository: Handles pricing data persistence
- * - BOQSyncRepository: Synchronizes pricing with BOQ
- * - TenderStatusRepository: Updates tender status based on pricing
+ * - Pricing data helpers: Handle pricing data persistence
+ * - BOQ sync helpers: Synchronize pricing with BOQ
+ * - Tender status helpers: Update tender status based on pricing
  *
  * Usage:
  * ```typescript
@@ -16,9 +16,9 @@
  * import { pricingOrchestrator } from '@/infrastructure/repositories/pricing'
  * await pricingOrchestrator.persistPricingAndBOQ(...)
  *
- * // For direct repository access (advanced)
- * import { pricingDataRepository } from '@/infrastructure/repositories/pricing'
- * await pricingDataRepository.savePricing(...)
+ * // For direct storage helpers (advanced)
+ * import { savePricingData } from '@/infrastructure/repositories/pricing'
+ * await savePricingData(...)
  * ```
  */
 
@@ -26,10 +26,15 @@
 export { PricingOrchestrator, pricingOrchestrator } from './PricingOrchestrator'
 export type { SavePricingOptions } from './PricingOrchestrator'
 
-// Specialized Repositories - Direct access when needed
-export { PricingDataRepository, pricingDataRepository } from './PricingDataRepository'
-export { BOQSyncRepository, boqSyncRepository } from './BOQSyncRepository'
-export { TenderStatusRepository, tenderStatusRepository } from './TenderStatusRepository'
+// Specialized helpers - Direct access when needed
+export {
+  loadPricingData,
+  savePricingData,
+  loadDefaultPercentages,
+  updateDefaultPercentages,
+} from './PricingDataRepository'
+export { syncPricingToBOQ } from './BOQSyncRepository'
+export { updateTenderStatus, calculateTotalValue } from './TenderStatusRepository'
 
 // Types
 export type { BOQSyncOptions } from './BOQSyncRepository'

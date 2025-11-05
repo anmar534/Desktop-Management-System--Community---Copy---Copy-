@@ -44,12 +44,12 @@ import {
   Area,
   AreaChart,
 } from 'recharts'
-import type { ProjectDashboardData } from '@/services/projectReportingService'
-import { projectReportingService } from '@/services/projectReportingService'
-import type { KPIDashboard } from '@/services/kpiCalculationEngine'
-import { kpiCalculationEngine } from '@/services/kpiCalculationEngine'
-import { enhancedProjectService } from '@/services/enhancedProjectService'
-import { reportExportService } from '@/services/reportExportService'
+import type { ProjectDashboardData } from '@/application/services/projectReportingService'
+import { projectReportingService } from '@/application/services/projectReportingService'
+import type { KPIDashboard } from '@/application/services/kpiCalculationEngine'
+import { kpiCalculationEngine } from '@/application/services/kpiCalculationEngine'
+import { enhancedProjectService } from '@/application/services/enhancedProjectService'
+import { reportExportService } from '@/application/services/reportExportService'
 import { toast } from 'sonner'
 
 interface ProjectsDashboardProps {

@@ -21,29 +21,18 @@ import { getBOQRepository } from '@/application/services/serviceRegistry'
 import { tenderPricingRepository } from '@/infrastructure/repositories/TenderPricingRepository'
 import { pricingService } from '@/application/services/pricingService'
 import type { BOQData, BOQItem } from '@/shared/types/boq'
-import type { PricingData as FullPricingData } from '@/shared/types/pricing'
+// Week 2 Day 1: Use FULL PricingData type instead of simplified version
+import type {
+  PricingData as FullPricingData,
+  PricingPercentages as FullPricingPercentages,
+} from '@/shared/types/pricing'
 import type { QuantityItem } from '@/presentation/pages/Tenders/TenderPricing/types'
 
-// Types
-interface PricingData {
-  id: string
-  unitPrice: number
-  totalPrice: number
-  quantity: number
-  description: string
-  unit: string | undefined // Allow undefined to match BOQItem
-  // Additional fields for backward compatibility
-  estimated?: {
-    unitPrice?: number
-    totalPrice?: number
-  }
-}
+// Week 2 Day 1: REMOVED simplified PricingData type - now using FullPricingData from @/shared/types/pricing
+// This enables Store to hold complete pricing data with materials, labor, equipment, etc.
 
-interface PricingPercentages {
-  administrative: number
-  operational: number
-  profit: number
-}
+// Week 2 Day 1: Use FullPricingPercentages from @/shared/types/pricing
+type PricingPercentages = FullPricingPercentages
 
 interface CurrentPricingData {
   materials: unknown[]
@@ -61,7 +50,8 @@ interface CurrentPricingData {
 interface TenderPricingState {
   // State
   currentTenderId: string | null
-  pricingData: Map<string, PricingData>
+  // Week 2 Day 1: Changed to FullPricingData to store complete pricing information
+  pricingData: Map<string, FullPricingData>
   boqItems: BOQItem[]
   isDirty: boolean
   isLoading: boolean
@@ -76,7 +66,8 @@ interface TenderPricingState {
   // Actions
   setCurrentTender: (tenderId: string) => void
   loadPricing: (tenderId: string) => Promise<void>
-  updateItemPricing: (itemId: string, pricing: Partial<PricingData>) => void
+  // Week 2 Day 1: Changed to FullPricingData
+  updateItemPricing: (itemId: string, pricing: Partial<FullPricingData>) => void
   markDirty: () => void
   savePricing: (
     fullPricingData?: Map<string, FullPricingData>,
@@ -90,7 +81,10 @@ interface TenderPricingState {
   setCurrentPricing: (
     pricing: CurrentPricingData | ((prev: CurrentPricingData) => CurrentPricingData),
   ) => void
-  setDefaultPercentages: (percentages: PricingPercentages) => void
+  // Week 4 Day 3: Enhanced to support updater functions
+  setDefaultPercentages: (
+    percentages: PricingPercentages | ((prev: PricingPercentages) => PricingPercentages),
+  ) => void
   updateCurrentPricingField: <K extends keyof CurrentPricingData>(
     field: K,
     value: CurrentPricingData[K],
@@ -105,7 +99,8 @@ interface TenderPricingState {
 // Initial state
 const initialState = {
   currentTenderId: null,
-  pricingData: new Map<string, PricingData>(),
+  // Week 2 Day 1: Use FullPricingData
+  pricingData: new Map<string, FullPricingData>(),
   boqItems: [],
   isDirty: false,
   isLoading: false,
@@ -156,9 +151,13 @@ export const useTenderPricingStore = create<TenderPricingState>()(
           })
 
           try {
-            // Load from BOQ Repository
+            // Week 2 Day 1: Load from BOTH sources
+            // 1. Load BOQ structure from BOQ Repository
             const boqRepo = getBOQRepository()
             const boqData: BOQData | null = await boqRepo.getByTenderId(tenderId)
+
+            // 2. Load saved pricing details from pricingService
+            const savedPricing = await pricingService.loadTenderPricing(tenderId)
 
             if (!boqData || !boqData.items) {
               console.log('[TenderPricingStore] No BOQ data found for tender:', tenderId)
@@ -166,6 +165,8 @@ export const useTenderPricingStore = create<TenderPricingState>()(
                 state.currentTenderId = tenderId
                 state.boqItems = []
                 state.pricingData = new Map()
+                state.defaultPercentages =
+                  savedPricing?.defaultPercentages || state.defaultPercentages
                 state.isDirty = false
                 state.isLoading = false
                 state.lastSaved = null
@@ -173,33 +174,64 @@ export const useTenderPricingStore = create<TenderPricingState>()(
               return
             }
 
-            // Convert BOQ items to pricing data
-            const pricingMap = new Map<string, PricingData>()
+            // Week 2 Day 1: Merge BOQ items with saved FULL pricing data
+            const pricingMap = new Map<string, FullPricingData>()
+
+            // Convert saved pricing to Map for easier lookup
+            const savedPricingMap = savedPricing?.pricing
+              ? new Map(savedPricing.pricing as [string, FullPricingData][])
+              : new Map<string, FullPricingData>()
+
+            // Start with BOQ items as base
             boqData.items.forEach((item: BOQItem) => {
-              pricingMap.set(item.id, {
-                id: item.id,
-                description: item.description,
-                unit: item.unit,
-                quantity: item.quantity || 0,
-                unitPrice: item.unitPrice || item.estimated?.unitPrice || 0,
-                totalPrice: item.totalPrice || item.estimated?.totalPrice || 0,
-                estimated: item.estimated,
-              })
+              // Check if we have saved FULL pricing for this item
+              const savedItemPricing = savedPricingMap.get(item.id)
+
+              if (savedItemPricing) {
+                // Week 2 Day 1: Use FULL saved pricing data (includes materials, labor, etc.)
+                pricingMap.set(item.id, savedItemPricing)
+              } else {
+                // No saved pricing - create default FullPricingData structure
+                pricingMap.set(item.id, {
+                  materials: [],
+                  labor: [],
+                  equipment: [],
+                  subcontractors: [],
+                  additionalPercentages: {
+                    administrative: 0,
+                    operational: 0,
+                    profit: 0,
+                  },
+                  technicalNotes: '',
+                  completed: false,
+                  // Include basic BOQ data for reference
+                  id: item.id,
+                  description: item.description,
+                  unit: item.unit,
+                  quantity: item.quantity || 0,
+                  unitPrice: item.unitPrice ?? item.estimated?.unitPrice ?? 0,
+                  totalPrice: item.totalPrice ?? item.estimated?.totalPrice ?? 0,
+                } as FullPricingData)
+              }
             })
 
             set((state) => {
               state.currentTenderId = tenderId
               state.boqItems = boqData.items
               state.pricingData = pricingMap
+              state.defaultPercentages =
+                savedPricing?.defaultPercentages || state.defaultPercentages
               state.isDirty = false
               state.isLoading = false
               state.lastSaved = boqData.updatedAt || null
             })
 
-            console.log('[TenderPricingStore] Loaded pricing:', {
+            console.log('[TenderPricingStore] Loaded pricing (Week 2):', {
               tenderId,
               itemsCount: boqData.items.length,
               pricedCount: get().getPricedItemsCount(),
+              hasSavedPricing: !!savedPricing?.pricing?.length,
+              defaultPercentages: savedPricing?.defaultPercentages,
             })
           } catch (error) {
             console.error('[TenderPricingStore] Failed to load pricing:', error)
@@ -210,7 +242,8 @@ export const useTenderPricingStore = create<TenderPricingState>()(
           }
         },
 
-        updateItemPricing: (itemId: string, pricing: Partial<PricingData>) => {
+        // Week 2 Day 1: Updated to use FullPricingData
+        updateItemPricing: (itemId: string, pricing: Partial<FullPricingData>) => {
           set((state) => {
             const existing = state.pricingData.get(itemId)
             if (!existing) {
@@ -218,14 +251,25 @@ export const useTenderPricingStore = create<TenderPricingState>()(
               return
             }
 
-            const updated: PricingData = {
+            // Week 2 Day 1: Cast to access additional properties
+            const existingExt = existing as FullPricingData & {
+              unitPrice?: number
+              totalPrice?: number
+              quantity?: number
+            }
+            const pricingExt = pricing as Partial<
+              FullPricingData & { unitPrice?: number; totalPrice?: number; quantity?: number }
+            >
+
+            const updated: FullPricingData = {
               ...existing,
               ...pricing,
               // Auto-calculate totalPrice if quantity or unitPrice changed
               totalPrice:
-                pricing.totalPrice ??
-                (pricing.unitPrice ?? existing.unitPrice) * (pricing.quantity ?? existing.quantity),
-            }
+                pricingExt.totalPrice ??
+                (pricingExt.unitPrice ?? existingExt.unitPrice ?? 0) *
+                  (pricingExt.quantity ?? existingExt.quantity ?? 0),
+            } as FullPricingData
 
             state.pricingData.set(itemId, updated)
             state.isDirty = true
@@ -326,19 +370,22 @@ export const useTenderPricingStore = create<TenderPricingState>()(
               return
             }
 
-            // Get default percentages from saved pricing or use defaults
-            const defaultPercentages = {
-              administrative: 10,
-              operational: 5,
-              profit: 8,
-            }
+            // Week 2 Day 4: Use Store's defaultPercentages (not hardcoded)
+            const storeDefaultPercentages = get().defaultPercentages
+
+            // Week 2 Day 4: Save defaultPercentages to pricingService before persisting
+            await pricingService.saveTenderPricing(currentTenderId, {
+              pricing: Array.from(pricingDataMap.entries()),
+              defaultPercentages: storeDefaultPercentages,
+              lastUpdated: new Date().toISOString(),
+            })
 
             // Persist using TenderPricingRepository with full data
             await tenderPricingRepository.persistPricingAndBOQ(
               currentTenderId,
               pricingDataMap,
               itemsToSave,
-              defaultPercentages,
+              storeDefaultPercentages, // Week 2 Day 4: Use Store's defaultPercentages
               { skipEvent: false }, // Allow event to update progress
             )
 
@@ -396,9 +443,18 @@ export const useTenderPricingStore = create<TenderPricingState>()(
           })
         },
 
-        setDefaultPercentages: (percentages: PricingPercentages) => {
+        // Week 4 Day 3: Enhanced to support updater functions
+        setDefaultPercentages: (
+          percentagesOrUpdater:
+            | PricingPercentages
+            | ((prev: PricingPercentages) => PricingPercentages),
+        ) => {
           set((state) => {
-            state.defaultPercentages = percentages
+            if (typeof percentagesOrUpdater === 'function') {
+              state.defaultPercentages = percentagesOrUpdater(state.defaultPercentages)
+            } else {
+              state.defaultPercentages = percentagesOrUpdater
+            }
             state.isDirty = true
           })
         },
@@ -416,18 +472,21 @@ export const useTenderPricingStore = create<TenderPricingState>()(
         // Computed
         getTotalValue: () => {
           const { pricingData } = get()
-          const total = Array.from(pricingData.values()).reduce(
-            (sum, p) => sum + (p.totalPrice || 0),
-            0,
-          )
+          // Week 2 Day 1: FullPricingData may have totalPrice as additional property
+          const total = Array.from(pricingData.values()).reduce((sum, p) => {
+            const itemTotal = (p as FullPricingData & { totalPrice?: number }).totalPrice || 0
+            return sum + itemTotal
+          }, 0)
           return total
         },
 
         getPricedItemsCount: () => {
           const { pricingData } = get()
-          const count = Array.from(pricingData.values()).filter(
-            (p) => p.unitPrice && p.unitPrice > 0,
-          ).length
+          // Week 2 Day 1: FullPricingData may have unitPrice as additional property
+          const count = Array.from(pricingData.values()).filter((p) => {
+            const unitPrice = (p as FullPricingData & { unitPrice?: number }).unitPrice
+            return unitPrice && unitPrice > 0
+          }).length
           return count
         },
 
@@ -449,8 +508,8 @@ export const useTenderPricingStore = create<TenderPricingState>()(
         // Restore from persisted state
         onRehydrateStorage: () => (state) => {
           if (state && Array.isArray(state.pricingData)) {
-            // Convert array back to Map
-            state.pricingData = new Map(state.pricingData as [string, PricingData][])
+            // Week 2 Day 1: Convert array back to Map (FullPricingData)
+            state.pricingData = new Map(state.pricingData as [string, FullPricingData][])
             console.log('[TenderPricingStore] Rehydrated from storage:', {
               tenderId: state.currentTenderId,
               itemsCount: state.pricingData.size,
@@ -574,3 +633,26 @@ export const useTenderPricingComputed = () =>
     pricedItemsCount: state.getPricedItemsCount(),
     completionPercentage: state.getCompletionPercentage(),
   }))
+
+/**
+ * Selector: Get pricing data Map
+ * Usage: const pricingData = usePricingData()
+ * Re-renders: Only when pricing data changes
+ *
+ * Added: Week 2 Day 1 - Part of Single Source of Truth migration
+ */
+export const usePricingData = () => useTenderPricingStore((state) => state.pricingData)
+
+/**
+ * Selector: Get pricing data setter
+ * Usage: const setPricingData = useSetPricingData()
+ * Re-renders: Never (action is stable)
+ *
+ * Added: Week 2 Day 1 - For backward compatibility during migration
+ */
+export const useSetPricingData = () =>
+  useTenderPricingStore((state) => (newData: Map<string, FullPricingData>) => {
+    // Week 2 Day 1: Update entire pricingData map (FullPricingData)
+    state.pricingData = newData
+    state.isDirty = true
+  })

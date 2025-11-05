@@ -2,10 +2,11 @@
  * @fileoverview Zustand store for tender data management
  * @module stores/tender/tenderDataStore
  *
- * This store manages ONLY tender data operations:
+ * This store manages tender data operations and navigation:
  * - Loading tenders from repository
  * - CRUD operations (Create, Read, Update, Delete)
  * - Loading states and error handling
+ * - View navigation state (Phase 2 Migration)
  *
  * Following Single Responsibility Principle (SRP)
  * Separated from filters, selection, and sorting concerns
@@ -16,6 +17,11 @@ import { immer } from 'zustand/middleware/immer'
 import { devtools } from 'zustand/middleware'
 import type { Tender } from '@/data/centralData'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
+
+/**
+ * View types for tender navigation
+ */
+export type TenderView = 'list' | 'pricing' | 'details' | 'results'
 
 /**
  * State structure for tender data
@@ -35,6 +41,13 @@ export interface TenderDataState {
 
   /** Timestamp of last successful load */
   lastLoadTime: number | null
+
+  // Phase 2 Migration: Navigation state
+  /** Current view being displayed */
+  currentView: TenderView
+
+  /** Currently selected tender for details/pricing/results */
+  selectedTender: Tender | null
 }
 
 /**
@@ -67,6 +80,25 @@ export interface TenderDataActions {
 
   /** Reset store to initial state */
   reset: () => void
+
+  // Phase 2 Migration: Navigation actions
+  /** Navigate to a specific view with optional tender */
+  navigateToView: (view: TenderView, tender?: Tender | null) => void
+
+  /** Navigate back to list view */
+  backToList: () => void
+
+  /** Navigate to pricing page for a tender */
+  navigateToPricing: (tender: Tender) => void
+
+  /** Navigate to details page for a tender */
+  navigateToDetails: (tender: Tender) => void
+
+  /** Navigate to results page for a tender */
+  navigateToResults: (tender: Tender) => void
+
+  /** Set selected tender without changing view */
+  setSelectedTender: (tender: Tender | null) => void
 }
 
 /**
@@ -83,6 +115,9 @@ const initialState: TenderDataState = {
   isRefreshing: false,
   error: null,
   lastLoadTime: null,
+  // Phase 2 Migration: Navigation initial state
+  currentView: 'list',
+  selectedTender: null,
 }
 
 /**
@@ -252,6 +287,52 @@ export const useTenderDataStore = create<TenderDataStore>()(
       // Reset store to initial state
       reset: () => {
         set(initialState)
+      },
+
+      // Phase 2 Migration: Navigation actions implementation
+      // Navigate to a specific view with optional tender
+      navigateToView: (view: TenderView, tender?: Tender | null) => {
+        set({
+          currentView: view,
+          selectedTender: tender ?? null,
+        })
+      },
+
+      // Navigate back to list view
+      backToList: () => {
+        set({
+          currentView: 'list',
+          selectedTender: null,
+        })
+      },
+
+      // Navigate to pricing page for a tender
+      navigateToPricing: (tender: Tender) => {
+        set({
+          currentView: 'pricing',
+          selectedTender: tender,
+        })
+      },
+
+      // Navigate to details page for a tender
+      navigateToDetails: (tender: Tender) => {
+        set({
+          currentView: 'details',
+          selectedTender: tender,
+        })
+      },
+
+      // Navigate to results page for a tender
+      navigateToResults: (tender: Tender) => {
+        set({
+          currentView: 'results',
+          selectedTender: tender,
+        })
+      },
+
+      // Set selected tender without changing view
+      setSelectedTender: (tender: Tender | null) => {
+        set({ selectedTender: tender })
       },
     })),
     {

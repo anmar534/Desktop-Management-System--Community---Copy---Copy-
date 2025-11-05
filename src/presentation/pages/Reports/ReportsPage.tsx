@@ -28,8 +28,14 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { formatCurrency } from '@/data/centralData'
-import { useTenders } from '@/application/hooks/useTenders'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { useFinancialState } from '@/application/context'
+import {
+  selectActiveTendersTotal,
+  selectActiveTendersCount,
+  selectUrgentTendersCount,
+  selectWonTendersCount,
+} from '@/domain/selectors/tenderSelectors'
 
 type ReportType = 'projects' | 'financial' | 'tenders' | 'clients' | 'kpi' | 'risk' | 'unknown'
 type ReportStatus = 'ready' | 'generating' | 'outdated' | 'unknown'
@@ -68,7 +74,18 @@ export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
   const { projects } = projectsState
   const { financialData, loading: financialLoading } = financial
   const { clients, isLoading: clientsLoading } = clientsState
-  const { stats: tenderStats } = useTenders()
+  const { tenders } = useTenderListStore()
+
+  // Calculate tender stats using domain selectors (replacing useTenders)
+  const tenderStats = useMemo(
+    () => ({
+      totalTenders: selectActiveTendersTotal(tenders),
+      activeTenders: selectActiveTendersCount(tenders),
+      urgentTenders: selectUrgentTendersCount(tenders),
+      wonTenders: selectWonTendersCount(tenders),
+    }),
+    [tenders],
+  )
 
   const systemStats = useMemo(() => {
     const totalProjects = projects.length

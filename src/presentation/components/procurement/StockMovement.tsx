@@ -56,7 +56,7 @@ import {
   inventoryManagementService,
   type StockMovement,
   type InventoryItem,
-} from '@/services/inventoryManagementService'
+} from '@/application/services/inventoryManagementService'
 
 interface MovementFormData {
   itemId: string

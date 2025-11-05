@@ -28,7 +28,7 @@ import type {
   TaskPriority,
   TaskType,
 } from '../../types/tasks'
-import { taskManagementService } from '@/services/taskManagementService'
+import { taskManagementService } from '@/application/services/taskManagementService'
 import { toast } from 'sonner'
 
 // مخطط التحقق من صحة البيانات

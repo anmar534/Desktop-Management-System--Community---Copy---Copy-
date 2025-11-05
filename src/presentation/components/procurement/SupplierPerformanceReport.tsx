@@ -23,8 +23,8 @@ import {
 import type {
   SupplierPerformanceMetrics,
   ProcurementKPI,
-} from '@/services/procurementReportingService'
-import { procurementReportingService } from '@/services/procurementReportingService'
+} from '@/application/services/procurementReportingService'
+import { procurementReportingService } from '@/application/services/procurementReportingService'
 
 interface SupplierPerformanceReportProps {
   className?: string

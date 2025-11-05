@@ -1,5 +1,5 @@
 // TenderPricingPage drives the full tender pricing workflow and persistence.
-import { pricingService } from '@/application/services/pricingService'
+// Week 4 Day 3: pricingService import removed - no longer used for saveDefaultPercentages
 import { exportTenderPricingToExcel } from '@/presentation/pages/Tenders/TenderPricing/utils/exportUtils'
 import { parseQuantityItems } from '@/presentation/pages/Tenders/TenderPricing/utils/parseQuantityItems'
 import {
@@ -34,7 +34,7 @@ import { usePricingEventHandlers } from '@/presentation/pages/Tenders/TenderPric
 import { usePricingForm } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingForm'
 import { usePricingValidation } from '@/presentation/pages/Tenders/TenderPricing/hooks/usePricingValidation'
 import { AlertCircle } from 'lucide-react'
-import { tenderPricingRepository } from '@/infrastructure/repositories/TenderPricingRepository.js'
+// Week 4 Day 3: tenderPricingRepository import removed - using Store.savePricing() instead
 import { APP_EVENTS } from '@/events/bus.js'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { TenderPricingTabs } from '@/presentation/components/pricing/tender-pricing-process/views/TenderPricingTabs'
@@ -60,16 +60,40 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   const tenderTitle = tender.title ?? tender.name ?? ''
   const recordPricingAudit = useMemo(() => createPricingAuditLogger(tender.id), [tender.id])
 
-  const [pricingData, setPricingData] = useState<Map<string, PricingData>>(new Map())
+  // Week 2 Day 2: REMOVED local state - now using Store as Single Source of Truth
+  // const [pricingData, setPricingData] = useState<Map<string, PricingData>>(new Map())
 
   // Zustand Store: unified BOQ and pricing state
   const {
     boqItems,
+    pricingData, // Week 2 Day 2: Get from Store instead of local state
     loadPricing,
     savePricing: storeSavePricing,
+    updateItemPricing, // Week 2 Day 2: For updating individual items
     isDirty,
     markDirty: storeMarkDirty,
   } = useTenderPricingStore()
+
+  // Week 2 Day 2: Setter function for backward compatibility with hooks
+  // This wraps Store's updateItemPricing for components that expect setPricingData
+  // Supports both direct value and updater function (like useState)
+  const setPricingData = React.useCallback(
+    (
+      newDataOrUpdater:
+        | Map<string, PricingData>
+        | ((prev: Map<string, PricingData>) => Map<string, PricingData>),
+    ) => {
+      // Handle updater function
+      const newData =
+        typeof newDataOrUpdater === 'function' ? newDataOrUpdater(pricingData) : newDataOrUpdater
+
+      // Update each item in the Store
+      newData.forEach((pricing, itemId) => {
+        updateItemPricing(itemId, pricing)
+      })
+    },
+    [updateItemPricing, pricingData],
+  )
 
   // Load pricing data when component mounts or tender changes
   useEffect(() => {
@@ -275,40 +299,38 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     )
   }, [tender.id])
 
-  const persistPricingAndBOQ = useCallback(
-    async (updatedPricingData: Map<string, PricingData>) => {
-      // ✅ النسب محفوظة مسبقاً في saveDefaultPercentages
-      // لا حاجة لحفظها مرة أخرى - فقط نُمرّرها للحسابات
-      console.log('[persistPricingAndBOQ] Using percentages from state:', defaultPercentages)
+  // Week 4 Day 3: Replaced persistPricingAndBOQ with direct Store.savePricing()
+  // Store.savePricing() already saves to both pricingService + repository
+  // No need for separate wrapper - use Store directly
+  const handlePersistPricing = useCallback(async () => {
+    try {
+      console.log('[handlePersistPricing] Saving via Store.savePricing()...')
 
-      // مزامنة التسعير مع BOQ (بدون حفظ النسب مرة أخرى)
-      await tenderPricingRepository.persistPricingAndBOQ(
-        tender.id,
-        updatedPricingData,
-        quantityItems,
-        defaultPercentages, // ← للحسابات فقط، ليس للحفظ
-        { skipEvent: true }, // ⚠️ منع إطلاق أحداث
-      )
+      // Store.savePricing() handles everything:
+      // 1. Save to pricingService (fast IndexedDB)
+      // 2. Save to tenderPricingRepository (comprehensive)
+      // 3. Save defaultPercentages
+      await storeSavePricing(pricingData, quantityItems)
 
-      // إرسال إشعار بدون إعادة تحميل
+      // Notify other components of update
       await notifyPricingUpdate()
-    },
-    [tender.id, quantityItems, defaultPercentages, notifyPricingUpdate],
-  )
 
+      console.log('✅ [handlePersistPricing] Save complete')
+    } catch (error) {
+      console.error('❌ [handlePersistPricing] Save failed:', error)
+      throw error
+    }
+  }, [storeSavePricing, pricingData, quantityItems, notifyPricingUpdate])
+
+  // Week 4 Day 3: REMOVED saveDefaultPercentages (async save to pricingService)
+  // Replaced with simple wrapper that updates Store and marks dirty
+  // Actual save happens via Store.savePricing() when user clicks "حفظ"
   const saveDefaultPercentages = useCallback(
     async (newPercentages: typeof defaultPercentages) => {
       setDefaultPercentages(newPercentages)
-      // حفظ النسب مباشرة في pricingService بدون إطلاق حدث TENDER_UPDATED
-      const currentPricingData = await pricingService.loadTenderPricing(tender.id)
-      await pricingService.saveTenderPricing(tender.id, {
-        pricing: currentPricingData?.pricing || [],
-        defaultPercentages: newPercentages,
-        lastUpdated: new Date().toISOString(),
-      })
-      console.log('[TenderPricingPage] Default percentages saved:', newPercentages)
+      markDirty() // Mark for save later
     },
-    [tender.id, setDefaultPercentages],
+    [setDefaultPercentages, markDirty],
   )
 
   const updateTenderStatus = useCallback(
@@ -341,49 +363,35 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
   // النسخ الاحتياطي كان جزءاً من Draft System المُلغى
   // الحفظ الآن مباشر في electron-store بدون drafts
 
-  // تحميل بيانات التسعير الكاملة من pricingService
-  // Store يخزن فقط BOQ (الأساسيات)، pricingService يخزن التفاصيل الكاملة
+  // Week 2 Day 2: REMOVED - Load pricingData from pricingService
+  // pricingData now comes from Store (loaded by Store.loadPricing())
+  // Store.loadPricing() loads FULL data from both BOQ Repository + pricingService
+  // See: src/stores/tenderPricingStore.ts lines 156-234 (Week 2 Day 1 changes)
+
+  // Week 2 Day 3: SIMPLIFIED - defaultPercentages now come from Store (via usePricingForm hook)
+  // Only sync defaultPercentagesInput with Store's defaultPercentages and set isLoaded flag
   useEffect(() => {
     let mounted = true
     void (async () => {
       try {
-        console.log(
-          '[TenderPricingPage] Loading pricing from pricingService for tender:',
-          tender.id,
-        )
-        const loaded = await pricingService.loadTenderPricing(tender.id)
-        console.log(
-          '[TenderPricingPage] Loaded pricing data:',
-          loaded
-            ? {
-                hasPricing: !!loaded.pricing,
-                pricingCount: loaded.pricing?.length || 0,
-                hasDefaultPercentages: !!loaded.defaultPercentages,
-                defaultPercentagesValues: loaded.defaultPercentages, // ✅ عرض القيم الفعلية
-              }
-            : 'null',
-        )
+        // Week 2 Day 3: defaultPercentages are loaded by Store.loadPricing()
+        // usePricingForm hook gets them from Store directly
+        // We only need to sync the input strings state here
+
+        // Wait a bit for Store to load (Store.loadPricing is called in useEffect at line 98-102)
+        await new Promise((resolve) => setTimeout(resolve, 100))
 
         if (!mounted) return
 
-        if (loaded && loaded.pricing) {
-          // Use saved pricing data from pricingService
-          const pricingMap = new Map(loaded.pricing) as Map<string, PricingData>
-          console.log('[TenderPricingPage] Setting pricingData with', pricingMap.size, 'items')
-          setPricingData(pricingMap)
+        // Week 2 Day 3: Get defaultPercentages from Store (already loaded)
+        const storeDefaultPercentages = useTenderPricingStore.getState().defaultPercentages
 
-          if (loaded.defaultPercentages) {
-            setDefaultPercentages(loaded.defaultPercentages)
-            setDefaultPercentagesInput({
-              administrative: String(loaded.defaultPercentages.administrative ?? ''),
-              operational: String(loaded.defaultPercentages.operational ?? ''),
-              profit: String(loaded.defaultPercentages.profit ?? ''),
-            })
-          }
-        } else {
-          // No saved pricing - use empty Map
-          setPricingData(new Map())
-        }
+        // Sync input strings with Store's values
+        setDefaultPercentagesInput({
+          administrative: String(storeDefaultPercentages.administrative ?? ''),
+          operational: String(storeDefaultPercentages.operational ?? ''),
+          profit: String(storeDefaultPercentages.profit ?? ''),
+        })
       } finally {
         if (mounted) setIsLoaded(true)
       }
@@ -458,14 +466,10 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     })
 
     setPricingData(updatedPricingData)
-    void pricingService.saveTenderPricing(tender.id, {
-      pricing: Array.from(updatedPricingData.entries()),
-      defaultPercentages,
-      lastUpdated: new Date().toISOString(),
-    })
-    // Don't call persistPricingAndBOQ here - this is not the main Save button
-    // User must click Save to persist changes
-    // void persistPricingAndBOQ(updatedPricingData)
+    // Week 4 Day 3: REMOVED separate save to pricingService
+    // defaultPercentages are already updated in Store via setDefaultPercentages
+    // They will be saved when user clicks "حفظ" via Store.savePricing()
+    // No need for separate save here - just mark as dirty
 
     try {
       markDirty()
@@ -492,7 +496,6 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     recordPricingAudit,
     setCurrentPricing,
     setPricingData,
-    tender.id,
     markDirty,
   ])
 
@@ -556,7 +559,10 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       markDirty,
       updateTenderStatus,
       pricingData,
-      setPricingData,
+      // Week 2 Day 2: Cast to expected type for hook compatibility
+      setPricingData: setPricingData as React.Dispatch<
+        React.SetStateAction<Map<string, PricingData>>
+      >,
       currentPricing,
     })
 
@@ -569,7 +575,10 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       currentPricing,
       setCurrentPricing,
       pricingData,
-      setPricingData,
+      // Week 2 Day 2: Cast to expected type for hook compatibility
+      setPricingData: setPricingData as React.Dispatch<
+        React.SetStateAction<Map<string, PricingData>>
+      >,
       quantityItems,
       isLoaded,
       tenderId: tender.id,
@@ -578,7 +587,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
       calculateTotals,
       calculateProjectTotal,
       formatCurrencyValue,
-      persistPricingAndBOQ,
+      handlePersistPricing, // Week 4 Day 3: Renamed from persistPricingAndBOQ
       notifyPricingUpdate,
       updateTenderStatus,
       recordPricingAudit,
@@ -627,7 +636,7 @@ export const TenderPricingProcess: React.FC<TenderPricingProcessProps> = ({ tend
     defaultPercentagesInput,
     setDefaultPercentagesInput,
     setDefaultPercentages,
-    saveDefaultPercentages,
+    saveDefaultPercentages, // Week 4 Day 3: Now just marks dirty (actual save via Store.savePricing)
     applyDefaultPercentagesToExistingItems,
     setCurrentItemIndex,
     setCurrentView: (view: 'summary' | 'pricing' | 'technical') => handleViewChange(view),

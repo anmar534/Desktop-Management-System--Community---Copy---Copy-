@@ -28,7 +28,7 @@ import {
   Target,
 } from 'lucide-react'
 import type { Task, TaskStatus, TaskPriority } from '../../types/tasks'
-import { taskManagementService } from '@/services/taskManagementService'
+import { taskManagementService } from '@/application/services/taskManagementService'
 import { toast } from 'sonner'
 
 interface TaskDetailsProps {

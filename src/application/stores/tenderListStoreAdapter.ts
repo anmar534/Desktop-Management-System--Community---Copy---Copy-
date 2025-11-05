@@ -207,6 +207,10 @@ export function useTenderListStore() {
     selectedIds: selectionStore.selectedIds,
     viewMode: 'grid' as const, // Default view mode
 
+    // Phase 2 Migration: Navigation state
+    currentView: dataStore.currentView,
+    selectedTender: dataStore.selectedTender,
+
     // Tenders operations
     setTenders: dataStore.setTenders,
     refreshTenders: dataStore.refreshTenders,
@@ -317,6 +321,14 @@ export function useTenderListStore() {
       selectionStore.reset()
       sortStore.reset()
     },
+
+    // Phase 2 Migration: Navigation operations
+    navigateToView: dataStore.navigateToView,
+    backToList: dataStore.backToList,
+    navigateToPricing: dataStore.navigateToPricing,
+    navigateToDetails: dataStore.navigateToDetails,
+    navigateToResults: dataStore.navigateToResults,
+    setSelectedTender: dataStore.setSelectedTender,
   }
 }
 

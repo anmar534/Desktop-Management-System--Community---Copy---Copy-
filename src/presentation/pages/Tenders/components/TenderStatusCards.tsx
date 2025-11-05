@@ -18,8 +18,21 @@ import { motion } from 'framer-motion'
 import { formatCurrency } from '@/shared/utils/formatters/formatters'
 import { useMemo } from 'react'
 import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
-import { useTenders } from '@/application/hooks/useTenders'
 import type { Tender } from '@/data/centralData'
+import {
+  selectActiveTendersCount,
+  selectWonTendersCount,
+  selectLostTendersCount,
+  selectSubmittedTendersCount,
+  selectNewTendersCount,
+  selectUnderActionTendersCount,
+  selectExpiredTendersCount,
+  selectUrgentTendersCount,
+  selectWinRate,
+  selectWonTendersValue,
+  selectLostTendersValue,
+  selectSubmittedTendersValue,
+} from '@/domain/selectors/tenderSelectors'
 import { InlineAlert } from '@/presentation/components/ui/inline-alert'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { cn } from '@/presentation/components/ui/utils'
@@ -44,7 +57,25 @@ interface TenderStatusCardsProps {
 
 export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
   const { tenders, isLoading } = useTenderListStore()
-  const { stats: tenderStats } = useTenders()
+
+  // Calculate stats using domain selectors (replacing useTenders)
+  const tenderStats = useMemo(
+    () => ({
+      activeTenders: selectActiveTendersCount(tenders),
+      wonTenders: selectWonTendersCount(tenders),
+      lostTenders: selectLostTendersCount(tenders),
+      submittedTenders: selectSubmittedTendersCount(tenders),
+      newTenders: selectNewTendersCount(tenders),
+      underActionTenders: selectUnderActionTendersCount(tenders),
+      expiredTenders: selectExpiredTendersCount(tenders),
+      urgentTenders: selectUrgentTendersCount(tenders),
+      winRate: selectWinRate(tenders),
+      submittedValue: selectSubmittedTendersValue(tenders),
+      wonValue: selectWonTendersValue(tenders),
+      lostValue: selectLostTendersValue(tenders),
+    }),
+    [tenders],
+  )
 
   // قائمة المنافسات العاجلة (لعرض أبرز 4 عناصر فقط)
   const urgentTenders = useMemo(

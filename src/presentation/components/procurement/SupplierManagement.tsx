@@ -44,8 +44,8 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { supplierManagementService } from '@/services/supplierManagementService'
-import type { Supplier } from '@/services/supplierManagementService'
+import { supplierManagementService } from '@/application/services/supplierManagementService'
+import type { Supplier } from '@/application/services/supplierManagementService'
 import { formatCurrency } from '@/shared/utils/formatters/formatters'
 
 // أنواع البيانات المحلية

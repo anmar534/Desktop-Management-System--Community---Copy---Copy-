@@ -16,9 +16,16 @@
 import { useMemo } from 'react'
 import { FileText, Trophy, Receipt, DollarSign } from 'lucide-react'
 import { DetailCard } from '@/presentation/components/layout/PageLayout'
-import { useTenders } from '@/application/hooks/useTenders'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { useDevelopment } from '@/application/hooks/useDevelopment'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
+import {
+  selectWinRate,
+  selectWonTendersCount,
+  selectSubmittedTendersValue,
+  selectSubmittedTendersCount,
+  selectTotalSentTendersCount,
+} from '@/domain/selectors/tenderSelectors'
 
 /**
  * TenderPerformanceCards Component
@@ -34,9 +41,21 @@ import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
  * ```
  */
 export function TenderPerformanceCards() {
-  const { stats: tenderStats, tenders } = useTenders()
+  const { tenders } = useTenderListStore()
   const { goals } = useDevelopment()
   const { formatCurrencyValue } = useCurrencyFormatter()
+
+  // Calculate stats using domain selectors (replacing useTenders)
+  const tenderStats = useMemo(
+    () => ({
+      winRate: selectWinRate(tenders),
+      wonTenders: selectWonTendersCount(tenders),
+      totalSentTenders: selectTotalSentTendersCount(tenders),
+      submittedValue: selectSubmittedTendersValue(tenders),
+      submittedTenders: selectSubmittedTendersCount(tenders),
+    }),
+    [tenders],
+  )
 
   // Get current year
   const currentYear = new Date().getFullYear()

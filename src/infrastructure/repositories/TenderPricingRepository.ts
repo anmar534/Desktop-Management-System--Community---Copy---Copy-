@@ -6,9 +6,9 @@
  *
  * Architecture Pattern: FACADE
  * This class now delegates all operations to specialized repositories:
- * - PricingDataRepository: Pricing data persistence
- * - BOQSyncRepository: BOQ synchronization
- * - TenderStatusRepository: Tender status updates
+ * - Pricing data helpers: Pricing data persistence
+ * - BOQ sync helpers: BOQ synchronization
+ * - Tender status helpers: Tender status updates
  * - PricingOrchestrator: Coordinated multi-step operations
  *
  * Purpose:
@@ -25,8 +25,11 @@ import type { PricingData, PricingPercentages } from '@/shared/types/pricing'
 import type { QuantityItem } from '@/presentation/pages/Tenders/TenderPricing/types'
 import {
   pricingOrchestrator,
-  pricingDataRepository,
-  tenderStatusRepository,
+  loadPricingData,
+  savePricingData,
+  loadDefaultPercentages,
+  updateDefaultPercentages as persistDefaultPercentages,
+  updateTenderStatus as persistTenderStatus,
   type SavePricingOptions,
 } from './pricing'
 
@@ -36,7 +39,7 @@ import {
  */
 export class TenderPricingRepository {
   async loadPricing(tenderId: string): Promise<Map<string, PricingData>> {
-    return pricingDataRepository.loadPricing(tenderId)
+    return loadPricingData(tenderId)
   }
 
   async savePricing(
@@ -44,7 +47,7 @@ export class TenderPricingRepository {
     pricingData: Map<string, PricingData>,
     defaultPercentages: PricingPercentages,
   ): Promise<void> {
-    return pricingDataRepository.savePricing(tenderId, pricingData, defaultPercentages)
+    return savePricingData(tenderId, pricingData, defaultPercentages)
   }
 
   async persistPricingAndBOQ(
@@ -70,21 +73,15 @@ export class TenderPricingRepository {
     totalValue: number,
     options?: { allowRefresh?: boolean },
   ): Promise<void> {
-    return tenderStatusRepository.updateTenderStatus(
-      tenderId,
-      completedCount,
-      totalCount,
-      totalValue,
-      options,
-    )
+    return persistTenderStatus(tenderId, completedCount, totalCount, totalValue, options)
   }
 
   async getDefaultPercentages(tenderId: string): Promise<PricingPercentages | null> {
-    return pricingDataRepository.getDefaultPercentages(tenderId)
+    return loadDefaultPercentages(tenderId)
   }
 
   async updateDefaultPercentages(tenderId: string, percentages: PricingPercentages): Promise<void> {
-    return pricingDataRepository.updateDefaultPercentages(tenderId, percentages)
+    return persistDefaultPercentages(tenderId, percentages)
   }
 }
 

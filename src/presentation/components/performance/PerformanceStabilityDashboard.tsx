@@ -36,8 +36,8 @@ import type {
   SystemHealth,
   PerformanceMetrics,
   OptimizationRule,
-} from '@/services/performanceOptimizationService'
-import { performanceOptimizationService } from '@/services/performanceOptimizationService'
+} from '@/application/services/performanceOptimizationService'
+import { performanceOptimizationService } from '@/application/services/performanceOptimizationService'
 
 interface PerformanceStabilityDashboardProps {
   className?: string
