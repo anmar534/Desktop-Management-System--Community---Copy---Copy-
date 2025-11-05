@@ -204,6 +204,7 @@ export function Settings() {
     urgentTenders: true,
     weeklyReports: false,
   })
+  const [checkingUpdate, setCheckingUpdate] = useState(false)
 
   const { projects: projectsState, tenders: tendersState } = useFinancialState()
   const { projects } = projectsState
@@ -766,6 +767,41 @@ export function Settings() {
 
   const handleBackup = () => {
     alert('جاري إنشاء نسخة احتياطية...')
+  }
+
+  // التحقق من التحديثات
+  const handleCheckForUpdates = async () => {
+    setCheckingUpdate(true)
+    try {
+      const updatesApi = window.electronAPI?.updates
+
+      if (!updatesApi?.check) {
+        alert('ميزة التحديث غير متاحة في هذه البيئة.')
+        return
+      }
+
+      const result = (await updatesApi.check()) as {
+        success?: boolean
+        updateAvailable?: boolean
+        error?: unknown
+      }
+
+      console.log('Update check result:', result)
+
+      if (result?.success === false) {
+        const errorMessage =
+          typeof result.error === 'string' && result.error.trim().length > 0
+            ? result.error
+            : 'تعذر التحقق من التحديثات'
+
+        alert(`فشل التحقق من التحديثات:\n${errorMessage}`)
+      }
+    } catch (error) {
+      console.error('Error checking for updates:', error)
+      alert('حدث خطأ أثناء التحقق من التحديثات. يرجى المحاولة لاحقاً.')
+    } finally {
+      setCheckingUpdate(false)
+    }
   }
 
   // معالجة رفع شعار الشركة
@@ -1480,6 +1516,42 @@ export function Settings() {
                   <Lock className="h-4 w-4 ml-2" />
                   تحديث كلمة المرور
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* التحديثات التلقائية */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <RefreshCw className="h-5 w-5 text-primary" />
+                التحديثات التلقائية
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="font-medium">الإصدار الحالي</Label>
+                  <p className="text-sm text-muted-foreground">1.0.3</p>
+                </div>
+                <StatusBadge status="success" size="sm" showIcon={false}>
+                  محدّث
+                </StatusBadge>
+              </div>
+              <div className="pt-2">
+                <Button
+                  onClick={handleCheckForUpdates}
+                  disabled={checkingUpdate}
+                  className="w-full"
+                  variant="outline"
+                >
+                  <RefreshCw className={`h-4 w-4 ml-2 ${checkingUpdate ? 'animate-spin' : ''}`} />
+                  {checkingUpdate ? 'جارٍ التحقق...' : 'التحقق من التحديثات'}
+                </Button>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-1 pt-2 border-t">
+                <p>• يتم التحقق من التحديثات تلقائياً كل 6 ساعات</p>
+                <p>• سيتم إشعارك عند توفر تحديث جديد</p>
               </div>
             </CardContent>
           </Card>

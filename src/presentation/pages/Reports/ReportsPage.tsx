@@ -27,9 +27,16 @@ import {
   HardDrive,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { formatCurrency, calculateDaysLeft } from '@/data/centralData'
-import { calculateTenderStats } from '@/calculations/tender'
+import { formatCurrency } from '@/data/centralData'
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { useFinancialState } from '@/application/context'
+import {
+  selectActiveTendersTotal,
+  selectActiveTendersCount,
+  selectUrgentTendersCount,
+  selectWonTendersCount,
+} from '@/domain/selectors/tenderSelectors'
 
 type ReportType = 'projects' | 'financial' | 'tenders' | 'clients' | 'kpi' | 'risk' | 'unknown'
 type ReportStatus = 'ready' | 'generating' | 'outdated' | 'unknown'
@@ -59,19 +66,39 @@ interface ReportsPageProps {
 }
 
 export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
+  // ✅ Scroll to top when component loads
+  useScrollToTop()
+
   const {
     projects: projectsState,
-    tenders: tendersState,
     financial,
     isLoading: providerLoading,
     clients: clientsState,
   } = useFinancialState()
   const { projects } = projectsState
-  const { tenders } = tendersState
   const { financialData, loading: financialLoading } = financial
   const { clients, isLoading: clientsLoading } = clientsState
+  const { tenders } = useTenderListStore()
 
-  const tenderStats = useMemo(() => calculateTenderStats(tenders), [tenders])
+  // Calculate tender stats using domain selectors (replacing useTenders)
+  const tenderStats = useMemo(
+    () => {
+      const totalTenders = selectActiveTendersTotal(tenders)
+      const activeTenders = selectActiveTendersCount(tenders)
+      const urgentTenders = selectUrgentTendersCount(tenders)
+      const wonTenders = selectWonTendersCount(tenders)
+      const winRate = totalTenders > 0 ? Math.round((wonTenders / totalTenders) * 100) : 0
+      
+      return {
+        totalTenders,
+        activeTenders,
+        urgentTenders,
+        wonTenders,
+        winRate,
+      }
+    },
+    [tenders],
+  )
 
   const systemStats = useMemo(() => {
     const totalProjects = projects.length
@@ -79,16 +106,10 @@ export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
     const completedProjects = projects.filter((project) => project.status === 'completed').length
     const delayedProjects = projects.filter((project) => project.status === 'delayed').length
 
-    const totalTenders = tenders.length
-    const activeStatuses = new Set(['new', 'under_action', 'ready_to_submit'])
-    const activeTenders = tenders.filter((tender) => activeStatuses.has(tender.status)).length
-    const urgentTenders = tenders.reduce((count, tender) => {
-      if (!tender.deadline) return count
-      if (!activeStatuses.has(tender.status)) return count
-      const daysLeft = calculateDaysLeft(tender.deadline)
-      return daysLeft <= 7 && daysLeft >= 0 ? count + 1 : count
-    }, 0)
-    const wonTenders = tenders.filter((tender) => tender.status === 'won').length
+    const totalTenders = tenderStats.totalTenders
+    const activeTenders = tenderStats.activeTenders
+    const urgentTenders = tenderStats.urgentTenders
+    const wonTenders = tenderStats.wonTenders
 
     const totalClients = clients.length
     const activeClients = clients.filter((client) => client.status === 'active').length
@@ -132,7 +153,7 @@ export default function Reports({ onSectionChange }: ReportsPageProps = {}) {
         profitability,
       },
     }
-  }, [projects, tenders, clients, financialData])
+  }, [projects, clients, financialData, tenderStats])
 
   const isLoading = providerLoading || clientsLoading || financialLoading
 

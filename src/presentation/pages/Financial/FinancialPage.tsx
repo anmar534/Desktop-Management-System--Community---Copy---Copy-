@@ -12,7 +12,7 @@ import {
 } from '@/presentation/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/presentation/components/ui/tabs'
 import { PageLayout, DetailCard, EmptyState } from '@/presentation/components/layout/PageLayout'
-import { ProjectCostAnalyzer } from './components/ProjectCostAnalyzer'
+import { ProjectCostAnalyzer } from '@/presentation/pages/Projects/components/ProjectCostAnalyzer'
 import { Invoices } from './components/Invoices'
 import { Budgets } from './components/Budgets'
 import { BankAccounts } from './components/BankAccounts'
@@ -27,6 +27,7 @@ import {
   type CurrencyOptions,
   type NumberFormatOptionsWithLocale,
 } from '@/shared/utils/formatters/formatters' // استخدام المنسق الموحد
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
 import {
   type LucideIcon,
   DollarSign,
@@ -134,17 +135,18 @@ interface FinancialProps {
 }
 
 export function Financial({ onSectionChange, initialTab }: FinancialProps) {
+  // ✅ Scroll to top when component loads
+  useScrollToTop()
+
   const [activeTab, setActiveTab] = useState<FinancialTabValue>(initialTab ?? 'overview')
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
 
+  // تحديث التبويب النشط عند تغيير initialTab
   useEffect(() => {
-    if (!initialTab) {
-      return
-    }
-    if (initialTab !== activeTab) {
+    if (initialTab) {
       setActiveTab(initialTab)
     }
-  }, [initialTab, activeTab])
+  }, [initialTab])
 
   const DEFAULT_LOCALE: NumberFormatOptionsWithLocale['locale'] = 'ar-SA'
 
@@ -176,9 +178,14 @@ export function Financial({ onSectionChange, initialTab }: FinancialProps) {
 
   const activateTab = useCallback(
     (value: FinancialTabValue) => {
+      // دائماً نحدث التبويب النشط
       setActiveTab(value)
+
       const targetSection = TAB_TO_SECTION[value]
-      if (targetSection) {
+      const currentSection = 'financial' // الصفحة الحالية
+
+      // فقط غير الـ section إذا كان مختلف عن الصفحة الحالية
+      if (targetSection && targetSection !== currentSection) {
         onSectionChange(targetSection)
       }
     },
@@ -212,15 +219,15 @@ export function Financial({ onSectionChange, initialTab }: FinancialProps) {
 
   const { financialData, suppliersData, loading: financialLoading, error } = financialState
 
+  const isLoading = financialLoading || aggregatedLoading
+  const showInitialLoader = !hasLoadedOnce && isLoading
+  const showRefreshingState = hasLoadedOnce && isLoading
+
   useEffect(() => {
     if (!financialLoading && !hasLoadedOnce) {
       setHasLoadedOnce(true)
     }
   }, [financialLoading, hasLoadedOnce])
-
-  const isLoading = financialLoading || aggregatedLoading
-  const showInitialLoader = !hasLoadedOnce && isLoading
-  const showRefreshingState = hasLoadedOnce && isLoading
 
   const baseCurrency = currency?.baseCurrency ?? 'SAR'
   const formatCurrencyValue = useCallback(
@@ -403,8 +410,13 @@ export function Financial({ onSectionChange, initialTab }: FinancialProps) {
   )
 
   const paymentCycleDays = Math.round(financialData.kpis.paymentCycle ?? 0)
-  const budgetVariance = financialData.kpis.budgetVariance ?? 0
-  const costEfficiencyLabel = formatPercentageValue(financialData.kpis.costEfficiency, 1)
+  const budgetVariance = isFinite(financialData.kpis.budgetVariance)
+    ? financialData.kpis.budgetVariance
+    : 0
+  const costEfficiency = isFinite(financialData.kpis.costEfficiency)
+    ? financialData.kpis.costEfficiency
+    : 0
+  const costEfficiencyLabel = formatPercentageValue(costEfficiency, 1)
   const revenueGrowthLabel = formatSignedPercentage(financialData.revenue.growth ?? 0, 1)
   const budgetVarianceLabel = formatSignedPercentage(budgetVariance, 1)
   const paymentCycleLabel = `${formatNumberValue(paymentCycleDays, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} يوم`
@@ -847,7 +859,13 @@ export function Financial({ onSectionChange, initialTab }: FinancialProps) {
         </div>
       )}
       {/* نظام التبويبات المحسّن */}
-      <Tabs value={activeTab} onValueChange={handleTabValueChange} className="w-full" dir="rtl">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabValueChange}
+        defaultValue="overview"
+        className="w-full"
+        dir="rtl"
+      >
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-2 mb-6">
           {FINANCIAL_TABS.map((tabKey) => {
             const { label, shortLabel, icon: Icon } = FINANCIAL_TAB_CONFIG[tabKey]
@@ -871,500 +889,301 @@ export function Financial({ onSectionChange, initialTab }: FinancialProps) {
           </div>
         )}
 
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* العمود الأيسر - الملخص المالي */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* تفاصيل الإيرادات والمصروفات */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* بطاقة الإيرادات */}
-                <Card className="border-border shadow-sm">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-success" />
-                      تفصيل الإيرادات
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
-                      <span className="text-sm text-muted-foreground">من المشاريع</span>
-                      <span className="font-bold text-success">
-                        {formatCurrencyValue(financialData.revenue.total * 0.85)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                      <span className="text-sm text-muted-foreground">من المنافسات</span>
-                      <span className="font-bold text-primary">
-                        {formatCurrencyValue(financialData.revenue.total * 0.15)}
-                      </span>
-                    </div>
-                    <div className="pt-3 border-t border-border">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">النمو الشهري</span>
+        <TabsContent value="overview" className="mt-0">
+          {showInitialLoader ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center space-y-3">
+                <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary" />
+                <p className="text-sm text-muted-foreground">جارٍ تحميل البيانات المالية...</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* العمود الأيسر - الملخص المالي */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* تفاصيل الإيرادات والمصروفات */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* بطاقة الإيرادات */}
+                  <Card className="border-border shadow-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-success" />
+                        تفصيل الإيرادات
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
+                        <span className="text-sm text-muted-foreground">من المشاريع</span>
                         <span className="font-bold text-success">
-                          {formatSignedPercentage(financialData.revenue.growth, 1)}
+                          {formatCurrencyValue(financialData.revenue.total * 0.85)}
                         </span>
                       </div>
+                      <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
+                        <span className="text-sm text-muted-foreground">من المنافسات</span>
+                        <span className="font-bold text-primary">
+                          {formatCurrencyValue(financialData.revenue.total * 0.15)}
+                        </span>
+                      </div>
+                      <div className="pt-3 border-t border-border">
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">النمو الشهري</span>
+                          <span className="font-bold text-success">
+                            {formatSignedPercentage(financialData.revenue.growth, 1)}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* بطاقة المصروفات */}
+                  <Card className="border-border shadow-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                        <TrendingDown className="h-5 w-5 text-destructive" />
+                        تفصيل المصروفات
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-between items-center p-3 bg-destructive/10 rounded-lg">
+                        <span className="text-sm text-muted-foreground">تشغيلية</span>
+                        <span className="font-bold text-destructive">
+                          {formatCurrencyValue(financialData.expenses.operational)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
+                        <span className="text-sm text-muted-foreground">مشاريع</span>
+                        <span className="font-bold text-warning">
+                          {formatCurrencyValue(financialData.expenses.projects)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-secondary/10 rounded-lg">
+                        <span className="text-sm text-muted-foreground">إدارية</span>
+                        <span className="font-bold text-secondary-foreground">
+                          {formatCurrencyValue(financialData.expenses.overhead)}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* إدارة الموردين */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                      <TrendingUp className="h-6 w-6 text-primary" />
+                      إدارة الموردين
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                      <div className="flex-1">
+                        <div className="relative">
+                          <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input placeholder="البحث في الموردين..." className="pr-10" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Select>
+                          <SelectTrigger className="w-40">
+                            <SelectValue placeholder="التصنيف" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">جميع التصنيفات</SelectItem>
+                            <SelectItem value="materials">مواد البناء</SelectItem>
+                            <SelectItem value="equipment">معدات</SelectItem>
+                            <SelectItem value="services">خدمات</SelectItem>
+                            <SelectItem value="logistics">لوجستيات</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select>
+                          <SelectTrigger className="w-32">
+                            <SelectValue placeholder="الحالة" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">جميع الحالات</SelectItem>
+                            <SelectItem value="active">نشط</SelectItem>
+                            <SelectItem value="inactive">غير نشط</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="border-b border-border">
+                          <tr className="text-right">
+                            <th className="pb-3 font-semibold">المورد</th>
+                            <th className="pb-3 font-semibold">التصنيف</th>
+                            <th className="pb-3 font-semibold">إجمالي المشتريات</th>
+                            <th className="pb-3 font-semibold">المستحقات</th>
+                            <th className="pb-3 font-semibold">التقييم</th>
+                            <th className="pb-3 font-semibold">الحالة</th>
+                            <th className="pb-3 font-semibold">الإجراءات</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {suppliersData.map((supplier, index) => (
+                            <motion.tr
+                              key={supplier.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                              className="border-b border-border hover:bg-muted/50"
+                            >
+                              <td className="py-4">
+                                <div>
+                                  <div className="font-medium">{supplier.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {supplier.contact}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-4">
+                                <StatusBadge
+                                  status="info"
+                                  label={supplier.category}
+                                  size="sm"
+                                  showIcon={false}
+                                  className="shadow-none"
+                                />
+                              </td>
+                              <td className="py-4 font-medium">
+                                {formatCurrencyValue(supplier.totalPurchases)}
+                              </td>
+                              <td className="py-4">
+                                <span
+                                  className={
+                                    supplier.outstandingBalance > 0
+                                      ? 'text-warning font-medium'
+                                      : 'text-success'
+                                  }
+                                >
+                                  {formatCurrencyValue(supplier.outstandingBalance)}
+                                </span>
+                              </td>
+                              <td className="py-4">
+                                <div className="flex items-center gap-1">
+                                  <div className="flex">
+                                    {[...Array(5)].map((_, i) => (
+                                      <span
+                                        key={i}
+                                        className={`text-xs ${i < Math.floor(supplier.rating) ? 'text-warning' : 'text-muted-foreground'}`}
+                                      >
+                                        ★
+                                      </span>
+                                    ))}
+                                  </div>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatNumberValue(supplier.rating, {
+                                      locale: DEFAULT_LOCALE,
+                                      minimumFractionDigits: 1,
+                                      maximumFractionDigits: 1,
+                                    })}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-4">
+                                {(() => {
+                                  const { status, label } = resolveSupplierStatusBadge(
+                                    supplier.status,
+                                  )
+                                  return (
+                                    <StatusBadge
+                                      status={status}
+                                      label={label}
+                                      size="sm"
+                                      showIcon={false}
+                                      className="shadow-none"
+                                    />
+                                  )
+                                })()}
+                              </td>
+                              <td className="py-4">
+                                <div className="flex gap-2">
+                                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                    <Eye className="h-3 w-3" />
+                                  </Button>
+                                  <Button variant="outline" size="sm" className="h-8 w-8 p-0">
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </motion.tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
+                      <div className="text-sm text-muted-foreground">
+                        عرض {formatIntegerValue(suppliersData.length)} من{' '}
+                        {formatIntegerValue(suppliersData.length)} مورد
+                      </div>
+                      <Button size="sm" className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        إضافة مورد جديد
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* بطاقة المصروفات */}
+                {/* المعاملات الحديثة */}
                 <Card className="border-border shadow-sm">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                      <TrendingDown className="h-5 w-5 text-destructive" />
-                      تفصيل المصروفات
+                      <CreditCard className="h-5 w-5 text-primary" />
+                      المعاملات المالية الحديثة
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-destructive/10 rounded-lg">
-                      <span className="text-sm text-muted-foreground">تشغيلية</span>
-                      <span className="font-bold text-destructive">
-                        {formatCurrencyValue(financialData.expenses.operational)}
-                      </span>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {recentTransactions.slice(0, 4).map((transaction, index) => (
+                        <TransactionCard
+                          key={transaction.id}
+                          transaction={transaction}
+                          index={index}
+                        />
+                      ))}
                     </div>
-                    <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
-                      <span className="text-sm text-muted-foreground">مشاريع</span>
-                      <span className="font-bold text-warning">
-                        {formatCurrencyValue(financialData.expenses.projects)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-secondary/10 rounded-lg">
-                      <span className="text-sm text-muted-foreground">إدارية</span>
-                      <span className="font-bold text-secondary-foreground">
-                        {formatCurrencyValue(financialData.expenses.overhead)}
-                      </span>
-                    </div>
+                    <Button variant="outline" className="w-full mt-4">
+                      عرض جميع المعاملات
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* إدارة الموردين */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                    <TrendingUp className="h-6 w-6 text-primary" />
-                    إدارة الموردين
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                    <div className="flex-1">
-                      <div className="relative">
-                        <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="البحث في الموردين..." className="pr-10" />
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Select>
-                        <SelectTrigger className="w-40">
-                          <SelectValue placeholder="التصنيف" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">جميع التصنيفات</SelectItem>
-                          <SelectItem value="materials">مواد البناء</SelectItem>
-                          <SelectItem value="equipment">معدات</SelectItem>
-                          <SelectItem value="services">خدمات</SelectItem>
-                          <SelectItem value="logistics">لوجستيات</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Select>
-                        <SelectTrigger className="w-32">
-                          <SelectValue placeholder="الحالة" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">جميع الحالات</SelectItem>
-                          <SelectItem value="active">نشط</SelectItem>
-                          <SelectItem value="inactive">غير نشط</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="border-b border-border">
-                        <tr className="text-right">
-                          <th className="pb-3 font-semibold">المورد</th>
-                          <th className="pb-3 font-semibold">التصنيف</th>
-                          <th className="pb-3 font-semibold">إجمالي المشتريات</th>
-                          <th className="pb-3 font-semibold">المستحقات</th>
-                          <th className="pb-3 font-semibold">التقييم</th>
-                          <th className="pb-3 font-semibold">الحالة</th>
-                          <th className="pb-3 font-semibold">الإجراءات</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {suppliersData.map((supplier, index) => (
-                          <motion.tr
-                            key={supplier.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="border-b border-border hover:bg-muted/50"
-                          >
-                            <td className="py-4">
-                              <div>
-                                <div className="font-medium">{supplier.name}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  {supplier.contact}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-4">
-                              <StatusBadge
-                                status="info"
-                                label={supplier.category}
-                                size="sm"
-                                showIcon={false}
-                                className="shadow-none"
-                              />
-                            </td>
-                            <td className="py-4 font-medium">
-                              {formatCurrencyValue(supplier.totalPurchases)}
-                            </td>
-                            <td className="py-4">
-                              <span
-                                className={
-                                  supplier.outstandingBalance > 0
-                                    ? 'text-warning font-medium'
-                                    : 'text-success'
-                                }
-                              >
-                                {formatCurrencyValue(supplier.outstandingBalance)}
-                              </span>
-                            </td>
-                            <td className="py-4">
-                              <div className="flex items-center gap-1">
-                                <div className="flex">
-                                  {[...Array(5)].map((_, i) => (
-                                    <span
-                                      key={i}
-                                      className={`text-xs ${i < Math.floor(supplier.rating) ? 'text-warning' : 'text-muted-foreground'}`}
-                                    >
-                                      ★
-                                    </span>
-                                  ))}
-                                </div>
-                                <span className="text-xs text-muted-foreground">
-                                  {formatNumberValue(supplier.rating, {
-                                    locale: DEFAULT_LOCALE,
-                                    minimumFractionDigits: 1,
-                                    maximumFractionDigits: 1,
-                                  })}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="py-4">
-                              {(() => {
-                                const { status, label } = resolveSupplierStatusBadge(
-                                  supplier.status,
-                                )
-                                return (
-                                  <StatusBadge
-                                    status={status}
-                                    label={label}
-                                    size="sm"
-                                    showIcon={false}
-                                    className="shadow-none"
-                                  />
-                                )
-                              })()}
-                            </td>
-                            <td className="py-4">
-                              <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                                <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                                  <Edit className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
-                    <div className="text-sm text-muted-foreground">
-                      عرض {formatIntegerValue(suppliersData.length)} من{' '}
-                      {formatIntegerValue(suppliersData.length)} مورد
-                    </div>
-                    <Button size="sm" className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      إضافة مورد جديد
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* المعاملات الحديثة */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                    المعاملات المالية الحديثة
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentTransactions.slice(0, 4).map((transaction, index) => (
-                      <TransactionCard
-                        key={transaction.id}
-                        transaction={transaction}
-                        index={index}
+              {/* العمود الأيمن - المؤشرات والتحليلات */}
+              <div className="space-y-6">
+                {/* الفواتير غير المسددة */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-warning" />
+                      الفواتير غير المسددة
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {topOutstandingInvoices.length === 0 ? (
+                      <EmptyState
+                        icon={FileText}
+                        title="لا توجد فواتير مفتوحة"
+                        description="كل الفواتير مسددة حالياً. سنقوم بتنبيهك عند ظهور فواتير جديدة."
                       />
-                    ))}
-                  </div>
-                  <Button variant="outline" className="w-full mt-4">
-                    عرض جميع المعاملات
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* العمود الأيمن - المؤشرات والتحليلات */}
-            <div className="space-y-6">
-              {/* الفواتير غير المسددة */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-warning" />
-                    الفواتير غير المسددة
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {topOutstandingInvoices.length === 0 ? (
-                    <EmptyState
-                      icon={FileText}
-                      title="لا توجد فواتير مفتوحة"
-                      description="كل الفواتير مسددة حالياً. سنقوم بتنبيهك عند ظهور فواتير جديدة."
-                    />
-                  ) : (
-                    topOutstandingInvoices.map((invoice) => (
-                      <div
-                        key={invoice.id}
-                        className="flex flex-col gap-2 p-3 rounded-lg border border-border"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">
-                              {invoice.invoiceNumber}
-                            </p>
-                            <p className="text-xs text-muted-foreground">{invoice.clientName}</p>
-                          </div>
-                          {(() => {
-                            const { status, label } = resolveInvoiceStatusBadge(invoice.status)
-                            return (
-                              <StatusBadge
-                                status={status}
-                                label={label}
-                                size="sm"
-                                showIcon={false}
-                                className="shadow-none"
-                              />
-                            )
-                          })()}
-                        </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>
-                            تاريخ الاستحقاق:{' '}
-                            {formatDateValue(invoice.dueDate ?? invoice.issueDate, {
-                              locale: 'ar-EG',
-                            })}
-                          </span>
-                          <span className="font-medium text-foreground">
-                            {formatCurrencyValue(invoice.total)}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-                <CardContent className="pt-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => onSectionChange('invoices')}
-                  >
-                    إدارة الفواتير
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* الموازنات المتجاوزة */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <PieChart className="h-5 w-5 text-destructive" />
-                    موازنات بحاجة لمتابعة
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {budgetsAtRisk.length === 0 ? (
-                    <EmptyState
-                      icon={PieChart}
-                      title="كل الموازنات تحت السيطرة"
-                      description="لا توجد موازنات متجاوزة حالياً. راقب الأداء هنا وسيظهر أي إنذار مباشرة."
-                    />
-                  ) : (
-                    budgetsAtRisk.map((budget) => (
-                      <div
-                        key={budget.id}
-                        className="flex flex-col gap-2 p-3 rounded-lg border border-border"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{budget.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              القسم: {budget.department}
-                            </p>
-                          </div>
-                          {(() => {
-                            const { status, label } = resolveBudgetUtilizationBadge(
-                              budget.utilizationPercentage,
-                            )
-                            return (
-                              <StatusBadge
-                                status={status}
-                                label={label}
-                                size="sm"
-                                showIcon={false}
-                                className="shadow-none"
-                              />
-                            )
-                          })()}
-                        </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>المخصص: {formatCurrencyValue(budget.totalAmount)}</span>
-                          <span className="font-medium text-destructive">
-                            المصروف: {formatCurrencyValue(budget.spentAmount)}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-                <CardContent className="pt-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => onSectionChange('budgets')}
-                  >
-                    إدارة الموازنات
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* المشاريع عالية المخاطر */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-warning" />
-                    مشاريع بحاجة لمتابعة عاجلة
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {projectsAtRisk.length === 0 ? (
-                    <EmptyState
-                      icon={AlertTriangle}
-                      title="لا توجد مشاريع عالية المخاطر"
-                      description="المشاريع تسير ضمن الحدود الآمنة حالياً. تابع التحذيرات هنا دائماً."
-                    />
-                  ) : (
-                    projectsAtRisk.map((project) => (
-                      <div
-                        key={project.id}
-                        className="flex flex-col gap-2 p-3 rounded-lg border border-border"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{project.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              المدير: {project.manager}
-                            </p>
-                          </div>
-                          {(() => {
-                            const { status, label } = resolveProjectRiskBadge(project.health)
-                            return (
-                              <StatusBadge
-                                status={status}
-                                label={label}
-                                size="sm"
-                                showIcon={false}
-                                className="shadow-none"
-                              />
-                            )
-                          })()}
-                        </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>نسبة الإنجاز: {formatPercentageValue(project.progress, 0)}</span>
-                          <span className="font-medium text-foreground">
-                            قيمة العقد: {formatCurrencyValue(project.contractValue)}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-                <CardContent className="pt-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => onSectionChange('projects')}
-                  >
-                    إدارة المشاريع
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* المنافسات التي تقترب مواعيدها */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <CalendarDays className="h-5 w-5 text-accent" />
-                    منافسات تقترب مواعيدها النهائية
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {tendersClosingSoon.length === 0 ? (
-                    <EmptyState
-                      icon={CalendarDays}
-                      title="لا توجد مواعيد نهائية قريبة"
-                      description="كل المنافسات بعيدة عن موعد التسليم. ستظهر هنا أي منافسة تحتاج انتباهاً."
-                    />
-                  ) : (
-                    tendersClosingSoon.map((tender) => {
-                      const deadline = tender.deadline ? new Date(tender.deadline) : null
-                      const daysLeft = Number.isFinite(tender.daysLeft)
-                        ? Number(tender.daysLeft)
-                        : deadline
-                          ? Math.max(
-                              0,
-                              Math.round((deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-                            )
-                          : null
-
-                      return (
+                    ) : (
+                      topOutstandingInvoices.map((invoice) => (
                         <div
-                          key={tender.id}
+                          key={invoice.id}
                           className="flex flex-col gap-2 p-3 rounded-lg border border-border"
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div>
-                              <p className="text-sm font-semibold text-foreground">{tender.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                العميل: {tender.client}
+                              <p className="text-sm font-semibold text-foreground">
+                                {invoice.invoiceNumber}
                               </p>
+                              <p className="text-xs text-muted-foreground">{invoice.clientName}</p>
                             </div>
                             {(() => {
-                              const { status, label } = resolveTenderDeadlineBadge(daysLeft)
+                              const { status, label } = resolveInvoiceStatusBadge(invoice.status)
                               return (
                                 <StatusBadge
                                   status={status}
@@ -1378,235 +1197,449 @@ export function Financial({ onSectionChange, initialTab }: FinancialProps) {
                           </div>
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
                             <span>
-                              الحالة:{' '}
-                              {tender.status === 'ready_to_submit'
-                                ? 'جاهزة للتقديم'
-                                : tender.status === 'submitted'
-                                  ? 'تم التقديم'
-                                  : 'قيد الإعداد'}
+                              تاريخ الاستحقاق:{' '}
+                              {formatDateValue(invoice.dueDate ?? invoice.issueDate, {
+                                locale: 'ar-EG',
+                              })}
                             </span>
                             <span className="font-medium text-foreground">
-                              قيمة متوقعة: {formatCurrencyValue(tender.value ?? 0)}
+                              {formatCurrencyValue(invoice.total)}
                             </span>
                           </div>
                         </div>
-                      )
-                    })
-                  )}
-                </CardContent>
-                <CardContent className="pt-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => onSectionChange('tenders')}
-                  >
-                    إدارة المنافسات
-                  </Button>
-                </CardContent>
-              </Card>
+                      ))
+                    )}
+                  </CardContent>
+                  <CardContent className="pt-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => onSectionChange('invoices')}
+                    >
+                      إدارة الفواتير
+                    </Button>
+                  </CardContent>
+                </Card>
 
-              {/* حالة التقارير المالية */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-info" />
-                    حالة التقارير المالية
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {latestReports.length === 0 ? (
-                    <EmptyState
-                      icon={BarChart3}
-                      title="لا توجد تقارير مالية بعد"
-                      description="أنشئ تقريراً جديداً لمتابعة الأداء المالي والتشغيلي."
-                      actionLabel="إنشاء تقرير"
-                      onAction={() => onSectionChange('financial-reports')}
-                    />
-                  ) : (
-                    latestReports.map((report) => (
-                      <div
-                        key={report.id}
-                        className="flex flex-col gap-2 p-3 rounded-lg border border-border"
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-foreground">{report.name}</p>
-                          {(() => {
-                            const { status, label } = resolveReportStatusBadge(report.status)
-                            return (
-                              <StatusBadge
-                                status={status}
-                                label={label}
-                                size="sm"
-                                showIcon={false}
-                                className="shadow-none"
-                              />
-                            )
-                          })()}
+                {/* الموازنات المتجاوزة */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <PieChart className="h-5 w-5 text-destructive" />
+                      موازنات بحاجة لمتابعة
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {budgetsAtRisk.length === 0 ? (
+                      <EmptyState
+                        icon={PieChart}
+                        title="كل الموازنات تحت السيطرة"
+                        description="لا توجد موازنات متجاوزة حالياً. راقب الأداء هنا وسيظهر أي إنذار مباشرة."
+                      />
+                    ) : (
+                      budgetsAtRisk.map((budget) => (
+                        <div
+                          key={budget.id}
+                          className="flex flex-col gap-2 p-3 rounded-lg border border-border"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">{budget.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                القسم: {budget.department}
+                              </p>
+                            </div>
+                            {(() => {
+                              const { status, label } = resolveBudgetUtilizationBadge(
+                                budget.utilizationPercentage,
+                              )
+                              return (
+                                <StatusBadge
+                                  status={status}
+                                  label={label}
+                                  size="sm"
+                                  showIcon={false}
+                                  className="shadow-none"
+                                />
+                              )
+                            })()}
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>المخصص: {formatCurrencyValue(budget.totalAmount)}</span>
+                            <span className="font-medium text-destructive">
+                              المصروف: {formatCurrencyValue(budget.spentAmount)}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>النوع: {report.type}</span>
-                          <span>
-                            أنشئ في {formatDateValue(report.createdAt, { locale: 'ar-EG' })}
-                          </span>
+                      ))
+                    )}
+                  </CardContent>
+                  <CardContent className="pt-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => onSectionChange('budgets')}
+                    >
+                      إدارة الموازنات
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* المشاريع عالية المخاطر */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-warning" />
+                      مشاريع بحاجة لمتابعة عاجلة
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {projectsAtRisk.length === 0 ? (
+                      <EmptyState
+                        icon={AlertTriangle}
+                        title="لا توجد مشاريع عالية المخاطر"
+                        description="المشاريع تسير ضمن الحدود الآمنة حالياً. تابع التحذيرات هنا دائماً."
+                      />
+                    ) : (
+                      projectsAtRisk.map((project) => (
+                        <div
+                          key={project.id}
+                          className="flex flex-col gap-2 p-3 rounded-lg border border-border"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">
+                                {project.name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                المدير: {project.manager}
+                              </p>
+                            </div>
+                            {(() => {
+                              const { status, label } = resolveProjectRiskBadge(project.health)
+                              return (
+                                <StatusBadge
+                                  status={status}
+                                  label={label}
+                                  size="sm"
+                                  showIcon={false}
+                                  className="shadow-none"
+                                />
+                              )
+                            })()}
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>نسبة الإنجاز: {formatPercentageValue(project.progress, 0)}</span>
+                            <span className="font-medium text-foreground">
+                              قيمة العقد: {formatCurrencyValue(project.contractValue)}
+                            </span>
+                          </div>
                         </div>
+                      ))
+                    )}
+                  </CardContent>
+                  <CardContent className="pt-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => onSectionChange('projects')}
+                    >
+                      إدارة المشاريع
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* المنافسات التي تقترب مواعيدها */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <CalendarDays className="h-5 w-5 text-accent" />
+                      منافسات تقترب مواعيدها النهائية
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {tendersClosingSoon.length === 0 ? (
+                      <EmptyState
+                        icon={CalendarDays}
+                        title="لا توجد مواعيد نهائية قريبة"
+                        description="كل المنافسات بعيدة عن موعد التسليم. ستظهر هنا أي منافسة تحتاج انتباهاً."
+                      />
+                    ) : (
+                      tendersClosingSoon.map((tender) => {
+                        const deadline = tender.deadline ? new Date(tender.deadline) : null
+                        const daysLeft = Number.isFinite(tender.daysLeft)
+                          ? Number(tender.daysLeft)
+                          : deadline
+                            ? Math.max(
+                                0,
+                                Math.round(
+                                  (deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+                                ),
+                              )
+                            : null
+
+                        return (
+                          <div
+                            key={tender.id}
+                            className="flex flex-col gap-2 p-3 rounded-lg border border-border"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div>
+                                <p className="text-sm font-semibold text-foreground">
+                                  {tender.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  العميل: {tender.client}
+                                </p>
+                              </div>
+                              {(() => {
+                                const { status, label } = resolveTenderDeadlineBadge(daysLeft)
+                                return (
+                                  <StatusBadge
+                                    status={status}
+                                    label={label}
+                                    size="sm"
+                                    showIcon={false}
+                                    className="shadow-none"
+                                  />
+                                )
+                              })()}
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>
+                                الحالة:{' '}
+                                {tender.status === 'ready_to_submit'
+                                  ? 'جاهزة للتقديم'
+                                  : tender.status === 'submitted'
+                                    ? 'تم التقديم'
+                                    : 'قيد الإعداد'}
+                              </span>
+                              <span className="font-medium text-foreground">
+                                قيمة متوقعة: {formatCurrencyValue(tender.value ?? 0)}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })
+                    )}
+                  </CardContent>
+                  <CardContent className="pt-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => onSectionChange('tenders')}
+                    >
+                      إدارة المنافسات
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* حالة التقارير المالية */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-info" />
+                      حالة التقارير المالية
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {latestReports.length === 0 ? (
+                      <EmptyState
+                        icon={BarChart3}
+                        title="لا توجد تقارير مالية بعد"
+                        description="أنشئ تقريراً جديداً لمتابعة الأداء المالي والتشغيلي."
+                        actionLabel="إنشاء تقرير"
+                        onAction={() => onSectionChange('financial-reports')}
+                      />
+                    ) : (
+                      latestReports.map((report) => (
+                        <div
+                          key={report.id}
+                          className="flex flex-col gap-2 p-3 rounded-lg border border-border"
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold text-foreground">{report.name}</p>
+                            {(() => {
+                              const { status, label } = resolveReportStatusBadge(report.status)
+                              return (
+                                <StatusBadge
+                                  status={status}
+                                  label={label}
+                                  size="sm"
+                                  showIcon={false}
+                                  className="shadow-none"
+                                />
+                              )
+                            })()}
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>النوع: {report.type}</span>
+                            <span>
+                              أنشئ في {formatDateValue(report.createdAt, { locale: 'ar-EG' })}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                  <CardContent className="pt-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => onSectionChange('financial-reports')}
+                    >
+                      إدارة التقارير المالية
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* مؤشرات الأداء المالي */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-secondary-foreground" />
+                      مؤشرات الأداء
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-muted-foreground">هامش الربح الإجمالي</span>
+                        <span className="font-medium">
+                          {formatPercentageValue(financialData.profitability.gross, 1)}
+                        </span>
                       </div>
-                    ))
-                  )}
-                </CardContent>
-                <CardContent className="pt-0">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => onSectionChange('financial-reports')}
-                  >
-                    إدارة التقارير المالية
-                  </Button>
-                </CardContent>
-              </Card>
+                      <Progress value={financialData.profitability.gross} className="h-2" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-muted-foreground">هامش الربح الصافي</span>
+                        <span className="font-medium">
+                          {formatPercentageValue(financialData.profitability.net, 1)}
+                        </span>
+                      </div>
+                      <Progress value={financialData.profitability.net} className="h-2" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-muted-foreground">كفاءة التكلفة</span>
+                        <span className="font-medium">
+                          {formatPercentageValue(financialData.kpis.costEfficiency, 1)}
+                        </span>
+                      </div>
+                      <Progress value={financialData.kpis.costEfficiency} className="h-2" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-muted-foreground">عائد الاستثمار</span>
+                        <span className="font-medium">
+                          {formatPercentageValue(financialData.profitability.roi, 1)}
+                        </span>
+                      </div>
+                      <Progress value={financialData.profitability.roi} className="h-2" />
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* مؤشرات الأداء المالي */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-secondary-foreground" />
-                    مؤشرات الأداء
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">هامش الربح الإجمالي</span>
-                      <span className="font-medium">
-                        {formatPercentageValue(financialData.profitability.gross, 1)}
-                      </span>
+                {/* حالة التدفق النقدي */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <Wallet className="h-5 w-5 text-success" />
+                      التدفق النقدي
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-center p-4 bg-success/10 rounded-lg">
+                      <div className="text-2xl font-bold text-success">
+                        {formatCurrencyValue(financialData.cashFlow.current)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">الرصيد الحالي</div>
                     </div>
-                    <Progress value={financialData.profitability.gross} className="h-2" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">هامش الربح الصافي</span>
-                      <span className="font-medium">
-                        {formatPercentageValue(financialData.profitability.net, 1)}
-                      </span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">متوقع الوصول</span>
+                        <span className="font-medium text-success">
+                          {formatCurrencyValue(financialData.cashFlow.incoming)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">متوقع الصرف</span>
+                        <span className="font-medium text-destructive">
+                          {formatCurrencyValue(financialData.cashFlow.outgoing)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between pt-3 border-t border-border">
+                        <span className="text-sm font-medium">التوقع النهائي</span>
+                        <span className="font-bold text-primary">
+                          {formatCurrencyValue(financialData.cashFlow.projected)}
+                        </span>
+                      </div>
                     </div>
-                    <Progress value={financialData.profitability.net} className="h-2" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">كفاءة التكلفة</span>
-                      <span className="font-medium">
-                        {formatPercentageValue(financialData.kpis.costEfficiency, 1)}
-                      </span>
-                    </div>
-                    <Progress value={financialData.kpis.costEfficiency} className="h-2" />
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">عائد الاستثمار</span>
-                      <span className="font-medium">
-                        {formatPercentageValue(financialData.profitability.roi, 1)}
-                      </span>
-                    </div>
-                    <Progress value={financialData.profitability.roi} className="h-2" />
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* حالة التدفق النقدي */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <Wallet className="h-5 w-5 text-success" />
-                    التدفق النقدي
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="text-center p-4 bg-success/10 rounded-lg">
-                    <div className="text-2xl font-bold text-success">
-                      {formatCurrencyValue(financialData.cashFlow.current)}
-                    </div>
-                    <div className="text-sm text-muted-foreground">الرصيد الحالي</div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">متوقع الوصول</span>
-                      <span className="font-medium text-success">
-                        {formatCurrencyValue(financialData.cashFlow.incoming)}
+                {/* المطلوبات */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-warning" />
+                      المطلوبات
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
+                      <span className="text-sm text-muted-foreground">متأخرة</span>
+                      <span className="font-bold text-destructive">
+                        {formatCurrencyValue(financialData.receivables.overdue)}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">متوقع الصرف</span>
-                      <span className="font-medium text-destructive">
-                        {formatCurrencyValue(financialData.cashFlow.outgoing)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between pt-3 border-t border-border">
-                      <span className="text-sm font-medium">التوقع النهائي</span>
+                    <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
+                      <span className="text-sm text-muted-foreground">حالية</span>
                       <span className="font-bold text-primary">
-                        {formatCurrencyValue(financialData.cashFlow.projected)}
+                        {formatCurrencyValue(financialData.receivables.current)}
                       </span>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
+                      <span className="text-sm text-muted-foreground">قادمة</span>
+                      <span className="font-bold text-success">
+                        {formatCurrencyValue(financialData.receivables.upcoming)}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* المطلوبات */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-warning" />
-                    المطلوبات
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
-                    <span className="text-sm text-muted-foreground">متأخرة</span>
-                    <span className="font-bold text-destructive">
-                      {formatCurrencyValue(financialData.receivables.overdue)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                    <span className="text-sm text-muted-foreground">حالية</span>
-                    <span className="font-bold text-primary">
-                      {formatCurrencyValue(financialData.receivables.current)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
-                    <span className="text-sm text-muted-foreground">قادمة</span>
-                    <span className="font-bold text-success">
-                      {formatCurrencyValue(financialData.receivables.upcoming)}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* إجراءات سريعة */}
-              <Card className="border-border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg font-semibold">إجراءات سريعة</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button variant="outline" size="sm" className="w-full justify-start">
-                    <Calculator className="h-4 w-4 ml-2" />
-                    حاسبة الربحية
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start">
-                    <PieChart className="h-4 w-4 ml-2" />
-                    تحليل التكاليف
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start">
-                    <Download className="h-4 w-4 ml-2" />
-                    تصدير البيانات
-                  </Button>
-                </CardContent>
-              </Card>
+                {/* إجراءات سريعة */}
+                <Card className="border-border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold">إجراءات سريعة</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      <Calculator className="h-4 w-4 ml-2" />
+                      حاسبة الربحية
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      <PieChart className="h-4 w-4 ml-2" />
+                      تحليل التكاليف
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      <Download className="h-4 w-4 ml-2" />
+                      تصدير البيانات
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </div>
+          )}
         </TabsContent>
 
-        <TabsContent value="projects">
+        <TabsContent value="projects" className="mt-0">
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               <Card className="border-border shadow-sm">
@@ -1771,7 +1804,7 @@ export function Financial({ onSectionChange, initialTab }: FinancialProps) {
           </div>
         </TabsContent>
 
-        <TabsContent value="tenders">
+        <TabsContent value="tenders" className="mt-0">
           <div className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               <Card className="border-border shadow-sm">
@@ -1997,27 +2030,27 @@ export function Financial({ onSectionChange, initialTab }: FinancialProps) {
         </TabsContent>
 
         {/* تبويب الفواتير */}
-        <TabsContent value="invoices">
+        <TabsContent value="invoices" className="mt-0">
           <Invoices onSectionChange={onSectionChange} />
         </TabsContent>
 
         {/* تبويب الموازنات */}
-        <TabsContent value="budgets">
+        <TabsContent value="budgets" className="mt-0">
           <Budgets onSectionChange={onSectionChange} />
         </TabsContent>
 
         {/* تبويب الحسابات البنكية */}
-        <TabsContent value="bank-accounts">
+        <TabsContent value="bank-accounts" className="mt-0">
           <BankAccounts onSectionChange={onSectionChange} />
         </TabsContent>
 
         {/* تبويب التقارير المالية */}
-        <TabsContent value="reports">
+        <TabsContent value="reports" className="mt-0">
           <FinancialReports onSectionChange={onSectionChange} />
         </TabsContent>
 
         {/* تبويب تحليل التكاليف */}
-        <TabsContent value="cost-analysis">
+        <TabsContent value="cost-analysis" className="mt-0">
           <ProjectCostAnalyzer />
         </TabsContent>
       </Tabs>

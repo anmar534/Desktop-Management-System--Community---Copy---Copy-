@@ -157,7 +157,7 @@ export function Sidebar() {
             {/* عناصر المعاينة المؤقتة حُذفت بعد الانتقال للتصميم النهائي */}
           </div>
 
-          <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-4">
+          <nav className="flex-1 space-y-1.5 overflow-y-hidden px-3 py-4">
             {sidebarNodes.map((node) => {
               const isActive = resolvedActiveSection === node.id
               const Icon = node.icon

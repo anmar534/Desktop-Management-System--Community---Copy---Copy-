@@ -9,6 +9,7 @@ import type { IInvoiceRepository } from '@/repository/invoice.repository'
 import type { IBudgetRepository } from '@/repository/budget.repository'
 import type { IFinancialReportRepository } from '@/repository/financialReport.repository'
 import type { IEnhancedProjectRepository } from '@/repository/enhancedProject.repository'
+import type { IDevelopmentGoalsRepository } from '@/repository/developmentGoals.repository'
 import { projectRepository as defaultProjectRepository } from '@/repository/providers/project.local'
 import { tenderRepository as defaultTenderRepository } from '@/repository/providers/tender.local'
 import { clientRepository as defaultClientRepository } from '@/repository/providers/client.local'
@@ -20,6 +21,7 @@ import { invoiceRepository as defaultInvoiceRepository } from '@/repository/prov
 import { budgetRepository as defaultBudgetRepository } from '@/repository/providers/budget.local'
 import { financialReportRepository as defaultFinancialReportRepository } from '@/repository/providers/financialReport.local'
 import defaultEnhancedProjectRepository from '@/repository/providers/enhancedProject.local'
+import { developmentGoalsRepository as defaultDevelopmentGoalsRepository } from '@/repository/providers/developmentGoals.local'
 
 export interface RepositoryRegistry {
   projectRepository: IProjectRepository
@@ -33,6 +35,7 @@ export interface RepositoryRegistry {
   budgetRepository: IBudgetRepository
   financialReportRepository: IFinancialReportRepository
   enhancedProjectRepository: IEnhancedProjectRepository
+  developmentGoalsRepository: IDevelopmentGoalsRepository
 }
 
 const defaultRegistry: RepositoryRegistry = {
@@ -47,6 +50,7 @@ const defaultRegistry: RepositoryRegistry = {
   budgetRepository: defaultBudgetRepository,
   financialReportRepository: defaultFinancialReportRepository,
   enhancedProjectRepository: defaultEnhancedProjectRepository,
+  developmentGoalsRepository: defaultDevelopmentGoalsRepository,
 }
 
 const registry: RepositoryRegistry = { ...defaultRegistry }
@@ -86,6 +90,9 @@ function assignRegistry(overrides: RepositoryOverrides) {
   }
   if (overrides.enhancedProjectRepository) {
     registry.enhancedProjectRepository = overrides.enhancedProjectRepository
+  }
+  if (overrides.developmentGoalsRepository) {
+    registry.developmentGoalsRepository = overrides.developmentGoalsRepository
   }
 }
 
@@ -145,6 +152,10 @@ export function registerFinancialReportRepository(repository: IFinancialReportRe
   registry.financialReportRepository = repository
 }
 
+export function registerDevelopmentGoalsRepository(repository: IDevelopmentGoalsRepository) {
+  registry.developmentGoalsRepository = repository
+}
+
 export function getProjectRepository(): IProjectRepository {
   return registry.projectRepository
 }
@@ -187,4 +198,8 @@ export function getFinancialReportRepository(): IFinancialReportRepository {
 
 export function getEnhancedProjectRepository(): IEnhancedProjectRepository {
   return registry.enhancedProjectRepository
+}
+
+export function getDevelopmentGoalsRepository(): IDevelopmentGoalsRepository {
+  return registry.developmentGoalsRepository
 }

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Competitor Database Service Implementation
  * @description Comprehensive service for managing competitor intelligence database in Phase 3.
  * Provides competitor profile management, historical tracking, and competitive analysis.
@@ -9,14 +9,14 @@
  *
  * @example
  * ```typescript
- * import { competitorDatabaseService } from '@/services/competitorDatabaseService'
+ * import { competitorDatabaseService } from '@/application/services/competitorDatabaseService'
  *
  * // Create a new competitor profile
  * const competitor = await competitorDatabaseService.createCompetitor({
- *   name: '╪┤╪▒┘â╪ر ╪د┘┘à┘╪د┘╪│ ╪د┘╪ث┘ê┘',
+ *   name: '?????�?� ?�???�???�???? ?�???�?�??',
  *   type: 'direct',
  *   marketSegments: ['commercial', 'infrastructure'],
- *   headquarters: '╪د┘╪▒┘è╪د╪╢╪î ╪د┘┘à┘à┘┘â╪ر ╪د┘╪╣╪▒╪ذ┘è╪ر ╪د┘╪│╪╣┘ê╪»┘è╪ر'
+ *   headquarters: '?�?????�?�???� ?�???�?�???�?� ?�???????�?�?� ?�???????�?�?�?�'
  * })
  *
  * // Get competitive analysis
@@ -439,32 +439,32 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
 
     // Required fields validation
     if (!data.name || data.name.trim().length === 0) {
-      errors.push('╪د╪│┘à ╪د┘╪┤╪▒┘â╪ر ┘à╪╖┘┘ê╪ذ')
+      errors.push('?�???� ?�???????�?� ?�?????�?�')
     }
 
     if (!data.headquarters || data.headquarters.trim().length === 0) {
-      errors.push('┘à┘ê┘é╪╣ ╪د┘┘à┘é╪▒ ╪د┘╪▒╪خ┘è╪│┘è ┘à╪╖┘┘ê╪ذ')
+      errors.push('?�?�?�?? ?�???�?�?? ?�?????�?�???� ?�?????�?�')
     }
 
     if (data.marketShare !== undefined && (data.marketShare < 0 || data.marketShare > 100)) {
-      errors.push('╪د┘╪ص╪╡╪ر ╪د┘╪│┘ê┘é┘è╪ر ┘è╪ش╪ذ ╪ث┘ ╪ز┘â┘ê┘ ╪ذ┘è┘ 0 ┘ê 100')
+      errors.push('?�???�???� ?�?????�?�?�?� ?�?�?� ?�?? ?�?�?�?? ?�?�?? 0 ?� 100')
     }
 
     if (data.winRate !== undefined && (data.winRate < 0 || data.winRate > 100)) {
-      errors.push('┘à╪╣╪»┘ ╪د┘┘┘ê╪▓ ┘è╪ش╪ذ ╪ث┘ ┘è┘â┘ê┘ ╪ذ┘è┘ 0 ┘ê 100')
+      errors.push('?�???�?? ?�?????�?? ?�?�?� ?�?? ?�?�?�?? ?�?�?? 0 ?� 100')
     }
 
     // Warnings for incomplete data
     if (!data.website) {
-      warnings.push('╪د┘┘à┘ê┘é╪╣ ╪د┘╪ح┘┘â╪ز╪▒┘ê┘┘è ╪║┘è╪▒ ┘à╪ص╪»╪»')
+      warnings.push('?�???�?�?�?? ?�???�???�?�???�???� ???�?? ?�?�?�?�')
     }
 
     if (!data.specializations || data.specializations.length === 0) {
-      warnings.push('╪د┘╪ز╪«╪╡╪╡╪د╪ز ╪║┘è╪▒ ┘à╪ص╪»╪»╪ر')
+      warnings.push('?�???�?�?????�?� ???�?? ?�?�?�?�?�')
     }
 
     if (!data.marketSegments || data.marketSegments.length === 0) {
-      warnings.push('╪د┘┘é╪╖╪د╪╣╪د╪ز ╪د┘╪│┘ê┘é┘è╪ر ╪║┘è╪▒ ┘à╪ص╪»╪»╪ر')
+      warnings.push('?�???�???�???�?� ?�?????�?�?�?� ???�?? ?�?�?�?�?�')
     }
 
     return {
@@ -946,21 +946,21 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     const opportunities: string[] = []
 
     if (competitor.weaknesses.length > competitor.strengths.length) {
-      opportunities.push('╪د╪│╪ز╪║┘╪د┘ ┘┘é╪د╪╖ ╪د┘╪╢╪╣┘ ┘┘è ╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪د┘╪ز╪│╪╣┘è╪▒')
+      opportunities.push('?�???�?????�?? ???�?�?? ?�???????? ???� ?�???�???�?�?�?�?�?� ?�???�?????�??')
     }
 
     if (competitor.marketShare < 10) {
-      opportunities.push('┘à┘╪د┘╪│╪ر ┘┘è ╪د┘┘à╪┤╪د╪▒┘è╪╣ ╪د┘╪╡╪║┘è╪▒╪ر ┘ê╪د┘┘à╪ز┘ê╪│╪╖╪ر')
+      opportunities.push('?�???�?????� ???� ?�???�???�???�?? ?�???????�???� ?�?�???�?�?�?????�')
     }
 
     if (competitor.winRate < 30) {
       opportunities.push(
-        '╪ز╪ص╪│┘è┘ ╪د┘╪╣╪▒┘ê╪╢ ┘┘è ╪د┘┘é╪╖╪د╪╣╪د╪ز ╪د┘╪ز┘è ┘è╪╢╪╣┘ ┘┘è┘ç╪د ╪د┘┘à┘╪د┘╪│',
+        '?�?�???�?? ?�???????�?? ???� ?�???�???�???�?� ?�???�?� ?�?????? ???�?�?� ?�???�???�????',
       )
     }
 
     if (competitor.geographicCoverage.length < 3) {
-      opportunities.push('╪د┘╪ز┘ê╪│╪╣ ┘┘è ╪د┘┘à┘╪د╪╖┘é ╪║┘è╪▒ ╪د┘┘à╪║╪╖╪د╪ر ┘à┘ ┘é╪ذ┘ ╪د┘┘à┘╪د┘╪│')
+      opportunities.push('?�???�?�???? ???� ?�???�???�???� ???�?? ?�???�?????�?� ?�?? ?�?�?? ?�???�???�????')
     }
 
     return opportunities
@@ -972,16 +972,16 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
 
     if (strength > 70) {
       recommendations.push(
-        '┘à╪▒╪د┘é╪ذ╪ر ╪»┘é┘è┘é╪ر ┘╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪د╪ز ╪د┘╪ز╪│╪╣┘è╪▒ ┘ê╪د┘╪╣╪▒┘ê╪╢',
+        '?�???�?�?�?� ?�?�?�?�?� ???�???�???�?�?�?�?�?�?� ?�???�?????�?? ?�?�???????�??',
       )
-      recommendations.push('╪ز╪╖┘ê┘è╪▒ ┘à┘è╪▓╪د╪ز ╪ز┘╪د┘╪│┘è╪ر ┘╪▒┘è╪»╪ر ┘┘╪ز┘┘ê┘é')
+      recommendations.push('?�???�?�?? ?�?�???�?� ?�???�?????�?� ?????�?�?� ?????�???�?�')
     } else if (strength > 40) {
-      recommendations.push('╪ز╪ص┘┘è┘ ┘┘é╪د╪╖ ╪د┘┘é┘ê╪ر ┘ê╪د┘╪د╪│╪ز┘╪د╪»╪ر ┘à┘┘ç╪د')
-      recommendations.push('╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر ╪د┘╪ز╪┤╪║┘è┘┘è╪ر ┘┘┘à┘╪د┘╪│╪ر')
+      recommendations.push('?�?�???�?? ???�?�?? ?�???�?�?� ?�?�???�???�???�?�?� ?�???�?�')
+      recommendations.push('?�?�???�?? ?�???�???�?�?� ?�???�?????�???�?� ?????�???�?????�')
     } else {
-      recommendations.push('╪د╪│╪ز╪║┘╪د┘ ┘┘é╪د╪╖ ╪د┘╪╢╪╣┘ ┘┘è ╪د┘╪╣╪▒┘ê╪╢ ╪د┘┘à╪ذ╪د╪┤╪▒╪ر')
+      recommendations.push('?�???�?????�?? ???�?�?? ?�???????? ???� ?�???????�?? ?�???�?�?�?????�')
       recommendations.push(
-        '╪د┘╪ز╪▒┘â┘è╪▓ ╪╣┘┘ë ╪د┘┘é╪╖╪د╪╣╪د╪ز ╪د┘╪ز┘è ┘è╪╢╪╣┘ ┘┘è┘ç╪د ╪د┘┘à┘╪د┘╪│',
+        '?�???�???�?�?? ?????� ?�???�???�???�?� ?�???�?� ?�?????? ???�?�?� ?�???�???�????',
       )
     }
 
@@ -992,21 +992,21 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     const insights: string[] = []
 
     insights.push(
-      `╪ص╪╡╪ر ╪│┘ê┘é┘è╪ر: ${competitor.marketShare}% - ${this.getMarketShareInsight(competitor.marketShare)}`,
+      `?�???� ???�?�?�?�: ${competitor.marketShare}% - ${this.getMarketShareInsight(competitor.marketShare)}`,
     )
     insights.push(
-      `┘à╪╣╪»┘ ╪د┘┘┘ê╪▓: ${competitor.winRate}% - ${this.getWinRateInsight(competitor.winRate)}`,
+      `?�???�?? ?�?????�??: ${competitor.winRate}% - ${this.getWinRateInsight(competitor.winRate)}`,
     )
 
     if (competitor.pricingStrategy) {
       insights.push(
-        `╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪ر ╪د┘╪ز╪│╪╣┘è╪▒: ${this.getPricingStrategyInsight(competitor.pricingStrategy)}`,
+        `?�???�???�?�?�?�?�?� ?�???�?????�??: ${this.getPricingStrategyInsight(competitor.pricingStrategy)}`,
       )
     }
 
     if (competitor.specializations.length > 0) {
       insights.push(
-        `╪د┘╪ز╪«╪╡╪╡╪د╪ز ╪د┘╪▒╪خ┘è╪│┘è╪ر: ${competitor.specializations.slice(0, 3).join('╪î ')}`,
+        `?�???�?�?????�?� ?�?????�?�???�?�: ${competitor.specializations.slice(0, 3).join('?� ')}`,
       )
     }
 
@@ -1072,14 +1072,14 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     const recommendations: string[] = []
 
     if (competitor.pricingStrategy === 'premium') {
-      recommendations.push('╪د┘╪ز╪▒┘â┘è╪▓ ╪╣┘┘ë ╪د┘┘é┘è┘à╪ر ╪د┘┘à╪╢╪د┘╪ر ┘┘è ╪د┘╪╣╪▒┘ê╪╢')
-      recommendations.push('╪ز╪ذ╪▒┘è╪▒ ╪د┘╪ث╪│╪╣╪د╪▒ ╪د┘┘à╪▒╪ز┘╪╣╪ر ╪ذ╪د┘╪ش┘ê╪»╪ر ┘ê╪د┘╪«╪ذ╪▒╪ر')
+      recommendations.push('?�???�???�?�?? ?????� ?�???�?�?�?� ?�???�???�???� ???� ?�???????�??')
+      recommendations.push('?�?�???�?? ?�???�?????�?? ?�???�???�?????� ?�?�???�?�?�?� ?�?�???�?�???�')
     } else if (competitor.pricingStrategy === 'competitive') {
-      recommendations.push('┘à╪▒╪د┘é╪ذ╪ر ╪د┘╪ز╪║┘è╪▒╪د╪ز ┘┘è ╪ث╪│╪╣╪د╪▒ ╪د┘╪│┘ê┘é')
-      recommendations.push('╪ز╪ص╪│┘è┘ ╪د┘┘â┘╪د╪ة╪ر ┘╪ز┘é┘┘è┘ ╪د┘╪ز┘â╪د┘┘è┘')
+      recommendations.push('?�???�?�?�?� ?�???�???�???�?� ???� ?�?????�?? ?�?????�?�')
+      recommendations.push('?�?�???�?? ?�???�???�?�?� ???�?�???�?? ?�???�?�?�???�??')
     } else if (competitor.pricingStrategy === 'penetration') {
-      recommendations.push('╪د┘╪ص╪░╪▒ ┘à┘ ╪ص╪▒╪ذ ╪د┘╪ث╪│╪╣╪د╪▒')
-      recommendations.push('╪د┘╪ز╪▒┘â┘è╪▓ ╪╣┘┘ë ╪د┘┘à┘è╪▓╪د╪ز ╪د┘╪ز┘╪د┘╪│┘è╪ر ╪║┘è╪▒ ╪د┘╪│╪╣╪▒┘è╪ر')
+      recommendations.push('?�???�???? ?�?? ?�???� ?�???�?????�??')
+      recommendations.push('?�???�???�?�?? ?????� ?�???�?�???�?� ?�???�???�?????�?� ???�?? ?�?????????�?�')
     }
 
     return recommendations
@@ -1169,9 +1169,9 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     analysis: CompetitiveAnalysisResult,
   ): string {
     return (
-      `${competitor.name} ┘ç┘ê ┘à┘╪د┘╪│ ${analysis.marketPosition} ┘┘è ╪د┘╪│┘ê┘é ╪ذ╪ص╪╡╪ر ╪│┘ê┘é┘è╪ر ${competitor.marketShare}% ┘ê┘à╪╣╪»┘ ┘┘ê╪▓ ${competitor.winRate}%. ` +
-      `┘à╪│╪ز┘ê┘ë ╪د┘╪ز┘ç╪»┘è╪»: ${analysis.threatLevel}. ╪د┘┘é┘ê╪ر ╪د┘╪ز┘╪د┘╪│┘è╪ر: ${analysis.competitiveStrength}/100. ` +
-      `┘è╪ز╪«╪╡╪╡ ┘┘è ${competitor.specializations.slice(0, 2).join(' ┘ê')} ┘ê┘è╪╣┘à┘ ┘┘è ${competitor.marketSegments.slice(0, 2).join(' ┘ê')}.`
+      `${competitor.name} ?�?� ?�???�???? ${analysis.marketPosition} ???� ?�?????�?� ?�?�???� ???�?�?�?� ${competitor.marketShare}% ?�?�???�?? ???�?? ${competitor.winRate}%. ` +
+      `?�???�?�?� ?�???�?�?�?�?�: ${analysis.threatLevel}. ?�???�?�?� ?�???�???�?????�?�: ${analysis.competitiveStrength}/100. ` +
+      `?�?�?�???? ???� ${competitor.specializations.slice(0, 2).join(' ?�')} ?�?�???�?? ???� ${competitor.marketSegments.slice(0, 2).join(' ?�')}.`
     )
   }
 
@@ -1179,15 +1179,15 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
     const threats: string[] = []
 
     if (competitor.marketShare > 15) {
-      threats.push('┘ç┘è┘à┘╪ر ╪╣┘┘ë ╪ص╪╡╪ر ┘â╪ذ┘è╪▒╪ر ┘à┘ ╪د┘╪│┘ê┘é')
+      threats.push('?�?�?�???� ?????� ?�???� ?�?�?�???� ?�?? ?�?????�?�')
     }
 
     if (competitor.winRate > 60) {
-      threats.push('┘à╪╣╪»┘ ┘┘ê╪▓ ╪╣╪د┘┘è ┘┘è ╪د┘┘à┘╪د┘é╪╡╪د╪ز')
+      threats.push('?�???�?? ???�?? ???�???� ???� ?�???�???�?�???�?�')
     }
 
     if (competitor.strengths.length > competitor.weaknesses.length) {
-      threats.push('┘┘é╪د╪╖ ┘é┘ê╪ر ┘à╪ز╪╣╪»╪»╪ر ┘à┘é╪د╪ذ┘ ┘┘é╪د╪╖ ╪╢╪╣┘ ┘é┘┘è┘╪ر')
+      threats.push('???�?�?? ?�?�?� ?�?�???�?�?� ?�?�?�?�?? ???�?�?? ?????? ?�???�???�')
     }
 
     return threats
@@ -1228,27 +1228,27 @@ class CompetitorDatabaseServiceImpl implements CompetitorDatabaseService {
   }
 
   private getMarketShareInsight(marketShare: number): string {
-    if (marketShare > 20) return '┘à┘ç┘è┘à┘'
-    if (marketShare > 10) return '┘é┘ê┘è'
-    if (marketShare > 5) return '┘à╪ز┘ê╪│╪╖'
-    return '╪╢╪╣┘è┘'
+    if (marketShare > 20) return '?�?�?�?�??'
+    if (marketShare > 10) return '?�?�?�'
+    if (marketShare > 5) return '?�?�?�????'
+    return '?????�??'
   }
 
   private getWinRateInsight(winRate: number): string {
-    if (winRate > 70) return '┘à┘à╪ز╪د╪▓'
-    if (winRate > 50) return '╪ش┘è╪»'
-    if (winRate > 30) return '┘à╪ز┘ê╪│╪╖'
-    return '╪╢╪╣┘è┘'
+    if (winRate > 70) return '?�?�?�?�??'
+    if (winRate > 50) return '?�?�?�'
+    if (winRate > 30) return '?�?�?�????'
+    return '?????�??'
   }
 
   private getPricingStrategyInsight(strategy: PricingStrategy): string {
     const strategies = {
-      cost_plus: '╪د┘╪ز┘â┘┘╪ر ╪▓╪د╪خ╪» ╪د┘╪▒╪ذ╪ص',
-      competitive: '╪ز┘╪د┘╪│┘è╪ر',
-      value_based: '┘é╪د╪خ┘à╪ر ╪╣┘┘ë ╪د┘┘é┘è┘à╪ر',
-      penetration: '╪د╪«╪ز╪▒╪د┘é ╪د┘╪│┘ê┘é',
-      premium: '┘à┘à┘è╪▓╪ر',
-      unknown: '╪║┘è╪▒ ┘à╪ص╪»╪»╪ر',
+      cost_plus: '?�???�?�?????� ???�?�?� ?�?????�?�',
+      competitive: '?�???�?????�?�',
+      value_based: '?�?�?�?�?� ?????� ?�???�?�?�?�',
+      penetration: '?�?�?�???�?� ?�?????�?�',
+      premium: '?�?�?�???�',
+      unknown: '???�?? ?�?�?�?�?�',
     }
     return strategies[strategy]
   }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculateTenderStats } from '@/calculations/tender'
+import { selectAllTenderCalculations } from '@/domain/selectors/tenderSelectors'
 import type { Tender } from '@/data/centralData'
 
 const makeTender = (overrides: Partial<Tender> = {}): Tender => ({
@@ -30,55 +30,66 @@ const makeTender = (overrides: Partial<Tender> = {}): Tender => ({
 const t = (status: Tender['status'], extra: Partial<Tender> = {}) =>
   makeTender({ id: Math.random().toString(), status, deadline: undefined, ...extra })
 
-describe('calculateTenderStats', () => {
+describe('selectAllTenderCalculations (replacing calculateTenderStats)', () => {
   it('returns zeros for empty array', () => {
-    const stats = calculateTenderStats([])
-    expect(stats).toEqual({
-      total: 0,
-      urgent: 0,
-      new: 0,
-      underAction: 0,
-      waitingResults: 0,
-      won: 0,
-      lost: 0,
-      expired: 0,
-      winRate: 0,
-      totalDocumentValue: 0,
-    })
+    const stats = selectAllTenderCalculations([])
+    expect(stats.total).toBe(0)
+    expect(stats.new).toBe(0)
+    expect(stats.underAction).toBe(0)
+    expect(stats.submitted).toBe(0)
+    expect(stats.won).toBe(0)
+    expect(stats.lost).toBe(0)
+    expect(stats.active).toBe(0)
+    expect(stats.winRate).toBe(0)
+    expect(stats.wonValue).toBe(0)
+    expect(stats.lostValue).toBe(0)
+    expect(stats.submittedValue).toBe(0)
   })
 
-  it('computes counts, winRate and document total for mixed tenders', () => {
+  it('computes counts, winRate and values for mixed tenders', () => {
     const today = Date.now()
     const tenders: Tender[] = [
-      makeTender({ id: 'n1', status: 'new', deadline: new Date(today + 3 * 86400000).toISOString() }),
-      makeTender({ id: 'ua1', status: 'under_action', deadline: new Date(today + 5 * 86400000).toISOString() }),
-      makeTender({ id: 'sub1', status: 'submitted', documentPrice: 100 }),
-  makeTender({ id: 'won1', status: 'won', totalValue: 5000, documentPrice: 200 }),
-  makeTender({ id: 'lost1', status: 'lost', documentPrice: 150 }),
-      makeTender({ id: 'exp1', status: 'new', deadline: new Date(today - 1 * 86400000).toISOString() }),
+      makeTender({
+        id: 'n1',
+        status: 'new',
+        deadline: new Date(today + 3 * 86400000).toISOString(),
+      }),
+      makeTender({
+        id: 'ua1',
+        status: 'under_action',
+        deadline: new Date(today + 5 * 86400000).toISOString(),
+      }),
+      makeTender({ id: 'sub1', status: 'submitted', value: 1000 }),
+      makeTender({ id: 'won1', status: 'won', totalValue: 5000 }),
+      makeTender({ id: 'lost1', status: 'lost', value: 2000 }),
+      makeTender({
+        id: 'exp1',
+        status: 'new',
+        deadline: new Date(today - 1 * 86400000).toISOString(),
+      }),
     ]
 
-    const stats = calculateTenderStats(tenders)
+    const stats = selectAllTenderCalculations(tenders)
 
     expect(stats.total).toBe(6)
     expect(stats.new).toBe(2)
     expect(stats.underAction).toBe(1)
-    expect(stats.waitingResults).toBe(1)
+    expect(stats.submitted).toBe(1)
     expect(stats.won).toBe(1)
     expect(stats.lost).toBe(1)
-    expect(stats.expired).toBe(1)
-    expect(stats.urgent).toBeGreaterThanOrEqual(1)
-    expect(stats.winRate).toBe(33)
-    expect(stats.totalDocumentValue).toBe(450)
+    expect(stats.winRate).toBe(33) // 1 won out of 3 (submitted + won + lost)
+    expect(stats.wonValue).toBe(5000)
+    expect(stats.lostValue).toBe(2000)
+    expect(stats.submittedValue).toBe(1000)
   })
 
   it('winRate = 0 when no submitted-like tenders', () => {
-    const stats = calculateTenderStats([t('new'), t('under_action')])
+    const stats = selectAllTenderCalculations([t('new'), t('under_action')])
     expect(stats.winRate).toBe(0)
   })
 
   it('winRate = won / (submitted + won + lost)', () => {
-    const stats = calculateTenderStats([
+    const stats = selectAllTenderCalculations([
       t('submitted'),
       t('won'),
       t('won'),
@@ -90,7 +101,7 @@ describe('calculateTenderStats', () => {
   })
 
   it('rounds winRate to nearest integer', () => {
-    const stats = calculateTenderStats([t('won'), t('won'), t('lost')])
+    const stats = selectAllTenderCalculations([t('won'), t('won'), t('lost')])
     expect(stats.winRate).toBe(67)
   })
 })

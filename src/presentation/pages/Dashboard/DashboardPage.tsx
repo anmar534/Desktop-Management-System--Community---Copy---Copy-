@@ -1,34 +1,41 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/presentation/components/ui/button'
-import { Badge } from '@/presentation/components/ui/badge'
 import { RefreshCcw, Settings, Calendar, CalendarDays, Clock } from 'lucide-react'
 import { DashboardKPICards } from './components/DashboardKPICards'
 import { TenderStatusCards } from '@/presentation/pages/Tenders/components/TenderStatusCards'
 import { RemindersCard } from './components/RemindersCard'
 import { FinancialSummaryCard } from './components/FinancialSummaryCard'
+import { MonthlyCalendarCard } from './components/MonthlyCalendarCard'
+import { ProjectManagementCards } from './components/ProjectManagementCards'
 import { LazyMonthlyExpensesChart } from '@/presentation/components/charts/LazyCharts'
-import { AnnualKPICards } from './components/AnnualKPICards'
-import { useFinancialState } from '@/application/context'
+import { DashboardKPIPreferencesDialog } from './components/DashboardKPIPreferencesDialog'
+import { useKPIs } from '@/application/hooks/useKPIs'
 import { useDashboardMetrics } from '@/application/hooks/useDashboardMetrics'
-import { formatTime } from '@/shared/utils/formatters/formatters'
+import { getHijriDate } from '../../../utils/dateFormatters'
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
 
 interface DashboardProps {
   onSectionChange: (section: string) => void
 }
 
 function Dashboard({ onSectionChange }: DashboardProps) {
-  const { currency, lastRefreshAt } = useFinancialState()
-
+  // ✅ Scroll to top when dashboard loads
+  useScrollToTop()
   const {
-    data: dashboardMetrics,
-    isLoading: dashboardMetricsLoading,
-    lastUpdated: dashboardLastUpdated,
-    refresh: refreshDashboardMetrics,
-  } = useDashboardMetrics()
+    allKpis,
+    visibleKpis,
+    selectedIds,
+    setSelectedIds,
+    maxCards,
+    isLoading: kpiLoading,
+  } = useKPIs()
+  const hasGoals = allKpis.length > 0
+  const [preferencesOpen, setPreferencesOpen] = useState(false)
+
+  const { isLoading: dashboardMetricsLoading, refresh: refreshDashboardMetrics } =
+    useDashboardMetrics()
 
   const [currentTime, setCurrentTime] = useState(new Date())
-
-  const baseCurrency = currency?.baseCurrency ?? dashboardMetrics.currency.base ?? 'SAR'
 
   // تحديث الوقت كل ثانية
   useEffect(() => {
@@ -64,38 +71,6 @@ function Dashboard({ onSectionChange }: DashboardProps) {
     return { dayName, day, month, year }
   }
 
-  // تنسيق التاريخ الهجري (تقريبي)
-  const getHijriDate = (date: Date) => {
-    const hijriMonths = [
-      'محرم',
-      'صفر',
-      'ربيع الأول',
-      'ربيع الثاني',
-      'جمادى الأولى',
-      'جمادى الثانية',
-      'رجب',
-      'شعبان',
-      'رمضان',
-      'شوال',
-      'ذو القعدة',
-      'ذو الحجة',
-    ]
-
-    const gregorianYear = date.getFullYear()
-    const gregorianMonth = date.getMonth() + 1
-    const gregorianDay = date.getDate()
-
-    const hijriYear = Math.floor(((gregorianYear - 622) * 33) / 32) + 1
-    const approximateHijriMonth = (gregorianMonth + 8) % 12
-    const hijriDay = gregorianDay
-
-    return {
-      day: hijriDay,
-      month: hijriMonths[approximateHijriMonth],
-      year: hijriYear,
-    }
-  }
-
   // تنسيق الوقت
   const getFormattedTime = (date: Date) => {
     const hours = date.getHours().toString().padStart(2, '0')
@@ -112,14 +87,6 @@ function Dashboard({ onSectionChange }: DashboardProps) {
     void refreshDashboardMetrics()
   }
 
-  const dataLastUpdatedLabel = formatTime(dashboardLastUpdated ?? lastRefreshAt, {
-    locale: 'ar-EG',
-  })
-  const currencyLastUpdatedLabel = formatTime(
-    dashboardMetrics.currency.lastUpdated ?? currency?.lastUpdated ?? null,
-    { locale: 'ar-EG' },
-  )
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-muted">
       <div className="p-6 space-y-6 max-w-[1920px] mx-auto">
@@ -132,17 +99,6 @@ function Dashboard({ onSectionChange }: DashboardProps) {
               <p className="text-sm text-muted-foreground mb-3">
                 نظرة شاملة على مؤشرات الأداء الرئيسية والعمليات التشغيلية
               </p>
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <Badge variant="outline" className="bg-info/10 text-info border-info/30">
-                  آخر تحديث: {dataLastUpdatedLabel}
-                </Badge>
-                <Badge variant="outline" className="bg-success/10 text-success border-success/30">
-                  العملة: {baseCurrency}
-                </Badge>
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                  أسعار الصرف: {currencyLastUpdatedLabel}
-                </Badge>
-              </div>
             </div>
 
             {/* Date, Time & Actions */}
@@ -227,74 +183,91 @@ function Dashboard({ onSectionChange }: DashboardProps) {
                 مقارنة الإنجازات الفعلية مع الأهداف المحددة
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onSectionChange('development')}
-              className="text-primary hover:text-primary/80"
-            >
-              إدارة الأهداف ←
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPreferencesOpen(true)}
+                disabled={!hasGoals}
+                className="hover:bg-primary/10"
+              >
+                تخصيص المؤشرات
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onSectionChange('development')}
+                className="text-primary hover:text-primary/80"
+              >
+                إدارة الأهداف ←
+              </Button>
+            </div>
           </div>
-          <DashboardKPICards onSectionChange={onSectionChange} />
+          <DashboardKPICards
+            kpis={visibleKpis}
+            isLoading={kpiLoading}
+            maxCards={maxCards}
+            hasGoals={hasGoals}
+            onSectionChange={onSectionChange}
+            onAddGoals={() => onSectionChange('development')}
+            onCustomize={() => setPreferencesOpen(true)}
+          />
         </div>
 
-        {/* الصف الثاني: مؤشرات الأداء السنوية */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">مؤشرات الأداء السنوية</h2>
-              <p className="text-sm text-muted-foreground">تفاصيل الأداء السنوي حسب الأقسام</p>
-            </div>
-            <Badge variant="secondary" className="text-sm">
-              {new Date().getFullYear()}
-            </Badge>
-          </div>
-          <AnnualKPICards onSectionChange={onSectionChange} />
-        </div>
-
-        {/* الصف الثالث: المنافسات والتذكيرات والمالية */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* المنافسات - عرض مزدوج */}
-          <div className="lg:col-span-2">
-            <div className="mb-4">
-              <h2 className="text-xl font-bold text-foreground">حالة المنافسات</h2>
-              <p className="text-sm text-muted-foreground">تحليل شامل لحالة المنافسات الجارية</p>
-            </div>
-            <TenderStatusCards onSectionChange={onSectionChange} />
-          </div>
-
-          {/* التذكيرات والملخص المالي */}
-          <div className="space-y-6">
-            {/* التذكيرات */}
-            <div>
-              <div className="mb-4">
-                <h2 className="text-xl font-bold text-foreground">التذكيرات</h2>
-                <p className="text-sm text-muted-foreground">المواعيد والمهام المهمة</p>
-              </div>
-              <RemindersCard onSectionChange={onSectionChange} />
-            </div>
-
-            {/* الملخص المالي */}
-            <div>
-              <div className="mb-4">
-                <h2 className="text-xl font-bold text-foreground">الملخص المالي</h2>
-                <p className="text-sm text-muted-foreground">نظرة سريعة على الوضع المالي</p>
-              </div>
-              <FinancialSummaryCard onSectionChange={onSectionChange} />
-            </div>
-          </div>
-        </div>
-
-        {/* الصف الرابع: المصاريف الشهرية */}
+        {/* الصف الثاني: المنافسات العاجلة وتحليل الأداء والتقويم */}
         <div>
           <div className="mb-4">
-            <h2 className="text-xl font-bold text-foreground">المصاريف الشهرية</h2>
-            <p className="text-sm text-muted-foreground">تحليل المصاريف الشهرية مقارنة بالموازنة</p>
+            <h2 className="text-xl font-bold text-foreground">حالة المنافسات والتقويم</h2>
+            <p className="text-sm text-muted-foreground">
+              نظرة شاملة على المنافسات والمواعيد المهمة
+            </p>
           </div>
-          <LazyMonthlyExpensesChart onSectionChange={onSectionChange} />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <TenderStatusCards onSectionChange={onSectionChange} />
+            <MonthlyCalendarCard
+              onDateClick={(date, reminders) => {
+                console.log('Selected date:', date, 'Reminders:', reminders)
+              }}
+            />
+          </div>
+        </div>
+
+        {/* الصف الثالث: بطاقات إدارة المشاريع والتذكيرات */}
+        <div>
+          <div className="mb-4">
+            <h2 className="text-xl font-bold text-foreground">إدارة المشاريع والتذكيرات</h2>
+            <p className="text-sm text-muted-foreground">
+              نظرة سريعة على أداء المشاريع والمواعيد المهمة
+            </p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <ProjectManagementCards onSectionChange={onSectionChange} />
+            <RemindersCard onSectionChange={onSectionChange} />
+          </div>
+        </div>
+
+        {/* الصف الرابع: المصاريف الشهرية والملخص المالي */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-foreground">المصاريف الشهرية</h2>
+              <p className="text-sm text-muted-foreground">
+                تحليل المصاريف الشهرية مقارنة بالموازنة
+              </p>
+            </div>
+            <LazyMonthlyExpensesChart onSectionChange={onSectionChange} />
+          </div>
+          <FinancialSummaryCard onSectionChange={onSectionChange} />
         </div>
       </div>
+      <DashboardKPIPreferencesDialog
+        open={preferencesOpen}
+        onOpenChange={setPreferencesOpen}
+        kpis={allKpis}
+        selectedIds={selectedIds}
+        maxSelectable={maxCards}
+        onSave={setSelectedIds}
+      />
     </div>
   )
 }

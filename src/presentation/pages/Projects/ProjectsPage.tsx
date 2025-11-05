@@ -25,6 +25,7 @@ import { useProjectCostManagement } from '@/application/hooks/useProjectCostMana
 import { ProjectHeaderExtras } from '@/presentation/components/projects/ProjectHeaderExtras'
 import { ProjectQuickActions } from '@/presentation/components/projects/ProjectQuickActions'
 import { ProjectTabs } from '@/presentation/components/projects/ProjectTabs'
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
 
 type ProjectWithLegacyFields = Project & { profit?: number; profitMargin?: number }
 
@@ -41,6 +42,9 @@ export function ProjectsView({
   onDeleteProject,
   onUpdateProject,
 }: ProjectsViewProps) {
+  // ✅ Scroll to top when component loads
+  useScrollToTop()
+
   console.log('🏗️ [ProjectsView] Rendering with projects count:', projects.length)
   if (projects.length > 0) {
     console.log('📊 [ProjectsView] First project sample:', {

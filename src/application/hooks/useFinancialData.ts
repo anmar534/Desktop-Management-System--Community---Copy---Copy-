@@ -3,11 +3,12 @@
  * Financial Data Management Hook
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { Project } from '@/data/centralData'
 import { useExpenses } from './useExpenses'
 import { useProjects } from './useProjects'
-import { useTenders } from './useTenders'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
+import { selectWonTendersCount } from '@/domain/selectors/tenderSelectors'
 
 interface FinancialData {
   revenue: {
@@ -89,7 +90,7 @@ export const useFinancialData = (): UseFinancialDataReturn => {
   // استخدام الهوكز للبيانات الحقيقية
   const { expenses, refreshExpenses, loading: expensesLoading } = useExpenses()
   const { projects, refreshProjects, isLoading: projectsLoading } = useProjects()
-  const { tenders, refreshTenders, isLoading: tendersLoading } = useTenders()
+  const { tenders, refreshTenders, isLoading: tendersLoading } = useTenderListStore()
   const [isRefreshingSources, setIsRefreshingSources] = useState(false)
 
   // بيانات الموردين (يمكن نقلها لاحقاً إلى hook منفصل)
@@ -175,16 +176,16 @@ export const useFinancialData = (): UseFinancialDataReturn => {
   }, [projects, getProjectActualCost])
 
   // حساب البيانات المالية من المصادر الحقيقية
-  const calculateFinancialData = useCallback((): FinancialData => {
+  // ✅ 1.2.3: wrapped in useMemo for performance optimization (+40% target)
+  const calculateFinancialData = useMemo((): FinancialData => {
     // حساب إجمالي الإيرادات من المشاريع
     const totalRevenue = projects.reduce((sum, project) => {
       return sum + (project.value || 0)
     }, 0)
 
     // 🔗 حساب إجمالي التكاليف الفعلية من جميع المصروفات المرتبطة بالمشاريع
-    console.log('📊 حساب التكاليف الفعلية من المشتريات والمصروفات...')
-    const projectsCostAnalysis = getProjectsWithActualCosts()
-    console.log('📈 تحليل تكاليف المشاريع:', projectsCostAnalysis)
+    // (يتم استخدامها لاحقاً في حساب الأداء)
+    getProjectsWithActualCosts()
 
     // حساب إجمالي المصروفات (تضمين المصروفات المرتبطة بالمشاريع والإدارية)
     const totalExpenses = expenses.reduce((sum, expense) => {
@@ -252,7 +253,7 @@ export const useFinancialData = (): UseFinancialDataReturn => {
         monthly: monthlyRevenue,
         growth: 12.5, // يمكن حسابها بمقارنة الفترات
         projects: projects.filter((p) => p.status === 'active').length,
-        tenders: tenders.filter((t) => t.status === 'won').length,
+        tenders: selectWonTendersCount(tenders),
       },
       expenses: {
         total: totalExpenses,
@@ -281,30 +282,20 @@ export const useFinancialData = (): UseFinancialDataReturn => {
         roi: (grossProfit / Math.max(totalExpenses, 1)) * 100,
       },
       kpis: {
-        revenuePerProject: totalRevenue / Math.max(projects.length, 1),
+        revenuePerProject: projects.length > 0 ? totalRevenue / projects.length : 0,
         costEfficiency: costEfficiency,
         paymentCycle: 45, // متوسط دورة التحصيل بالأيام
-        budgetVariance: (totalExpenses / totalRevenue - 0.7) * 100, // انحراف عن ميزانية مستهدفة 70%
+        budgetVariance:
+          totalRevenue > 0 && totalExpenses > 0 ? (totalExpenses / totalRevenue - 0.7) * 100 : 0, // انحراف عن ميزانية مستهدفة 70%
       },
     }
   }, [expenses, projects, getProjectsWithActualCosts, tenders])
 
-  const [financialData, setFinancialData] = useState<FinancialData>(() => calculateFinancialData())
+  // ✅ تحديث: استخدام القيمة المحسوبة مباشرة بدلاً من useState المعقد
+  // calculateFinancialData الآن useMemo يُرجع القيمة مباشرة
 
-  // تحديث البيانات عند تغيير المصادر
-  useEffect(() => {
-    setLoading(true)
-    try {
-      const newFinancialData = calculateFinancialData()
-      setFinancialData(newFinancialData)
-      setError(null)
-    } catch (err) {
-      console.error('❌ خطأ في حساب البيانات المالية:', err)
-      setError('فشل في حساب البيانات المالية')
-    } finally {
-      setLoading(false)
-    }
-  }, [calculateFinancialData])
+  // تحديث البيانات عند تغيير المصادر - لم يعد ضرورياً
+  // useMemo يعيد الحساب تلقائياً عند تغيير dependencies
 
   // دالة إعادة تحميل البيانات
   const refreshData = useCallback(async () => {
@@ -312,11 +303,8 @@ export const useFinancialData = (): UseFinancialDataReturn => {
     setIsRefreshingSources(true)
     try {
       await Promise.all([refreshExpenses(), refreshProjects(), refreshTenders()])
-
-      const newFinancialData = calculateFinancialData()
-      setFinancialData(newFinancialData)
+      // ✅ calculateFinancialData سيُعاد حسابه تلقائياً عبر useMemo
       setError(null)
-      console.log('📊 تم تحديث البيانات المالية من المستودعات')
     } catch (err) {
       console.error('❌ خطأ في تحديث البيانات المالية:', err)
       setError('فشل في تحديث البيانات المالية')
@@ -324,7 +312,7 @@ export const useFinancialData = (): UseFinancialDataReturn => {
       setLoading(false)
       setIsRefreshingSources(false)
     }
-  }, [calculateFinancialData, refreshExpenses, refreshProjects, refreshTenders])
+  }, [refreshExpenses, refreshProjects, refreshTenders])
 
   useEffect(() => {
     if (!isRefreshingSources) {
@@ -333,7 +321,7 @@ export const useFinancialData = (): UseFinancialDataReturn => {
   }, [expensesLoading, projectsLoading, tendersLoading, isRefreshingSources])
 
   return {
-    financialData,
+    financialData: calculateFinancialData,
     suppliersData,
     loading,
     error,

@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/presentation/components/ui/alert-dialog'
 import { Trophy, XCircle, AlertCircle, Zap } from 'lucide-react'
-import { useFinancialState } from '@/application/context'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { APP_EVENTS, emit } from '@/events/bus'
 import { toast } from 'sonner'
 import { TenderNotificationService } from '@/shared/utils/tender/tenderNotifications'
@@ -47,8 +47,7 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
   const [notes, setNotes] = useState('')
   const [isUpdating, setIsUpdating] = useState(false)
 
-  const { tenders } = useFinancialState()
-  const { updateTender } = tenders
+  const { updateTender } = useTenderListStore()
   const { formatCurrencyValue } = useCurrencyFormatter()
 
   // دالة تحديث إحصائيات التطوير
@@ -94,8 +93,9 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
 
     try {
       const currentDate = new Date().toISOString()
-      const updatedTender = {
-        ...tender,
+
+      // Prepare updates object - only changed fields
+      const updates: Partial<Tender> = {
         status: selectedResult,
         lastUpdate: currentDate,
         resultNotes: notes,
@@ -110,12 +110,17 @@ export function TenderQuickResults({ tender, onUpdate }: TenderQuickResultsProps
               lostDate: currentDate,
               resultDate: currentDate,
               lastAction: 'لم يتم الفوز بالمنافسة',
-              winningBidValue: winningBidAmount,
+              winningBidValue: winningBidAmount ?? undefined,
               ourBidValue: tenderBaseValue,
             }),
-      } as Tender
+      }
 
-      await updateTender(updatedTender)
+      // Use updateTender(id, updates) signature
+      await updateTender(tender.id, updates)
+
+      // Create full tender object for notifications (merge tender + updates)
+      const updatedTender = { ...tender, ...updates } as Tender
+
       TenderNotificationService.notifyStatusChange(tender, selectedResult)
 
       // تحديث إحصائيات التطوير

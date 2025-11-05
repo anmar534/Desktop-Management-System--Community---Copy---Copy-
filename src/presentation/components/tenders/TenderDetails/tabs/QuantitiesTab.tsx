@@ -80,7 +80,7 @@ export function QuantitiesTab({
             },
             accent: {
               container: 'bg-accent/10 border border-accent/30',
-              value: 'text-accent',
+              value: 'text-accent-foreground',
             },
             info: { container: 'bg-info/10 border border-info/30', value: 'text-info' },
           }
@@ -365,8 +365,8 @@ export function QuantitiesTab({
                                     {isCompleted || isInProgress ? (
                                       <span className="font-bold text-success text-sm">
                                         {formatCurrencyValue(item.totalPrice, {
-                                          minimumFractionDigits: 0,
-                                          maximumFractionDigits: 0,
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits: 2,
                                         })}
                                       </span>
                                     ) : (
@@ -444,7 +444,7 @@ export function QuantitiesTab({
                                                 <div className="text-info text-xs mb-1">المواد</div>
                                                 <div className="font-bold text-info">
                                                   {formatCurrencyValue(item.breakdown.materials, {
-                                                    maximumFractionDigits: 0,
+                                                    maximumFractionDigits: 2,
                                                   })}
                                                 </div>
                                               </div>
@@ -456,7 +456,7 @@ export function QuantitiesTab({
                                                 </div>
                                                 <div className="font-bold text-success">
                                                   {formatCurrencyValue(item.breakdown.labor, {
-                                                    maximumFractionDigits: 0,
+                                                    maximumFractionDigits: 2,
                                                   })}
                                                 </div>
                                               </div>
@@ -468,7 +468,7 @@ export function QuantitiesTab({
                                                 </div>
                                                 <div className="font-bold text-warning">
                                                   {formatCurrencyValue(item.breakdown.equipment, {
-                                                    maximumFractionDigits: 0,
+                                                    maximumFractionDigits: 2,
                                                   })}
                                                 </div>
                                               </div>
@@ -482,7 +482,7 @@ export function QuantitiesTab({
                                                   {formatCurrencyValue(
                                                     item.breakdown.subcontractors,
                                                     {
-                                                      maximumFractionDigits: 0,
+                                                      maximumFractionDigits: 2,
                                                     },
                                                   )}
                                                 </div>
@@ -500,7 +500,7 @@ export function QuantitiesTab({
                                                   {formatCurrencyValue(
                                                     item.breakdown.administrative,
                                                     {
-                                                      maximumFractionDigits: 0,
+                                                      maximumFractionDigits: 2,
                                                     },
                                                   )}
                                                 </div>
@@ -513,7 +513,7 @@ export function QuantitiesTab({
                                                 </div>
                                                 <div className="font-bold text-warning">
                                                   {formatCurrencyValue(item.breakdown.operational, {
-                                                    maximumFractionDigits: 0,
+                                                    maximumFractionDigits: 2,
                                                   })}
                                                 </div>
                                               </div>
@@ -525,7 +525,7 @@ export function QuantitiesTab({
                                                 </div>
                                                 <div className="font-bold text-success">
                                                   {formatCurrencyValue(item.breakdown.profit, {
-                                                    maximumFractionDigits: 0,
+                                                    maximumFractionDigits: 2,
                                                   })}
                                                 </div>
                                               </div>
@@ -546,7 +546,7 @@ export function QuantitiesTab({
                                                     (item.breakdown.administrative || 0) +
                                                     (item.breakdown.operational || 0) +
                                                     (item.breakdown.profit || 0),
-                                                  { maximumFractionDigits: 0 },
+                                                  { maximumFractionDigits: 2 },
                                                 )}
                                               </span>
                                             </div>

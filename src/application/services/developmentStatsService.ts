@@ -1,5 +1,5 @@
 import type { Tender } from '@/data/centralData'
-import { UnifiedCalculations } from '@/shared/utils/pricing/unifiedCalculations'
+import { selectWinRate } from '@/domain/selectors/tenderSelectors'
 import { safeLocalStorage } from '@/shared/utils/storage/storage'
 import { STORAGE_KEYS } from '@/shared/constants/storageKeys'
 import { APP_EVENTS, emit } from '@/events/bus'
@@ -369,7 +369,7 @@ class DevelopmentStatsService {
         submittedTenders.length > 0 ? totalBookletsCost / submittedTenders.length : 0
 
       const allTenders = [...submittedTenders, ...wonTenders, ...lostTenders]
-      const winRate = UnifiedCalculations.calculateWinRate(allTenders as Tender[])
+      const winRate = selectWinRate(allTenders as Tender[])
 
       const currentDate = new Date()
       const currentMonthKey = getMonthKey(currentDate)
@@ -420,7 +420,7 @@ class DevelopmentStatsService {
 
   private updateWinRateFromStats(stats: DevelopmentStats): void {
     const simulatedTenders = buildSimulatedTenders(stats)
-    stats.winRate = UnifiedCalculations.calculateWinRate(simulatedTenders)
+    stats.winRate = selectWinRate(simulatedTenders)
   }
 
   private saveDevelopmentStats(stats: DevelopmentStats): void {

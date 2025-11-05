@@ -17,9 +17,22 @@ import {
 import { motion } from 'framer-motion'
 import { formatCurrency } from '@/shared/utils/formatters/formatters'
 import { useMemo } from 'react'
-import { useFinancialState } from '@/application/context'
-import { calculateTenderStats } from '@/calculations/tender'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import type { Tender } from '@/data/centralData'
+import {
+  selectActiveTendersCount,
+  selectWonTendersCount,
+  selectLostTendersCount,
+  selectSubmittedTendersCount,
+  selectNewTendersCount,
+  selectUnderActionTendersCount,
+  selectExpiredTendersCount,
+  selectUrgentTendersCount,
+  selectWinRate,
+  selectWonTendersValue,
+  selectLostTendersValue,
+  selectSubmittedTendersValue,
+} from '@/domain/selectors/tenderSelectors'
 import { InlineAlert } from '@/presentation/components/ui/inline-alert'
 import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { cn } from '@/presentation/components/ui/utils'
@@ -43,11 +56,26 @@ interface TenderStatusCardsProps {
 }
 
 export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
-  const { tenders: tendersState } = useFinancialState()
-  const { tenders, isLoading } = tendersState
+  const { tenders, isLoading } = useTenderListStore()
 
-  // إحصائيات موحدة للمنافسات
-  const tenderStats = useMemo(() => calculateTenderStats(tenders), [tenders])
+  // Calculate stats using domain selectors (replacing useTenders)
+  const tenderStats = useMemo(
+    () => ({
+      activeTenders: selectActiveTendersCount(tenders),
+      wonTenders: selectWonTendersCount(tenders),
+      lostTenders: selectLostTendersCount(tenders),
+      submittedTenders: selectSubmittedTendersCount(tenders),
+      newTenders: selectNewTendersCount(tenders),
+      underActionTenders: selectUnderActionTendersCount(tenders),
+      expiredTenders: selectExpiredTendersCount(tenders),
+      urgentTenders: selectUrgentTendersCount(tenders),
+      winRate: selectWinRate(tenders),
+      submittedValue: selectSubmittedTendersValue(tenders),
+      wonValue: selectWonTendersValue(tenders),
+      lostValue: selectLostTendersValue(tenders),
+    }),
+    [tenders],
+  )
 
   // قائمة المنافسات العاجلة (لعرض أبرز 4 عناصر فقط)
   const urgentTenders = useMemo(
@@ -65,19 +93,16 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
     [tenders],
   )
 
-  // استخدام الإحصائيات الموحدة
+  // استخدام الإحصائيات الموحدة من useTenders
   const performanceData = {
     thisMonth: {
-      submitted: tenderStats.waitingResults,
-      won: tenderStats.won,
-      lost: tenderStats.lost,
-      pending: tenderStats.waitingResults,
+      submitted: tenderStats.submittedTenders,
+      won: tenderStats.wonTenders,
+      lost: tenderStats.lostTenders,
+      pending: tenderStats.submittedTenders,
       winRate: tenderStats.winRate,
-      // إجمالي قيمة المنافسات المقدمة (ليس جزءاً من calculateTenderStats)
-      totalValue:
-        tenders
-          .filter((t) => t.status === 'submitted')
-          .reduce((sum, t) => sum + (t.value || 0), 0) / 1000000,
+      // إجمالي قيمة المنافسات المقدمة
+      totalValue: tenderStats.submittedValue / 1000000,
     },
     lastMonth: {
       submitted: 6,
@@ -128,7 +153,7 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <>
       {/* بطاقة المنافسات العاجلة */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -143,10 +168,10 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
               </div>
               المنافسات العاجلة
               <StatusBadge
-                status={tenderStats.urgent > 0 ? 'warning' : 'success'}
+                status={tenderStats.urgentTenders > 0 ? 'warning' : 'success'}
                 size="sm"
-                label={tenderStats.urgent > 0 ? 'منافسات عاجلة' : 'مستقر'}
-                value={tenderStats.urgent}
+                label={tenderStats.urgentTenders > 0 ? 'منافسات عاجلة' : 'مستقر'}
+                value={tenderStats.urgentTenders}
               />
             </CardTitle>
             <p className="text-sm text-muted-foreground">
@@ -156,26 +181,30 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
 
           <CardContent className="space-y-4">
             <InlineAlert
-              variant={tenderStats.urgent > 0 ? 'warning' : 'success'}
+              variant={tenderStats.urgentTenders > 0 ? 'warning' : 'success'}
               title={
-                tenderStats.urgent > 0
+                tenderStats.urgentTenders > 0
                   ? 'هناك منافسات تحتاج متابعة عاجلة'
                   : 'لا توجد منافسات عاجلة حالياً'
               }
               description={
-                tenderStats.urgent > 0
-                  ? `رصد النظام ${tenderStats.urgent} منافسة تنتهي خلال الأيام القادمة.`
+                tenderStats.urgentTenders > 0
+                  ? `رصد النظام ${tenderStats.urgentTenders} منافسة تنتهي خلال الأيام القادمة.`
                   : 'جميع المنافسات ضمن الجدول الزمني المحدد.'
               }
             />
 
             <div className="grid grid-cols-2 gap-4 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
               <div className="text-center">
-                <div className="text-lg font-bold text-destructive">{tenderStats.expired}</div>
+                <div className="text-lg font-bold text-destructive">
+                  {tenderStats.expiredTenders}
+                </div>
                 <div className="text-xs text-muted-foreground">منتهية الصلاحية</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-warning">{tenderStats.underAction}</div>
+                <div className="text-lg font-bold text-warning">
+                  {tenderStats.underActionTenders}
+                </div>
                 <div className="text-xs text-muted-foreground">قيد الإجراء</div>
               </div>
             </div>
@@ -418,6 +447,6 @@ export function TenderStatusCards({ onSectionChange }: TenderStatusCardsProps) {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
+    </>
   )
 }

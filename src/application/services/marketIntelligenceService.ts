@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @fileoverview Market Intelligence Service Implementation
  * @description Comprehensive service for market intelligence integration in Phase 3.
  * Provides material cost tracking, labor rate monitoring, economic indicators,
@@ -10,7 +10,7 @@
  *
  * @example
  * ```typescript
- * import { marketIntelligenceService } from '@/services/marketIntelligenceService'
+ * import { marketIntelligenceService } from '@/application/services/marketIntelligenceService'
  *
  * // Track material costs
  * const materialCosts = await marketIntelligenceService.getMaterialCosts('concrete')
@@ -1031,28 +1031,28 @@ class MarketIntelligenceServiceImpl implements MarketIntelligenceService {
 
       const reportDate = new Date().toLocaleDateString('ar-SA')
 
-      let report = `# ╪ز┘é╪▒┘è╪▒ ╪░┘â╪د╪ة ╪د┘╪│┘ê┘é - Market Intelligence Report\n\n`
-      report += `**╪ز╪د╪▒┘è╪« ╪د┘╪ز┘é╪▒┘è╪▒ / Report Date:** ${reportDate}\n\n`
+      let report = `# ?�?�???�?? ???�?�?� ?�?????�?� - Market Intelligence Report\n\n`
+      report += `**?�?�???�?� ?�???�?�???�?? / Report Date:** ${reportDate}\n\n`
 
       // Executive Summary
-      report += `## ╪د┘┘à┘╪«╪╡ ╪د┘╪ز┘┘┘è╪░┘è / Executive Summary\n\n`
-      report += `- ╪ح╪ش┘à╪د┘┘è ╪د┘┘à┘ê╪د╪» ╪د┘┘à╪ز╪ز╪ذ╪╣╪ر / Total Materials Tracked: ${analysis.summary.totalMaterials}\n`
-      report += `- ┘à╪ز┘ê╪│╪╖ ╪ز╪║┘è┘è╪▒ ╪د┘╪ث╪│╪╣╪د╪▒ / Average Price Change: ${analysis.summary.avgPriceChange}%\n`
-      report += `- ╪ح╪ش┘à╪د┘┘è ┘╪خ╪د╪ز ╪د┘╪╣┘à╪د┘╪ر / Total Labor Categories: ${analysis.summary.totalLaborCategories}\n`
-      report += `- ┘à╪ز┘ê╪│╪╖ ╪ز╪║┘è┘è╪▒ ╪د┘╪ث╪ش┘ê╪▒ / Average Rate Change: ${analysis.summary.avgRateChange}%\n`
-      report += `- ╪د┘┘╪▒╪╡ ╪د┘┘╪┤╪╖╪ر / Active Opportunities: ${analysis.summary.activeOpportunities}\n`
-      report += `- ╪د┘╪ز┘╪ذ┘è┘ç╪د╪ز ╪د┘╪ص╪▒╪ش╪ر / Critical Alerts: ${analysis.summary.criticalAlerts}\n\n`
+      report += `## ?�???�???�?? ?�???�?????�???� / Executive Summary\n\n`
+      report += `- ?�?�?�?�???� ?�???�?�?�?� ?�???�?�?�?�???� / Total Materials Tracked: ${analysis.summary.totalMaterials}\n`
+      report += `- ?�?�?�???? ?�???�?�?? ?�???�?????�?? / Average Price Change: ${analysis.summary.avgPriceChange}%\n`
+      report += `- ?�?�?�?�???� ???�?�?� ?�?????�?�???� / Total Labor Categories: ${analysis.summary.totalLaborCategories}\n`
+      report += `- ?�?�?�???? ?�???�?�?? ?�???�?�?�?? / Average Rate Change: ${analysis.summary.avgRateChange}%\n`
+      report += `- ?�???????? ?�?????????� / Active Opportunities: ${analysis.summary.activeOpportunities}\n`
+      report += `- ?�???�???�?�?�?�?� ?�???�???�?� / Critical Alerts: ${analysis.summary.criticalAlerts}\n\n`
 
       // Market Trends
-      report += `## ╪د╪ز╪ش╪د┘ç╪د╪ز ╪د┘╪│┘ê┘é / Market Trends\n\n`
-      report += `- ╪د╪ز╪ش╪د┘ç ╪ز┘â┘┘╪ر ╪د┘┘à┘ê╪د╪» / Material Cost Trend: ${this.translateTrend(analysis.trends.materialCostTrend)}\n`
-      report += `- ╪د╪ز╪ش╪د┘ç ╪ث╪ش┘ê╪▒ ╪د┘╪╣┘à╪د┘╪ر / Labor Rate Trend: ${this.translateTrend(analysis.trends.laborRateTrend)}\n`
-      report += `- ┘à╪╣┘┘ê┘è╪د╪ز ╪د┘╪│┘ê┘é / Market Sentiment: ${this.translateSentiment(analysis.trends.marketSentiment)}\n`
-      report += `- ┘à╪│╪ز┘ê┘ë ╪د┘┘à┘╪د┘╪│╪ر / Competition Level: ${this.translateCompetition(analysis.trends.competitionLevel)}\n\n`
+      report += `## ?�?�?�?�?�?�?� ?�?????�?� / Market Trends\n\n`
+      report += `- ?�?�?�?�?� ?�?�?????� ?�???�?�?�?� / Material Cost Trend: ${this.translateTrend(analysis.trends.materialCostTrend)}\n`
+      report += `- ?�?�?�?�?� ?�?�?�?? ?�?????�?�???� / Labor Rate Trend: ${this.translateTrend(analysis.trends.laborRateTrend)}\n`
+      report += `- ?�?????�?�?�?� ?�?????�?� / Market Sentiment: ${this.translateSentiment(analysis.trends.marketSentiment)}\n`
+      report += `- ?�???�?�?� ?�???�???�?????� / Competition Level: ${this.translateCompetition(analysis.trends.competitionLevel)}\n\n`
 
       // Top Materials by Price Change
       if (materials.length > 0) {
-        report += `## ╪ث┘ç┘à ╪د┘┘à┘ê╪د╪» ╪ص╪│╪ذ ╪ز╪║┘è┘è╪▒ ╪د┘╪│╪╣╪▒ / Top Materials by Price Change\n\n`
+        report += `## ?�?�?� ?�???�?�?�?� ?�???� ?�???�?�?? ?�???????? / Top Materials by Price Change\n\n`
         const topMaterials = materials
           .sort((a, b) => Math.abs(b.priceChangePercent) - Math.abs(a.priceChangePercent))
           .slice(0, 5)
@@ -1065,29 +1065,29 @@ class MarketIntelligenceServiceImpl implements MarketIntelligenceService {
 
       // Top Labor Rates
       if (laborRates.length > 0) {
-        report += `## ╪ث╪╣┘┘ë ╪ث╪ش┘ê╪▒ ╪د┘╪╣┘à╪د┘╪ر / Highest Labor Rates\n\n`
+        report += `## ?�?????� ?�?�?�?? ?�?????�?�???� / Highest Labor Rates\n\n`
         const topRates = laborRates.sort((a, b) => b.hourlyRate - a.hourlyRate).slice(0, 5)
 
         topRates.forEach((rate, index) => {
-          report += `${index + 1}. **${rate.skillCategory}** (${rate.skillLevel}) - ${rate.hourlyRate} ${rate.currency}/╪│╪د╪╣╪ر\n`
+          report += `${index + 1}. **${rate.skillCategory}** (${rate.skillLevel}) - ${rate.hourlyRate} ${rate.currency}/???�???�\n`
         })
         report += `\n`
       }
 
       // Market Opportunities
       if (opportunities.length > 0) {
-        report += `## ╪د┘┘╪▒╪╡ ╪د┘╪│┘ê┘é┘è╪ر / Market Opportunities\n\n`
+        report += `## ?�???????? ?�?????�?�?�?� / Market Opportunities\n\n`
         const activeOpps = opportunities.filter((o) => o.status === 'active').slice(0, 5)
 
         activeOpps.forEach((opp, index) => {
-          report += `${index + 1}. **${opp.title}** - ${opp.estimatedValue.toLocaleString()} (╪د╪ص╪ز┘à╪د┘┘è╪ر: ${opp.probability}%)\n`
+          report += `${index + 1}. **${opp.title}** - ${opp.estimatedValue.toLocaleString()} (?�?�?�?�?�???�?�: ${opp.probability}%)\n`
         })
         report += `\n`
       }
 
       // Recommendations
       if (analysis.recommendations.length > 0) {
-        report += `## ╪د┘╪ز┘ê╪╡┘è╪د╪ز / Recommendations\n\n`
+        report += `## ?�???�?�???�?�?� / Recommendations\n\n`
         analysis.recommendations.forEach((rec, index) => {
           report += `${index + 1}. ${rec}\n`
         })
@@ -1096,7 +1096,7 @@ class MarketIntelligenceServiceImpl implements MarketIntelligenceService {
 
       // Industry Trends
       if (trends.length > 0) {
-        report += `## ╪د┘╪د╪ز╪ش╪د┘ç╪د╪ز ╪د┘╪╡┘╪د╪╣┘è╪ر / Industry Trends\n\n`
+        report += `## ?�???�?�?�?�?�?�?� ?�???????�???�?� / Industry Trends\n\n`
         trends.slice(0, 3).forEach((trend, index) => {
           report += `${index + 1}. **${trend.title}** - ${this.translateImpact(trend.impact)} Impact\n`
           report += `   ${trend.description.substring(0, 100)}...\n\n`
@@ -1104,8 +1104,8 @@ class MarketIntelligenceServiceImpl implements MarketIntelligenceService {
       }
 
       report += `---\n\n`
-      report += `*╪ز┘à ╪ح┘╪┤╪د╪ة ┘ç╪░╪د ╪د┘╪ز┘é╪▒┘è╪▒ ╪ذ┘ê╪د╪│╪╖╪ر ┘╪╕╪د┘à ╪ح╪»╪د╪▒╪ر ╪│╪╖╪ص ╪د┘┘à┘â╪ز╪ذ / Generated by Desktop Management System*\n`
-      report += `*╪ت╪«╪▒ ╪ز╪ص┘┘è┘: ${analysis.lastAnalyzed} / Last Analysis: ${analysis.lastAnalyzed}*`
+      report += `*?�?� ?�?????�?� ?�???� ?�???�?�???�?? ?�?�?�?????� ?????�?� ?�?�?�???� ?????� ?�???�?�?�?� / Generated by Desktop Management System*\n`
+      report += `*?�?�?? ?�?�???�??: ${analysis.lastAnalyzed} / Last Analysis: ${analysis.lastAnalyzed}*`
 
       return report
     } catch (error) {
@@ -1130,35 +1130,35 @@ class MarketIntelligenceServiceImpl implements MarketIntelligenceService {
 
     if (materialTrend === 'increasing') {
       recommendations.push(
-        '┘┘â╪▒ ┘┘è ╪ز╪ث┘à┘è┘ ╪د┘┘à┘ê╪د╪» ┘à╪│╪ذ┘é╪د┘ï ┘╪ز╪ش┘╪ذ ╪▓┘è╪د╪»╪د╪ز ╪د┘╪ث╪│╪╣╪د╪▒ ╪د┘┘à╪│╪ز┘é╪ذ┘┘è╪ر',
+        '???�?? ???� ?�?�?�?�?? ?�???�?�?�?� ?�???�?�?�?� ???�?�???� ???�?�?�?�?� ?�???�?????�?? ?�???�???�?�?�???�?�',
       )
       recommendations.push('Consider securing materials in advance to avoid future price increases')
     }
 
     if (laborTrend === 'increasing') {
       recommendations.push(
-        '╪▒╪د╪ش╪╣ ╪د╪│╪ز╪▒╪د╪ز┘è╪ش┘è╪د╪ز ╪د┘╪ز┘ê╪╕┘è┘ ┘ê┘┘â╪▒ ┘┘è ╪د┘╪ز╪»╪▒┘è╪ذ ╪د┘╪»╪د╪«┘┘è',
+        '???�?�?? ?�???�???�?�?�?�?�?�?� ?�???�?�???�?? ?�???�?? ???� ?�???�?�???�?� ?�???�?�?�???�',
       )
       recommendations.push('Review hiring strategies and consider internal training programs')
     }
 
     if (sentiment === 'negative') {
       recommendations.push(
-        '╪د╪ز╪«╪░ ┘à┘ê┘é┘╪د┘ï ╪»┘╪د╪╣┘è╪د┘ï ┘┘è ╪د┘╪│┘ê┘é ┘ê╪▒┘â╪▓ ╪╣┘┘ë ╪د┘┘à╪┤╪د╪▒┘è╪╣ ╪د┘┘à╪╢┘à┘ê┘╪ر',
+        '?�?�?�?? ?�?�?�???�?� ?�???�???�?�?� ???� ?�?????�?� ?�???�?? ?????� ?�???�???�???�?? ?�???�???�?�???�',
       )
       recommendations.push('Take a defensive market position and focus on secured projects')
     }
 
     if (sentiment === 'positive') {
       recommendations.push(
-        '╪د╪│╪ز┘â╪┤┘ ┘╪▒╪╡ ╪د┘╪ز┘ê╪│╪╣ ┘ê╪د┘╪د╪│╪ز╪س┘à╪د╪▒ ┘┘è ┘é╪╖╪د╪╣╪د╪ز ╪ش╪»┘è╪»╪ر',
+        '?�???�?�???? ?????? ?�???�?�???? ?�?�???�???�?�?�?�?? ???� ?�???�???�?� ?�?�?�?�?�',
       )
       recommendations.push('Explore expansion opportunities and investment in new sectors')
     }
 
     if (criticalAlerts > 3) {
       recommendations.push(
-        '╪▒╪د╪ش╪╣ ╪د┘╪ز┘╪ذ┘è┘ç╪د╪ز ╪د┘╪ص╪▒╪ش╪ر ┘┘ê╪▒╪د┘ï ┘ê╪د╪ز╪«╪░ ╪ح╪ش╪▒╪د╪ة╪د╪ز ╪ز╪╡╪ص┘è╪ص┘è╪ر',
+        '???�?�?? ?�???�???�?�?�?�?� ?�???�???�?� ???�???�?� ?�?�?�?�?? ?�?�???�?�?�?� ?�???�?�?�?�?�',
       )
       recommendations.push('Review critical alerts immediately and take corrective actions')
     }
@@ -1169,11 +1169,11 @@ class MarketIntelligenceServiceImpl implements MarketIntelligenceService {
   private translateTrend(trend: string): string {
     switch (trend) {
       case 'increasing':
-        return '┘à╪ز╪▓╪د┘è╪» / Increasing'
+        return '?�?�???�?�?� / Increasing'
       case 'decreasing':
-        return '┘à╪ز┘╪د┘é╪╡ / Decreasing'
+        return '?�?�???�?�?? / Decreasing'
       case 'stable':
-        return '┘à╪│╪ز┘é╪▒ / Stable'
+        return '?�???�?�?? / Stable'
       default:
         return trend
     }
@@ -1182,11 +1182,11 @@ class MarketIntelligenceServiceImpl implements MarketIntelligenceService {
   private translateSentiment(sentiment: string): string {
     switch (sentiment) {
       case 'positive':
-        return '╪ح┘è╪ش╪د╪ذ┘è / Positive'
+        return '?�?�?�?�?�?� / Positive'
       case 'negative':
-        return '╪│┘╪ذ┘è / Negative'
+        return '?????�?� / Negative'
       case 'neutral':
-        return '┘à╪ص╪د┘è╪» / Neutral'
+        return '?�?�?�?�?� / Neutral'
       default:
         return sentiment
     }
@@ -1195,11 +1195,11 @@ class MarketIntelligenceServiceImpl implements MarketIntelligenceService {
   private translateCompetition(level: string): string {
     switch (level) {
       case 'high':
-        return '╪╣╪د┘┘è / High'
+        return '???�???� / High'
       case 'medium':
-        return '┘à╪ز┘ê╪│╪╖ / Medium'
+        return '?�?�?�???? / Medium'
       case 'low':
-        return '┘à┘╪«┘╪╢ / Low'
+        return '?�???�???? / Low'
       default:
         return level
     }
@@ -1208,11 +1208,11 @@ class MarketIntelligenceServiceImpl implements MarketIntelligenceService {
   private translateImpact(impact: string): string {
     switch (impact) {
       case 'high':
-        return '╪╣╪د┘┘è / High'
+        return '???�???� / High'
       case 'medium':
-        return '┘à╪ز┘ê╪│╪╖ / Medium'
+        return '?�?�?�???? / Medium'
       case 'low':
-        return '┘à┘╪«┘╪╢ / Low'
+        return '?�???�???? / Low'
       default:
         return impact
     }

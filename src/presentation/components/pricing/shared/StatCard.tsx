@@ -120,8 +120,8 @@ export const StatCard: React.FC<StatCardProps> = ({
           <>
             <div className={iconClasses[variant]}>{icon}</div>
             <div className="w-full">
-              <div className="text-sm font-medium mb-1">{title}</div>
-              <div className={cn('text-xl font-bold', iconClasses[variant])}>{value}</div>
+              <div className="text-sm font-medium text-foreground mb-1">{title}</div>
+              <div className="text-xl font-bold text-foreground">{value}</div>
               {subtitle && <div className="text-xs text-muted-foreground mt-1">{subtitle}</div>}
             </div>
           </>

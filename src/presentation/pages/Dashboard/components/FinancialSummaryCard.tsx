@@ -9,6 +9,11 @@ import { DollarSign, TrendingUp, TrendingDown, Wallet, CreditCard } from 'lucide
 import { useFinancialState } from '@/application/context'
 import { formatCurrency } from '@/shared/utils/formatters/formatters'
 import { motion } from 'framer-motion'
+import {
+  selectWonTendersValue,
+  selectSubmittedTendersValue,
+  selectUnderActionTendersValue,
+} from '@/domain/selectors/tenderSelectors'
 
 interface FinancialSummaryCardProps {
   onSectionChange?: (section: string) => void
@@ -23,26 +28,23 @@ export const FinancialSummaryCard: React.FC<FinancialSummaryCardProps> = ({ onSe
   const financialSummary = useMemo(() => {
     // إجمالي إيرادات المشاريع
     const totalRevenue = projects.reduce((sum, project) => {
-      return sum + (project.totalBudget || 0)
+      return sum + (project.budget || 0)
     }, 0)
 
     // إجمالي المصروفات
     const totalExpenses = projects.reduce((sum, project) => {
-      return sum + (project.actualCost || 0)
+      return sum + (project.spent || 0)
     }, 0)
 
     // صافي الربح
     const netProfit = totalRevenue - totalExpenses
 
     // قيمة المنافسات الفائزة
-    const wonTendersValue = tenders
-      .filter((t) => t.status === 'won')
-      .reduce((sum, t) => sum + (t.value || 0), 0)
+    const wonTendersValue = selectWonTendersValue(tenders)
 
     // قيمة المنافسات قيد الانتظار
-    const pendingTendersValue = tenders
-      .filter((t) => t.status === 'submitted' || t.status === 'under_action')
-      .reduce((sum, t) => sum + (t.value || 0), 0)
+    const pendingTendersValue =
+      selectSubmittedTendersValue(tenders) + selectUnderActionTendersValue(tenders)
 
     return {
       totalRevenue,

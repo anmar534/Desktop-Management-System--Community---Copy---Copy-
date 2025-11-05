@@ -57,11 +57,8 @@ export function useTenderUpdateListener(refreshTenders: () => Promise<void>) {
         skipRefresh: event instanceof CustomEvent ? event.detail?.skipRefresh : undefined,
       })
 
-      // Fix #2: فحص skipRefresh flag لمنع reload غير ضروري
-      if (event instanceof CustomEvent && event.detail?.skipRefresh === true) {
-        console.log('⏭️ تخطي إعادة التحميل - skipRefresh flag موجود')
-        return
-      }
+      // ✅ FIX: skipRefresh يعني "لا تعيد تحميل الصفحة" لكن نحدّث البيانات في الخلفية
+      // هذا يضمن تحديث بطاقات المنافسة بعد التسعير دون مغادرة الصفحة
 
       // Fix #1: منع re-entrance (Event Loop Guard)
       if (isRefreshingRef.current) {
@@ -76,7 +73,7 @@ export function useTenderUpdateListener(refreshTenders: () => Promise<void>) {
 
       refreshTimeoutRef.current = setTimeout(() => {
         isRefreshingRef.current = true
-        console.log('🔄 تم تحديث بيانات المناقصات - إعادة التحميل')
+        console.log('🔄 تم تحديث بيانات المناقصات - إعادة التحميل في الخلفية')
         void refreshTenders().finally(() => {
           isRefreshingRef.current = false
         })

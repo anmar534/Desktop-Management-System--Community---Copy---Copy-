@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import {
   AlertCircle,
   Target,
@@ -70,6 +70,7 @@ interface SummaryViewProps {
     }>
   >
   setDefaultPercentages: React.Dispatch<React.SetStateAction<DefaultPercentages>>
+  saveDefaultPercentages: (newPercentages: DefaultPercentages) => Promise<void>
   applyDefaultPercentagesToExistingItems: () => void
   setCurrentItemIndex: (index: number) => void
   setCurrentView: (view: 'summary' | 'pricing' | 'technical') => void
@@ -114,6 +115,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   defaultPercentagesInput,
   setDefaultPercentagesInput,
   setDefaultPercentages,
+  saveDefaultPercentages,
   applyDefaultPercentagesToExistingItems,
   setCurrentItemIndex,
   setCurrentView,
@@ -140,6 +142,17 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
     pricingData,
     defaultPercentages,
   })
+
+  // 🔍 تشخيص البيانات للبطاقات
+  useEffect(() => {
+    console.log('[SummaryView] Cards Data:', {
+      pricingDataSize: pricingData.size,
+      quantityItemsCount: quantityItems.length,
+      defaultPercentages,
+      totals: unifiedCalculations.totals,
+      averagePercentages: unifiedCalculations.averagePercentages,
+    })
+  }, [pricingData, quantityItems, defaultPercentages, unifiedCalculations])
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -198,8 +211,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           <StatCard
             title="القيمة الإجمالية"
             value={formatCurrencyValue(unifiedCalculations.totals.projectTotal, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
             })}
             subtitle="إجمالي تقديري"
             icon={<DollarSign className="h-5 w-5" />}
@@ -209,8 +222,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           <StatCard
             title="ضريبة القيمة المضافة"
             value={formatCurrencyValue(unifiedCalculations.calculateVAT(), {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
             })}
             subtitle="15% من الإجمالي"
             icon={<Calculator className="h-5 w-5" />}
@@ -243,7 +256,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                       const clamped = isNaN(num)
                         ? defaultPercentages.administrative
                         : Math.max(0, Math.min(100, num))
-                      setDefaultPercentages((prev) => ({ ...prev, administrative: clamped }))
+                      const newPercentages = { ...defaultPercentages, administrative: clamped }
+                      setDefaultPercentages(newPercentages)
+                      saveDefaultPercentages(newPercentages)
                     }}
                     className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                     aria-label="النسبة الإدارية الافتراضية"
@@ -264,7 +279,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                       const clamped = isNaN(num)
                         ? defaultPercentages.operational
                         : Math.max(0, Math.min(100, num))
-                      setDefaultPercentages((prev) => ({ ...prev, operational: clamped }))
+                      const newPercentages = { ...defaultPercentages, operational: clamped }
+                      setDefaultPercentages(newPercentages)
+                      saveDefaultPercentages(newPercentages)
                     }}
                     className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                     aria-label="النسبة التشغيلية الافتراضية"
@@ -285,7 +302,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                       const clamped = isNaN(num)
                         ? defaultPercentages.profit
                         : Math.max(0, Math.min(100, num))
-                      setDefaultPercentages((prev) => ({ ...prev, profit: clamped }))
+                      const newPercentages = { ...defaultPercentages, profit: clamped }
+                      setDefaultPercentages(newPercentages)
+                      saveDefaultPercentages(newPercentages)
                     }}
                     className="w-full h-8 px-2 border border-input rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-info focus:border-transparent"
                     aria-label="نسبة الربح الافتراضية"
@@ -310,10 +329,10 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
 
           {/* بطاقات التكاليف - باستخدام StatCard الموحد */}
           <StatCard
-            title={`التكاليف الإدارية (${unifiedCalculations.averagePercentages.administrative.toFixed(1)}%)`}
+            title={`التكاليف الإدارية (${unifiedCalculations.displayPercentages.administrative.toFixed(1)}%)`}
             value={formatCurrencyValue(unifiedCalculations.totals.administrative, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
             })}
             icon={<Settings className="h-6 w-6" />}
             variant="destructive"
@@ -321,10 +340,10 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           />
 
           <StatCard
-            title={`التكاليف التشغيلية (${unifiedCalculations.averagePercentages.operational.toFixed(1)}%)`}
+            title={`التكاليف التشغيلية (${unifiedCalculations.displayPercentages.operational.toFixed(1)}%)`}
             value={formatCurrencyValue(unifiedCalculations.totals.operational, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
             })}
             icon={<Building className="h-6 w-6" />}
             variant="warning"
@@ -332,10 +351,10 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           />
 
           <StatCard
-            title={`إجمالي الأرباح (${unifiedCalculations.averagePercentages.profit.toFixed(1)}%)`}
+            title={`إجمالي الأرباح (${unifiedCalculations.displayPercentages.profit.toFixed(1)}%)`}
             value={formatCurrencyValue(unifiedCalculations.totals.profit, {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 0,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
             })}
             icon={<TrendingUp className="h-6 w-6" />}
             variant="success"
@@ -465,8 +484,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                             {isInProgress ? (
                               <span className="font-bold text-success">
                                 {formatCurrencyValue(itemTotal, {
-                                  minimumFractionDigits: 0,
-                                  maximumFractionDigits: 0,
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
                                 })}
                               </span>
                             ) : (
@@ -705,8 +724,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                                     ?.administrative ?? 0}
                                                   % ={' '}
                                                   {formatCurrencyValue(administrative, {
-                                                    minimumFractionDigits: 0,
-                                                    maximumFractionDigits: 0,
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
                                                   })}
                                                 </span>
                                               </div>
@@ -720,8 +739,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                                     0}
                                                   % ={' '}
                                                   {formatCurrencyValue(operational, {
-                                                    minimumFractionDigits: 0,
-                                                    maximumFractionDigits: 0,
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
                                                   })}
                                                 </span>
                                               </div>
@@ -734,8 +753,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                                   {itemPricing.additionalPercentages?.profit ?? 0}%
                                                   ={' '}
                                                   {formatCurrencyValue(profit, {
-                                                    minimumFractionDigits: 0,
-                                                    maximumFractionDigits: 0,
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
                                                   })}
                                                 </span>
                                               </div>
@@ -765,8 +784,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                                 </span>
                                                 <span className="font-semibold tabular-nums">
                                                   {formatCurrencyValue(directCosts, {
-                                                    minimumFractionDigits: 0,
-                                                    maximumFractionDigits: 0,
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
                                                   })}
                                                 </span>
                                               </div>
@@ -778,8 +797,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                                   {formatCurrencyValue(
                                                     administrative + operational,
                                                     {
-                                                      minimumFractionDigits: 0,
-                                                      maximumFractionDigits: 0,
+                                                      minimumFractionDigits: 2,
+                                                      maximumFractionDigits: 2,
                                                     },
                                                   )}
                                                 </span>
@@ -790,8 +809,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                                                 </span>
                                                 <span className="font-semibold tabular-nums">
                                                   {formatCurrencyValue(profit, {
-                                                    minimumFractionDigits: 0,
-                                                    maximumFractionDigits: 0,
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
                                                   })}
                                                 </span>
                                               </div>
@@ -889,32 +908,32 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     <span className="font-medium">إجمالي قيمة البنود المُسعرة:</span>
                     <span className="font-bold text-info">
                       {formatCurrencyValue(unifiedCalculations.totals.items, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
                       })}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg">
                     <span className="font-medium">
                       إجمالي التكاليف الإدارية (
-                      {unifiedCalculations.averagePercentages.administrative.toFixed(1)}%):
+                      {unifiedCalculations.displayPercentages.administrative.toFixed(1)}%):
                     </span>
                     <span className="font-bold text-warning">
                       {formatCurrencyValue(unifiedCalculations.totals.administrative, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
                       })}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-warning/10 rounded-lg border border-warning/30">
                     <span className="font-medium">
                       إجمالي التكاليف التشغيلية (
-                      {unifiedCalculations.averagePercentages.operational.toFixed(1)}%):
+                      {unifiedCalculations.displayPercentages.operational.toFixed(1)}%):
                     </span>
                     <span className="font-bold text-warning">
                       {formatCurrencyValue(unifiedCalculations.totals.operational, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
                       })}
                     </span>
                   </div>
@@ -931,12 +950,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   </div>
                   <div className="flex justify-between items-center p-3 bg-warning/15 rounded-lg">
                     <span className="font-medium">
-                      إجمالي الأرباح ({unifiedCalculations.averagePercentages.profit.toFixed(1)}%):
+                      إجمالي الأرباح ({unifiedCalculations.displayPercentages.profit.toFixed(1)}%):
                     </span>
                     <span className="font-bold text-warning">
                       {formatCurrencyValue(unifiedCalculations.totals.profit, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
                       })}
                     </span>
                   </div>
@@ -947,8 +966,8 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   <span className="font-bold text-lg">القيمة الإجمالية النهائية:</span>
                   <span className="font-bold text-xl text-success">
                     {formatCurrencyValue(unifiedCalculations.totals.projectTotal, {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
                     })}
                   </span>
                 </div>

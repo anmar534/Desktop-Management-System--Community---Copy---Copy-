@@ -9,6 +9,10 @@ export const STORAGE_KEYS = {
   PROJECTS: 'app_projects_data',
   CLIENTS: 'app_clients_data',
 
+  // إدارة التطوير
+  DEVELOPMENT_GOALS: 'development_goals',
+  DASHBOARD_KPI_SELECTION: 'dashboard_kpi_selection',
+
   // مالية/إعدادات (موجودة في utils/storage سابقًا)
   FINANCIAL: 'app_financial_data',
   SETTINGS: 'app_settings_data',
@@ -23,6 +27,10 @@ export const STORAGE_KEYS = {
   EXPENSES: 'app_expenses_data',
   BOQ_DATA: 'app_boq_data',
   PRICING_DATA: 'app_pricing_data',
+
+  // علاقات بين الكيانات (Relationships)
+  TENDER_PROJECT_RELATIONS: 'app_tender_project_relations',
+  PROJECT_PURCHASE_RELATIONS: 'app_project_purchase_relations',
 
   // Procurement Management
   SUPPLIERS: 'app_suppliers',

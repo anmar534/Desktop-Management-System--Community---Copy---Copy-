@@ -9,7 +9,7 @@ function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
-      className={cn('flex flex-col gap-2', className)}
+      className={cn('flex flex-col gap-2 mt-6', className)}
       {...props}
     />
   )
@@ -45,7 +45,11 @@ function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPr
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn('flex-1 outline-none', className)}
+      className={cn(
+        'outline-none',
+        'data-[state=inactive]:hidden data-[state=active]:block',
+        className,
+      )}
       {...props}
     />
   )

@@ -1,6 +1,4 @@
 // TenderDetails renders the full tender workspace with tabs, documents, and workflow.
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Button } from '@/presentation/components/ui/button'
 import { Badge } from '@/presentation/components/ui/badge'
@@ -17,15 +15,19 @@ import {
 } from '@/presentation/components/ui/alert-dialog'
 import { Calendar, ArrowRight, FileText, Paperclip, Grid3X3, Info, Send } from 'lucide-react'
 import { toast } from 'sonner'
+import type { Tender } from '@/data/centralData'
+import type { UploadedFile } from '@/shared/utils/fileUploadService'
 import { TenderStatusManager } from '@/presentation/pages/Tenders/components/TenderStatusManager'
 import { APP_EVENTS } from '@/events/bus'
 import { FileUploadService } from '@/shared/utils/fileUploadService'
-// (legacy pricingService import removed – unified hook supplies data)
-// Removed pricingDataSyncService (legacy dual-write path)
-// Removed normalizeAndEnrich / dedupePricingItems legacy enrichment utilities – unified hook supplies final items
-// Removed direct snapshot utilities & metrics – unified hook manages snapshot reading
-// Removed useTenderPricing (legacy hook) – unified hook is now sole source of truth here
-import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
+// Phase 2: Migrated to Zustand Store (Week 1 - Day 1)
+// Removed useUnifiedTenderPricing - replaced with useTenderPricingStore
+import { useTenderPricingStore } from '@/stores/tenderPricingStore'
+// ✅ Migrated to unified pricing calculations (Single Source of Truth)
+import { usePricingCalculations } from '@/shared/hooks/usePricingCalculations'
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
+// import { useTenderPricingCalculations } from '@/presentation/pages/Tenders/TenderPricing/hooks/useTenderPricingCalculations' // LEGACY - replaced
+// import { useDomainPricingEngine } from '@/application/hooks/useDomainPricingEngine' // LEGACY - not needed
 import { getStatusColor } from '@/shared/utils/ui/statusColors'
 import { getTenderRepository } from '@/application/services/serviceRegistry'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
@@ -47,7 +49,17 @@ import {
  */
 // legacy normalizePricing utilities removed (buildPricingMap no longer needed after snapshot adoption)
 
-export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => void }) {
+/**
+ * Props for TenderDetails component
+ */
+interface TenderDetailsProps {
+  /** The tender to display details for */
+  tender: Tender
+  /** Callback function to navigate back to the list */
+  onBack: () => void
+}
+
+export function TenderDetails({ tender, onBack }: TenderDetailsProps) {
   const [activeTab, setActiveTab] = useState('general')
   const [showSubmitDialog, setShowSubmitDialog] = useState(false)
   const [localTender, setLocalTender] = useState(tender)
@@ -100,8 +112,106 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
 
   // أزيل مستمع pricingDataUpdated وإعادة بناء snapshot – الاعتماد على تزامن مركزي لاحق (إن لزم) عبر unified hook.
 
-  const unified = useUnifiedTenderPricing(tender)
+  // Phase 2: Use Zustand Store for data
+  const { boqItems, loadPricing, pricingData, defaultPercentages } = useTenderPricingStore()
   const { formatCurrencyValue } = useCurrencyFormatter()
+
+  // Transform BOQItems to QuantityItem format for usePricingCalculations
+  const quantityItems = useMemo(
+    () =>
+      boqItems.map((item) => ({
+        id: item.id,
+        itemNumber: item.originalId || item.id,
+        description: item.description,
+        unit: item.unit || 'وحدة',
+        quantity: item.quantity || 0,
+        specifications: item.canonicalDescription,
+      })),
+    [boqItems],
+  )
+
+  // ✅ Migrated to unified pricing calculations (matches TenderPricingPage & SummaryView)
+  const unifiedCalculations = usePricingCalculations({
+    quantityItems,
+    pricingData,
+    defaultPercentages,
+  })
+
+  // Backward compatibility wrapper for existing code (memoized to avoid re-renders)
+  const pricingCalculations = useMemo(
+    () => ({
+      calculateItemsTotal: () => unifiedCalculations.totals.items,
+      calculateVAT: () => unifiedCalculations.totals.vat,
+      calculateProjectTotal: () => unifiedCalculations.totals.projectTotal,
+      calculateTotalAdministrative: () => unifiedCalculations.totals.administrative,
+      calculateTotalOperational: () => unifiedCalculations.totals.operational,
+      calculateTotalProfit: () => unifiedCalculations.totals.profit,
+    }),
+    [unifiedCalculations],
+  )
+
+  // Load pricing when tender changes
+  useEffect(() => {
+    if (tender?.id) {
+      void loadPricing(tender.id)
+    }
+  }, [tender?.id, loadPricing])
+
+  // ✅ Scroll to top when tender changes
+  useScrollToTop([tender?.id])
+
+  // Create unified interface for compatibility with tabs
+  const unified = useMemo(() => {
+    const items = boqItems.map((item, idx) => ({
+      ...item,
+      description: item.description || item.canonicalDescription || `البند ${idx + 1}`,
+      canonicalDescription: item.canonicalDescription || item.description,
+      unitPrice: item.unitPrice ?? item.estimated?.unitPrice ?? 0,
+      totalPrice: item.totalPrice ?? item.estimated?.totalPrice ?? 0,
+      quantity: item.quantity ?? item.estimated?.quantity ?? 0,
+    }))
+
+    const hasPricing = items.some((it) => it.unitPrice > 0 || it.totalPrice > 0)
+
+    // ✅ Unified calculations from usePricingCalculations (Single Source of Truth)
+    const calculatedTotals = pricingCalculations.calculateItemsTotal()
+    const vatAmount = pricingCalculations.calculateVAT()
+    const totalWithVat = pricingCalculations.calculateProjectTotal()
+
+    // ✅ Get all values from unified source - NO manual calculations needed
+    const profitTotal = pricingCalculations.calculateTotalProfit()
+    const administrativeTotal = pricingCalculations.calculateTotalAdministrative()
+    const operationalTotal = pricingCalculations.calculateTotalOperational()
+
+    // ✅ Use display percentages from Single Source of Truth
+    const displayPct = unifiedCalculations.displayPercentages
+
+    const totals = hasPricing
+      ? {
+          totalValue: calculatedTotals,
+          vatRate: 0.15,
+          vatAmount: vatAmount,
+          totalWithVat: totalWithVat,
+          profit: profitTotal,
+          profitPercentage: displayPct.profit,
+          administrative: administrativeTotal,
+          administrativePercentage: displayPct.administrative,
+          operational: operationalTotal,
+          operationalPercentage: displayPct.operational,
+          adminOperational: administrativeTotal + operationalTotal,
+          adminOperationalPercentage: displayPct.adminOperational,
+        }
+      : null
+
+    return {
+      status: items.length > 0 ? 'ready' : 'empty',
+      items,
+      totals,
+      meta: null,
+      source: 'central-boq',
+      refresh: () => loadPricing(tender.id),
+    }
+  }, [boqItems, pricingCalculations, unifiedCalculations.displayPercentages, loadPricing, tender.id])
   const quantityFormatter = useMemo(
     () =>
       new Intl.NumberFormat('ar-SA', {
@@ -125,97 +235,48 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
     },
     [quantityFormatter],
   )
-  // تشخيص مبسط للمصدر الموحد فقط
+  // تشخيص مبسط للمصدر الموحد (من Store)
   useEffect(() => {
-    console.log('[TenderDetails] Unified pricing diagnostic', {
+    console.log('[TenderDetails] Store-based pricing diagnostic', {
       tenderId: tender?.id,
-      unifiedStatus: unified.status,
-      unifiedSource: unified.source,
+      status: unified.status,
+      source: unified.source,
       items: unified.items.length,
       hasTotals: !!unified.totals,
       totalsContent: unified.totals,
       firstItem: unified.items[0],
-      itemsWithPrices: unified.items.filter((it: any) => it.unitPrice || it.totalPrice).length,
+      itemsWithPrices: unified.items.filter((it) => it.unitPrice || it.totalPrice).length,
     })
-  }, [
-    unified.status,
-    unified.source,
-    unified.items.length,
-    unified.totals,
-    unified.items,
-    tender?.id,
-  ])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tender?.id]) // ✅ فقط tenderId - تجنب infinite loop من unified object
 
   // إعداد بيانات المرفقات
   const attachmentsData = useMemo(() => {
-    const originalAttachments = tender.attachments || []
-    let technicalFiles: any[] = []
+    const originalAttachments = (tender.documents || []).map((doc) => ({
+      ...doc,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      type: (doc as any).type || doc.mimeType || 'application/octet-stream',
+    }))
+    let technicalFiles: (UploadedFile & { source?: string })[] = []
 
     try {
       technicalFiles = FileUploadService.getFilesByTender(tender.id).map((file) => ({
         ...file,
-        source: 'technical',
-        type: 'technical',
-      })) as any[]
+        source: 'technical' as const,
+      }))
     } catch (error) {
       console.log('خطأ في قراءة الملفات الفنية:', error)
     }
 
-    let allAttachments = [...originalAttachments, ...technicalFiles]
-
-    // إذا لم توجد مرفقات، استخدم بيانات افتراضية
-    if (allAttachments.length === 0) {
-      allAttachments = [
-        {
-          id: '1',
-          name: 'كراسة الشروط والمواصفات.pdf',
-          type: 'specifications',
-          size: '2.5 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          id: '2',
-          name: 'جدول الكميات.xlsx',
-          type: 'quantity',
-          size: '1.2 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          id: '3',
-          name: 'المخططات المعمارية.dwg',
-          type: 'drawings',
-          size: '8.7 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          id: '4',
-          name: 'تقرير الموقع.pdf',
-          type: 'report',
-          size: '3.1 MB',
-          uploadDate: '2024-08-15',
-          source: 'original',
-        },
-        {
-          id: '5',
-          name: 'العرض الفني والمواصفات التقنية.pdf',
-          type: 'technical',
-          size: '4.8 MB',
-          uploadDate: '2024-08-20',
-          source: 'technical',
-        },
-      ]
-    }
+    const allAttachments = [...originalAttachments, ...technicalFiles]
 
     return {
       allAttachments,
       technicalFilesCount: technicalFiles.length,
     }
-  }, [tender.attachments, tender.id])
+  }, [tender.documents, tender.id])
 
-  const handlePreviewAttachment = useCallback((attachment: any) => {
+  const handlePreviewAttachment = useCallback((attachment: UploadedFile & { source?: string }) => {
     if (attachment.source === 'technical') {
       alert(`معاينة الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
     } else {
@@ -223,7 +284,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
     }
   }, [])
 
-  const handleDownloadAttachment = useCallback((attachment: any) => {
+  const handleDownloadAttachment = useCallback((attachment: UploadedFile & { source?: string }) => {
     if (attachment.source === 'technical') {
       alert(`تحميل الملف الفني: ${attachment.name}\n\nهذا الملف تم رفعه من خلال صفحة التسعير`)
     } else {
@@ -351,9 +412,7 @@ export function TenderDetails({ tender, onBack }: { tender: any; onBack: () => v
             </Button>
             <div>
               <h1 className="text-xl lg:text-2xl font-bold">{tender.name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {tender.client || tender.ownerEntity || 'غير محدد'}
-              </p>
+              <p className="text-sm text-muted-foreground">{tender.client || 'غير محدد'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">

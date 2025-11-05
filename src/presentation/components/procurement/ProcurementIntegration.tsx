@@ -35,8 +35,8 @@ import type {
   IntegrationSummary,
   ProjectIntegration,
   FinancialIntegration,
-} from '@/services/procurementIntegrationService'
-import { procurementIntegrationService } from '@/services/procurementIntegrationService'
+} from '@/application/services/procurementIntegrationService'
+import { procurementIntegrationService } from '@/application/services/procurementIntegrationService'
 
 interface ProcurementIntegrationProps {
   className?: string

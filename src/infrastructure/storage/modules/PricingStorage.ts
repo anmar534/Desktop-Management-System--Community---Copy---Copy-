@@ -29,7 +29,8 @@ type PricingEntry = [string, unknown]
 export interface TenderPricingPayload {
   pricing: PricingEntry[]
   defaultPercentages?: DefaultPercentages
-  lastUpdated?: string
+  lastUpdated?: string // When data was last modified
+  lastSavedAt?: string // When data was last persisted to storage
   version?: number
 }
 
@@ -99,12 +100,14 @@ export class PricingStorage implements IStorageModule {
     const store = await this.manager.get<PricingStore>(STORAGE_KEYS.PRICING_DATA, {})
     const previous = store[tenderId]
 
-    // Check if data changed (skip lastUpdated in comparison)
+    // Check if data changed (skip lastUpdated and lastSavedAt in comparison)
     let isSame = false
     if (previous) {
       try {
         const normalize = (value: TenderPricingPayload): string => {
-          return JSON.stringify(value, (key, val) => (key === 'lastUpdated' ? undefined : val))
+          return JSON.stringify(value, (key, val) =>
+            key === 'lastUpdated' || key === 'lastSavedAt' ? undefined : val,
+          )
         }
         isSame = normalize(previous) === normalize(data)
       } catch (error) {
@@ -114,6 +117,8 @@ export class PricingStorage implements IStorageModule {
 
     // Only save if data changed
     if (!isSame) {
+      // Set lastSavedAt to current time when actually persisting
+      data.lastSavedAt = new Date().toISOString()
       store[tenderId] = data
       await this.manager.set(STORAGE_KEYS.PRICING_DATA, store)
     }
@@ -210,10 +215,12 @@ export class PricingStorage implements IStorageModule {
           const raw = window.localStorage.getItem(legacyKey)
           if (raw) {
             const parsed = JSON.parse(raw) as Partial<TenderPricingPayload>
+            const now = new Date().toISOString()
             const payload: TenderPricingPayload = {
               pricing: Array.isArray(parsed?.pricing) ? (parsed.pricing as PricingEntry[]) : [],
               defaultPercentages: parsed?.defaultPercentages,
-              lastUpdated: parsed?.lastUpdated ?? new Date().toISOString(),
+              lastUpdated: parsed?.lastUpdated ?? now,
+              lastSavedAt: now, // Migration time becomes save time
               version: 1,
             }
 
@@ -236,10 +243,12 @@ export class PricingStorage implements IStorageModule {
       }
 
       // Migrate from manager
+      const now = new Date().toISOString()
       const payload: TenderPricingPayload = {
         pricing: Array.isArray(legacyData?.pricing) ? legacyData.pricing : [],
         defaultPercentages: legacyData?.defaultPercentages,
-        lastUpdated: legacyData?.lastUpdated ?? new Date().toISOString(),
+        lastUpdated: legacyData?.lastUpdated ?? now,
+        lastSavedAt: now, // Migration time becomes save time
         version: 1,
       }
 

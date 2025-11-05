@@ -3,7 +3,7 @@
  * Main layout that includes sidebar, header, and dynamic content area
  */
 
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useNavigation } from '@/application/context'
 import { Sidebar } from '@/presentation/components/ui/layout/Sidebar'
 import { Header } from '@/presentation/components/ui/layout/Header'
@@ -61,6 +61,11 @@ function PageLoadingFallback() {
 
 function AppLayout() {
   const { activeSection, navigate, tenderToEdit } = useNavigation()
+
+  // إعادة السكرول للأعلى عند تغيير الصفحة
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+  }, [activeSection])
 
   // Get the component for the active section
   const PageComponent = PAGE_COMPONENTS[activeSection]

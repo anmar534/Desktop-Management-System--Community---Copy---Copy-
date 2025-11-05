@@ -1,16 +1,6 @@
 // TendersPage shows the tenders dashboard, filters, and quick actions.
-import { useState, useMemo, useCallback } from 'react'
-import {
-  Trophy,
-  Search,
-  ListChecks,
-  AlertTriangle,
-  FileText,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Calendar,
-} from 'lucide-react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
+import { Trophy, Search } from 'lucide-react'
 
 import type { Tender } from '@/data/centralData'
 
@@ -20,7 +10,6 @@ import {
   normaliseSearchQuery,
   computeFilteredTenders,
 } from '@/shared/utils/tender/tenderFilters'
-import { computeTenderSummary } from '@/shared/utils/tender/tenderSummaryCalculator'
 import {
   createTabsWithCounts,
   getActiveTabLabel,
@@ -29,61 +18,66 @@ import {
 import { createQuickActions } from '@/shared/utils/tender/tenderQuickActions'
 import { createDeleteHandler, createSubmitHandler } from '@/shared/utils/tender/tenderEventHandlers'
 import { toast } from 'sonner'
+import { useScrollToTop } from '@/shared/hooks/useScrollToTop'
+
+// Domain selectors for stats calculation
+import {
+  selectActiveTendersCount,
+  selectWonTendersCount,
+  selectLostTendersCount,
+  selectSubmittedTendersCount,
+  selectNewTendersCount,
+  selectUnderActionTendersCount,
+  selectExpiredTendersCount,
+  selectUrgentTendersCount,
+  selectWinRate,
+  selectWonTendersValue,
+  selectLostTendersValue,
+  selectSubmittedTendersValue,
+  selectActiveTendersTotal,
+} from '@/domain/selectors/tenderSelectors'
 
 // Components
 import {
   TenderTabs,
   TenderDeleteDialog,
-  TenderPerformanceCards,
   TenderDetails,
-  EnhancedTenderCard,
+  VirtualizedTenderList,
 } from '@/presentation/components/tenders'
 import { SubmitReviewDialog } from './components/SubmitReviewDialog'
 
 import { PageLayout, EmptyState } from '@/presentation/components/layout/PageLayout'
-import { StatusBadge } from '@/presentation/components/ui/status-badge'
 import { TenderPricingPage, type TenderWithPricingSources } from './TenderPricingPage'
 import { TenderResultsManager } from './components/TenderResultsManager'
+import { TendersPagination } from './components/TendersPagination'
+import { TendersHeaderSection } from './components/TendersHeaderSection'
 
-import { useFinancialState } from '@/application/context'
+// Phase 1 Migration: Using tenderListStoreAdapter (Zustand Stores)
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import {
   useTenderDetailNavigation,
   useTenderUpdateListener,
   useTenderPricingNavigation,
 } from '@/application/hooks/useTenderEventListeners'
-import { useTenderViewNavigation } from '@/application/hooks/useTenderViewNavigation'
-import type { TenderMetricsSummary } from '@/domain/contracts/metrics'
-import type { TenderMetrics as AggregatedTenderMetrics } from '@/domain/selectors/financialMetrics'
-import { resolveTenderPerformance } from '@/domain/utils/tenderPerformance'
 
 interface TendersProps {
   onSectionChange: (section: string, tender?: Tender) => void
 }
 
 export function Tenders({ onSectionChange }: TendersProps) {
-  const { tenders: tendersState, metrics } = useFinancialState()
-  const { tenders: tendersData, deleteTender, refreshTenders, updateTender } = tendersState
+  // ✅ Scroll to top when component loads
+  useScrollToTop()
 
-  const tenders = useMemo(() => tendersData, [tendersData])
-  const rawTenderMetrics = metrics.tenders as AggregatedTenderMetrics
-
-  const tenderPerformance = useMemo<TenderMetricsSummary>(
-    () => resolveTenderPerformance(rawTenderMetrics, tenders),
-    [rawTenderMetrics, tenders],
-  )
-
-  const tenderMetrics = useMemo<AggregatedTenderMetrics>(
-    () => ({
-      ...rawTenderMetrics,
-      performance: tenderPerformance,
-    }),
-    [rawTenderMetrics, tenderPerformance],
-  )
-
-  const { formatCurrencyValue } = useCurrencyFormatter()
-
+  // Phase 1 Migration: Use Store-based state management
+  const storeData = useTenderListStore()
   const {
+    tenders,
+    deleteTender,
+    refreshTenders,
+    updateTender,
+    loadTenders,
+    // Phase 2 Migration: Navigation from Store
     currentView,
     selectedTender,
     setSelectedTender,
@@ -91,18 +85,77 @@ export function Tenders({ onSectionChange }: TendersProps) {
     navigateToPricing,
     navigateToDetails,
     navigateToResults,
-  } = useTenderViewNavigation()
+  } = storeData
 
-  const [searchTerm, setSearchTerm] = useState('')
+  // 🔧 FIX: Load tenders on component mount
+  useEffect(() => {
+    console.log('[TendersPage] Component mounted, loading tenders...')
+    loadTenders()
+  }, [loadTenders])
+
+  // Generate stats using domain selectors (Single Source of Truth)
+  const tenderStats = useMemo(
+    () => ({
+      totalTenders: selectActiveTendersTotal(tenders),
+      activeTenders: selectActiveTendersCount(tenders),
+      wonTenders: selectWonTendersCount(tenders),
+      lostTenders: selectLostTendersCount(tenders),
+      submittedTenders: selectSubmittedTendersCount(tenders),
+      urgentTenders: selectUrgentTendersCount(tenders),
+      newTenders: selectNewTendersCount(tenders),
+      underActionTenders: selectUnderActionTendersCount(tenders),
+      expiredTenders: selectExpiredTendersCount(tenders),
+      winRate: selectWinRate(tenders),
+      submittedValue: selectSubmittedTendersValue(tenders),
+      wonValue: selectWonTendersValue(tenders),
+      lostValue: selectLostTendersValue(tenders),
+    }),
+    [tenders],
+  )
+
+  const { formatCurrencyValue } = useCurrencyFormatter()
+
+  // Phase 1 & 2 Migration:
+  // - Phase 1: Search state from Store.filters
+  // - Phase 2: Navigation state from Store (removed useTenderViewNavigation hook)
+  const { filters, setFilter } = storeData
+  const searchTerm = filters.search || ''
+  const setSearchTerm = (value: string) => setFilter('search', value)
+
   const [activeTab, setActiveTab] = useState<TenderTabId>('all')
   const [tenderToDelete, setTenderToDelete] = useState<Tender | null>(null)
   const [tenderToSubmit, setTenderToSubmit] = useState<Tender | null>(null)
 
+  // Local pagination state for frontend-only pagination
+  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPageSize, setCurrentPageSize] = useState(10)
+
   const normalisedSearch = useMemo(() => normaliseSearchQuery(searchTerm), [searchTerm])
 
+  // إنشاء tenderSummary من stats
   const tenderSummary = useMemo(
-    () => computeTenderSummary(tenders, tenderMetrics, tenderPerformance),
-    [tenders, tenderMetrics, tenderPerformance],
+    () => ({
+      total: tenderStats.totalTenders,
+      urgent: tenderStats.urgentTenders,
+      new: tenderStats.newTenders,
+      underAction: tenderStats.underActionTenders,
+      readyToSubmit: 0, // سيتم حسابه من tenders مباشرة
+      waitingResults: tenderStats.submittedTenders,
+      won: tenderStats.wonTenders,
+      lost: tenderStats.lostTenders,
+      expired: tenderStats.expiredTenders,
+      winRate: tenderStats.winRate,
+      totalDocumentValue: 0, // غير مستخدم في tabs
+      active: tenderStats.activeTenders,
+      submitted: tenderStats.submittedTenders,
+      averageWinChance: 0, // غير مستخدم في tabs
+      averageCycleDays: null, // غير مستخدم في tabs
+      submittedValue: tenderStats.submittedValue,
+      wonValue: tenderStats.wonValue,
+      lostValue: tenderStats.lostValue,
+      documentBookletsCount: 0, // غير مستخدم في tabs
+    }),
+    [tenderStats],
   )
 
   const tabsWithCounts = useMemo(() => createTabsWithCounts(tenderSummary), [tenderSummary])
@@ -111,6 +164,21 @@ export function Tenders({ onSectionChange }: TendersProps) {
     () => computeFilteredTenders(tenders, normalisedSearch, activeTab),
     [tenders, normalisedSearch, activeTab],
   )
+
+  // Apply pagination to filtered tenders using local state
+  const paginatedTenders = useMemo(() => {
+    const startIndex = (currentPage - 1) * currentPageSize
+    const endIndex = startIndex + currentPageSize
+    return filteredTenders.slice(startIndex, endIndex)
+  }, [filteredTenders, currentPage, currentPageSize])
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredTenders.length / currentPageSize)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filteredTenders.length, activeTab, searchTerm])
 
   const quickActions = useMemo(() => createQuickActions(onSectionChange), [onSectionChange])
 
@@ -145,9 +213,8 @@ export function Tenders({ onSectionChange }: TendersProps) {
           await purchaseOrderService.deleteTenderRelatedOrders(tender.id)
         }
 
-        // Update tender with new status directly
-        await updateTender({
-          ...tender,
+        // Update tender with new status
+        const updates: Partial<Tender> = {
           status: newStatus,
           lastUpdate: new Date().toISOString(),
           lastAction:
@@ -158,7 +225,9 @@ export function Tenders({ onSectionChange }: TendersProps) {
                 : newStatus === 'under_action'
                   ? 'تراجع للتسعير والتعديل'
                   : 'تراجع عن الحالة',
-        } as Tender)
+        }
+
+        await updateTender(tender.id, updates)
 
         toast.success('تم التراجع بنجاح', {
           description: `تم إعادة المنافسة "${tender.name}" إلى الحالة السابقة`,
@@ -180,84 +249,8 @@ export function Tenders({ onSectionChange }: TendersProps) {
     [onSectionChange, setSelectedTender],
   )
 
-  // شريط المعلومات العلوي مع البطاقات التحليلية - مثل صفحة المشاريع
-  const headerMetadata = useMemo(
-    () => (
-      <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm text-muted-foreground md:gap-3">
-        <StatusBadge
-          status="default"
-          label={`الكل ${tenderSummary.total}`}
-          icon={ListChecks}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.urgent > 0 ? 'warning' : 'default'}
-          label={`عاجل ${tenderSummary.urgent}`}
-          icon={AlertTriangle}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.new > 0 ? 'info' : 'default'}
-          label={`جديد ${tenderSummary.new}`}
-          icon={FileText}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.underAction > 0 ? 'info' : 'default'}
-          label={`تحت الإجراء ${tenderSummary.underAction}`}
-          icon={Clock}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.waitingResults > 0 ? 'warning' : 'default'}
-          label={`بانتظار النتائج ${tenderSummary.waitingResults}`}
-          icon={Calendar}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.won > 0 ? 'success' : 'default'}
-          label={`فائز ${tenderSummary.won}`}
-          icon={CheckCircle}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status={tenderSummary.lost > 0 ? 'error' : 'default'}
-          label={`خاسر ${tenderSummary.lost}`}
-          icon={XCircle}
-          size="sm"
-          className="shadow-none"
-        />
-        <StatusBadge
-          status="info"
-          label={`معدل الفوز ${tenderSummary.winRate.toFixed(1)}%`}
-          icon={Trophy}
-          size="sm"
-          className="shadow-none"
-        />
-      </div>
-    ),
-    [tenderSummary],
-  )
-
-  const headerExtraContent = useMemo(
-    () => (
-      <div className="space-y-4">
-        <div className="rounded-3xl border border-primary/20 bg-gradient-to-l from-primary/10 via-card/40 to-background p-5 shadow-sm">
-          {headerMetadata}
-        </div>
-        <div className="rounded-3xl border border-border/40 bg-card/80 p-4 shadow-lg shadow-primary/10 backdrop-blur-sm">
-          <TenderPerformanceCards tenderSummary={tenderSummary} />
-        </div>
-      </div>
-    ),
-    [headerMetadata, tenderSummary],
-  )
+  // Header section with metadata and performance cards
+  const headerExtraContent = useMemo(() => <TendersHeaderSection />, [])
 
   if (currentView === 'pricing' && selectedTender) {
     const tenderForPricing: TenderWithPricingSources = { ...selectedTender }
@@ -293,23 +286,32 @@ export function Tenders({ onSectionChange }: TendersProps) {
         }
       >
         {filteredTenders.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredTenders.map((tender, index) => (
-              <EnhancedTenderCard
-                key={tender.id}
-                tender={tender}
-                index={index}
-                onOpenDetails={navigateToDetails}
-                onStartPricing={navigateToPricing}
-                onSubmitTender={setTenderToSubmit}
-                onEdit={handleEditTender}
-                onDelete={setTenderToDelete}
-                onOpenResults={navigateToResults}
-                onRevertStatus={handleRevertStatus}
-                formatCurrencyValue={formatCurrencyValue}
+          <>
+            {/* Use VirtualizedTenderList for better performance */}
+            <VirtualizedTenderList
+              items={paginatedTenders}
+              onOpenDetails={navigateToDetails}
+              onStartPricing={navigateToPricing}
+              onSubmitTender={setTenderToSubmit}
+              onEdit={handleEditTender}
+              onDelete={setTenderToDelete}
+              onOpenResults={navigateToResults}
+              onRevertStatus={handleRevertStatus}
+              formatCurrencyValue={formatCurrencyValue}
+            />
+
+            {/* Pagination Controls */}
+            {filteredTenders.length > currentPageSize && (
+              <TendersPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={currentPageSize}
+                totalItems={filteredTenders.length}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setCurrentPageSize}
               />
-            ))}
-          </div>
+            )}
+          </>
         ) : tenders.length > 0 ? (
           <EmptyState
             title="لا توجد منافسات مطابقة"

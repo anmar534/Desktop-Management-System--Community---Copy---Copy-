@@ -60,16 +60,16 @@ describe('projectDetailsStore', () => {
 
   describe('setActiveTab', () => {
     it('should change active tab', () => {
+      useProjectDetailsStore.getState().setActiveTab('costs')
       const store = useProjectDetailsStore.getState()
-      store.setActiveTab('costs')
 
       expect(store.activeTab).toBe('costs')
     })
 
     it('should save previous tab', () => {
+      useProjectDetailsStore.getState().setActiveTab('costs')
+      useProjectDetailsStore.getState().setActiveTab('budget')
       const store = useProjectDetailsStore.getState()
-      store.setActiveTab('costs')
-      store.setActiveTab('budget')
 
       expect(store.previousTab).toBe('costs')
     })
@@ -77,10 +77,10 @@ describe('projectDetailsStore', () => {
 
   describe('goToPreviousTab', () => {
     it('should go back to previous tab', () => {
+      useProjectDetailsStore.getState().setActiveTab('costs')
+      useProjectDetailsStore.getState().setActiveTab('budget')
+      useProjectDetailsStore.getState().goToPreviousTab()
       const store = useProjectDetailsStore.getState()
-      store.setActiveTab('costs')
-      store.setActiveTab('budget')
-      store.goToPreviousTab()
 
       expect(store.activeTab).toBe('costs')
     })
@@ -100,8 +100,8 @@ describe('projectDetailsStore', () => {
 
   describe('setEditMode', () => {
     it('should enable edit mode', () => {
+      useProjectDetailsStore.getState().setEditMode(true)
       const store = useProjectDetailsStore.getState()
-      store.setEditMode(true)
 
       expect(store.isEditing).toBe(true)
     })
@@ -119,8 +119,8 @@ describe('projectDetailsStore', () => {
 
   describe('setEditFormData', () => {
     it('should set form data', () => {
+      useProjectDetailsStore.getState().setEditFormData(mockEditFormData)
       const store = useProjectDetailsStore.getState()
-      store.setEditFormData(mockEditFormData)
 
       expect(store.editFormData).toEqual(mockEditFormData)
     })
@@ -140,15 +140,15 @@ describe('projectDetailsStore', () => {
     })
 
     it('should update single field', () => {
+      useProjectDetailsStore.getState().updateEditFormField('name', 'Updated Name')
       const store = useProjectDetailsStore.getState()
-      store.updateEditFormField('name', 'Updated Name')
 
       expect(store.editFormData?.name).toBe('Updated Name')
     })
 
     it('should set dirty flag', () => {
+      useProjectDetailsStore.getState().updateEditFormField('progress', 75)
       const store = useProjectDetailsStore.getState()
-      store.updateEditFormField('progress', 75)
 
       expect(store.isDirty).toBe(true)
     })
@@ -165,8 +165,8 @@ describe('projectDetailsStore', () => {
 
   describe('setDirty', () => {
     it('should set dirty flag', () => {
+      useProjectDetailsStore.getState().setDirty(true)
       const store = useProjectDetailsStore.getState()
-      store.setDirty(true)
 
       expect(store.isDirty).toBe(true)
     })
@@ -201,9 +201,9 @@ describe('projectDetailsStore', () => {
 
   describe('setBudgetComparison', () => {
     it('should set budget comparison data', () => {
-      const store = useProjectDetailsStore.getState()
       const mockData: any[] = [{ item: 'Test', estimatedCost: 1000, actualCost: 900 }]
-      store.setBudgetComparison(mockData)
+      useProjectDetailsStore.getState().setBudgetComparison(mockData)
+      const store = useProjectDetailsStore.getState()
 
       expect(store.budgetComparison).toEqual(mockData)
     })
@@ -211,7 +211,6 @@ describe('projectDetailsStore', () => {
 
   describe('setBudgetSummary', () => {
     it('should set budget summary', () => {
-      const store = useProjectDetailsStore.getState()
       const summary = {
         totalEstimated: 10000,
         totalActual: 9500,
@@ -219,7 +218,8 @@ describe('projectDetailsStore', () => {
         variancePercentage: 5,
         itemsCount: 10,
       }
-      store.setBudgetSummary(summary)
+      useProjectDetailsStore.getState().setBudgetSummary(summary)
+      const store = useProjectDetailsStore.getState()
 
       expect(store.budgetSummary).toEqual(summary)
     })
@@ -251,9 +251,9 @@ describe('projectDetailsStore', () => {
 
   describe('setRelatedTender', () => {
     it('should set related tender', () => {
-      const store = useProjectDetailsStore.getState()
       const tender: any = { id: 'tender-1', name: 'Test Tender' }
-      store.setRelatedTender(tender)
+      useProjectDetailsStore.getState().setRelatedTender(tender)
+      const store = useProjectDetailsStore.getState()
 
       expect(store.relatedTender).toEqual(tender)
     })
@@ -261,9 +261,9 @@ describe('projectDetailsStore', () => {
 
   describe('setPurchaseOrders', () => {
     it('should set purchase orders', () => {
-      const store = useProjectDetailsStore.getState()
       const orders: any[] = [{ id: 'po-1', number: 'PO-001' }]
-      store.setPurchaseOrders(orders)
+      useProjectDetailsStore.getState().setPurchaseOrders(orders)
+      const store = useProjectDetailsStore.getState()
 
       expect(store.purchaseOrders).toEqual(orders)
     })
@@ -271,8 +271,8 @@ describe('projectDetailsStore', () => {
 
   describe('setRelatedDataLoading', () => {
     it('should set loading state', () => {
+      useProjectDetailsStore.getState().setRelatedDataLoading(true)
       const store = useProjectDetailsStore.getState()
-      store.setRelatedDataLoading(true)
 
       expect(store.relatedDataLoading).toBe(true)
     })
@@ -280,8 +280,8 @@ describe('projectDetailsStore', () => {
 
   describe('setRelatedDataError', () => {
     it('should set error message', () => {
+      useProjectDetailsStore.getState().setRelatedDataError('Test error')
       const store = useProjectDetailsStore.getState()
-      store.setRelatedDataError('Test error')
 
       expect(store.relatedDataError).toBe('Test error')
     })

@@ -57,13 +57,7 @@ export {
 } from './crmConnector'
 
 // Webhook Service
-export {
-  WebhookService,
-  webhookService,
-  WEBHOOK_EVENTS,
-  type Webhook,
-  type RetryPolicy,
-  type WebhookLog,
-  type WebhookDeliveryStatus,
-} from './webhookService'
+// Webhook service archived - not in use
+// Previously exported from './webhookService'
+
 

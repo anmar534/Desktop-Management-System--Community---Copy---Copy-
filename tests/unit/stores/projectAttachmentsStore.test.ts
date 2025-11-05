@@ -62,26 +62,30 @@ describe('projectAttachmentsStore', () => {
 
   describe('setAttachments', () => {
     it('should set attachments', () => {
+      useProjectAttachmentsStore.getState().setAttachments(mockAttachments)
+      
+      // Re-read state after mutation (Immer + Zustand pattern)
       const store = useProjectAttachmentsStore.getState()
-      store.setAttachments(mockAttachments)
-
       expect(store.attachments).toHaveLength(2)
     })
 
     it('should clear error', () => {
+      const { setError, setAttachments } = useProjectAttachmentsStore.getState()
+      setError('Test error')
+      setAttachments(mockAttachments)
+      
+      // Re-read state after mutation
       const store = useProjectAttachmentsStore.getState()
-      store.setError('Test error')
-      store.setAttachments(mockAttachments)
-
       expect(store.error).toBeNull()
     })
   })
 
   describe('addAttachment', () => {
     it('should add attachment', () => {
+      useProjectAttachmentsStore.getState().addAttachment(mockAttachments[0])
+      
+      // Re-read state after mutation (Immer + Zustand pattern)
       const store = useProjectAttachmentsStore.getState()
-      store.addAttachment(mockAttachments[0])
-
       expect(store.attachments).toHaveLength(1)
       expect(store.attachments[0].id).toBe('att-1')
     })
@@ -93,9 +97,10 @@ describe('projectAttachmentsStore', () => {
     })
 
     it('should update attachment', () => {
+      useProjectAttachmentsStore.getState().updateAttachment('att-1', { name: 'Updated Contract' })
+      
+      // Re-read state after mutation (Immer + Zustand pattern)
       const store = useProjectAttachmentsStore.getState()
-      store.updateAttachment('att-1', { name: 'Updated Contract' })
-
       expect(store.attachments[0].name).toBe('Updated Contract')
     })
 
@@ -113,9 +118,10 @@ describe('projectAttachmentsStore', () => {
     })
 
     it('should remove attachment', () => {
+      useProjectAttachmentsStore.getState().removeAttachment('att-1')
+      
+      // Re-read state after mutation (Immer + Zustand pattern)
       const store = useProjectAttachmentsStore.getState()
-      store.removeAttachment('att-1')
-
       expect(store.attachments).toHaveLength(1)
       expect(store.attachments[0].id).toBe('att-2')
     })
@@ -127,9 +133,10 @@ describe('projectAttachmentsStore', () => {
 
   describe('startUpload', () => {
     it('should start new upload', () => {
+      useProjectAttachmentsStore.getState().startUpload('file-1', 'test.pdf', 1000)
+      
+      // Re-read state after mutation (Immer + Zustand pattern)
       const store = useProjectAttachmentsStore.getState()
-      store.startUpload('file-1', 'test.pdf', 1000)
-
       expect(store.uploads).toHaveLength(1)
       expect(store.uploads[0].filename).toBe('test.pdf')
       expect(store.uploads[0].status).toBe('uploading')
@@ -143,9 +150,10 @@ describe('projectAttachmentsStore', () => {
     })
 
     it('should update upload progress', () => {
+      useProjectAttachmentsStore.getState().updateUploadProgress('file-1', 50, 500)
+      
+      // Re-read state after mutation (Immer + Zustand pattern)
       const store = useProjectAttachmentsStore.getState()
-      store.updateUploadProgress('file-1', 50, 500)
-
       expect(store.uploads[0].progress).toBe(50)
       expect(store.uploads[0].uploaded).toBe(500)
     })
@@ -157,9 +165,10 @@ describe('projectAttachmentsStore', () => {
     })
 
     it('should complete upload', () => {
+      useProjectAttachmentsStore.getState().completeUpload('file-1', mockAttachments[0])
+      
+      // Re-read state after mutation (Immer + Zustand pattern)
       const store = useProjectAttachmentsStore.getState()
-      store.completeUpload('file-1', mockAttachments[0])
-
       expect(store.uploads[0].status).toBe('completed')
       expect(store.uploads[0].progress).toBe(100)
       expect(store.attachments).toHaveLength(1)
@@ -167,10 +176,12 @@ describe('projectAttachmentsStore', () => {
     })
 
     it('should keep uploading state if other uploads active', () => {
+      const { startUpload, completeUpload } = useProjectAttachmentsStore.getState()
+      startUpload('file-2', 'test2.pdf', 1000)
+      completeUpload('file-1', mockAttachments[0])
+      
+      // Re-read state after mutation
       const store = useProjectAttachmentsStore.getState()
-      store.startUpload('file-2', 'test2.pdf', 1000)
-      store.completeUpload('file-1', mockAttachments[0])
-
       expect(store.isUploading).toBe(true)
     })
   })
@@ -181,9 +192,10 @@ describe('projectAttachmentsStore', () => {
     })
 
     it('should fail upload with error', () => {
+      useProjectAttachmentsStore.getState().failUpload('file-1', 'Upload failed')
+      
+      // Re-read state after mutation (Immer + Zustand pattern)
       const store = useProjectAttachmentsStore.getState()
-      store.failUpload('file-1', 'Upload failed')
-
       expect(store.uploads[0].status).toBe('error')
       expect(store.uploads[0].error).toBe('Upload failed')
       expect(store.isUploading).toBe(false)
@@ -196,9 +208,10 @@ describe('projectAttachmentsStore', () => {
     })
 
     it('should cancel and remove upload', () => {
+      useProjectAttachmentsStore.getState().cancelUpload('file-1')
+      
+      // Re-read state after mutation (Immer + Zustand pattern)
       const store = useProjectAttachmentsStore.getState()
-      store.cancelUpload('file-1')
-
       expect(store.uploads).toHaveLength(0)
       expect(store.isUploading).toBe(false)
     })
@@ -206,15 +219,16 @@ describe('projectAttachmentsStore', () => {
 
   describe('clearUploads', () => {
     beforeEach(() => {
-      const store = useProjectAttachmentsStore.getState()
-      store.startUpload('file-1', 'test.pdf', 1000)
-      store.startUpload('file-2', 'test2.pdf', 2000)
+      const { startUpload } = useProjectAttachmentsStore.getState()
+      startUpload('file-1', 'test.pdf', 1000)
+      startUpload('file-2', 'test2.pdf', 2000)
     })
 
     it('should clear all uploads', () => {
+      useProjectAttachmentsStore.getState().clearUploads()
+      
+      // Re-read state after mutation (Immer + Zustand pattern)
       const store = useProjectAttachmentsStore.getState()
-      store.clearUploads()
-
       expect(store.uploads).toEqual([])
       expect(store.isUploading).toBe(false)
     })

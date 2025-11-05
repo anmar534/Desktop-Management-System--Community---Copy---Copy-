@@ -12,7 +12,6 @@ import {
 import { useBOQ } from '@/application/hooks/useBOQ'
 import { useRepository } from '@/application/services/RepositoryProvider'
 import { getBOQRepository } from '@/application/services/serviceRegistry'
-import { TenderPricingRepository } from '@/infrastructure/repositories/TenderPricingRepository'
 import type { BOQItem } from '@/shared/types/boq'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { CostItemBreakdown } from './CostItemBreakdown'

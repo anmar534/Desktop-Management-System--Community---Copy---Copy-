@@ -23,8 +23,8 @@ import {
   BarChart3,
   Clock,
 } from 'lucide-react'
-import { performanceOptimizationService } from '@/services/performanceOptimizationService'
-import { systemIntegrationService } from '@/services/systemIntegrationService'
+import { performanceOptimizationService } from '@/application/services/performanceOptimizationService'
+import { systemIntegrationService } from '@/application/services/systemIntegrationService'
 
 interface OptimizationDashboardProps {
   className?: string

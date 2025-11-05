@@ -1,8 +1,9 @@
 // useTenderDetails Hook
 // Manages tender state and data loading
+// Phase 2: Migrated to Zustand Store (Week 1 - Day 1)
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useUnifiedTenderPricing } from '@/application/hooks/useUnifiedTenderPricing'
+import { useTenderPricingStore } from '@/stores/tenderPricingStore'
 import { useCurrencyFormatter } from '@/application/hooks/useCurrencyFormatter'
 import { APP_EVENTS } from '@/events/bus'
 import type { CollapsedSections, TabValue, QuantityItem } from '../types'
@@ -38,9 +39,40 @@ export function useTenderDetails(tender: any) {
     }
   }, [tender.id])
 
-  // Unified pricing data hook
-  const unified = useUnifiedTenderPricing(tender)
+  // Phase 2: Use Zustand Store instead of useUnifiedTenderPricing
+  const { boqItems, loadPricing, getTotalValue } = useTenderPricingStore()
   const { formatCurrencyValue } = useCurrencyFormatter()
+
+  // Load pricing when tender changes
+  useEffect(() => {
+    if (tender?.id) {
+      void loadPricing(tender.id)
+    }
+  }, [tender?.id, loadPricing])
+
+  // Create unified interface for compatibility
+  const unified = useMemo(() => {
+    const items = boqItems.map((item, idx) => ({
+      ...item,
+      description: item.description || item.canonicalDescription || `البند ${idx + 1}`,
+      canonicalDescription: item.canonicalDescription || item.description,
+      unitPrice: item.unitPrice ?? item.estimated?.unitPrice ?? 0,
+      totalPrice: item.totalPrice ?? item.estimated?.totalPrice ?? 0,
+      quantity: item.quantity ?? item.estimated?.quantity ?? 0,
+    }))
+
+    const totalValue = getTotalValue()
+    const hasPricing = items.some((it) => it.unitPrice > 0 || it.totalPrice > 0)
+
+    return {
+      status: items.length > 0 ? 'ready' : 'empty',
+      items,
+      totals: hasPricing ? { totalValue } : null,
+      meta: null,
+      source: 'central-boq',
+      refresh: () => loadPricing(tender.id),
+    }
+  }, [boqItems, getTotalValue, loadPricing, tender.id])
 
   // Quantity formatter
   const quantityFormatter = useMemo(

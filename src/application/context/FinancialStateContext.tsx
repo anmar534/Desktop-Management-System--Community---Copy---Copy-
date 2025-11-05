@@ -8,7 +8,7 @@ import {
 } from '@/application/hooks/useFinancialReports'
 import { useFinancialData, type UseFinancialDataReturn } from '@/application/hooks/useFinancialData'
 import { useProjects } from '@/application/hooks/useProjects'
-import { useTenders } from '@/application/hooks/useTenders'
+import { useTenderListStore } from '@/application/stores/tenderListStoreAdapter'
 import { useClients } from '@/application/hooks/useClients'
 import { useCurrencyRates, type CurrencyRatesState } from '@/application/hooks/useCurrencyRates'
 import {
@@ -19,7 +19,7 @@ import {
 } from '@/domain/selectors/financialMetrics'
 
 type UseProjectsReturn = ReturnType<typeof useProjects>
-type UseTendersReturn = ReturnType<typeof useTenders>
+type UseTendersReturn = ReturnType<typeof useTenderListStore>
 type UseClientsReturn = ReturnType<typeof useClients>
 
 export interface FinancialStateContextValue {
@@ -47,7 +47,7 @@ export function FinancialStateProvider({ children }: { children: ReactNode }) {
   const reportsState = useFinancialReports()
   const financialDataState = useFinancialData()
   const projectsState = useProjects()
-  const tendersState = useTenders()
+  const tendersState = useTenderListStore()
   const clientsState = useClients()
   const currencyState = useCurrencyRates()
   const { refresh: refreshCurrencyRates } = currencyState
@@ -95,15 +95,8 @@ export function FinancialStateProvider({ children }: { children: ReactNode }) {
     deleteProject,
   } = projectsState
 
-  const {
-    tenders,
-    isLoading: tendersLoading,
-    refreshTenders,
-    addTender,
-    updateTender,
-    deleteTender,
-    stats: tenderStats,
-  } = tendersState
+  // Destructure needed properties from tendersState
+  const { tenders, isLoading: tendersLoading, refreshTenders } = tendersState
 
   const {
     clients,
@@ -255,18 +248,8 @@ export function FinancialStateProvider({ children }: { children: ReactNode }) {
     }
   }, [projects, addProject, updateProject, deleteProject, refreshProjects, projectsLoading])
 
-  const tendersValue = useMemo<UseTendersReturn>(
-    () => ({
-      tenders,
-      isLoading: tendersLoading,
-      refreshTenders,
-      addTender,
-      updateTender,
-      deleteTender,
-      stats: tenderStats,
-    }),
-    [tenders, tendersLoading, refreshTenders, addTender, updateTender, deleteTender, tenderStats],
-  )
+  // Return full Store interface instead of custom UseTendersReturn
+  const tendersValue = useMemo(() => tendersState, [tendersState])
 
   const clientsValue = useMemo<UseClientsReturn>(
     () => ({

@@ -25,7 +25,7 @@ import {
   X,
 } from 'lucide-react'
 import type { Task, TaskStatus, TaskPriority, TaskBoardColumn } from '../../types/tasks'
-import { taskManagementService } from '@/services/taskManagementService'
+import { taskManagementService } from '@/application/services/taskManagementService'
 import { toast } from 'sonner'
 
 interface TaskBoardProps {

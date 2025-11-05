@@ -102,9 +102,9 @@ const DEV_CONFIG = (() => {
 })()
 
 const resolveScopedAppName = () => {
-  const rawName = app.getName() || 'ConstructionSystem'
-  const suffix = isE2E ? '-E2E' : (isDev ? '-Dev' : '')
-  return `${rawName}${suffix}`.replace(/[<>:"/\\|?*]/g, '_')
+  // استخدام اسم ثابت لجميع البيئات لتجنب مشكلة تعدد المجلدات
+  // هذا يضمن أن جميع الإصدارات (dev/production) تستخدم نفس مجلد البيانات
+  return 'desktop-management-system-community'
 }
 
 const PRODUCTION_INDEX_CANDIDATES = [
@@ -1513,6 +1513,89 @@ function setupIPC() {
     return app.getVersion()
   })
 
+  // معالج للحصول على حالة Migration (للتشخيص والمراقبة)
+  registerGuardedHandler('migration-get-status', async () => {
+    try {
+      if (isDev || isE2E) {
+        return {
+          success: false,
+          error: 'Migration status not available in development/E2E mode'
+        }
+      }
+
+      const { getMigrationStatus } = require('./migrations/index.cjs')
+      const status = getMigrationStatus()
+      
+      return {
+        success: true,
+        status
+      }
+    } catch (error) {
+      console.error('Failed to get migration status:', error)
+      return {
+        success: false,
+        error: error.message || String(error)
+      }
+    }
+  })
+
+  // معالج للتحقق اليدوي من التحديثات
+  registerGuardedHandler('check-for-updates', async () => {
+    if (isDev || isE2E) {
+      return {
+        success: false,
+        error: 'التحديثات التلقائية غير متاحة في وضع التطوير'
+      }
+    }
+
+    try {
+      logAutoUpdaterEvent('check-manual', 'success', { source: 'user-request' })
+      const result = await autoUpdater.checkForUpdatesAndNotify()
+      
+      if (result && result.updateInfo) {
+        // تحديث متاح - سيتم عرض الرسالة من event handler
+        return {
+          success: true,
+          updateAvailable: true,
+          version: result.updateInfo.version,
+          releaseDate: result.updateInfo.releaseDate
+        }
+      } else {
+        // لا يوجد تحديث - عرض رسالة للمستخدم
+        dialog.showMessageBox(mainWindow, {
+          type: 'info',
+          title: 'لا توجد تحديثات',
+          message: `أنت تستخدم أحدث إصدار (${app.getVersion()})`,
+          buttons: ['موافق']
+        }).catch(() => {});
+        
+        return {
+          success: true,
+          updateAvailable: false,
+          currentVersion: app.getVersion()
+        }
+      }
+    } catch (error) {
+      logAutoUpdaterEvent('check-manual-failed', 'error', {
+        source: 'user-request',
+        error: error instanceof Error ? error.message : String(error)
+      })
+      
+      // عرض رسالة خطأ للمستخدم
+      dialog.showMessageBox(mainWindow, {
+        type: 'error',
+        title: 'خطأ في التحقق من التحديثات',
+        message: `فشل التحقق من التحديثات:\n${error instanceof Error ? error.message : String(error)}`,
+        buttons: ['موافق']
+      }).catch(() => {});
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      }
+    }
+  })
+
   registerGuardedHandler('security-get-csp-nonce', () => {
     return getActiveCspNonce()
   })
@@ -1608,8 +1691,40 @@ function setupLifecycleObservers() {
 // معالج التحديث التلقائي مع سجل أمني
 function setupAutoUpdater() {
   try {
+    // تكوين GitHub provider صراحة
+    const updateToken = process.env.GITHUB_UPDATE_TOKEN || '';
+    
+    const feedConfig = {
+      provider: 'github',
+      owner: 'anmar534',
+      repo: 'Desktop-Management-System--Community---Copy---Copy-',
+      releaseType: 'release'
+    };
+    
+    // إذا كان المستودع خاص، أضف token
+    if (updateToken) {
+      feedConfig.private = true;
+      feedConfig.token = updateToken;
+      console.log('✅ Using private repository with token');
+    } else {
+      console.log('⚠️ No GITHUB_UPDATE_TOKEN - assuming public repository');
+    }
+    
+    autoUpdater.setFeedURL(feedConfig);
+
+    // تمكين السجلات للتشخيص
+    autoUpdater.logger = console;
+    autoUpdater.logger.transports.file.level = 'info';
+
+    // إعدادات التحديث
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.allowPrerelease = false;
+
+    console.log('✅ AutoUpdater configured:', {
+      currentVersion: app.getVersion(),
+      feedURL: 'github:anmar534/Desktop-Management-System--Community---Copy---Copy-'
+    });
   } catch (error) {
     console.warn('⚠️ Failed to configure autoUpdater defaults:', error?.message || error);
   }
@@ -1640,6 +1755,10 @@ function setupAutoUpdater() {
   };
 
   autoUpdater.on('checking-for-update', () => {
+    console.log('🔍 Checking for updates...', {
+      currentVersion: app.getVersion(),
+      feedURL: 'github:anmar534/Desktop-Management-System--Community---Copy---Copy-'
+    });
     logAutoUpdaterEvent('checking-for-update', 'success', {});
   });
 
@@ -1649,13 +1768,14 @@ function setupAutoUpdater() {
       releaseDate: info?.releaseDate,
       files: info?.files?.length
     };
+    console.log('✨ Update available!', payload);
     logAutoUpdaterEvent('update-available', 'success', payload);
     emitUpdateEventToRenderer('update-available', payload);
     dialog
       .showMessageBox(mainWindow, {
         type: 'info',
         title: 'تحديث متاح',
-        message: `تحديث جديد متاح (Electron ${info?.version ?? ''}). سيتم تحميله في الخلفية.`,
+        message: `تحديث جديد متاح!\n\nالإصدار الحالي: ${app.getVersion()}\nالإصدار الجديد: ${info?.version ?? ''}\n\nسيتم تحميل التحديث في الخلفية.`,
         buttons: ['موافق']
       })
       .catch(() => {
@@ -1664,6 +1784,10 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('update-not-available', (info) => {
+    console.log('ℹ️ No updates available', {
+      currentVersion: app.getVersion(),
+      latestVersion: info?.version
+    });
     logAutoUpdaterEvent('update-not-available', 'success', {
       version: info?.version || app.getVersion()
     });
@@ -1700,9 +1824,13 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on('error', (error) => {
-    logAutoUpdaterEvent('error', 'error', {
-      message: error?.message || String(error)
-    });
+    const errorDetails = {
+      message: error?.message || String(error),
+      stack: error?.stack,
+      currentVersion: app.getVersion()
+    };
+    console.error('❌ AutoUpdater error:', errorDetails);
+    logAutoUpdaterEvent('error', 'error', errorDetails);
   });
 
   void performCheck('startup');
@@ -1741,11 +1869,80 @@ app.whenReady().then(async () => {
   // اضبط المسارات الآمنة بعد ready وقبل تهيئة أي موارد تعتمد على userData
   setupSafePaths();
   
+  // 🆕 Migration: نقل البيانات من المجلد القديم (-Dev) إلى المجلد الجديد الموحد
+  // هذا يحل مشكلة v1.0.6 حيث فقد المستخدمون بياناتهم بسبب تغيير اسم المجلد
+  try {
+    console.log('🔄 Checking for user data migration...');
+    const { migrateUserData } = require('./migrations/migrate-user-data.cjs');
+    const migrationResult = await migrateUserData(app);
+    
+    if (migrationResult.success && migrationResult.migrated) {
+      console.log('✅ User data migration completed successfully');
+      console.log(`   Old path: ${migrationResult.oldPath}`);
+      console.log(`   New path: ${migrationResult.newPath}`);
+      console.log(`   Backup: ${migrationResult.backupPath}`);
+    } else if (!migrationResult.success) {
+      console.warn('⚠️ User data migration failed:', migrationResult.error);
+      // لا نوقف التطبيق، فقط نسجل التحذير
+    }
+  } catch (migrationError) {
+    console.warn('⚠️ Migration script error:', migrationError.message);
+    // لا نوقف التطبيق، المستخدم قد يكون تثبيت جديد
+  }
+  
   // تهيئة نظام تسجيل الأخطاء
   await initErrorReporter();
   
   await createStore();
   await ensureEncryptionKey();
+  
+  // ⭐ Migration Manager - تحديث البيانات تلقائياً عند التحديث
+  if (!isDev && !isE2E) {
+    try {
+      console.log('🔄 Checking for data migrations...');
+      const { checkAndRunMigrations } = require('./migrations/index.cjs');
+      const migrationResult = await checkAndRunMigrations();
+      
+      if (!migrationResult.success) {
+        console.error('❌ Migration failed:', migrationResult.error);
+        
+        const { dialog } = require('electron');
+        await dialog.showMessageBox({
+          type: 'error',
+          title: 'فشل تحديث البيانات - Migration Failed',
+          message: 'حدث خطأ أثناء تحديث بيانات التطبيق.\n\nتم استعادة البيانات من النسخة الاحتياطية.\nيرجى المحاولة مرة أخرى أو الاتصال بالدعم الفني.\n\nAn error occurred while updating application data.\n\nData has been restored from backup.\nPlease try again or contact technical support.',
+          buttons: ['موافق - OK']
+        });
+        
+        // إنهاء التطبيق - لا تفتح النافذة
+        app.quit();
+        return;
+      }
+      
+      if (migrationResult.migrationsRun > 0) {
+        console.log(`✅ Successfully applied ${migrationResult.migrationsRun} migration(s)`);
+      } else {
+        console.log('✅ Data is up to date - no migrations needed');
+      }
+    } catch (error) {
+      console.error('💥 Migration system error:', error);
+      
+      const { dialog } = require('electron');
+      await dialog.showMessageBox({
+        type: 'error',
+        title: 'خطأ في نظام التحديث - Migration System Error',
+        message: `فشل في تهيئة نظام تحديث البيانات.\n\nالخطأ: ${error.message || error}\n\nFailed to initialize migration system.\n\nError: ${error.message || error}`,
+        buttons: ['موافق - OK']
+      });
+      
+      // إنهاء التطبيق
+      app.quit();
+      return;
+    }
+  } else {
+    console.log('ℹ️  Migration skipped (development/E2E mode)');
+  }
+  
   setupIPC();
   createWindow();
   createMenu();

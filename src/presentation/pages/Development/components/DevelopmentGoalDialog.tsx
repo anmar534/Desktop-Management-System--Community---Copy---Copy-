@@ -30,7 +30,16 @@ import {
 import { Textarea } from '@/presentation/components/ui/textarea'
 import type { DevelopmentGoal } from '@/application/hooks/useDevelopment'
 import { toast } from 'sonner'
-import { Target, Award, Building2, DollarSign, TrendingUp, Users, Calendar } from 'lucide-react'
+import {
+  Target,
+  Award,
+  Building2,
+  DollarSign,
+  TrendingUp,
+  Users,
+  Calendar,
+  BarChart3,
+} from 'lucide-react'
 
 // ============================================
 // Goal Categories with Icons
@@ -41,6 +50,7 @@ const goalCategories = [
   { value: 'projects', label: 'المشاريع', icon: Building2 },
   { value: 'revenue', label: 'الإيرادات', icon: DollarSign },
   { value: 'profit', label: 'الأرباح', icon: TrendingUp },
+  { value: 'performance', label: 'أداء المشاريع', icon: BarChart3 },
   { value: 'team', label: 'الفريق', icon: Users },
   { value: 'other', label: 'أخرى', icon: Target },
 ]
@@ -168,6 +178,9 @@ export function DevelopmentGoalDialog({
   }
 
   const CategoryIcon = getCategoryIcon()
+  const AUTO_SYNC_CATEGORIES = new Set(['tenders', 'projects', 'revenue', 'profit', 'performance'])
+  const isAutoSyncedValue =
+    AUTO_SYNC_CATEGORIES.has(formData.category ?? '') && formData.type === 'yearly'
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -313,7 +326,14 @@ export function DevelopmentGoalDialog({
                   }
                   placeholder="0"
                   className="text-right"
+                  disabled={isAutoSyncedValue}
+                  readOnly={isAutoSyncedValue}
                 />
+                {isAutoSyncedValue && (
+                  <p className="text-xs text-muted-foreground">
+                    يتم تحديث هذه القيمة تلقائياً من سجلات النظام. لا يمكن تعديلها يدوياً.
+                  </p>
+                )}
               </div>
             </div>
 

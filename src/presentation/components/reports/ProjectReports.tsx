@@ -43,10 +43,13 @@ import {
   Area,
   AreaChart,
 } from 'recharts'
-import type { ProjectStatusReport, ProjectDashboardData } from '@/services/projectReportingService'
-import { projectReportingService } from '@/services/projectReportingService'
-import type { KPIDashboard } from '@/services/kpiCalculationEngine'
-import { kpiCalculationEngine } from '@/services/kpiCalculationEngine'
+import type {
+  ProjectStatusReport,
+  ProjectDashboardData,
+} from '@/application/services/projectReportingService'
+import { projectReportingService } from '@/application/services/projectReportingService'
+import type { KPIDashboard } from '@/application/services/kpiCalculationEngine'
+import { kpiCalculationEngine } from '@/application/services/kpiCalculationEngine'
 import { toast } from 'sonner'
 
 interface ProjectReportsProps {

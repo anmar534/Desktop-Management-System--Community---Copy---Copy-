@@ -138,6 +138,11 @@ export interface Tender {
   requirements?: string[] // متطلبات المنافسة
   createdAt?: string // تاريخ الإنشاء
   updatedAt?: string // تاريخ آخر تحديث
+
+  // ⭐ Phase 5: Optimistic Locking & Conflict Resolution
+  version?: number // رقم الإصدار - يزداد مع كل تحديث (يبدأ من 1)
+  lastModified?: string // تاريخ آخر تعديل (ISO 8601 date string)
+  lastModifiedBy?: string // معرف المستخدم الذي قام بآخر تعديل
 }
 
 export interface Client {

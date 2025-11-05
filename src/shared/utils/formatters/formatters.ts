@@ -208,12 +208,16 @@ export const formatDateWithDay = (date: string | Date, locale = DEFAULT_LOCALE):
 
 // ===== دوال تنسيق العملة =====
 
+/**
+ * تنسيق المبالغ المالية بالعملة السعودية
+ * القيمة الافتراضية: رقمين بعد الفاصلة (للهللات)
+ */
 export const formatCurrency = (amount: number, options?: CurrencyOptions): string => {
   const {
     currency = 'SAR',
     locale = DEFAULT_LOCALE,
-    minimumFractionDigits = 0,
-    maximumFractionDigits = 0,
+    minimumFractionDigits = 2,
+    maximumFractionDigits = 2,
     notation = 'standard',
   } = options ?? {}
 
@@ -354,9 +358,22 @@ export const formatTenderType = (type: string): string => {
   return type
 }
 
+/**
+ * تنسيق تاريخ المنافسة بالتاريخ الميلادي
+ * يعرض التاريخ المدخل (الميلادي) بدون تحويل للهجري
+ */
 export const formatTenderDate = (deadline: string): string => {
   if (!deadline) return 'غير محدد'
-  return formatDateValue(deadline, undefined, 'تاريخ غير صحيح')
+  return formatDateValue(
+    deadline,
+    {
+      locale: 'ar-SA',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    },
+    'تاريخ غير صحيح',
+  )
 }
 
 // ===== تصدير الدوال المتوافقة مع الإصدارات السابقة =====

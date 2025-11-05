@@ -101,12 +101,12 @@ export function useCurrencyFormatter(
       // Validate number
       const safeValue = Number.isFinite(numericValue) ? numericValue : 0
 
-      // Default options
+      // Default options - رقمين بعد الفاصلة للهللات
       const defaultOptions: Intl.NumberFormatOptions = {
         style: 'currency',
         currency: baseCurrency,
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       }
 
       // Merge options
